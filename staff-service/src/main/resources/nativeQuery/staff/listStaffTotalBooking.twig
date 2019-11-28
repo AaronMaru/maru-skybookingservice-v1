@@ -1,0 +1,40 @@
+SELECT
+
+	COUNT(b.id) AS bookingQty,
+	SUM( b.total_amount + b.markup_amount + b.markup_pay_amount ) AS totalAmount,
+	b.`status`,
+	(CASE
+		WHEN (b.`status` = 11 AND (
+
+								SELECT IF(COUNT(dep_date) = 0, FALSE, TRUE)
+								FROM booking_origin_destinations bod
+								WHERE bod.booking_id = b.id
+								AND dep_date >= CURRENT_TIMESTAMP
+
+							) = TRUE
+
+				) THEN "Upcoming"
+
+		WHEN (b.`status` = 11 AND (
+
+								SELECT IF(COUNT(dep_date) = 0, FALSE, TRUE)
+								FROM booking_origin_destinations bod
+								WHERE bod.booking_id = b.id
+								AND dep_date < CURRENT_TIMESTAMP
+
+							) = TRUE
+
+				) THEN "Completed"
+
+		WHEN (b.`status` IN (10, 12, 4, 3)) THEN  "Cancelled"
+
+	END) AS statusKey
+
+FROM bookings b
+
+WHERE ( b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id = :companyId )
+
+AND b.`status` IN (11, 10, 12, 4)
+
+GROUP BY statusKey
+ORDER BY bookingQty DESC

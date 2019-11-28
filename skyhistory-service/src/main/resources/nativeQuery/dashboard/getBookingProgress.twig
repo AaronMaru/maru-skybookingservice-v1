@@ -1,0 +1,47 @@
+SELECT
+COUNT(b.id) AS amount,
+CASE
+WHEN (b.`status` = 11 AND (
+
+SELECT IF(COUNT(dep_date) = 0, FALSE, TRUE)
+FROM booking_origin_destinations bod
+WHERE bod.booking_id = b.id
+AND dep_date >= CURRENT_TIMESTAMP
+
+) = TRUE
+
+) THEN "Upcoming"
+
+WHEN (b.`status` = 11 AND (
+
+SELECT IF(COUNT(dep_date) = 0, FALSE, TRUE)
+FROM booking_origin_destinations bod
+WHERE bod.booking_id = b.id
+AND dep_date < CURRENT_TIMESTAMP
+
+) = TRUE
+
+) THEN "Completed"
+
+WHEN (b.`status` IN (3)) THEN "Cancelled"
+WHEN (b.`status` IN (10, 12, 4)) THEN  "Failed"
+
+END AS `status`
+
+FROM bookings b
+
+WHERE ( b.`status` IN (11, 10, 12, 4, 3) )
+
+AND (IF('skyuser' = :userType,
+b.stakeholder_user_id = :userId AND b.stakeholder_company_id IS NULL,
+IF('admin' = :userRole,
+b.stakeholder_user_id = :userId OR b.stakeholder_company_id = :companyId,
+b.stakeholder_user_id = :userId AND b.stakeholder_company_id = :companyId)))
+
+AND (IF('range' = :filter, DATE(b.created_at) >= :startDate AND DATE(b.created_at) <= :endDate, 0 )
+OR IF('daily' = :filter, DATE(b.created_at) = CURDATE() , 0)
+OR IF('weekly' = :filter, YEARWEEK(DATE(b.created_at)) = YEARWEEK(CURDATE()) , 0 )
+OR IF('monthly' = :filter, MONTH(b.created_at) = MONTH( CURDATE() ) , 0 )
+OR IF('yearly' = :filter, YEAR(b.created_at) = YEAR(CURDATE()), 0 ))
+
+GROUP BY `status`

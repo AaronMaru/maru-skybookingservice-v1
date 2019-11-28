@@ -1,0 +1,11 @@
+SELECT
+	bti.pass_type AS passType,
+	bti.pass_qty AS passQty,
+	bti.base_fare AS baseFare,
+	bti.total_tax AS totalTax,
+	bti.total_amount AS totalAmount,
+	bti.currency_code AS currencyCode,
+	bti.non_refundable_ind AS nonRefund
+FROM booking_travel_itineraries bti
+
+WHERE bti.booking_id = :bookingId

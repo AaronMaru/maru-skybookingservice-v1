@@ -1,0 +1,12 @@
+SELECT
+bod.id,
+bod.elapsed_time AS elapsedTime,
+bod.arrage_air_segs AS arrageAirSegs,
+bod.group_air_segs AS grAirSegs,
+bod.multiple_air_status AS multipleAirStatus,
+bod.multiple_air_url AS multipleAirUrl90,
+bod.`stop`
+
+FROM booking_origin_destinations bod
+WHERE bod.parent_id IS NULL
+AND bod.booking_id = :bookingId

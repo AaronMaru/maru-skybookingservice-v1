@@ -1,0 +1,39 @@
+SELECT
+	su.id,
+	su.user_id AS userId,
+	su.first_name AS firstName,
+	su.last_name AS lastName,
+	su.user_code AS userCode,
+	su.date_of_birth AS dob,
+	su.gender,
+	(
+		SELECT c.`value`
+		FROM contacts c
+		WHERE c.contactable_id = su.id
+		AND c.contactable_type = 'skyuser'
+		AND c.type = 'p'
+	) AS contPhone,
+	(
+		SELECT c.`value`
+		FROM contacts c
+		WHERE c.contactable_id = su.id
+		AND c.contactable_type = 'skyuser'
+		AND c.type = 'a'
+	) AS contAddress,
+	(
+		SELECT c.`value`
+		FROM contacts c
+		WHERE c.contactable_id = su.id
+		AND c.contactable_type = 'skyuser'
+		AND c.type = 'e'
+	) AS contEmail,
+	su.photo AS profile,
+	su.created_from createdFrom,
+	su.currency_id currencyId,
+	su.language_id languageId,
+	su.device_name deviceName,
+	su.status,
+	su.created_at AS createdAt
+
+FROM stakeholder_users su
+WHERE su.id = :skyuserId

@@ -1,0 +1,30 @@
+
+spring:
+    application:
+        name: skygateway-service
+
+    cloud:
+        config:
+            uri: http://192.168.2.4:8888
+
+zuul:
+    sensitiveHeaders: Cookie,Set-Cookie
+    decodeUrl: false
+
+    routes:
+        payment:
+            path: /payment/**
+            serviceId: payment-service
+            url: http://192.168.2.4:7001
+        skyhistory:
+            path: /skyhistory/**
+            serviceId: skyhistory-service
+            url: http://192.168.2.4:7002
+        staff:
+            path: /staff/**
+            serviceId: staff-service
+            url: http://192.168.2.4:7003
+        stakeholder:
+            path: /stakeholder/**
+            serviceId: stakeholder-service
+            url: http://192.168.2.4:7004

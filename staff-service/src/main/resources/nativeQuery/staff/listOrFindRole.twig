@@ -1,0 +1,7 @@
+SELECT
+	sr.id AS roleId,
+	sr.`name` AS role,
+	sr.key_name AS userType
+FROM skyowner_role sr
+
+WHERE IF( :action = 'byRole', sr.key_name = :role , sr.key_name IN ('admin', 'editor', 'moderator') )

@@ -1,0 +1,33 @@
+SELECT
+	fn.id,
+	ss.url_key AS urlKey,
+	ss.noti_icon AS notiIcon,
+	ss.title,
+	fn.readable,
+	fn.`status`,
+	fn.created_at AS createdAt
+FROM front_notification fn
+
+INNER JOIN
+(
+	SELECT
+		ss.id,
+		ss.url_key,
+		(
+			SELECT sslo.title
+			FROM sending_script_locale sslo
+			WHERE IF( NULL IS NULL, sslo.locale_id = :locale , sslo.locale_id = :locale)
+			AND sslo.send_script_id = ss.id
+		) AS title,
+		ss.noti_icon
+	FROM sending_script ss
+) ss ON ss.id = fn.send_script_id
+
+WHERE fn.user_id = :skyuserId
+AND IF(:action = 'skyuser',
+				fn.user_type = 'skyuser',
+				fn.user_type = 'staff'
+				AND fn.stcompany_id = :companyId
+			)
+
+ORDER BY fn.created_at DESC

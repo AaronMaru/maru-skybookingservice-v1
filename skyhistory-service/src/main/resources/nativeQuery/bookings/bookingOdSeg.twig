@@ -1,0 +1,231 @@
+SELECT
+bod_seg.id,
+bod_seg.airline_code AS airlineCode,
+fi.airline_name AS airlineName,
+bod_seg.flight_number AS flightNumber,
+bod_seg.equip_type AS equipType,
+aci.aircraft_name AS airCraftName,
+bod_seg.dep_location_code AS depLocation,
+dep_ai.dep_airport AS depLocationName,
+dep_ai.dep_city AS depCity,
+dep_ai.dep_country AS depCountry,
+bod_seg.dep_date AS depDateTime,
+(
+	SELECT arr_seg.arr_location_code
+	FROM booking_origin_destinations arr_seg
+	WHERE arr_seg.parent_id = :bodId
+	ORDER BY arr_seg.id DESC
+	LIMIT 1
+
+) AS arrLocation,
+arr_ai.arr_airport AS arrLocationName,
+arr_ai.arr_city AS arrCity,
+arr_ai.arr_country AS arrCountry,
+(
+	SELECT arr_seg.arr_date
+	FROM booking_origin_destinations arr_seg
+	WHERE arr_seg.parent_id = :bodId
+	ORDER BY arr_seg.id DESC
+	LIMIT 1
+
+) AS arrDateTime,
+bod_seg.stop
+
+FROM booking_origin_destinations bod_seg
+
+	-- Inner Join
+	-- Query airline with localization name
+	INNER JOIN
+	(
+
+		SELECT
+			fi.id,
+			fi.airline_code,
+			(
+				SELECT fil.name AS airline_name
+				FROM flight_info_locale fil
+				WHERE fil.locale_id = 1
+				AND fil.flight_id = fi.id
+			) AS airline_name
+
+		FROM flight_info fi
+
+	) fi ON fi.airline_code = bod_seg.airline_code
+	-- The end of airline with localization name
+
+
+	-- Query aircraft with localization name
+	INNER JOIN
+	(
+
+		SELECT
+			aci.id,
+			aci.aircraft_code,
+			(
+				SELECT ail.name AS aircraft_name
+				FROM aircraft_locale ail
+				WHERE ail.locale_id = 1
+				AND ail.aircraft_id = aci.id
+			) AS aircraft_name
+
+		FROM aircrafts_info aci
+
+	) aci ON aci.aircraft_code = bod_seg.equip_type
+	-- The end of aircraft with localization name
+
+	-- Query departure information with localization name
+	INNER JOIN
+	(
+
+		SELECT
+			dep_ai.id,
+			dep_ai.`code`,
+			ail.dep_airport,
+			cc_city.dep_city,
+			cc_city.dep_country
+
+		FROM airport_info dep_ai
+
+		-- For departure airport localization
+		INNER JOIN
+		(
+			SELECT
+			ail.airport_info_id,
+			ail.`name` AS dep_airport
+
+			FROM airport_info_locale ail
+			WHERE ail.locale_id = 1
+		) ail ON ail.airport_info_id = dep_ai.id
+		-- The end of departure airport localization
+
+
+		-- Start
+		-- For departure city and country
+		INNER JOIN
+		(
+
+			SELECT
+			cc_city.id,
+			cc_city.parent_id,
+			cc_county.dep_country,
+			(
+
+				SELECT cc_lcity.`name` AS dep_city
+				FROM country_city_locale cc_lcity
+				WHERE cc_lcity.locale_id = 1
+				AND cc_lcity.country_city_id = cc_city.id
+
+			) AS dep_city
+
+			FROM country_city cc_city -- Find city name
+
+
+			-- For departure country
+			INNER JOIN
+			(
+
+				SELECT
+					cc_county.id,
+					(
+						SELECT cc_lcountry.`name` AS dep_country
+						FROM country_city_locale cc_lcountry
+						WHERE cc_lcountry.locale_id = 1
+						AND cc_lcountry.country_city_id = cc_county.id
+					) AS dep_country
+
+				FROM country_city cc_county
+
+			) cc_county ON cc_county.id = cc_city.parent_id
+			-- The end of departure country
+
+
+		) cc_city ON cc_city.id = dep_ai.country_city_id
+		-- For departure city and country
+		-- The End
+
+	) dep_ai ON dep_ai.`code` = bod_seg.dep_location_code
+	-- The end of departure
+
+	-- Query arrival information with localization name
+	INNER JOIN
+	(
+
+		SELECT
+			arr_ai.id,
+			arr_ai.`code`,
+			ail.arr_airport,
+			cc_city.arr_city,
+			cc_city.arr_country
+
+		FROM airport_info arr_ai
+
+		-- For arrival airport localization
+		INNER JOIN
+		(
+
+			SELECT
+			ail.airport_info_id,
+			ail.`name` AS arr_airport
+
+			FROM airport_info_locale ail
+			WHERE ail.locale_id = 1
+
+		) ail ON ail.airport_info_id = arr_ai.id
+		-- The end of arrival airport localization
+
+
+		-- Start
+		-- For arrival city and country
+		INNER JOIN
+		(
+
+			SELECT
+			cc_city.id,
+			cc_city.parent_id,
+			cc_county.arr_country,
+			(
+
+				SELECT cc_lcity.`name` AS arr_city
+				FROM country_city_locale cc_lcity
+				WHERE cc_lcity.locale_id = 1
+				AND cc_lcity.country_city_id = cc_city.id
+
+			) AS arr_city
+
+			FROM country_city cc_city -- Find city name
+
+
+			-- For arrival country
+			INNER JOIN
+			(
+
+				SELECT
+					cc_county.id,
+					(
+						SELECT cc_lcountry.`name` AS arr_country
+						FROM country_city_locale cc_lcountry
+						WHERE cc_lcountry.locale_id = 1
+						AND cc_lcountry.country_city_id = cc_county.id
+					) AS arr_country
+
+				FROM country_city cc_county
+
+			) cc_county ON cc_county.id = cc_city.parent_id
+			-- The end of arrival country
+
+
+		) cc_city ON cc_city.id = arr_ai.country_city_id
+		-- For arrival city and country
+		-- The End
+
+
+	) arr_ai ON arr_ai.`code` = (SELECT arr_seg.arr_location_code
+																FROM booking_origin_destinations arr_seg
+																WHERE arr_seg.parent_id = 31
+																ORDER BY arr_seg.id DESC
+																LIMIT 1)
+	-- The end of arrival information
+
+WHERE bod_seg.parent_id = :bodId
+ORDER BY bod_seg.id ASC
+LIMIT 1

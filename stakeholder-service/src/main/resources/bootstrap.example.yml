@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: stakeholder-service
+
+  cloud:
+    config:
+      uri: http://192.168.2.4:8888
+
+  awsImageUrl:
+    companyLicense: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/company_license/
+
+  companyStatus:
+    waiting: 0
+    reject: 1
+    ban: 3
+    active: 4
+    deactive: 5
+
+native-query:
+  package-scan: com.skybooking.stakeholderservice

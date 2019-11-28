@@ -1,0 +1,299 @@
+SELECT
+b.id AS bookingId,
+b.booking_code AS bookingCode,
+b.itinerary_ref AS pnrCode,
+b.trip_type AS tripType,
+(
+SELECT CONCAT(su.last_name,' ', su.first_name) AS staffName
+FROM stakeholder_users su
+WHERE su.id = b.stakeholder_user_id
+) AS staffName,
+(
+	SELECT COUNT(`pass_type`)
+	FROM booking_travel_itineraries bti
+	WHERE bti.booking_id = b.id
+	AND bti.pass_type = "ADT"
+) AS `adult`,
+(
+	SELECT COUNT(`pass_type`)
+	FROM booking_travel_itineraries bti
+	WHERE bti.booking_id = b.id
+	AND bti.pass_type = "CNN"
+) AS `child`,
+(
+	SELECT COUNT(`pass_type`)
+	FROM booking_travel_itineraries bti
+	WHERE bti.booking_id = b.id
+	AND bti.pass_type = "INF"
+) AS `infant`,
+(
+	SELECT COUNT(`pass_type`)
+	FROM booking_travel_itineraries bti
+	WHERE bti.booking_id = b.id
+) AS `totalPass`,
+(
+
+	SELECT bod.cabin_name
+	FROM booking_origin_destinations bod
+	WHERE bod.booking_id = b.id
+	AND bod.parent_id IS NOT NULL
+	LIMIT 1
+
+) AS cabinName,
+
+( b.total_amount + b.markup_amount + b.markup_pay_amount ) AS totalAmount,
+b.dis_pay_met_amount AS disPayment,
+b.currency_code AS currencyCode,
+b.cont_fullname AS contName,
+b.created_at AS bookDate,
+b.`status`,
+CASE
+
+WHEN (b.`status` = 11 AND (
+
+SELECT IF(COUNT(dep_date) = 0, FALSE, TRUE)
+FROM booking_origin_destinations bod
+WHERE bod.booking_id = b.id
+AND dep_date >= CURRENT_TIMESTAMP
+
+) = TRUE
+
+) THEN "upcoming"
+
+WHEN (b.`status` = 11 AND (
+
+SELECT IF(COUNT(dep_date) = 0, FALSE, TRUE)
+FROM booking_origin_destinations bod
+WHERE bod.booking_id = b.id
+AND dep_date < CURRENT_TIMESTAMP
+
+) = TRUE
+
+) THEN "complete"
+
+WHEN (b.`status` IN (3)) THEN "cancel"
+WHEN (b.`status` IN (10, 12, 4)) THEN  "fail"
+
+END AS statusKey
+
+FROM bookings b
+
+-- Condition by Booking status
+WHERE b.status IN (11, 10, 4, 12, 3)
+
+
+AND ( IF( :stake = 'skyuser',
+
+-- IF TRUE
+( b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id IS NULL),
+
+-- IF FALSE
+-- Condition for Skyowner
+IF( :stake = 'company',
+    b.stakeholder_user_id = :skyuserId OR b.stakeholder_company_id = :companyId,
+    b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id = :companyId))
+    -- The end of if
+)
+
+-- Filter Feature Booking
+AND ( IF( :action = 'filter',
+
+-- If condition TRUE
+
+-- Param: startRange and endRange
+( b.total_amount + b.markup_amount + b.markup_pay_amount ) >= :startRange AND ( b.total_amount + b.markup_amount + b.markup_pay_amount ) <= :endRange
+
+
+-- By trip type
+-- Param: tripType
+AND b.trip_type = :tripType
+
+
+-- By stakeholder name
+-- Param: bookByName
+AND (
+SELECT COUNT(su.id)
+FROM stakeholder_users su
+WHERE su.id = b.stakeholder_user_id
+AND CONCAT(su.last_name,' ', su.first_name) LIKE '%' :bookByName '%'
+) > 0
+
+-- By Flying From and To
+-- Param: flyingFrom, flyingTo
+AND (
+IF( :tripType = 'Return',
+
+-- IF TRUE
+-- Condition with multicity
+( SELECT COUNT(fbod.id)
+FROM booking_origin_destinations fbod
+WHERE fbod.booking_id = b.id
+AND fbod.parent_id IS NOT NULL
+AND fbod.dep_location_code = :flyingFrom
+ORDER BY fbod.id ASC
+LIMIT 1
+) > 0
+
+AND
+
+( SELECT COUNT(fbod.id)
+FROM booking_origin_destinations fbod
+WHERE fbod.booking_id = b.id
+AND fbod.parent_id IS NOT NULL
+AND fbod.dep_location_code = :flyingTo
+ORDER BY fbod.id DESC
+LIMIT 1
+) > 0
+,
+
+-- If FALSE
+-- Condition with ONEWAY and Multicity
+( SELECT COUNT(fbod.id)
+FROM booking_origin_destinations fbod
+WHERE fbod.booking_id = b.id
+AND fbod.parent_id IS NOT NULL
+AND fbod.dep_location_code = :flyingFrom
+ORDER BY fbod.id ASC
+LIMIT 1
+) > 0
+
+AND
+
+( SELECT COUNT(fbod.id)
+FROM booking_origin_destinations fbod
+WHERE fbod.booking_id = b.id
+AND fbod.parent_id IS NOT NULL
+AND fbod.arr_location_code = :flyingTo
+ORDER BY fbod.id DESC
+LIMIT 1
+) > 0
+
+) -- The End of condition
+
+)
+
+-- By Class Name
+-- Param: className
+AND ( SELECT COUNT(fbod.id)
+FROM booking_origin_destinations fbod
+WHERE fbod.booking_id = b.id
+AND fbod.parent_id IS NOT NULL
+AND (
+IF( :className = 'allclass', fbod.cabin_code IN ('Y', 'F', 'C', 'S', 'P', 'J'), 0 )
+OR IF( :className = 'economy', fbod.cabin_code = 'Y' , 0)
+OR IF( :className = 'first', fbod.cabin_code = 'F' , 0)
+OR IF( :className = 'business', fbod.cabin_code = 'C' , 0 )
+)
+) > 0
+
+-- By date
+-- Param: bookDate
+AND Date(b.created_at) = :bookDate
+
+-- By Payment Type
+-- Param: paymentType
+AND ( SELECT COUNT(bpt.id)
+FROM booking_payment_transactions bpt
+WHERE bpt.method = :paymentType
+) > 0
+
+-- By booking status
+-- Param: bookStatus
+AND IF( :bookStatus = 'complete' OR :bookStatus = 'upcoming' ,
+
+-- If TRUE condition between COMPLETE and UPCOMING
+-- Booking status succcessfully
+IF( :bookStatus = 'complete',
+
+-- If TRUE
+-- Condition for complete
+(
+
+SELECT COUNT(dep_date)
+FROM booking_origin_destinations bod
+WHERE bod.booking_id = b.id
+AND dep_date < CURRENT_TIMESTAMP
+
+) > 0
+
+,
+-- If FALSE
+-- Condition for upcoming
+(
+
+SELECT COUNT(dep_date)
+FROM booking_origin_destinations bod
+WHERE bod.booking_id = b.id
+AND dep_date >= CURRENT_TIMESTAMP
+
+) > 0
+
+)
+
+,
+-- If FALSE condition between COMPLETE and UPCOMING
+-- Booking status Cancelation and Fail
+IF( :bookStatus = 'cancel',
+b.`status` = 3
+,
+b.`status` IN (10, 12, 4)
+)
+)
+
+,
+-- If condition False For FILTER Feature
+b.status IN (11, 10, 4, 12, 3) )
+
+)
+
+
+-- Search Feature Booking
+AND ( IF( :action = 'search',
+
+-- If condition TRUE
+
+-- *** Param: keyword
+
+-- By trip type
+b.trip_type LIKE :keyword '%'
+
+-- By pnr code
+OR b.itinerary_ref LIKE :keyword '%'
+
+-- By booking code
+OR b.booking_code LIKE :keyword '%'
+
+-- By contact person
+OR b.cont_fullname LIKE :keyword '%'
+
+-- By date
+OR Date(b.created_at) LIKE :keyword '%'
+
+-- By Class Name
+OR ( SELECT COUNT(fbod.id)
+FROM booking_origin_destinations fbod
+WHERE fbod.booking_id = b.id
+AND fbod.parent_id IS NOT NULL
+AND (
+IF( :keyword = 'economy', fbod.cabin_code = 'Y' , 0)
+OR IF( :keyword = 'first', fbod.cabin_code = 'F' , 0)
+OR IF( :keyword = 'business', fbod.cabin_code = 'C' , 0 )
+)
+) > 0
+
+-- By stakeholder name
+OR (
+SELECT COUNT(su.id)
+FROM stakeholder_users su
+WHERE su.id = b.stakeholder_user_id
+AND CONCAT(su.last_name,' ', su.first_name) LIKE '%' :keyword '%'
+) > 0
+
+,
+-- If condition False For FILTER Feature
+b.status IN (11, 10, 4, 12, 3) )
+
+)
+
+GROUP BY pnrCode
+ORDER BY bookDate DESC

@@ -1,0 +1,87 @@
+SELECT
+b.id AS bookingId,
+b.booking_code AS bookingCode,
+b.itinerary_ref AS pnrCode,
+b.trip_type AS tripType,
+(
+	SELECT CONCAT(su.last_name,' ', su.first_name) AS staffName
+	FROM stakeholder_users su
+	WHERE su.id = b.stakeholder_user_id
+) AS staffName,
+(
+	SELECT COUNT(`pass_type`)
+	FROM booking_travel_itineraries bti
+	WHERE bti.booking_id = b.id
+	AND bti.pass_type = "ADT"
+) AS `adult`,
+(
+	SELECT COUNT(`pass_type`)
+	FROM booking_travel_itineraries bti
+	WHERE bti.booking_id = b.id
+	AND bti.pass_type = "CNN"
+) AS `child`,
+(
+	SELECT COUNT(`pass_type`)
+	FROM booking_travel_itineraries bti
+	WHERE bti.booking_id = b.id
+	AND bti.pass_type = "INF"
+) AS `infant`,
+(
+	SELECT COUNT(`pass_type`)
+	FROM booking_travel_itineraries bti
+	WHERE bti.booking_id = b.id
+) AS `totalPass`,
+(
+
+	SELECT bod.cabin_name
+	FROM booking_origin_destinations bod
+	WHERE bod.booking_id = b.id
+	AND bod.parent_id IS NOT NULL
+	LIMIT 1
+
+) AS cabinName,
+
+( b.total_amount + b.markup_amount + b.markup_pay_amount ) AS totalAmount,
+b.dis_pay_met_amount AS disPayment,
+b.currency_code AS currencyCode,
+b.cont_fullname AS contName,
+b.created_at AS bookDate,
+b.`status`,
+CASE
+
+	WHEN (b.`status` = 11 AND (
+
+							SELECT IF(COUNT(dep_date) = 0, FALSE, TRUE)
+							FROM booking_origin_destinations bod
+							WHERE bod.booking_id = b.id
+							AND dep_date >= CURRENT_TIMESTAMP
+
+						) = TRUE
+
+			) THEN "upcoming"
+
+	WHEN (b.`status` = 11 AND (
+
+							SELECT IF(COUNT(dep_date) = 0, FALSE, TRUE)
+							FROM booking_origin_destinations bod
+							WHERE bod.booking_id = b.id
+							AND dep_date < CURRENT_TIMESTAMP
+
+						) = TRUE
+
+			) THEN "complete"
+
+	WHEN (b.`status` IN (3)) THEN "cancel"
+	WHEN (b.`status` IN (10, 12, 4)) THEN  "fail"
+
+END AS statusKey
+
+FROM bookings b
+
+-- Condition by Booking status
+WHERE b.status IN (11, 10, 4, 12, 3)
+AND b.id = :bookingId
+AND IF(:action = 'skyuser' ,
+				(b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id IS NULL),
+				(b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id = :companyId)
+			)

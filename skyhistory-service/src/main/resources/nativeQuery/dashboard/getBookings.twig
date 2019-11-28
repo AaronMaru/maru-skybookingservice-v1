@@ -1,0 +1,53 @@
+SELECT
+id,
+stakeholder_user_id AS userId,
+stakeholder_company_id AS companyId,
+slug,
+booking_code AS bookingCode,
+booking_type AS bookingType,
+itinerary_ref AS itineraryRef,
+cust_name AS custName,
+cust_address AS custAddress,
+cust_city AS custCity,
+cust_zip AS custZip,
+cont_location_code AS contLocationCode,
+cont_phone AS contPhone,
+cont_email AS contEmail,
+cont_fullname AS contFullname,
+dep_date AS depDate,
+currency_convert AS currencyConvert,
+currency_con_rate AS currencyConRate,
+markup_percentage AS markupPercentage,
+total_amount AS totalAmount,
+markup_amount AS markupAmount,
+trip_type AS tripType,
+remark,
+cont_phonecode AS contPhonecode,
+pq,
+local_issue_date AS localIssueDate,
+currency_code AS currencyCode,
+vat_percentage AS vatPercentage,
+is_check AS isCheck,
+itinerary_file AS itineraryFile,
+reciept_file AS receiptFile,
+reciept_path AS receiptPath,
+dis_pay_met_percentage AS disPayMetPercentage,
+dis_pay_met_amount AS disPayMetAmount,
+markup_pay_percentage AS markupPayPercentage,
+markup_pay_amount AS markupPayAmount,
+pay_met_fee_percentage AS payMetFeePercentage,
+pay_met_fee_amount AS payMetFeeAmount,
+seen,
+`status` AS status,
+CASE
+WHEN (`status` IN (1, 11) AND ((SELECT IF(COUNT(dep_date) = 0, FALSE, TRUE) FROM booking_origin_destinations WHERE booking_id = bookings.id AND dep_date >= CURRENT_TIMESTAMP)) = TRUE) THEN "Upcoming"
+WHEN (`status` IN (1, 11) AND ((SELECT IF(COUNT(dep_date) = 0, FALSE, TRUE) FROM booking_origin_destinations WHERE booking_id = bookings.id AND dep_date > CURRENT_TIMESTAMP)) = FALSE) THEN "Completed"
+WHEN (`status` IN (3, 30, 31)) THEN "Cancelled"
+WHEN (`status` IN (10, 12)) THEN  "Failed"
+END
+AS description,
+created_at AS createdAt,
+updated_at AS updatedAt
+FROM `bookings`
+
+WHERE `status` IN(1, 3, 10, 11, 12, 30, 31)

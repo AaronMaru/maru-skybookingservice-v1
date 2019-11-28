@@ -1,0 +1,28 @@
+SELECT
+	sr.key_name AS userType,
+	srp.permission AS 'key',
+	srp.module
+FROM skyowner_role sr
+
+-- Role check has permissions
+INNER JOIN
+(
+	SELECT
+	srp.role_id,
+	(
+		SELECT sp.`name`
+		FROM skyowner_permission sp
+		WHERE sp.id = srp.permission_id
+	) AS permission,
+	(
+		SELECT sp.module
+		FROM skyowner_permission sp
+		WHERE sp.id = srp.permission_id
+	) AS module
+
+	FROM skyowner_role_permission srp
+
+) srp ON srp.role_id = sr.id
+-- The end of Role check has permissions
+
+WHERE sr.key_name = :role

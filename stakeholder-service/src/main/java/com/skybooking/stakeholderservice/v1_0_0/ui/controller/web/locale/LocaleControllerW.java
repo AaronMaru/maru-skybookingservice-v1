@@ -1,0 +1,53 @@
+package com.skybooking.stakeholderservice.v1_0_0.ui.controller.web.locale;
+
+import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.locale.LocaleSV;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.locale.ModuleLanguageRS;
+import com.skybooking.stakeholderservice.v1_0_0.util.header.HeaderBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping(value = "/wv1.0.0/utils")
+public class LocaleControllerW {
+
+    @Autowired
+    private HeaderBean headerBean;
+
+    @Autowired
+    private LocaleSV localeSV;
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get module translation by locale id
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @return Response
+     */
+    @GetMapping("/language-module")
+    public ResponseEntity getLanguageModuleByLocaleId() {
+
+        ModuleLanguageRS response = localeSV.findModuleLanguageByLocaleId(headerBean.getLocalizationId());
+
+        return new ResponseEntity(response.getRoot(), HttpStatus.OK);
+
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * list all locale
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @return List
+     */
+    @GetMapping(value = "/locale")
+    public ResponseEntity getAllLocale() {
+
+        return new ResponseEntity(localeSV.findAllLocale(), HttpStatus.OK);
+    }
+}

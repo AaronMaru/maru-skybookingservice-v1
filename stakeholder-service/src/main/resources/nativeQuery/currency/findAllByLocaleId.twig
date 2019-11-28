@@ -1,0 +1,15 @@
+SELECT
+c.id AS currencyId,
+c.`code`,
+(
+SELECT cl.`name`
+FROM currency_locale cl
+WHERE cl.locale_id = :id
+AND cl.currency_id = c.id
+) AS name,
+c.symbol,
+c.is_top AS isTop,
+c.top_order AS topOrder
+FROM currency c
+WHERE c.`status` = 1
+ORDER BY c.code ASC

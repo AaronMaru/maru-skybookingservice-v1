@@ -1,0 +1,6 @@
+SELECT
+    sui.invite_from AS email
+FROM stakeholder_user_invitations sui
+
+WHERE stakeholder_company_id = :companyId
+AND NOT EXISTS (SELECT * FROM users u where u.email = sui.invite_from)

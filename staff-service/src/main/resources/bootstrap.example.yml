@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: staff-service
+
+  cloud:
+    config:
+      uri: http://192.168.2.4:8888
+
+
+  sms:
+    url: https://api.mekongsms.com/api/postsms.aspx
+    username: pathfinder_otp@mekongnet
+    pass: 98b7d5e059b3814ef3bdcfff750061bd
+    sender: skybooking
+    cd: 203.189.151.167
+    isflash: 0
+    int: 1
+
+  email:
+    host: email-smtp.us-east-1.amazonaws.com
+    username: AKIARX6S32NWTESX6HPL
+    password: BCcrVRjYcQW+EQcGv5c82wniS82SqxGW8SgC8Cls1PSv
+    port: 587
+    driver: smtp
+    encryption: tls
+    from-address: no-reply@skybooking.info
+    from-name: Skybooking
+    properties.mail.smtp:
+      auth: true
+      starttls.enable: true
+      ssl.trust: smtp.gmail.
+
+native-query:
+  package-scan: com.skybooking.staffservice
+
+security:
+  oauth2:
+    resource:
+      jwt:
+        key-value: as466gfsuntaaaak

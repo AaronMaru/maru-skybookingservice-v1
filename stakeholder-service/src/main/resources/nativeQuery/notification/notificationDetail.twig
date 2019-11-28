@@ -1,0 +1,33 @@
+SELECT
+	fn.id,
+	ss.url_key AS urlKey,
+	ss.noti_icon AS notiIcon,
+	ss.title,
+	ss.description,
+	fn.readable,
+	fn.`status`,
+	fn.created_at AS createdAt
+FROM front_notification fn
+
+INNER JOIN
+(
+	SELECT
+		ss.id,
+		ss.url_key,
+		(
+			SELECT sslo.title
+			FROM sending_script_locale sslo
+			WHERE IF( NULL IS NULL, sslo.locale_id = 1 , sslo.locale_id = :locale)
+			AND sslo.send_script_id = ss.id
+		) AS title,
+		(
+			SELECT sslo.`subject`
+			FROM sending_script_locale sslo
+			WHERE IF( NULL IS NULL, sslo.locale_id = 1 , sslo.locale_id = :locale)
+			AND sslo.send_script_id = ss.id
+		) AS description,
+		ss.noti_icon
+	FROM sending_script ss
+) ss ON ss.id = fn.send_script_id
+
+WHERE fn.id = :notiId

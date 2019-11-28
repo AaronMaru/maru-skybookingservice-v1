@@ -1,0 +1,16 @@
+SELECT COUNT(b.id)        AS total,
+DATE(b.created_at) AS date
+FROM bookings AS b
+WHERE (IF('skyuser' = :userType,
+b.stakeholder_user_id = :userId AND b.stakeholder_company_id IS NULL,
+IF('admin' = :userRole,
+b.stakeholder_user_id = :userId OR b.stakeholder_company_id = :companyId,
+b.stakeholder_user_id = :userId AND b.stakeholder_company_id = :companyId)))
+AND (IF('daily' = :filter, DATE(b.created_at) = CURDATE(), 0)
+OR IF('weekly' = :filter, YEARWEEK(DATE(b.created_at)) = YEARWEEK(CURDATE()), 0)
+OR IF('monthly' = :filter, MONTH(b.created_at) = MONTH(CURDATE()), 0))
+
+AND (b.status = 11)
+
+GROUP BY DATE(b.created_at)
+ORDER BY b.created_at DESC

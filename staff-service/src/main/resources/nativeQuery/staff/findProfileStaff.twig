@@ -1,0 +1,33 @@
+SELECT
+	suc.added_by AS addedBy,
+	(
+		SELECT COUNT(b.id) AS bookQty
+		FROM bookings b
+		WHERE b.stakeholder_user_id = suc.stakeholder_user_id
+		AND b.stakeholder_company_id = suc.stakeholder_company_id
+	) AS bookingQty,
+	(
+		SELECT
+			CASE WHEN ( b.total_amount > 0 ) THEN
+				SUM( b.total_amount + b.markup_amount + b.markup_pay_amount )
+			ELSE
+				0
+			END AS statusKey
+		FROM bookings b
+		WHERE b.stakeholder_user_id = suc.stakeholder_user_id
+		AND b.stakeholder_company_id = suc.stakeholder_company_id
+	) AS bookAmount,
+	CASE
+		WHEN ( suc.`join_status` = 1 ) THEN "Active"
+		WHEN ( suc.`join_status` = 0 OR suc.`join_status` IS NULL ) THEN  "Deactive"
+	END AS statusKey,
+	CASE
+		WHEN ( suc.`status` = 1 ) THEN "Owner"
+		WHEN ( suc.`status` = 0 OR suc.`join_status` IS NULL ) THEN  "status"
+	END AS position,
+	suc.skyuser_role AS skyuserRole,
+	suc.created_at AS joinDate
+
+FROM stakeholder_user_has_companies suc
+WHERE suc.stakeholder_user_id = :skyuserId
+AND suc.stakeholder_company_id = :companyId

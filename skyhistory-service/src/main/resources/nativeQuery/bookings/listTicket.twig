@@ -1,0 +1,11 @@
+SELECT
+	bat.ticket_number AS ticketNumber,
+	bat.first_name AS firstName,
+	bat.last_name AS lastName,
+	bat.amount,
+	bat.currency,
+	bat.pass_type AS passType
+
+FROM booking_airtickets bat
+
+WHERE bat.booking_id = :bookingId
