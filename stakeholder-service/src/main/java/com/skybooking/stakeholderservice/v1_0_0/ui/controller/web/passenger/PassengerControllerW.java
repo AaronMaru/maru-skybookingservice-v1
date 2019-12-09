@@ -4,6 +4,7 @@ import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.passenger.Pas
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.interfaces.OnCreate;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.interfaces.OnUpdate;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.passenger.PassengerRQ;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.passenger.PassengerRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,11 +42,11 @@ public class PassengerControllerW {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
 
-    public ResponseEntity<PassengerRS> create(@Validated({OnCreate.class}) @RequestBody PassengerRQ body) {
+    public ResRS create(@Validated({OnCreate.class}) @RequestBody PassengerRQ body) {
 
         PassengerRS response = this.passengerService.createItem(body);
 
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
+        return localization.resAPI(HttpStatus.CREATED,"res_succ", response);
 
     }
 
@@ -58,11 +59,11 @@ public class PassengerControllerW {
      * @return List of passengers
      */
     @GetMapping(path = "")
-    public ResponseEntity<List<PassengerRS>> findAll() {
+    public ResRS findAll() {
 
         List<PassengerRS> responses = this.passengerService.getItems(null);
 
-        return new ResponseEntity<>(responses, HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK,"res_succ", responses);
 
     }
 
@@ -76,11 +77,11 @@ public class PassengerControllerW {
      * @return PassengerDao
      */
     @GetMapping(path = "/{id}")
-    public ResponseEntity<PassengerRS> findById(@PathVariable Long id) {
+    public ResRS findById(@PathVariable Long id) {
 
         PassengerRS response = this.passengerService.getItem(id);
 
-        return new ResponseEntity<>(response, HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK,"res_succ", response);
 
     }
 
@@ -98,11 +99,11 @@ public class PassengerControllerW {
             path = "/{id}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    public ResponseEntity<String> updateById(@PathVariable Long id, @Validated({OnUpdate.class}) @RequestBody PassengerRQ body) {
+    public ResRS updateById(@PathVariable Long id, @Validated({OnUpdate.class}) @RequestBody PassengerRQ body) {
 
         PassengerRS response = this.passengerService.updateItem(id, body);
 
-        return new ResponseEntity(localization.resAPI("update_succ", response), HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK,"update_succ", response);
     }
 
 
@@ -118,11 +119,11 @@ public class PassengerControllerW {
             path = "/{id}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    public ResponseEntity<String> deleteById(@PathVariable Long id) {
+    public ResRS deleteById(@PathVariable Long id) {
 
         this.passengerService.deleteItem(id);
 
-        return new ResponseEntity(localization.resAPI("del_succ", ""), HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK,"del_succ", "");
     }
 
 }

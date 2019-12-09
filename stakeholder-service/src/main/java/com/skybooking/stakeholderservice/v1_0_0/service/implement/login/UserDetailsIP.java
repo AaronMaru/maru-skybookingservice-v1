@@ -40,23 +40,23 @@ public class UserDetailsIP implements UserDetailsService {
     @Transactional
     public UserDetails loadUserByUsername(String username) {
 
-        UserEntity userEntity = userRepository.findByUsernameOrEmail(username);
+        UserEntity user = userRepository.findByUsernameOrEmail(username);
 
         if (NumberUtils.isNumber(username)) {
-            userEntity = userRepository.findByPhoneAndCode(username, request.getParameter("code"));
+            user = userRepository.findByPhoneAndCode(username, request.getParameter("code"));
         }
 
         if (! request.getParameter("provider").isEmpty()) {
-            userEntity = userRepository.findByEmailOrProviderId(username, request.getParameter("provider_id"));
+            user = userRepository.findByEmailOrProviderId(username, request.getParameter("provider_id"));
         }
 
-        if (userEntity == null) {
+        if (user == null) {
             throw new UsernameNotFoundException("Invalid Username or password");
         }
 
-        logger.activities(ActivityLoggingBean.Action.LOGIN, userEntity);
+        logger.activities(ActivityLoggingBean.Action.LOGIN, user);
 
-        return UserPrinciple.build(userEntity);
+        return UserPrinciple.build(user);
 
     }
 

@@ -3,13 +3,12 @@ package com.skybooking.staffservice.v1_0_0.ui.controller.app.invitation;
 import com.skybooking.staffservice.v1_0_0.service.interfaces.invitation.InvitationSV;
 import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.InviteStaffNoAccRQ;
 import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.SkyuserIdStaffRQ;
+import com.skybooking.staffservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.invitation.PendingEmailStaffRS;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.invitation.SkyuserDetailsRS;
-import com.skybooking.staffservice.v1_0_0.util.GeneralBean;
 import com.skybooking.staffservice.v1_0_0.util.localization.Localization;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -26,8 +25,6 @@ public class InvitationControllerM {
     @Autowired
     private Localization localization;
 
-    @Autowired
-    private GeneralBean generalBean;
 
 
     /**
@@ -38,9 +35,9 @@ public class InvitationControllerM {
      * @Return ResponseEntity
      */
     @GetMapping("/find-skyuser")
-    public ResponseEntity findSkyuser() {
+    public ResRS findSkyuser() {
         List<SkyuserDetailsRS> skyusers =  invitationSV.findSkyusers();
-        return new ResponseEntity<>(skyusers, HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK,"vf_succ", skyusers);
     }
 
 
@@ -52,9 +49,9 @@ public class InvitationControllerM {
      * @Return ResponseEntity
      */
     @PostMapping("/invite-skyuser")
-    public ResponseEntity invSkyuser(@Valid @RequestBody SkyuserIdStaffRQ inviteRQ) {
+    public ResRS invSkyuser(@Valid @RequestBody SkyuserIdStaffRQ inviteRQ) {
         invitationSV.invSkyuser(inviteRQ);
-        return new ResponseEntity<>(localization.resAPI("inv_succ", ""), HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK,"inv_succ", "");
     }
 
 
@@ -66,9 +63,9 @@ public class InvitationControllerM {
      * @Return ResponseEntity
      */
     @PostMapping("/invite-skyuser-no-acc")
-    public ResponseEntity invSkyuserNoAcc(@Valid @RequestBody InviteStaffNoAccRQ inviteStaffNoAccRQ) {
+    public ResRS invSkyuserNoAcc(@Valid @RequestBody InviteStaffNoAccRQ inviteStaffNoAccRQ) {
         invitationSV.invSkyuserNotExistsAcc(inviteStaffNoAccRQ);
-        return new ResponseEntity<>(localization.resAPI("inv_succ", ""), HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK,"inv_succ", "");
     }
 
 
@@ -80,9 +77,9 @@ public class InvitationControllerM {
      * @Return ResponseEntity
      */
     @GetMapping("/list-pending-email")
-    public ResponseEntity getPendingEmail() {
+    public ResRS getPendingEmail() {
         List<PendingEmailStaffRS> emails = invitationSV.getPendingEmail();
-        return new ResponseEntity<>(emails, HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK,"res_succ", emails);
     }
 
 
@@ -95,9 +92,9 @@ public class InvitationControllerM {
      * @Return ResponseEntity
      */
     @DeleteMapping("/list-pending-email/{id}")
-    public ResponseEntity deletePendingEmail(@PathVariable Integer id) {
+    public ResRS deletePendingEmail(@PathVariable Integer id) {
         invitationSV.removePendingEmail(id);
-        return new ResponseEntity<>(localization.resAPI("del_succ", ""), HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK,"del_succ", "");
     }
 
 
@@ -110,9 +107,9 @@ public class InvitationControllerM {
      * @Return ResponseEntity
      */
     @PostMapping("/list-pending-email/resend")
-    public ResponseEntity resendPendingEmail(@RequestBody InviteStaffNoAccRQ inviteStaffNoAccRQ) {
+    public ResRS resendPendingEmail(@RequestBody InviteStaffNoAccRQ inviteStaffNoAccRQ) {
         invitationSV.resendPendingEmail(inviteStaffNoAccRQ);
-        return new ResponseEntity<>(localization.resAPI("Resend", ""), HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK,"sent_succ", "");
     }
 
 

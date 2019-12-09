@@ -2,12 +2,13 @@ package com.skybooking.staffservice.v1_0_0.service.implement.invitation;
 
 import com.skybooking.staffservice.exception.httpstatus.BadRequestException;
 import com.skybooking.staffservice.exception.httpstatus.UnauthorizedException;
+import com.skybooking.staffservice.v1_0_0.io.enitity.user.StakeHolderUserEntity;
 import com.skybooking.staffservice.v1_0_0.io.enitity.user.StakeholderUserInvitationEntity;
 import com.skybooking.staffservice.v1_0_0.io.enitity.user.UserEntity;
-import com.skybooking.staffservice.v1_0_0.io.nativeQuery.staff.RoleTO;
-import com.skybooking.staffservice.v1_0_0.io.nativeQuery.staff.StaffSvNQ;
 import com.skybooking.staffservice.v1_0_0.io.nativeQuery.staff.PendingStaffEmailTO;
+import com.skybooking.staffservice.v1_0_0.io.nativeQuery.staff.RoleTO;
 import com.skybooking.staffservice.v1_0_0.io.nativeQuery.staff.SkyuserSearchTO;
+import com.skybooking.staffservice.v1_0_0.io.nativeQuery.staff.StaffSvNQ;
 import com.skybooking.staffservice.v1_0_0.io.repository.company.CompanyHasUserRP;
 import com.skybooking.staffservice.v1_0_0.io.repository.users.StakeholderUserInvitationRP;
 import com.skybooking.staffservice.v1_0_0.io.repository.users.UserRepository;
@@ -19,6 +20,8 @@ import com.skybooking.staffservice.v1_0_0.ui.model.response.invitation.SkyuserDe
 import com.skybooking.staffservice.v1_0_0.util.ApiBean;
 import com.skybooking.staffservice.v1_0_0.util.GeneralBean;
 import com.skybooking.staffservice.v1_0_0.util.JwtUtils;
+import com.skybooking.staffservice.v1_0_0.util.cls.Duplicate;
+import com.skybooking.staffservice.v1_0_0.util.notification.NotificationBean;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -43,8 +46,8 @@ public class InvitationIP implements InvitationSV {
     @Autowired
     private UserRepository userRepository;
 
-//    @Autowired
-//    private UserBean userBean;
+    // @Autowired
+    // private UserBean userBean;
 
     @Autowired
     private GeneralBean general;
@@ -61,6 +64,8 @@ public class InvitationIP implements InvitationSV {
     @Autowired
     private ApiBean apiBean;
 
+    @Autowired
+    private NotificationBean notificationBean;
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -83,14 +88,14 @@ public class InvitationIP implements InvitationSV {
             SkyuserDetailsRS skyuserRS = new SkyuserDetailsRS();
 
             BeanUtils.copyProperties(skyuser, skyuserRS);
-            skyuserRS.setPhotoMedium(environment.getProperty("spring.awsImageUrl.profile.url_larg") + skyuser.getPhoto());
+            skyuserRS.setPhotoMedium(
+                    environment.getProperty("spring.awsImageUrl.profile.url_larg") + skyuser.getPhoto());
             skyusersRS.add(skyuserRS);
         }
 
         return skyusersRS;
 
     }
-
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -124,10 +129,15 @@ public class InvitationIP implements InvitationSV {
 
         general.addStaff(companyId, skyuser.getStakeHolderUser().getId(), roleTO.get(0).getUserType());
 
-        apiBean.sendEmailSMS("tenglyheang@skybooking.info", "Invitation");
+        notificationBean.sendNotiSkyuser(skyuser.getStakeHolderUser().getId());
+
+        StakeHolderUserEntity stakeHolderUser = skyuser.getStakeHolderUser();
+        String fullName = stakeHolderUser.getFirstName() + " " + stakeHolderUser.getLastName();
+
+        apiBean.sendEmailSMS(skyuser.getEmail(), "Invitation",
+                Duplicate.mailTemplateData(fullName, 0, "invite-skyowner"));
 
     }
-
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -154,10 +164,10 @@ public class InvitationIP implements InvitationSV {
 
         userInvRP.save(userInv);
 
-        apiBean.sendEmailSMS(inviteStaffNoAccRQ.getUsername(), "Invitation");
+        apiBean.sendEmailSMS(inviteStaffNoAccRQ.getUsername(), "Invitation",
+                Duplicate.mailTemplateData("", 0, "invite-nonskyowner"));
 
     }
-
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -175,7 +185,6 @@ public class InvitationIP implements InvitationSV {
         }
 
     }
-
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -203,7 +212,6 @@ public class InvitationIP implements InvitationSV {
 
     }
 
-
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Remove pending email
@@ -225,7 +233,6 @@ public class InvitationIP implements InvitationSV {
 
     }
 
-
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Resend pending email
@@ -234,8 +241,8 @@ public class InvitationIP implements InvitationSV {
      * @Param inviteStaffNoAccRQ
      */
     public void resendPendingEmail(InviteStaffNoAccRQ inviteStaffNoAccRQ) {
-        apiBean.sendEmailSMS(inviteStaffNoAccRQ.getUsername(), "Invitation again");
+        apiBean.sendEmailSMS(inviteStaffNoAccRQ.getUsername(), "Invitation again",
+                Duplicate.mailTemplateData("", 0, "invite-nonskyowner"));
     }
-
 
 }

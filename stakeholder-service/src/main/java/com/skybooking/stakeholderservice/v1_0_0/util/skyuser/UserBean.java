@@ -18,7 +18,6 @@ import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyHas
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.contact.ContactRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.notification.UserPlayerRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserRepository;
-import com.skybooking.stakeholderservice.v1_0_0.service.UserPrinciple;
 import com.skybooking.stakeholderservice.v1_0_0.transformer.TokenTF;
 import com.skybooking.stakeholderservice.v1_0_0.transformer.UserDetailsTF;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.CompanyRS;
@@ -259,11 +258,11 @@ public class UserBean {
      *
      * @Return stkCompanies
      */
-    public List<CompanyRS> companiesDetails(List<StakeholderCompanyEntity> stkCompanies) {
+    public List<CompanyRS> companiesDetails(List<StakeholderCompanyEntity> companies) {
 
         List<CompanyRS> companyRSS = new ArrayList<>();
 
-        for (StakeholderCompanyEntity company: stkCompanies) {
+        for (StakeholderCompanyEntity company: companies) {
 
             CompanyRS companyRS = new CompanyRS();
             companyRS.setId(company.getId());

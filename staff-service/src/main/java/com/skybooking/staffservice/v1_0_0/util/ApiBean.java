@@ -1,5 +1,6 @@
 package com.skybooking.staffservice.v1_0_0.util;
 
+import freemarker.template.Configuration;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,11 +13,17 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class ApiBean {
 
 
     @Autowired
     Environment environment;
+
+    @Autowired
+    private Configuration configuration;
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -26,13 +33,13 @@ public class ApiBean {
      * @Param reciever
      * @Param message
      */
-    public Boolean sendEmailSMS(String reciever, String message) {
+    public Boolean sendEmailSMS(String reciever, String message, Map<String, String> mailTemplateData) {
         boolean validEmail = EmailValidator.getInstance().isValid(reciever);
         if (NumberUtils.isNumber(reciever.replaceAll("[+]", ""))) {
             sms(reciever, message);
             return true;
         } else if (validEmail) {
-            email(reciever, message);
+            email(reciever, mailTemplateData);
             return true;
         }
         return false;
@@ -47,20 +54,22 @@ public class ApiBean {
      * @Param TO
      * @Param MESSAGE
      */
-    public void email(String TO, String MESSAGE) {
+    public void email(String TO,  Map<String, String> mailTemplateData) {
 
-        final String SMTP_SERVER_HOST = environment.getProperty("spring.email.host");
-        final String SMTP_SERVER_PORT = environment.getProperty("spring.email.port");
-        final String SUBJECT = "Skybooking";
+        Map<String, String> mailProperty = new HashMap<>();
+        mailProperty.put("SMTP_SERVER_HOST", environment.getProperty("spring.email.host"));
+        mailProperty.put("SMTP_SERVER_PORT", environment.getProperty("spring.email.port"));
+        mailProperty.put("SUBJECT", "Skybooking");
+        mailProperty.put("SMTP_USER_NAME", environment.getProperty("spring.email.username"));
+        mailProperty.put("SMTP_USER_PASSWORD", environment.getProperty("spring.email.password"));
+        mailProperty.put("FROM_USER_EMAIL", environment.getProperty("spring.email.from-address"));
+        mailProperty.put("FROM_USER_FULLNAME", environment.getProperty("spring.email.from-name"));
+        mailProperty.put("TO", TO);
 
-        final String SMTP_USER_NAME = environment.getProperty("spring.email.username");
-        final String SMTP_USER_PASSWORD = environment.getProperty("spring.email.password");
-        final String FROM_USER_EMAIL = environment.getProperty("spring.email.from-address");
-        final String FROM_USER_FULLNAME = environment.getProperty("spring.email.from-name");
+        mailTemplateData.put("mailUrl", environment.getProperty("spring.awsImageUrl.mailTemplate"));
 
         SendingMailThroughAWSSESSMTPServer sendingMailThroughAWSSESSMTPServer = new SendingMailThroughAWSSESSMTPServer();
-        sendingMailThroughAWSSESSMTPServer.sendMail(SMTP_SERVER_HOST, SMTP_SERVER_PORT, SMTP_USER_NAME,
-                SMTP_USER_PASSWORD, FROM_USER_EMAIL, FROM_USER_FULLNAME, TO, SUBJECT, MESSAGE);
+        sendingMailThroughAWSSESSMTPServer.sendMail(configuration, mailProperty, mailTemplateData);
 
     }
 

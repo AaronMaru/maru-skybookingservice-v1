@@ -1,8 +1,10 @@
 package com.skybooking.stakeholderservice.v1_0_0.ui.controller.web.currency;
 
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.currency.CurrencySV;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.currency.CurrencyRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.header.HeaderBean;
+import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +27,9 @@ public class CurrencyControllerW {
     @Autowired
     private HeaderBean headerBean;
 
+    @Autowired
+    private Localization localization;
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -34,7 +39,7 @@ public class CurrencyControllerW {
      * @return ResponseEntity
      */
     @GetMapping(value = "/currency")
-    public ResponseEntity getCurrencyByLocaleId() {
+    public ResRS getCurrencyByLocaleId() {
 
         var currencyRSList = currencySV.findAllCurrencyByLocaleId(headerBean.getLocalizationId());
         var topCurrencyList = currencyRSList.stream().filter(currencyRS -> currencyRS.getIsTop() > 0).collect(Collectors.toList());
@@ -43,7 +48,7 @@ public class CurrencyControllerW {
         responses.put("topCurrencies", topCurrencyList);
         responses.put("allCurrencies", currencyRSList);
 
-        return new ResponseEntity(responses, HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK, "res_succ", responses);
 
     }
 }

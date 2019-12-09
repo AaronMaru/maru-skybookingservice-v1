@@ -4,6 +4,7 @@ import com.skybooking.staffservice.v1_0_0.util.ApiBean;
 import com.skybooking.staffservice.v1_0_0.util.GeneralBean;
 import com.skybooking.staffservice.v1_0_0.util.header.HeaderBean;
 import com.skybooking.staffservice.v1_0_0.util.localization.Localization;
+import com.skybooking.staffservice.v1_0_0.util.notification.NotificationBean;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -34,5 +35,8 @@ public class StaffServiceApplication {
     GeneralBean generalBean() {
         return new GeneralBean();
     }
+
+    @Bean
+    NotificationBean notificationBean() { return new NotificationBean(); }
 
 }

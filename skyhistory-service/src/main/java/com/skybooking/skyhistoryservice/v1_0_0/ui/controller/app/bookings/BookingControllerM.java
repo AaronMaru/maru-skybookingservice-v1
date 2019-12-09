@@ -1,9 +1,10 @@
 package com.skybooking.skyhistoryservice.v1_0_0.ui.controller.app.bookings;
 
 import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.booking.BookingSV;
+import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.ResRS;
+import com.skybooking.skyhistoryservice.v1_0_0.util.localization.Localization;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,17 +19,20 @@ public class BookingControllerM {
     @Autowired
     private BookingSV bookingSV;
 
+    @Autowired
+    private Localization localization;
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Get bookings company
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @return ResponseEntity
+     * @Return ResponseEntity
      */
     @GetMapping("/bookings-company")
-    public ResponseEntity bookingsCompany() {
-        return new ResponseEntity(bookingSV.getBooking("company"), HttpStatus.OK);
+    public ResRS bookingsCompany() {
+        return localization.resAPI(HttpStatus.OK,"res_succ", bookingSV.getBooking("company"));
     }
 
 
@@ -37,12 +41,12 @@ public class BookingControllerM {
      * Get bookings skyuser
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @return ResponseEntity
+     * @Return ResponseEntity
      */
     @GetMapping("/bookings-skyuser")
     @PreAuthorize("#oauth2.hasScope('read')")
-    public ResponseEntity bookingsSkyuser() {
-        return new ResponseEntity(bookingSV.getBooking("skyuser"), HttpStatus.OK);
+    public ResRS bookingsSkyuser() {
+        return localization.resAPI(HttpStatus.OK,"res_succ", bookingSV.getBooking("skyuser"));
     }
 
 
@@ -51,11 +55,11 @@ public class BookingControllerM {
      * Get bookings staff
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @return ResponseEntity
+     * @Return ResponseEntity
      */
     @GetMapping("/bookings-staff")
-    public ResponseEntity bookingsStaff() {
-        return new ResponseEntity(bookingSV.getBooking("staff"), HttpStatus.OK);
+    public ResRS bookingsStaff() {
+        return localization.resAPI(HttpStatus.OK,"res_succ", bookingSV.getBooking("staff"));
     }
 
 
@@ -64,11 +68,11 @@ public class BookingControllerM {
      * Get booking details
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @return ResponseEntity
+     * @Return ResponseEntity
      */
     @GetMapping("/booking/{id}")
-    public ResponseEntity getBookingDetail(@PathVariable Long id) {
-        return new ResponseEntity(bookingSV.getBookingDetail(id), HttpStatus.OK);
+    public ResRS getBookingDetail(@PathVariable Long id) {
+        return localization.resAPI(HttpStatus.OK,"res_succ", bookingSV.getBookingDetail(id));
     }
 
 

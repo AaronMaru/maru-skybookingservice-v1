@@ -1,10 +1,10 @@
 package com.skybooking.stakeholderservice.v1_0_0.ui.controller.app.notification;
 
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.notification.NotificationSV;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -27,8 +27,8 @@ public class NotificationControllerM {
      * @Return ResponseEntity
      */
     @GetMapping("/staff")
-    public  ResponseEntity getNotifiStaff() {
-        return new ResponseEntity<>(notificationSV.getNotifications("staff"), HttpStatus.OK);
+    public  ResRS getNotifiStaff() {
+        return localization.resAPI(HttpStatus.OK, "res_succ", notificationSV.getNotifications("staff"));
     }
 
 
@@ -41,8 +41,8 @@ public class NotificationControllerM {
      * @Return ResponseEntity
      */
     @GetMapping("/skyuser")
-    public ResponseEntity getNotifiSkyuser() {
-        return new ResponseEntity<>(notificationSV.getNotifications("skyuser"), HttpStatus.OK);
+    public ResRS getNotifiSkyuser() {
+        return localization.resAPI(HttpStatus.OK, "res_succ", notificationSV.getNotifications("skyuser"));
     }
 
 
@@ -54,8 +54,8 @@ public class NotificationControllerM {
      * @Return ResponseEntity
      */
     @GetMapping("/{id}")
-    public  ResponseEntity detailsNotifi(@PathVariable Long id) {
-        return new ResponseEntity<>(notificationSV.detailNotification(id), HttpStatus.OK);
+    public ResRS detailsNotifi(@PathVariable Long id) {
+        return localization.resAPI(HttpStatus.OK, "res_succ", notificationSV.detailNotification(id));
     }
 
 
@@ -68,9 +68,9 @@ public class NotificationControllerM {
      * @Return ResponseEntity
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity removeNF(@PathVariable Long id) {
+    public ResRS removeNF(@PathVariable Long id) {
         notificationSV.removeNF(id);
-        return new ResponseEntity<>(localization.resAPI("del_succ", ""), HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK,"del_succ", "");
     }
 
 }

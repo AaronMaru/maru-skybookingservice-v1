@@ -2,12 +2,22 @@ package com.skybooking.skyhistoryservice.v1_0_0.ui.model.response;
 
 public class ResRS {
 
+    private int status;
     private String message;
     private Object data;
 
-    public ResRS(String message, Object data) {
+    public ResRS(int status, String message, Object data) {
+        this.status = status;
         this.message = message;
         this.data = data;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
     }
 
     public String getMessage() {

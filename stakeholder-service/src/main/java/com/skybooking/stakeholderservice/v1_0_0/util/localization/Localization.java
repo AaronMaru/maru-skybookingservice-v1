@@ -5,6 +5,8 @@ import com.skybooking.stakeholderservice.v1_0_0.io.repository.locale.Translation
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.header.HeaderBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 public class Localization {
 
@@ -44,16 +46,14 @@ public class Localization {
      * -----------------------------------------------------------------------------------------------------------------
      * Res API message
      * -----------------------------------------------------------------------------------------------------------------
-     *
+     * @Param status
      * @Param message
      * @Param data
      * @Return String
      */
-    public ResRS resAPI(String message, Object data) {
-        ResRS resAPI = new ResRS(multiLanguageRes(message), data);
+    public ResRS resAPI(HttpStatus status, String message, Object data) {
+        ResRS resAPI = new ResRS(status.value(), multiLanguageRes(message), data);
         return resAPI;
     }
-
-
 
 }

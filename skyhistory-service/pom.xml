@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.skybooking</groupId>
     <artifactId>skyhistory-service</artifactId>
-    <version>2.2.0 M5</version>
+    <version>2.2.0.M5</version>
     <name>skyhistory-service</name>
     <description>Skybooking for skyowner</description>
 
@@ -156,7 +156,33 @@
             <version>1.8.3</version>
         </dependency>
 
+        <dependency>
+            <groupId>commons-validator</groupId>
+            <artifactId>commons-validator</artifactId>
+            <version>1.4.1</version>
+        </dependency>
+        <!--mail-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-freemarker</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
 
+        <!--pdf-->
+        <dependency>
+            <groupId>org.xhtmlrenderer</groupId>
+            <artifactId>flying-saucer-pdf</artifactId>
+            <version>9.0.7</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-tomcat</artifactId>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <dependencyManagement>
@@ -179,5 +205,5 @@
             </plugin>
         </plugins>
     </build>
-
+    <packaging>war</packaging>
 </project>

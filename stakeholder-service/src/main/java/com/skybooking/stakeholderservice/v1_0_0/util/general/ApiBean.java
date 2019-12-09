@@ -80,7 +80,7 @@ public class ApiBean {
 
         if (NumberUtils.isNumber(username)) {
             contactEntity.setType("p");
-            phoneEmail = code + "-" + username;
+            phoneEmail = code + "-" + username.replaceFirst("^0+(?!$)", "");
         }
         if (EmailValidator.getInstance().isValid(username)) {
             contactEntity.setType("e");
@@ -115,7 +115,7 @@ public class ApiBean {
 
         String phoneEmail = username;
         if (NumberUtils.isNumber(username)) {
-            phoneEmail = code + "-" + username;
+            phoneEmail = code + "-" + username.replaceFirst("^0+(?!$)", "");
         }
 
         for (ContactEntity contact : stkHolder.getContactEntities()) {
@@ -151,6 +151,7 @@ public class ApiBean {
      * @Param message
      */
     public Boolean sendEmailSMS(String receiver, String message, Map<String, String> mailTemplateData) {
+
         boolean validEmail = EmailValidator.getInstance().isValid(receiver);
         if (NumberUtils.isNumber(receiver.replaceAll("[+]", ""))) {
             sms(receiver, message);
@@ -298,7 +299,8 @@ public class ApiBean {
         Random generator = new Random();
         generator.setSeed(System.currentTimeMillis());
 
-        int num = generator.nextInt(99999) + 99999;
+        int num = generator.nextInt(999999);
+
         if (num < 100000 || num > 999999) {
             num = generator.nextInt(99999) + 99999;
             if (num < 100000 || num > 999999) {

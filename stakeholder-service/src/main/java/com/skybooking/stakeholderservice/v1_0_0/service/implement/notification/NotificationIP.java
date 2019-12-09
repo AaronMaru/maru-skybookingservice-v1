@@ -73,14 +73,14 @@ public class NotificationIP implements NotificationSV {
      */
     public List<NotificationRS> getNotifications(String action) {
 
-        UserEntity userEntity = userBean.getUserPrincipal();
-        Long companyId = null;
+        UserEntity user = userBean.getUserPrincipal();
+        Long companyId = (long)0;
 
-        if (userEntity.getStakeHolderUser().getIsSkyowner() == 1) {
-            companyId  = userEntity.getStakeHolderUser().getStakeholderCompanies().stream().findFirst().get().getId();
+        if (user.getStakeHolderUser().getIsSkyowner() == 1) {
+            companyId  = user.getStakeHolderUser().getStakeholderCompanies().stream().findFirst().get().getId();
         }
 
-        List<NotificationTO> notiesTO = notificationNQ.listNotification(action, headerBean.getLocalizationId(), companyId, userEntity.getStakeHolderUser().getId());
+        List<NotificationTO> notiesTO = notificationNQ.listNotification(action, headerBean.getLocalizationId(), companyId, user.getStakeHolderUser().getId());
         List<NotificationRS> notiesRS = new ArrayList<>();
 
         for (NotificationTO notiTO : notiesTO) {
@@ -106,9 +106,9 @@ public class NotificationIP implements NotificationSV {
      */
     public void removeNF(Long id) {
 
-        UserEntity userEntity = userBean.getUserPrincipal();
+        UserEntity user = userBean.getUserPrincipal();
 
-        List<NotificationEntity> notifications = userEntity.getStakeHolderUser().getNotification();
+        List<NotificationEntity> notifications = user.getStakeHolderUser().getNotification();
 
         Optional<NotificationEntity> notification = notifications.stream().filter(c -> c.getId() == id).findFirst();
 
@@ -116,8 +116,8 @@ public class NotificationIP implements NotificationSV {
             throw new BadRequestException("sth_w_w", "");
         }
 
-        userEntity.getStakeHolderUser().getNotification().remove(notification.get());
-        userRepository.save(userEntity);
+        user.getStakeHolderUser().getNotification().remove(notification.get());
+        userRepository.save(user);
 
     }
 

@@ -35,8 +35,6 @@ public class HeaderBean {
         String reqLocale = request.getHeader("X-localization");
         String locale = reqLocale == null ? "en" : (reqLocale.equals("")) ? "en" : (b ? reqLocale : "en");
 
-        System.out.println(locale);
-
         return locale;
     }
 

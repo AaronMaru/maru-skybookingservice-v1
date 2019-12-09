@@ -1,7 +1,9 @@
 package com.skybooking.stakeholderservice.v1_0_0.ui.controller.web.country;
 
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.country.CountrySV;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.country.CountryRS;
+import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,9 @@ public class CountryControllerW {
     @Autowired
     private CountrySV countrySV;
 
+    @Autowired
+    private Localization localization;
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -27,11 +32,9 @@ public class CountryControllerW {
      * @return list of country
      */
     @GetMapping(value = "/country")
-    public ResponseEntity getCountry() {
-
+    public ResRS getCountry() {
         List<CountryRS> countries = countrySV.getItems();
-
-        return new ResponseEntity(countries, HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK, "res_succ", countries);
     }
 
 }

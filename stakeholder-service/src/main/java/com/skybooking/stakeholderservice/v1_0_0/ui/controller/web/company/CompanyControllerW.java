@@ -4,10 +4,10 @@ import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.company.Compa
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company.CompanyRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.CompanyRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
+import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +22,9 @@ public class CompanyControllerW {
 
     @Autowired
     private GeneralBean generalBean;
+
+    @Autowired
+    private Localization localization;
 
 
     /**
@@ -38,7 +41,7 @@ public class CompanyControllerW {
             return generalBean.errors(errors);
         }
         CompanyRS companyRS = companySV.updateCompany(companyRQ, id);
-        return new ResponseEntity<>(companyRS, HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK, "res_succ", companyRS);
     }
 
 

@@ -50,10 +50,10 @@ public class SkyownerBean {
      *
      * @Param skyownerRQ;
      */
-    public void addStakeHolderCompany(SkyownerRegisterRQ skyownerRQ, UserEntity userEntity, UserRepository userRepository) {
+    public void addStakeHolderCompany(SkyownerRegisterRQ skyownerRQ, UserEntity user, UserRepository userRP) {
 
-        List<StakeholderCompanyEntity> stkCompanies = new ArrayList<>();
-        List<StakeHolderUserEntity> stakeHolderUsers = new ArrayList<>();
+        List<StakeholderCompanyEntity> companies = new ArrayList<>();
+        List<StakeHolderUserEntity> skyuser = new ArrayList<>();
 
         StakeholderCompanyEntity stkCompany = new StakeholderCompanyEntity();
         stkCompany.setTypeValue(skyownerRQ.getBusinessType());
@@ -69,27 +69,27 @@ public class SkyownerBean {
             stkCompany.setContactPosition(skyownerRQ.getContactPosition());
         }
 
-        stkCompanies.add(stkCompany);
-        stakeHolderUsers.add(userEntity.getStakeHolderUser());
+        companies.add(stkCompany);
+        skyuser.add(user.getStakeHolderUser());
 
-        userEntity.getStakeHolderUser().setStakeholderCompanies(stkCompanies);
-        userEntity.getStakeHolderUser().setIsSkyowner(1);
+        user.getStakeHolderUser().setStakeholderCompanies(companies);
+        user.getStakeHolderUser().setIsSkyowner(1);
 
-        for (StakeholderCompanyEntity stakeholderCompany: stkCompanies) {
-            stakeholderCompany.setStakeHolderUsers(stakeHolderUsers);
+        for (StakeholderCompanyEntity stakeholderCompany: companies) {
+            stakeholderCompany.setStakeHolderUsers(skyuser);
         }
 
         storeCompanyDocs(stkCompany, skyownerRQ);
 
-        userEntity = userRepository.save(userEntity);
+        user = userRP.save(user);
 
-        StakeholderCompanyEntity company = userEntity.getStakeHolderUser().getStakeholderCompanies().stream().findFirst().get();
+        StakeholderCompanyEntity company = user.getStakeHolderUser().getStakeholderCompanies().stream().findFirst().get();
 
         apiBean.addSimpleContact(company.getId(), skyownerRQ.getUsername(), "e", "skyowner");
-        apiBean.addSimpleContact(company.getId(),skyownerRQ.getCode() + "-" + skyownerRQ.getPhone(), "p", "skyowner");
+        apiBean.addSimpleContact(company.getId(),skyownerRQ.getCode() + "-" + skyownerRQ.getPhone().replaceFirst("^0+(?!$)", ""), "p", "skyowner");
         apiBean.addSimpleContact(company.getId(), "", "a", "skyowner");
 
-        storeCompanyStatus(company.getId(), userEntity.getId(), 0, "Waiting admin approve");
+        storeCompanyStatus(company.getId(), user.getId(), 0, "Waiting admin approve");
     }
 
 
@@ -102,27 +102,27 @@ public class SkyownerBean {
      * @Param fileName
      * @Param fileName2
      */
-    public void storeCompanyDocs(StakeholderCompanyEntity stkCompany, SkyownerRegisterRQ skyownerRQ) {
+    public void storeCompanyDocs(StakeholderCompanyEntity company, SkyownerRegisterRQ skyownerRQ) {
 
-        List<StakeholderCompanyDocsEntity> stkCompanyDocs = new ArrayList<>();
+        List<StakeholderCompanyDocsEntity> companyDocs = new ArrayList<>();
 
-        StakeholderCompanyDocsEntity stkCompanyDoc = new StakeholderCompanyDocsEntity();
+        StakeholderCompanyDocsEntity companyDoc = new StakeholderCompanyDocsEntity();
         String nameFile = userBean.uploadLicense(skyownerRQ.getLicense(), "/company_license", null);
-        stkCompanyDoc.setImage(nameFile);
-        stkCompanyDocs.add(stkCompanyDoc);
+        companyDoc.setImage(nameFile);
+        companyDocs.add(companyDoc);
 
-        if (stkCompany.getTypeValue().equals("com_tra")) {
+        if (company.getTypeValue().equals("com_tra")) {
             StakeholderCompanyDocsEntity stkCompanyDocSecond = new StakeholderCompanyDocsEntity();
             String nameFile2 = userBean.uploadLicense(skyownerRQ.getLicenseSecond(), "/company_license", null);
             stkCompanyDocSecond.setImage(nameFile2);
-            stkCompanyDocs.add(stkCompanyDocSecond);
+            companyDocs.add(stkCompanyDocSecond);
         }
 
-        for (StakeholderCompanyDocsEntity doc: stkCompanyDocs) {
-            doc.setStakeholderCompany(stkCompany);
+        for (StakeholderCompanyDocsEntity doc: companyDocs) {
+            doc.setStakeholderCompany(company);
         }
 
-        stkCompany.setStakeholderCompanyDocs(stkCompanyDocs);
+        company.setStakeholderCompanyDocs(companyDocs);
 
     }
 

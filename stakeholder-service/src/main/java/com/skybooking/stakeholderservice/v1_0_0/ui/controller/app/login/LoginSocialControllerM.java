@@ -3,8 +3,10 @@ package com.skybooking.stakeholderservice.v1_0_0.ui.controller.app.login;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.login.LoginSocialSV;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.login.LoginSocialRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.login.LoginSocialSkyownerRQ;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
+import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -25,6 +27,9 @@ public class LoginSocialControllerM {
     @Autowired
     private GeneralBean generalBean;
 
+    @Autowired
+    private Localization localization;
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -36,9 +41,9 @@ public class LoginSocialControllerM {
      * @Return ResponseEntity
      */
     @PostMapping("/login/social")
-    public ResponseEntity loginSocial(@RequestHeader HttpHeaders httpHeaders, @Valid @RequestBody LoginSocialRQ loginSocialRQ) {
+    public ResRS loginSocial(@RequestHeader HttpHeaders httpHeaders, @Valid @RequestBody LoginSocialRQ loginSocialRQ) {
         UserDetailsTokenRS data = loginSocialSV.loginSocial(httpHeaders, loginSocialRQ);
-        return new ResponseEntity<>(data, HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK, "res_succ", data);
     }
 
 
@@ -59,7 +64,7 @@ public class LoginSocialControllerM {
         }
 
         UserDetailsTokenRS data = loginSocialSV.loginSocialSkyowner(httpHeaders, loginSocialRQ);
-        return new ResponseEntity<>(data, HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK, "res_succ", data);
 
     }
 

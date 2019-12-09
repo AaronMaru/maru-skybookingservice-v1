@@ -1,6 +1,7 @@
 package com.skybooking.skyhistoryservice.v1_0_0.ui.controller.web.flightSave;
 
 import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.flightSave.FlightSaveSV;
+import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.flightSave.FlightSaveRS;
 import com.skybooking.skyhistoryservice.v1_0_0.util.localization.Localization;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,15 +35,15 @@ public class FlightSaveControllerW {
      * @return
      */
     @GetMapping(path = "/flight-saved")
-    public ResponseEntity getFlightSaveList(@RequestParam(name = "keyword", defaultValue = "") String keyword,
-                                            @RequestParam(name = "page", defaultValue = "1") int page,
-                                            @RequestParam(name = "limit", defaultValue = "10") int limit,
-                                            @RequestParam(name = "by", defaultValue = "id") String by,
-                                            @RequestParam(name = "order", defaultValue = "DESC") String order
+    public ResRS getFlightSaveList(@RequestParam(name = "keyword", defaultValue = "") String keyword,
+                                   @RequestParam(name = "page", defaultValue = "1") int page,
+                                   @RequestParam(name = "limit", defaultValue = "10") int limit,
+                                   @RequestParam(name = "by", defaultValue = "id") String by,
+                                   @RequestParam(name = "order", defaultValue = "DESC") String order
     ) {
         List<FlightSaveRS> responses = flightSaveSV.getItemsByKeyword(keyword, page - 1, limit, by, order);
 
-        return new ResponseEntity(responses, HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK,"res_succ", responses);
     }
 
 
@@ -57,11 +58,11 @@ public class FlightSaveControllerW {
     @DeleteMapping(
             path = "/flight-saved/{id}"
     )
-    public ResponseEntity<String> deleteById(@PathVariable Long id) {
+    public ResRS deleteById(@PathVariable Long id) {
 
         this.flightSaveSV.deleteItem(id);
 
-        return new ResponseEntity(localization.resAPI("del_succ", ""), HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK,"del_succ", "");
     }
 
 }

@@ -2,12 +2,13 @@ package com.skybooking.skyhistoryservice.v1_0_0.ui.controller.web.dashboard;
 
 
 import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.dashboard.DashboardSV;
+import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.skyhistoryservice.v1_0_0.util.JwtUtils;
 import com.skybooking.skyhistoryservice.v1_0_0.util.header.HeaderBean;
+import com.skybooking.skyhistoryservice.v1_0_0.util.localization.Localization;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -28,6 +29,9 @@ public class DashBoardControllerW {
     @Autowired
     private JwtUtils jwtUtils;
 
+    @Autowired
+    private Localization localization;
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * get recent booking by company's id and user's id
@@ -36,11 +40,11 @@ public class DashBoardControllerW {
      * @return ResponseEntity
      */
     @GetMapping(value = "/recent-booking")
-    public ResponseEntity getRecentBooking() {
+    public ResRS getRecentBooking() {
 
         var responses = dashboardSV.getRecentBooking(jwtUtils.getClaim("companyId", Long.class), jwtUtils.getClaim("stakeholderId", Long.class), jwtUtils.getClaim("userType", String.class), jwtUtils.getClaim("userRole", String.class), 5);
 
-        return new ResponseEntity(responses, HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK,"res_succ", responses);
 
     }
 
@@ -56,7 +60,7 @@ public class DashBoardControllerW {
      * @return ResponseEntity
      */
     @GetMapping(value = "/booking-progress")
-    public ResponseEntity getBookingProgress(@RequestParam(name = "filter", defaultValue = "weekly") String filter,
+    public ResRS getBookingProgress(@RequestParam(name = "filter", defaultValue = "weekly") String filter,
                                              @RequestParam(name = "startDate", defaultValue = "#{T(java.time.LocalDate).now()}", required = false)
                                              @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
                                              @RequestParam(name = "endDate", defaultValue = "#{T(java.time.LocalDate).now()}", required = false)
@@ -64,7 +68,7 @@ public class DashBoardControllerW {
 
         var responses = dashboardSV.getBookingProgress(jwtUtils.getClaim("companyId", Long.class), jwtUtils.getClaim("stakeholderId", Long.class), jwtUtils.getClaim("userType", String.class), jwtUtils.getClaim("userRole", String.class), filter, startDate.toString(), endDate.toString());
 
-        return new ResponseEntity(responses, HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK,"res_succ", responses);
 
     }
 
@@ -78,11 +82,11 @@ public class DashBoardControllerW {
      * @return ResponseEntity
      */
     @GetMapping(value = "/booking-calendar")
-    public ResponseEntity getBookingTimeline(@RequestParam(name = "filter") String filter) {
+    public ResRS getBookingTimeline(@RequestParam(name = "filter") String filter) {
 
         var responses = dashboardSV.getBookingTimeline(jwtUtils.getClaim("companyId", Long.class), jwtUtils.getClaim("stakeholderId", Long.class), jwtUtils.getClaim("userType", String.class), jwtUtils.getClaim("userRole", String.class), filter);
 
-        return new ResponseEntity(responses, HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK,"res_succ", responses);
 
     }
 
@@ -98,7 +102,7 @@ public class DashBoardControllerW {
      * @return ResponseEntity
      */
     @GetMapping(value = "/booking-top-seller")
-    public ResponseEntity getBookingTopSeller(@RequestParam(name = "filter", defaultValue = "weekly") String filter,
+    public ResRS getBookingTopSeller(@RequestParam(name = "filter", defaultValue = "weekly") String filter,
                                               @RequestParam(name = "startDate", defaultValue = "#{T(java.time.LocalDate).now()}", required = false)
                                               @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
                                               @RequestParam(name = "endDate", defaultValue = "#{T(java.time.LocalDate).now()}", required = false)
@@ -106,7 +110,7 @@ public class DashBoardControllerW {
 
         var response = dashboardSV.getBookingTopSeller(jwtUtils.getClaim("companyId", Long.class), filter, startDate.toString(), endDate.toString(), 5);
 
-        return new ResponseEntity(response, HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK,"res_succ", response);
 
     }
 
@@ -122,7 +126,7 @@ public class DashBoardControllerW {
      * @return ResponseEntity
      */
     @GetMapping(value = "/booking-activity")
-    public ResponseEntity getBookingActivity(@RequestParam(name = "filter", defaultValue = "weekly") String filter,
+    public ResRS getBookingActivity(@RequestParam(name = "filter", defaultValue = "weekly") String filter,
                                              @RequestParam(name = "startDate", defaultValue = "#{T(java.time.LocalDate).now()}", required = false)
                                              @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
                                              @RequestParam(name = "endDate", defaultValue = "#{T(java.time.LocalDate).now()}", required = false)
@@ -130,7 +134,7 @@ public class DashBoardControllerW {
 
         var responses = dashboardSV.getBookingActivity(jwtUtils.getClaim("companyId", Long.class), jwtUtils.getClaim("stakeholderId", Long.class), jwtUtils.getClaim("userType", String.class), jwtUtils.getClaim("userRole", String.class), filter, startDate.toString(), endDate.toString(), 5, headerBean.getLocalizationId());
 
-        return new ResponseEntity(responses, HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK,"res_succ", responses);
 
     }
 
@@ -147,7 +151,7 @@ public class DashBoardControllerW {
      * @return ResponseEntity
      */
     @GetMapping(value = "/booking-report")
-    public ResponseEntity getBookingReport(@RequestParam(name = "classType", defaultValue = "allclass") String classType,
+    public ResRS getBookingReport(@RequestParam(name = "classType", defaultValue = "allclass") String classType,
                                            @RequestParam(name = "tripType", defaultValue = "alltrip") String tripType,
                                            @RequestParam(name = "startDate", defaultValue = "#{T(java.time.LocalDate).now()}")
                                            @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
@@ -156,7 +160,7 @@ public class DashBoardControllerW {
 
         var response = dashboardSV.getBookingReport(jwtUtils.getClaim("companyId", Long.class), jwtUtils.getClaim("stakeholderId", Long.class), jwtUtils.getClaim("userType", String.class), /* JwtUtils.getClaim("userRole", String.class)*/ "company", classType, tripType, startDate.toString(), endDate.toString());
 
-        return new ResponseEntity(response, HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK,"res_succ", response);
 
     }
 }

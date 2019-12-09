@@ -7,6 +7,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public interface RegisterSV {
-    int skyuser(SkyUserRegisterRQ userRequest);
-    int skyowner(SkyownerRegisterRQ skyownerRegisterRQ);
+    int skyuser(SkyUserRegisterRQ skyuserRQ);
+    int skyowner(SkyownerRegisterRQ skyownerRQ);
 }

@@ -1,0 +1,102 @@
+server:
+  port: 7004
+
+spring:
+  application:
+    name: stakeholder-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/skybooking?createDatabaseIfNotExist=true&useUnicode=yes&characterEncoding=UTF-8&useLegacyDatetimeCode=false&serverTimezone=UTC
+    username: root
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+      show-sql: true
+      naming-strategy: org.hibernate.cfg.ImprovedNamingStrategy
+
+  sms:
+    url: https://api.mekongsms.com/api/postsms.aspx
+    username: pathfinder_otp@mekongnet
+    pass: 98b7d5e059b3814ef3bdcfff750061bd
+    sender: skybooking
+    cd: 203.189.151.167
+    isflash: 0
+    int: 1
+
+  email:
+    host: email-smtp.us-east-1.amazonaws.com
+    username: AKIARX6S32NWTESX6HPL
+    password: BCcrVRjYcQW+EQcGv5c82wniS82SqxGW8SgC8Cls1PSv
+    port: 587
+    driver: smtp
+    encryption: tls
+    from-address: no-reply@skybooking.info
+    from-name: Skybooking
+    properties.mail.smtp:
+      auth: true
+      starttls.enable: true
+      ssl.trust: smtp.gmail.
+
+  awsImage:
+    url: s3.amazonaws.com
+    region: us-east-1
+    bucket: skybooking
+    key: AKIAJEC5JZZKMU7GNCFQ
+    secret: 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
+    visibility: public
+  awsImageUrl:
+    profile:
+      url_larg: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/profile/
+      url_small: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/profile/_thumbnail/
+    companyLicense: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/company_license/
+    mailTemplate:
+      logo: https://${spring.awsImage.bucket}.s3.amazonaws.com/mail-asset/logo.png
+
+  oauth2:
+    client-id: skybooking
+    client-secret: 168@skybooking
+
+  stkStatus:
+    inactive: 0
+    active: 1
+    ban: 2
+
+  jwtKey: as466gfsuntaaaak
+
+  companyStatus:
+    waiting: 0
+    reject: 1
+    ban: 3
+    active: 4
+    deactive: 5
+
+  verifyStatus:
+    verify: 1
+    updateContact: 2
+    forgotPassword: 3
+    activeUser: 4
+
+  stakeUser:
+    inactive: 0
+    active: 1
+    ban: 2
+
+eureka:
+  instance:
+    leaseRenewalIntervalInSeconds: 3
+    metadataMap:
+      instanceId: ${vcap.application.instance_id:${spring.application.name}:${spring.application.instance_id:${random.value}}}
+  client:
+    registryFetchIntervalSeconds: 5
+    instanceInfoReplicationIntervalSeconds: 5
+    initialInstanceInfoReplicationIntervalSeconds: 5
+    fetchRegistry: true
+    serviceUrl:
+      defaultZone: http://192.168.2.3:8761/eureka/
+
+security:
+  oauth2:
+    resource:
+      jwt:
+        key-value: as466gfsuntaaaak

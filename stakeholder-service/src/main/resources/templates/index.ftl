@@ -17,7 +17,7 @@
 						<div class="cnt-outer" style="padding: 0 20px;display:  block;">
 
 							<ul class="scl-login" style="margin:0;padding:0;text-align: center;margin: 0;padding: 0;">
-								<p style="font-weight:500;font-size:14px;text-align:justify;color: #00458c;font-weight: 300;font-size: 16px;margin: 20px 0 0px 0;text-align: center;">Get the latest Skybooking App for your phone</p>
+								<p style="font-weight:500;font-size:14px;text-align:justify;color: #00458c;font-weight: 300;font-size: 16px;margin: 20px 0 0px 0;text-align: center;">Get the latest Skybooking App for your phone 你好丸波波</p>
 								<li style="list-style:none;padding:5px;color:#FF5722;font-weight:500;font-size:15px;display:inline-block;margin-top:10px;">
 									<a href="http://skybooking.app.link/IXBskEzxv0"><img style="width:100px;height:35px;" src="${mailUrl}app_store_link.png"></a>
 								</li>

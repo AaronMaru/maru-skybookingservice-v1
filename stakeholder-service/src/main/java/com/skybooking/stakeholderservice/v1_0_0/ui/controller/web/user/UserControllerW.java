@@ -4,6 +4,7 @@ import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserReposito
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.user.UserSV;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company.CompanyRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user.*;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
@@ -57,9 +58,9 @@ public class UserControllerW {
      * @Return ResponseEntity
      */
     @GetMapping("/user")
-    public ResponseEntity getUser() {
+    public ResRS getUser() {
         UserDetailsRS userDetailsRS = userSV.getUser();
-        return new ResponseEntity<>(userDetailsRS, HttpStatus.OK);
+        return localization.resAPI(HttpStatus.OK,"res_succ",userDetailsRS);
     }
 
 
@@ -72,9 +73,9 @@ public class UserControllerW {
      * @Return ResponseEntity
      */
     @PatchMapping(value = "/update-profile", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ResponseEntity<UserDetailsRS> updateProfile(@Valid ProfileRQ profileRequest, @RequestParam(value = "file", required = false) MultipartFile multipartFile) throws ParseException {
-        UserDetailsRS userDetailsRS = userSV.updateProfile(profileRequest, multipartFile);
-        return new ResponseEntity<>(userDetailsRS, HttpStatus.OK);
+    public ResRS updateProfile(@Valid ProfileRQ profileRQ, @RequestParam(value = "file", required = false) MultipartFile multipartFile) throws ParseException {
+        UserDetailsRS userDetailsRS = userSV.updateProfile(profileRQ, multipartFile);
+        return localization.resAPI(HttpStatus.OK,"res_succ",userDetailsRS);
     }
 
 
@@ -87,9 +88,9 @@ public class UserControllerW {
      * @Return ResponseEntity
      */
     @PatchMapping("/change-password")
-    public ResponseEntity changPassword(@Valid @RequestBody ChangePasswordRQ pwdRequest) {
-        userSV.changePassword(pwdRequest);
-        return new ResponseEntity<>(localization.resAPI("ch_pwd_succ", ""), HttpStatus.OK);
+    public ResRS changPassword(@Valid @RequestBody ChangePasswordRQ passwordRQ) {
+        userSV.changePassword(passwordRQ);
+        return localization.resAPI(HttpStatus.OK,"ch_pwd_succ", "");
     }
 
 
@@ -102,9 +103,9 @@ public class UserControllerW {
      * @Return ResponseEntity
      */
     @PatchMapping("/auth/forgot-password")
-    public ResponseEntity resetPassword(@Valid @RequestBody ResetPasswordRQ pwdResetRequest) {
-        userSV.resetPassword(pwdResetRequest);
-        return new ResponseEntity<>(localization.resAPI("reset_pwd_succ", ""), HttpStatus.OK);
+    public ResRS resetPassword(@Valid @RequestBody ResetPasswordRQ passwordRQ) {
+        userSV.resetPassword(passwordRQ);
+        return localization.resAPI(HttpStatus.OK,"reset_pwd_succ", "");
     }
 
 
@@ -117,9 +118,9 @@ public class UserControllerW {
      * @Return ResponseEntity
      */
     @PostMapping("/auth/send-forgot-password")
-    public ResponseEntity sendCodeResetPassword(@RequestBody SendVerifyRQ sendVerifyRequest) {
-        userSV.sendCodeResetPassword(sendVerifyRequest);
-        return new ResponseEntity<>(localization.resAPI("succ_sms", ""), HttpStatus.TEMPORARY_REDIRECT);
+    public ResRS sendCodeResetPassword(@RequestBody SendVerifyRQ sendVerifyRQ) {
+        userSV.sendCodeResetPassword(sendVerifyRQ);
+        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"vf_rdy_sent", "");
     }
 
 
@@ -132,9 +133,9 @@ public class UserControllerW {
      * @Return ResponseEntity
      */
     @PatchMapping("/update-contact")
-    public ResponseEntity updateContact(@Valid @RequestBody UpdateContactRQ updateContactRequest) {
-        userSV.updateContact(updateContactRequest);
-        return new ResponseEntity<>(localization.resAPI("update_succ", ""), HttpStatus.OK);
+    public ResRS updateContact(@Valid @RequestBody UpdateContactRQ contactRQ) {
+        userSV.updateContact(contactRQ);
+        return localization.resAPI(HttpStatus.OK,"update_succ", "");
     }
 
 
@@ -147,9 +148,9 @@ public class UserControllerW {
      * @Return ResponseEntity
      */
     @PostMapping("/send-update-contact")
-    public ResponseEntity sendCodeUpdateContact(@RequestBody UpdateContactRQ updateContactRequest) {
-        userSV.sendCodeUpdateContact(updateContactRequest);
-        return new ResponseEntity<>(localization.resAPI("succ_sms", ""), HttpStatus.TEMPORARY_REDIRECT);
+    public ResRS sendCodeUpdateContact(@RequestBody UpdateContactRQ contactRQ) {
+        userSV.sendCodeUpdateContact(contactRQ);
+        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"vf_rdy_sent", "");
     }
 
 
@@ -180,9 +181,9 @@ public class UserControllerW {
      * @Return ResponseEntity
      */
     @PatchMapping("/deactive-account")
-    public ResponseEntity deactiveAccount(@Valid @RequestBody DeactiveAccountRQ deactiveAccount) {
-        userSV.deactiveAccount(deactiveAccount);
-        return new ResponseEntity<>(localization.resAPI("succ_deact", ""), HttpStatus.OK);
+    public ResRS deactiveAccount(@Valid @RequestBody DeactiveAccountRQ accountRQ) {
+        userSV.deactiveAccount(accountRQ);
+        return localization.resAPI(HttpStatus.OK,"succ_deact", "");
     }
 
 
@@ -203,7 +204,7 @@ public class UserControllerW {
 
         userSV.applySkyowner(companyRQ);
 
-        return new ResponseEntity<>(localization.resAPI("apl_skyowner_succ", ""), HttpStatus.TEMPORARY_REDIRECT);
+        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"apl_skyowner_succ", "");
 
     }
 

@@ -7,7 +7,7 @@ spring:
       uri: http://192.168.2.4:8888
 
   awsImageUrl:
-    companyLicense: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/company_license/
+    mailTemplate: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/mail/images/
 
   companyStatus:
     waiting: 0

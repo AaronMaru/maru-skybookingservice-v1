@@ -1,17 +1,19 @@
 package com.skybooking.staffservice.v1_0_0.util;
 
-import javax.mail.Message;
+import freemarker.template.Configuration;
+import freemarker.template.Template;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
+
 import javax.mail.Session;
 import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
 public class SendingMailThroughAWSSESSMTPServer {
-
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -28,26 +30,34 @@ public class SendingMailThroughAWSSESSMTPServer {
      * @Param subject
      * @Param body
      */
-    public void sendMail(String smtpServerHost, String smtpServerPort, String smtpUserName, String smtpUserPassword, String fromUserEmail, String fromUserFullName, String toEmail, String subject, String body) {
+    public void sendMail(Configuration configuration, Map<String, String> mailProperty,
+                         Map<String, String> mailTemplateData) {
 
         try {
             Properties props = System.getProperties();
             props.put("mail.transport.protocol", "smtp");
-            props.put("mail.smtp.port", smtpServerPort);
+            props.put("mail.smtp.port", mailProperty.get("SMTP_SERVER_PORT"));
             props.put("mail.smtp.starttls.enable", "true");
             props.put("mail.smtp.auth", "true");
 
             Session session = Session.getDefaultInstance(props);
 
-            MimeMessage msg = new MimeMessage(session);
-            msg.setFrom(new InternetAddress(fromUserEmail, fromUserFullName));
-            msg.setRecipient(Message.RecipientType.TO, new InternetAddress(toEmail));
-            msg.setSubject(subject);
-            msg.setContent(body, "text/html");
+            MimeMessage message = new MimeMessage(session);
+            MimeMessageHelper helper = new MimeMessageHelper(message);
+
+            Template template = configuration.getTemplate("index.ftl");
+
+            String html = FreeMarkerTemplateUtils.processTemplateIntoString(template, mailTemplateData);
+
+            helper.setTo(mailProperty.get("TO"));
+            helper.setText(html, true);
+            helper.setSubject(mailProperty.get("SUBJECT"));
+            helper.setFrom(mailProperty.get("FROM_USER_EMAIL"));
 
             Transport transport = session.getTransport();
-            transport.connect(smtpServerHost, smtpUserName, smtpUserPassword);
-            transport.sendMessage(msg, msg.getAllRecipients());
+            transport.connect(mailProperty.get("SMTP_SERVER_HOST"), mailProperty.get("SMTP_USER_NAME"),
+                    mailProperty.get("SMTP_USER_PASSWORD"));
+            transport.sendMessage(message, message.getAllRecipients());
         } catch (Exception ex) {
             Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, ex.getMessage(), ex);
         }

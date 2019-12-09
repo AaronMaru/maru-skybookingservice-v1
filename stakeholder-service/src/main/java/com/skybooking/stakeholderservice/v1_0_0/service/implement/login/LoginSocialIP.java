@@ -79,13 +79,17 @@ public class LoginSocialIP implements LoginSocialSV {
         }
 
         if (user.getProvider() == null) {
-            throw new BadRequestException("This email register already please go to login page", null);
+            throw new BadRequestException("fail_reg", null);
         }
+
+        userBean.registerPlayer(user.getStakeHolderUser().getId());
 
         TokenTF data = userBean.getCredential(user.getEmail(), password, credential, null, loginSocialRQ.getProvider());
 
         UserDetailsTokenRS userDetailsTokenRS = new UserDetailsTokenRS();
         BeanUtils.copyProperties(userBean.userFields(user, data.getAccess_token()), userDetailsTokenRS);
+
+        userBean.registerPlayer(user.getStakeHolderUser().getId());
 
         return userDetailsTokenRS;
 
@@ -101,6 +105,7 @@ public class LoginSocialIP implements LoginSocialSV {
      * @Return code
      */
     public UserDetailsTokenRS loginSocialSkyowner(HttpHeaders httpHeaders, LoginSocialSkyownerRQ skyownerSocialRQ) {
+
         LoginSocialRQ loginSocialRQ = new LoginSocialRQ();
         SkyownerRegisterRQ skyownerRegisterRQ = new SkyownerRegisterRQ();
 
@@ -120,8 +125,10 @@ public class LoginSocialIP implements LoginSocialSV {
         }
 
         if (user.getProvider() == null) {
-            throw new BadRequestException("This email register already please go to login page", null);
+            throw new BadRequestException("fail_reg", "");
         }
+
+        userBean.registerPlayer(user.getStakeHolderUser().getId());
 
         TokenTF data = userBean.getCredential(user.getEmail(), password, credential, null, skyownerSocialRQ.getProvider());
 

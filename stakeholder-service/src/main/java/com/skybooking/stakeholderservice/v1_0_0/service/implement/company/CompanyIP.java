@@ -64,7 +64,6 @@ public class CompanyIP implements CompanySV {
         }
 
         List<ContactEntity> contacts = updateContacts(company, companyRQ);
-        System.out.println(Integer.parseInt(environment.getProperty("spring.companyStatus.reject")));
         if (company.getStatus() == Integer.parseInt(environment.getProperty("spring.companyStatus.reject"))) {
             company.setTypeValue(companyRQ.getBusinessType());
             updateLicense(company, companyRQ, user.getId());

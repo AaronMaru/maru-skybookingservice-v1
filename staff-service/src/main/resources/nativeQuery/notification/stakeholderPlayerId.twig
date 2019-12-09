@@ -1,0 +1,6 @@
+SELECT
+	su.id,
+	su.player_id AS playerId
+FROM user_playid su
+WHERE su.stuser_id = :skyuserId
+AND su.`status` = 1

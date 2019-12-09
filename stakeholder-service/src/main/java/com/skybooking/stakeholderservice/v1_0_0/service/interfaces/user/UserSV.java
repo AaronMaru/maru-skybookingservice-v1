@@ -12,13 +12,13 @@ import java.text.ParseException;
 public interface UserSV {
 
     UserDetailsRS getUser();
-    void changePassword(ChangePasswordRQ pwdRequest);
-    UserDetailsRS updateProfile(ProfileRQ profileRequest, MultipartFile multipartFile) throws ParseException;
-    void deactiveAccount(DeactiveAccountRQ deactiveAccount);
-    void resetPassword(ResetPasswordRQ pwdRequest);
-    int sendCodeResetPassword(SendVerifyRQ sendVerifyRequest);
-    void updateContact(UpdateContactRQ updateContactRq);
-    int sendCodeUpdateContact(UpdateContactRQ updateContactRq);
+    void changePassword(ChangePasswordRQ passwordRQ);
+    UserDetailsRS updateProfile(ProfileRQ profileRQ, MultipartFile multipartFile) throws ParseException;
+    void deactiveAccount(DeactiveAccountRQ accountRQ);
+    void resetPassword(ResetPasswordRQ passwordRQ);
+    int sendCodeResetPassword(SendVerifyRQ sendVerifyRQ);
+    void updateContact(UpdateContactRQ contactRQ);
+    int sendCodeUpdateContact(UpdateContactRQ contactRQ);
     void applySkyowner(CompanyRQ companyRQ);
 
 }

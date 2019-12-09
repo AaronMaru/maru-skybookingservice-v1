@@ -36,14 +36,16 @@ public class DashboardIP implements DashboardSV {
      * @return List
      */
     @Override
-    public List<RecentBookingRS> getRecentBooking(long companyId, long userId, String userType, String userRole, long take) {
+    public List<RecentBookingRS> getRecentBooking(long companyId, long userId, String userType, String userRole,
+            long take) {
 
         var bookings = dashboardNQ.getRecentBooking(companyId, userId, userType, userRole, take);
         var responses = RecentBookingTF.getResponseList(bookings);
 
         responses.forEach(response -> {
             var segments = dashboardNQ.getRecentBookingSegment(response.getBookingId());
-            response.setContPhoto(environment.getProperty("spring.awsImageUrl.profile.url_small") + response.getContPhoto());
+            response.setContPhoto(
+                    environment.getProperty("spring.awsImageUrl.profile.url_small") + response.getContPhoto());
             segments.forEach(segment -> {
 
                 var recentSegment = new RecentBookingSegmentRS();
@@ -56,7 +58,6 @@ public class DashboardIP implements DashboardSV {
         return responses;
 
     }
-
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -73,10 +74,13 @@ public class DashboardIP implements DashboardSV {
      * @return List
      */
     @Override
-    public List<BookingProgressRS> getBookingProgress(long companyId, long userId, String userType, String userRole, String filter, String startDate, String endDate) {
+    public List<BookingProgressRS> getBookingProgress(long companyId, long userId, String userType, String userRole,
+            String filter, String startDate, String endDate) {
 
-        var bookings = dashboardNQ.getBookingProgress(companyId, userId, userType, userRole, filter, startDate, endDate);
-        var totalBookings = bookings.stream().reduce(0, (totalResult, booking) -> totalResult + booking.getAmount().intValueExact(), Integer::sum);
+        var bookings = dashboardNQ.getBookingProgress(companyId, userId, userType, userRole, filter, startDate,
+                endDate);
+        var totalBookings = bookings.stream().reduce(0,
+                (totalResult, booking) -> totalResult + booking.getAmount().intValueExact(), Integer::sum);
 
         var summary = new TreeMap<String, BookingProgressRS>();
         summary.put("Completed", new BookingProgressRS("Completed"));
@@ -101,7 +105,6 @@ public class DashboardIP implements DashboardSV {
         return responses;
     }
 
-
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * get dashboard timeline summary report by company, user and filter
@@ -115,11 +118,11 @@ public class DashboardIP implements DashboardSV {
      * @return List
      */
     @Override
-    public List<BookingTimelineRS> getBookingTimeline(long companyId, long userId, String userType, String userRole, String filter) {
+    public List<BookingTimelineRS> getBookingTimeline(long companyId, long userId, String userType, String userRole,
+            String filter) {
         var bookings = dashboardNQ.getBookingTimeline(companyId, userId, userType, userRole, filter);
         return BookingTimelineTF.getResponseList(bookings);
     }
-
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -134,20 +137,18 @@ public class DashboardIP implements DashboardSV {
      * @return List
      */
     @Override
-    public List<BookingTopSellerRS> getBookingTopSeller(long companyId, String filter, String startDate, String endDate, long take) {
+    public List<BookingTopSellerRS> getBookingTopSeller(long companyId, String filter, String startDate, String endDate,
+            long take) {
 
-        var sellers = dashboardNQ
-                .getBookingTopSeller(companyId, filter, startDate, endDate, take)
-                .stream()
-                .filter(seller -> seller.getTotalAmount().intValue() > 0)
-                .collect(Collectors.toList());
+        var sellers = dashboardNQ.getBookingTopSeller(companyId, filter, startDate, endDate, take).stream()
+                .filter(seller -> seller.getTotalAmount().intValue() > 0).collect(Collectors.toList());
 
-        sellers.forEach(seller -> seller.setUserProfile(environment.getProperty("spring.awsImageUrl.profile.url_small") + seller.getUserProfile()));
+        sellers.forEach(seller -> seller.setUserProfile(
+                environment.getProperty("spring.awsImageUrl.profile.url_small") + seller.getUserProfile()));
 
         return BookingTopSellerTF.getResponseList(sellers);
 
     }
-
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -164,19 +165,22 @@ public class DashboardIP implements DashboardSV {
      * @return List
      */
     @Override
-    public List<BookingActivityRS> getBookingActivity(long companyId, long userId, String userType, String userRole, String filter, String startDate, String endDate, long take, long localeId) {
+    public List<BookingActivityRS> getBookingActivity(long companyId, long userId, String userType, String userRole,
+            String filter, String startDate, String endDate, long take, long localeId) {
 
-        var bookings = dashboardNQ.getBookingActivity(companyId, userId, userType, userRole, filter, startDate, endDate, take);
+        var bookings = dashboardNQ.getBookingActivity(companyId, userId, userType, userRole, filter, startDate, endDate,
+                take);
         var responses = BookingActivityTF.getResponseList(bookings);
         responses.forEach(response -> {
-            response.setUserProfile(environment.getProperty("spring.awsImageUrl.profile.url_small") + response.getUserProfile());
-            response.setSegments(BookingActivityTF.getResponseSegmentList(dashboardNQ.getBookingActivityFlightSegment(response.getBookingId(), localeId)));
+            response.setUserProfile(
+                    environment.getProperty("spring.awsImageUrl.profile.url_small") + response.getUserProfile());
+            response.setSegments(BookingActivityTF.getResponseSegmentList(
+                    dashboardNQ.getBookingActivityFlightSegment(response.getBookingId(), localeId)));
         });
 
         return responses;
 
     }
-
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -194,13 +198,16 @@ public class DashboardIP implements DashboardSV {
      * @return BookingReportRS
      */
     @Override
-    public BookingReportRS getBookingReport(long company, long userId, String userType, String userRole, String classType, String tripType, String startDate, String endDate) {
+    public BookingReportRS getBookingReport(long company, long userId, String userType, String userRole,
+            String classType, String tripType, String startDate, String endDate) {
 
-        var summary = dashboardNQ.getBookingReportSummary(company, userId, userType, userRole, classType, tripType, startDate, endDate);
+        var summary = dashboardNQ.getBookingReportSummary(company, userId, userType, userRole, classType, tripType,
+                startDate, endDate);
         var response = BookingReportTF.getResponse(summary);
 
         if (summary != null) {
-            var details = dashboardNQ.getBookingReportDetail(company, userId, userType, userRole, classType, tripType, startDate, endDate);
+            var details = dashboardNQ.getBookingReportDetail(company, userId, userType, userRole, classType, tripType,
+                    startDate, endDate);
             response.setBookings(BookingReportTF.getDetailResponseList(details));
         }
 

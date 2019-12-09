@@ -35,12 +35,15 @@ public class CustomJWTEnhancer implements TokenEnhancer {
 
         additionalInfo.put("userId", user.getId());
         additionalInfo.put("stakeholderId", user.getStakeHolderUser().getId());
-        additionalInfo.put("companyId", company.getStakeholderCompanyId());
-        additionalInfo.put("userRole", company.getSkyuserRole());
+
+        if (company != null) {
+            additionalInfo.put("companyId", company.getStakeholderCompanyId());
+            additionalInfo.put("userRole", company.getSkyuserRole());
+        }
+
         additionalInfo.put("userType", user.getStakeHolderUser().getIsSkyowner() == 0 ? "skyuser" : "skyowner");
 
         ((DefaultOAuth2AccessToken) accessToken).setAdditionalInformation(additionalInfo);
-
         return accessToken;
 
     }

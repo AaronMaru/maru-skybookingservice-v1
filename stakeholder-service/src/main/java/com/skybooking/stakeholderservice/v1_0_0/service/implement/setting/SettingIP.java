@@ -3,7 +3,11 @@ package com.skybooking.stakeholderservice.v1_0_0.service.implement.setting;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.setting.FrontendConfigEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.setting.SettingRP;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.setting.SettingSV;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.setting.SendDownloadLinkRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.setting.SettingRS;
+import com.skybooking.stakeholderservice.v1_0_0.util.cls.Duplicate;
+import com.skybooking.stakeholderservice.v1_0_0.util.cls.SmsMessage;
+import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +20,17 @@ public class SettingIP implements SettingSV {
     @Autowired
     private SettingRP settingRP;
 
+    @Autowired
+    private ApiBean apiBean;
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Getting lists of setting
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Return SettingRS
+     */
     @Override
     public SettingRS getSetting() {
 
@@ -30,43 +45,59 @@ public class SettingIP implements SettingSV {
         var seo = new HashMap<String, String>();
         var contact = new HashMap<String, String>();
 
-        for (FrontendConfigEntity seting: settings) {
+        for (FrontendConfigEntity setting: settings) {
 
-            String type = seting.getType();
+            String type = setting.getType();
 
             switch (type) {
                 case "twitter":
-                    twitter.put(seting.getName(), seting.getTextValue());
+                    twitter.put(setting.getName(), setting.getTextValue());
                     settingRS.setTwitterDetails(twitter);
                     break;
                 case "third_party":
-                    thirdParty.put(seting.getName(), seting.getTextValue());
+                    thirdParty.put(setting.getName(), setting.getTextValue());
                     settingRS.setThirdPartyDetails(thirdParty);
                     break;
                 case "facebook":
-                    facebook.put(seting.getName(), seting.getTextValue());
+                    facebook.put(setting.getName(), setting.getTextValue());
                     settingRS.setFacebookDetails(facebook);
                     break;
                 case "appstore":
-                    appstore.put(seting.getName(), seting.getTextValue());
+                    appstore.put(setting.getName(), setting.getTextValue());
                     settingRS.setAppstoreDetails(appstore);
                     break;
                 case "social_link":
-                    socialLink.put(seting.getName(), seting.getTextValue());
+                    socialLink.put(setting.getName(), setting.getTextValue());
                     settingRS.setSocialMediaDetails(socialLink);
                     break;
                 case "seo":
-                    seo.put(seting.getName(), seting.getTextValue());
+                    seo.put(setting.getName(), setting.getTextValue());
                     settingRS.setSeoDetails(seo);
                     break;
                 case "contact":
-                    contact.put(seting.getName(), seting.getTextValue());
+                    contact.put(setting.getName(), setting.getTextValue());
                     settingRS.setContactDetails(contact);
                     break;
             }
         }
 
         return settingRS;
+
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Send download link for mobile
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param SendDownloadLinkRQ
+     */
+    public void sendLinkDownload(SendDownloadLinkRQ sendDownloadLinkRQ) {
+
+        SmsMessage sms = new SmsMessage();
+        apiBean.sendEmailSMS(sendDownloadLinkRQ.getUsername(), sms.sendSMS("send-download-link", 0),
+                Duplicate.mailTemplateData("", 0, "send-download-link"));
 
     }
 

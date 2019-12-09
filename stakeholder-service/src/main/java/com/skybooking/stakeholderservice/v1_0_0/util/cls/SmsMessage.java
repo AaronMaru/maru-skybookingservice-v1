@@ -12,7 +12,7 @@ public class SmsMessage {
      * @Param code
      * @Return String
      */
-    public String sendSMS(String cases, String code) {
+    public String sendSMS(String cases, int code) {
 
         switch (cases) {
             case "send-verify":
@@ -21,8 +21,13 @@ public class SmsMessage {
                 return "Password reset successfully";
             case "deactive-account":
                 return "Your account deactive success";
+            case "verify-success":
+                return "Your account verify success";
+            case "send-download-link":
+                return "Welcome to skybooking download the skybooking!! app and enjoy your travel and book cheap flight ticket click  https://www.skybooking.net";
             default:
                 return "No message";
+
         }
 
     }

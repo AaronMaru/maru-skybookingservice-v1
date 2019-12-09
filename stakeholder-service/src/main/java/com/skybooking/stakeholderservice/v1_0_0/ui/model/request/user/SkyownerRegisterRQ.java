@@ -10,9 +10,10 @@ import javax.validation.constraints.Size;
 
 
 @FieldMatch(first = "password", second = "confirmPassword", message = "The password fields must match")
-@UsernameUnique(first = "username", second = "code", message = "Username already exists")
 @FieldMatchRequire(first = "businessType", second = "contactPerson", third = "contactPosition", message = "Please provide contact persion and contact position")
 @LicenseMatchRequire(first = "businessType", second = "licenseSecond", message = "Please provide secode license")
+@UsernameUnique(first = "phone", second = "code", message = "Phone number already exists")
+@EmailUnique(first = "username", message = "Username already exists")
 public class SkyownerRegisterRQ {
 
     @Email

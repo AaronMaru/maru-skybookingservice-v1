@@ -1,0 +1,38 @@
+SELECT
+	suhc.id,
+	up.player_id AS playerId
+FROM stakeholder_user_has_companies suhc
+
+INNER JOIN
+(
+	SELECT *
+	FROM user_playid up
+) up ON up.stuser_id = suhc.stakeholder_user_id
+
+WHERE IF(:role = 'admin',
+                    (
+						suhc.stakeholder_user_id = :skyuserId
+						AND suhc.stakeholder_company_id = :companyId
+						AND suhc.skyuser_role = 'admin'
+					),
+					-- When staff has role editor, will push ot Admin Role
+					IF(:role = 'editor',
+				        (
+						  suhc.stakeholder_user_id = :skyuserId
+						  AND suhc.stakeholder_company_id = :companyId
+						  AND suhc.skyuser_role = 'editor'
+					    )
+          ,
+						IF(:role = 'moderator',
+						(
+						  suhc.stakeholder_user_id = :skyuserId
+						  AND suhc.stakeholder_company_id = :companyId
+						  AND suhc.skyuser_role = 'moderator'
+					    ),
+							suhc.stakeholder_company_id = :companyId
+
+						) -- End of moderator role
+
+					) -- End of editor role
+
+				) -- End of admin role
