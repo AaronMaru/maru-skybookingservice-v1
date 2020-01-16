@@ -2,19 +2,17 @@ package com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company;
 
 import com.skybooking.stakeholderservice.exception.anotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import java.util.HashMap;
 
-@FieldMatchRequire(first = "businessType", second = "contactPerson", third = "contactPosition", message = "Please provide contact persion and contact position")
-@LicenseMatchRequire(first = "businessType", second = "licenseSecond", message = "Please provide secode license")
+@FieldMatchRequire(first = "businessTypeId", second = "contactPerson", third = "contactPosition", message = "Please provide contact persion and contact position")
 @UsernameUnique(first = "phone", second = "code", message = "Phone number already exists")
-@EmailUnique(first = "email", message = "Email already exists")
 public class CompanyRQ {
 
-    @Include(contains = "com_tra|com_biz|com_gov", delimiter = "\\|", message = "HHHHHHH")
-    @NotEmpty(message = "Please provide a business type")
-    private String businessType;
+    @BussinessType
+    @NotNull(message = "Please provide a business type id")
+    private Long businessTypeId;
 
     @NotEmpty(message = "Please provide a business name")
     @CompanyName
@@ -23,10 +21,6 @@ public class CompanyRQ {
     private String contactPerson;
     private String contactPosition;
 
-    @Email
-    @NotEmpty(message = "Please provide a email")
-    private String email;
-
     @Phone
     @NotEmpty(message = "Please provide a phone number")
     private String phone;
@@ -34,20 +28,24 @@ public class CompanyRQ {
     @NotEmpty(message = "Please provide a country code")
     private String code;
 
-//    @NotEmpty(message = "Please provide a license")
     @NotNull(message = "Please provide a license")
-    private MultipartFile license;
-    private MultipartFile licenseSecond;
+    private HashMap<String, MultipartFile> licenses;
 
     private String address;
-    private String description;
+    private String website;
+    private String postalOrZipCode;
+    private String city;
 
-    public String getBusinessType() {
-        return businessType;
+    @NotNull(message = "Please provide a country id")
+    @Country
+    private Long countryId;
+
+    public Long getBusinessTypeId() {
+        return businessTypeId;
     }
 
-    public void setBusinessType(String businessType) {
-        this.businessType = businessType;
+    public void setBusinessTypeId(Long businessTypeId) {
+        this.businessTypeId = businessTypeId;
     }
 
     public String getBusinessName() {
@@ -74,14 +72,6 @@ public class CompanyRQ {
         this.contactPosition = contactPosition;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
     public String getPhone() {
         return phone;
     }
@@ -98,22 +88,6 @@ public class CompanyRQ {
         this.code = code;
     }
 
-    public MultipartFile getLicense() {
-        return license;
-    }
-
-    public void setLicense(MultipartFile license) {
-        this.license = license;
-    }
-
-    public MultipartFile getLicenseSecond() {
-        return licenseSecond;
-    }
-
-    public void setLicenseSecond(MultipartFile licenseSecond) {
-        this.licenseSecond = licenseSecond;
-    }
-
     public String getAddress() {
         return address;
     }
@@ -122,11 +96,44 @@ public class CompanyRQ {
         this.address = address;
     }
 
-    public String getDescription() {
-        return description;
+    public String getWebsite() {
+        return website;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setWebsite(String website) {
+        this.website = website;
     }
+
+    public String getPostalOrZipCode() {
+        return postalOrZipCode;
+    }
+
+    public void setPostalOrZipCode(String postalOrZipCode) {
+        this.postalOrZipCode = postalOrZipCode;
+    }
+
+    public Long getCountryId() {
+        return countryId;
+    }
+
+    public void setCountryId(Long countryId) {
+        this.countryId = countryId;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public HashMap<String, MultipartFile> getLicenses() {
+        return licenses;
+    }
+
+    public void setLicenses(HashMap<String, MultipartFile> licenses) {
+        this.licenses = licenses;
+    }
+
 }

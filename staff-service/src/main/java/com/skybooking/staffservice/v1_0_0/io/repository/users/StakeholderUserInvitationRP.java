@@ -12,7 +12,7 @@ public interface StakeholderUserInvitationRP extends JpaRepository<StakeholderUs
     /**
      * Find email invited
      */
-    StakeholderUserInvitationEntity findFirstByInviteFrom(String username);
+    StakeholderUserInvitationEntity findFirstByInviteTo(String username);
 
 
     /**
@@ -20,6 +20,8 @@ public interface StakeholderUserInvitationRP extends JpaRepository<StakeholderUs
      */
     StakeholderUserInvitationEntity findByIdAndStakeholderCompanyId(Integer id, Long companyId);
 
-
-
+    /**
+     * Find by skyuserId and companyId
+     */
+    StakeholderUserInvitationEntity findByInviteStakeholderUserIdAndStakeholderCompanyId(Long skyuserId, Long companyId);
 }

@@ -1,15 +1,19 @@
 package com.skybooking.stakeholderservice.v1_0_0.util.general;
 
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.contact.ContactEntity;
+import com.skybooking.stakeholderservice.v1_0_0.io.enitity.country.LocationEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.sluggle.SluggleEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.StakeHolderUserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.StakeholderUserStatusEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.verify.VerifyUserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.contact.ContactRP;
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.country.CountryRP;
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.country.LocationRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.sluggle.SluggleRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.StakeHolderUserStatusRP;
 import com.skybooking.stakeholderservice.v1_0_0.util.cls.SendingMailThroughAWSSESSMTPServer;
+import com.skybooking.stakeholderservice.v1_0_0.util.cls.SmsMessage;
 import freemarker.template.Configuration;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.validator.routines.EmailValidator;
@@ -43,6 +47,13 @@ public class ApiBean {
     @Autowired
     private Configuration configuration;
 
+    @Autowired
+    private CountryRP countryRP;
+
+    @Autowired
+    private LocationRP locationRP;
+
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Generate unique name for file
@@ -71,7 +82,7 @@ public class ApiBean {
      * @Param type
      * @Param stkUser
      */
-    public void addContact(String username, String code, StakeHolderUserEntity stkUser, String type) {
+    public void addContact(String username, String code, StakeHolderUserEntity skyuser, String type) {
 
         List<ContactEntity> contacts = new ArrayList<>();
         ContactEntity contactEntity = new ContactEntity();
@@ -93,10 +104,10 @@ public class ApiBean {
         contacts.add(contactEntity);
 
         for (ContactEntity contact : contacts) {
-            contact.setStakeHolderUserEntity(stkUser);
+            contact.setStakeHolderUserEntity(skyuser);
         }
 
-        stkUser.setContactEntities(contacts);
+        skyuser.setContactEntities(contacts);
 
     }
 
@@ -109,8 +120,8 @@ public class ApiBean {
      * @Param code
      * @Param stkHolder
      */
-    public void updateContact(String username, String code, StakeHolderUserEntity stkHolder, String type,
-                              String address) {
+    public void updateContact(String username, String code, StakeHolderUserEntity skyuser, String type, String address) {
+
         Boolean b = false;
 
         String phoneEmail = username;
@@ -118,16 +129,18 @@ public class ApiBean {
             phoneEmail = code + "-" + username.replaceFirst("^0+(?!$)", "");
         }
 
-        for (ContactEntity contact : stkHolder.getContactEntities()) {
+        for (ContactEntity contact : skyuser.getContactEntities()) {
             if (contact.getType().equals(type)) {
                 contact.setValue(phoneEmail);
                 b = true;
             }
         }
         if (!b) {
-            addContact(username, code, stkHolder, address);
+            addContact(username, code, skyuser, address);
         }
+
     }
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -142,6 +155,7 @@ public class ApiBean {
         contactRP.createContact(id, value, type, skyType);
     }
 
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Send email and sms
@@ -150,11 +164,13 @@ public class ApiBean {
      * @Param reciever
      * @Param message
      */
-    public Boolean sendEmailSMS(String receiver, String message, Map<String, String> mailTemplateData) {
+    public Boolean sendEmailSMS(String receiver, String message, Map<String, Object> mailTemplateData) {
+
+        SmsMessage sms = new SmsMessage();
 
         boolean validEmail = EmailValidator.getInstance().isValid(receiver);
         if (NumberUtils.isNumber(receiver.replaceAll("[+]", ""))) {
-            sms(receiver, message);
+            sms(receiver, sms.sendSMS(message, Integer.parseInt(mailTemplateData.get("code").toString())));
             return true;
         } else if (validEmail) {
             email(receiver, mailTemplateData);
@@ -164,6 +180,7 @@ public class ApiBean {
 
     }
 
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Email
@@ -172,7 +189,7 @@ public class ApiBean {
      * @Param TO
      * @Param MESSAGE
      */
-    public void email(String TO, Map<String, String> mailTemplateData) {
+    public void email(String TO, Map<String, Object> mailTemplateData) {
 
         Map<String, String> mailProperty = new HashMap<>();
         mailProperty.put("SMTP_SERVER_HOST", environment.getProperty("spring.email.host"));
@@ -190,6 +207,7 @@ public class ApiBean {
         sendingMailThroughAWSSESSMTPServer.sendMail(configuration, mailProperty, mailTemplateData);
 
     }
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -221,6 +239,7 @@ public class ApiBean {
 
     }
 
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Generate code sluggle for user
@@ -239,6 +258,7 @@ public class ApiBean {
 
     }
 
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Store user status
@@ -250,16 +270,42 @@ public class ApiBean {
      */
     public void storeUserStatus(UserEntity user, Integer status, String comment) {
 
-        StakeholderUserStatusEntity userStatus = new StakeholderUserStatusEntity();
+        StakeholderUserStatusEntity skyuserStatus = new StakeholderUserStatusEntity();
 
-        userStatus.setActionableId(user.getId());
-        userStatus.setSkyuserId(user.getStakeHolderUser().getId());
-        userStatus.setStatus(status);
-        userStatus.setComment(comment);
+        skyuserStatus.setActionableId(user.getId());
+        skyuserStatus.setSkyuserId(user.getStakeHolderUser().getId());
+        skyuserStatus.setStatus(status);
+        skyuserStatus.setComment(comment);
 
-        userStatusRP.save(userStatus);
+        userStatusRP.save(skyuserStatus);
 
     }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Store contacts
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param skyownerRQ
+     * @Param id
+     */
+    public void storeOrUpdateCountry(Long countryID, String stake, Long stakeID) {
+
+        LocationEntity location = locationRP.findByLocationableId(stakeID);
+        System.out.println(location);
+        if (location == null) {
+            location = new LocationEntity();
+
+            location.setLocationableType(stake);
+            location.setLocationableId(stakeID);
+        }
+
+        location.setCountryId(countryID);
+
+        locationRP.save(location);
+    }
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -269,7 +315,7 @@ public class ApiBean {
      * @Param userEntity
      * @Param status
      */
-    public int createVerifyCode(UserEntity userEntity, int status) {
+    public int createVerifyCode(UserEntity user, int status) {
 
         int num = generateCode();
 
@@ -280,12 +326,13 @@ public class ApiBean {
         verifyUser.setStatus(status);
         verifyUserList.add(verifyUser);
 
-        userEntity.setVerifyUserEntity(verifyUserList);
-        verifyUser.setUserEntity(userEntity);
+        user.setVerifyUserEntity(verifyUserList);
+        verifyUser.setUserEntity(user);
 
         return num;
 
     }
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------

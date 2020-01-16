@@ -15,6 +15,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class SendingMailThroughAWSSESSMTPServer {
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Send mail throw amazon
@@ -31,7 +32,7 @@ public class SendingMailThroughAWSSESSMTPServer {
      * @Param body
      */
     public void sendMail(Configuration configuration, Map<String, String> mailProperty,
-                         Map<String, String> mailTemplateData) {
+                         Map<String, Object> mailTemplateData) {
         try {
             Properties props = System.getProperties();
             props.put("mail.transport.protocol", "smtp");
@@ -49,6 +50,12 @@ public class SendingMailThroughAWSSESSMTPServer {
 
             String html = FreeMarkerTemplateUtils.processTemplateIntoString(template, mailTemplateData);
 
+            if (mailTemplateData.get("fullName") != null) {
+                html = this.replaceCode(html, "{{FULL_NAME}}", mailTemplateData.get("fullName").toString());
+            }
+
+            html = this.replaceCode(html, "{{CODE}}", mailTemplateData.get("code").toString());
+
             helper.setTo(mailProperty.get("TO"));
             helper.setText(html, true);
             helper.setSubject(mailProperty.get("SUBJECT"));
@@ -61,6 +68,10 @@ public class SendingMailThroughAWSSESSMTPServer {
         } catch (Exception ex) {
             Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, ex.getMessage(), ex);
         }
+    }
+
+    private String replaceCode(String html, String target, String code) {
+        return html.replace(target, code);
     }
 
 }

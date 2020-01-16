@@ -3,17 +3,15 @@ package com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company;
 public class CompanyRS {
 
     private Long id;
-    private String companyName;
-    private String profileImg;
-    private String typeValue;
-    private String contactPerson;
-    private String contactPosition;
-    private String License;
-    private String LicenseSecond;
-    private String address;
-    private String email;
-    private String phone;
-
+    private String companyName = "";
+    private String profileImg = "";
+    private String contactPerson = "";
+    private String contactPosition = "";
+//    private List<LicenseRS> licenses = new ArrayList<>();
+    private String address = "";
+    private String phone = "";
+    private String webiste = "";
+    private String postalOrZipCode = "";
 
     public Long getId() {
         return id;
@@ -40,14 +38,6 @@ public class CompanyRS {
         this.profileImg = profileImg;
     }
 
-    public String getTypeValue() {
-        return typeValue;
-    }
-
-    public void setTypeValue(String typeValue) {
-        this.typeValue = typeValue;
-    }
-
     public String getContactPerson() {
         contactPerson = contactPerson != null ? contactPerson : "";
         return contactPerson;
@@ -66,22 +56,13 @@ public class CompanyRS {
         this.contactPosition = contactPosition;
     }
 
-    public String getLicense() {
-        return License;
-    }
-
-    public void setLicense(String license) {
-        License = license;
-    }
-
-    public String getLicenseSecond() {
-        LicenseSecond = LicenseSecond != null ? LicenseSecond : "";
-        return LicenseSecond;
-    }
-
-    public void setLicenseSecond(String licenseSecond) {
-        LicenseSecond = licenseSecond;
-    }
+//    public List<LicenseRS> getLicenses() {
+//        return licenses;
+//    }
+//
+//    public void setLicenses(List<LicenseRS> licenses) {
+//        this.licenses = licenses;
+//    }
 
     public String getAddress() {
         return address;
@@ -89,14 +70,6 @@ public class CompanyRS {
 
     public void setAddress(String address) {
         this.address = address;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 
     public String getPhone() {
@@ -107,5 +80,20 @@ public class CompanyRS {
         this.phone = phone;
     }
 
+    public String getWebiste() {
+        return webiste;
+    }
+
+    public void setWebiste(String webiste) {
+        this.webiste = webiste;
+    }
+
+    public String getPostalOrZipCode() {
+        return postalOrZipCode;
+    }
+
+    public void setPostalOrZipCode(String postalOrZipCode) {
+        this.postalOrZipCode = postalOrZipCode;
+    }
 
 }

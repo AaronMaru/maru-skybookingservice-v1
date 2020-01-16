@@ -2,6 +2,7 @@ package com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.booking;
 
 public class BookingBaggageInfoRS {
 
+    private int pieceStatus;
     private String passType;
     private String bagAirline;
     private Integer bagPiece;
@@ -48,4 +49,11 @@ public class BookingBaggageInfoRS {
         this.bagUnit = bagUnit;
     }
 
+    public int getPieceStatus() {
+        return pieceStatus;
+    }
+
+    public void setPieceStatus(int pieceStatus) {
+        this.pieceStatus = pieceStatus;
+    }
 }

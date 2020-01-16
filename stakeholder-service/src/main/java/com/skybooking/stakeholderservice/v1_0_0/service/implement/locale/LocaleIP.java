@@ -78,4 +78,5 @@ public class LocaleIP implements LocaleSV {
     public List<LocaleRS> findAllLocale() {
         return LocaleTF.getResponseList(localeRP.findAll());
     }
+
 }

@@ -1,0 +1,21 @@
+SELECT
+
+fi.id,
+fi.airline_code as code,
+fil.name as airline,
+fil.business_name as airbus,
+fi.logo
+
+FROM flight_info fi
+
+INNER JOIN
+(
+-- get airline with localization
+SELECT *
+FROM flight_info_locale fil
+WHERE fil.locale_id = 1
+
+) fil ON fil.flight_id = fi.id
+
+-- where airline code
+WHERE fi.airline_code = :airline

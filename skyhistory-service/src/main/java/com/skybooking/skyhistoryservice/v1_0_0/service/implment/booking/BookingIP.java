@@ -13,7 +13,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Date;
@@ -74,6 +73,42 @@ public class BookingIP implements BookingSV {
         bookingDetailRS.setAirItinPrices(bookingAirItinPriceRSList);
 
         return bookingDetailRS;
+
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Getting data bookings detail data to email
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param id
+     * @return a booking
+     */
+    public BookingEmailDetailRS getBookingDetailEmail(Long id) {
+
+        Long skyuserId = jwtUtils.getClaim("stakeholderId", Long.class);
+        Long companyId = jwtUtils.getClaim("companyId", Long.class);
+
+        List<BookingTO> bookingTO = bookingNQ.detailBooking("skyuser", id, skyuserId, companyId);
+
+        BookingEmailDetailRS bookingRS = new BookingEmailDetailRS();
+
+        if (bookingTO.size() == 0) {
+            throw new NotFoundException("This url not found", "");
+        }
+
+        BeanUtils.copyProperties(bookingTO.get(0), bookingRS);
+
+        List<BookingOdRS> bookingOdRSList = bookingOD(bookingTO.get(0));
+        List<BookingTicketRS> bookingTicketRSList = getAirTickets(id);
+        List<BookingAirItinPriceRS> bookingAirItinPriceRSList = getAirItinPrice(id);
+
+        bookingRS.setBookingOd(bookingOdRSList);
+        bookingRS.setAirTickets(bookingTicketRSList);
+        bookingRS.setAirItinPrices(bookingAirItinPriceRSList);
+
+        return bookingRS;
 
     }
 
@@ -224,8 +259,8 @@ public class BookingIP implements BookingSV {
             bookingOdSegRS.setAirlineLogo45(logo.get("logo45"));
             bookingOdSegRS.setAirlineLogo90(logo.get("logo90"));
 
-            bookingOdSegRS.setArrDateTime(flightBean.DateToString(bookingOdSegTO.getArrDateTime()));
-            bookingOdSegRS.setDepDateTime(flightBean.DateToString(bookingOdSegTO.getDepDateTime()));
+            bookingOdSegRS.setArrDateTime(bookingOdSegTO.getArrDateTime());
+            bookingOdSegRS.setDepDateTime(bookingOdSegTO.getDepDateTime());
 
             bookingOdRS.setfSegs(bookingOdSegRS);
 

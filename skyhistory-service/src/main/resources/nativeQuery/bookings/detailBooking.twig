@@ -1,8 +1,24 @@
 SELECT
 b.id AS bookingId,
 b.booking_code AS bookingCode,
+(
+	SELECT bpt.transaction_id
+	FROM booking_payment_transactions bpt
+	WHERE bpt.booking_id = b.id
+	ORDER BY bpt.id DESC
+	LIMIT 1
+) as transId,
+(
+	SELECT bpt.bank_name
+	FROM booking_payment_transactions bpt
+	WHERE bpt.booking_id = b.id
+	ORDER BY bpt.id DESC
+	LIMIT 1
+) as payMethod,
 b.itinerary_ref AS pnrCode,
 b.trip_type AS tripType,
+b.dep_date AS depDate,
+b.booking_type As bookType,
 (
 	SELECT CONCAT(su.last_name,' ', su.first_name) AS staffName
 	FROM stakeholder_users su
@@ -42,9 +58,30 @@ b.trip_type AS tripType,
 ) AS cabinName,
 
 ( b.total_amount + b.markup_amount + b.markup_pay_amount ) AS totalAmount,
+b.markup_amount AS markupAmount,
+b.markup_pay_amount AS markupPayAmount,
 b.dis_pay_met_amount AS disPayment,
 b.currency_code AS currencyCode,
+b.itinerary_file AS itineraryFile,
+b.itinerary_path AS itineraryPath,
+b.reciept_file AS recieptFile,
+b.reciept_path AS recieptPath,
 b.cont_fullname AS contName,
+(
+	SELECT
+		(
+			SELECT ccl.`name`
+			FROM country_city_locale ccl
+			WHERE ccl.country_city_id = cc.id
+			AND ccl.locale_id = 1
+		) AS contLocationCode
+
+	FROM country_city cc
+	WHERE cc.iata = b.cont_location_code
+) AS contLocationCode,
+b.cont_phone AS contPhone,
+b.cont_phonecode AS contPhoneCode,
+b.cont_email AS contEmail,
 b.created_at AS bookDate,
 b.`status`,
 CASE

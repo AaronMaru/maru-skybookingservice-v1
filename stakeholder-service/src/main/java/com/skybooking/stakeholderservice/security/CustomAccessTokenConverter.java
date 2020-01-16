@@ -14,5 +14,6 @@ public class CustomAccessTokenConverter extends DefaultAccessTokenConverter {
         authentication.setDetails(claims);
         return authentication;
     }
+
 }
 

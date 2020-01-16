@@ -1,5 +1,6 @@
 package com.skybooking.stakeholderservice;
 
+import com.skybooking.stakeholderservice.v1_0_0.util.general.Duplicate;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.header.HeaderBean;
@@ -46,5 +47,11 @@ public class StakeholderServiceApplication {
     NotificationBean notificationBean() {
         return new NotificationBean();
     }
+
+    @Bean
+    Duplicate duplicate() {
+        return new Duplicate();
+    }
+
 
 }

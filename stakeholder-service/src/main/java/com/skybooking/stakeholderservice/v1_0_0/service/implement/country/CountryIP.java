@@ -37,7 +37,7 @@ public class CountryIP implements CountrySV {
         List<CountryEntity> countries = countryRP.findAllCountry();
         List<CountryRS> countriesRS = new ArrayList<>();
 
-        String selectedLocalization = headerBean.getLocalization();
+        String selectedLocalization = headerBean.getLocalization(null);
 
         countries.stream().forEach(country -> {
             var countryLocaleList = country.getCountryLocaleEntities();

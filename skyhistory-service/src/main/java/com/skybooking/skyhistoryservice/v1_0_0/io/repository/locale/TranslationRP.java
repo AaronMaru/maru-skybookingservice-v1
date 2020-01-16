@@ -15,4 +15,6 @@ public interface TranslationRP extends JpaRepository<TranslationEntity, Long> {
 
     List<TranslationEntity> findAllByLocaleId(long id);
 
+    @Query(value = "SELECT * FROM frontend_translation WHERE module = :key AND locale_id = :lang", nativeQuery = true)
+    List<TranslationEntity> findByModule(long lang, String key);
 }

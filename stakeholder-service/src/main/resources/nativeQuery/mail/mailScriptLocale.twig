@@ -1,0 +1,10 @@
+SELECT
+    ss.id
+FROM sending_script ss
+INNER JOIN
+    (
+    SELECT *
+    FROM sending_script_locale sslo
+    ) sslo ON sslo.send_script_id = ss.id AND sslo.locale_id = :locale
+
+WHERE ss.url_key = :keyword

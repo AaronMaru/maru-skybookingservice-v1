@@ -28,7 +28,7 @@ public class PassengerEntity {
     private String lastName;
 
     @Column(name = "birthday")
-    private Date birthDate;
+    private String birthDate;
 
     @Column(length = 20)
     private String gender;
@@ -39,7 +39,7 @@ public class PassengerEntity {
     private String idNumber;
 
     @Column(name = "expire_date")
-    private Date expireDate;
+    private String expireDate;
 
     @Column(name = "passenger_type")
     private String passengerType;

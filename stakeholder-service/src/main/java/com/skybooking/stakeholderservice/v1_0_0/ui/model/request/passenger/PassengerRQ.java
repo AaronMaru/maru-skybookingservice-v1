@@ -30,8 +30,7 @@ public class PassengerRQ {
 
     @NotNull(message = "Please provide a birth date.", groups = {OnCreate.class})
     @DateTimeFormat(pattern = "yyyy-MM-dd")
-    @Temporal(TemporalType.DATE)
-    private Date birthDate;
+    private String birthDate;
 
     @NotBlank(message = "Please provide a nationality.", groups = {OnCreate.class})
     @Size(min = 1, max = 35, message = "The nationality must be not blank value.", groups = {OnCreate.class, OnUpdate.class})
@@ -43,8 +42,7 @@ public class PassengerRQ {
 
     @NotNull(message = "Please provide an expiry date of the identity card. ", groups = {OnCreate.class})
     @DateTimeFormat(pattern = "yyyy-MM-dd")
-    @Temporal(TemporalType.DATE)
-    private Date expireDate;
+    private String expireDate;
 
     @NotNull(message = "Please provide a type of the identity card.", groups = {OnCreate.class})
     @Include(contains = "0|1", delimiter = "\\|", groups = {OnCreate.class, OnUpdate.class})

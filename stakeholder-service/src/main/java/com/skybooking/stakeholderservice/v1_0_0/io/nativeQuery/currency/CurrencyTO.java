@@ -12,6 +12,4 @@ public class CurrencyTO {
     private Byte isTop;
     private Byte topOrder;
 
-
-
 }

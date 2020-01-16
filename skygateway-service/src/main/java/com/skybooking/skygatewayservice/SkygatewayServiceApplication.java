@@ -4,10 +4,7 @@ import com.skybooking.skygatewayservice.filters.ErrorFilter;
 import com.skybooking.skygatewayservice.filters.PostFilter;
 import com.skybooking.skygatewayservice.filters.PreFilter;
 import com.skybooking.skygatewayservice.filters.RouteFilter;
-import com.skybooking.skygatewayservice.provider.fallback.PaymentFB;
-import com.skybooking.skygatewayservice.provider.fallback.SkyhistoryFB;
-import com.skybooking.skygatewayservice.provider.fallback.StaffFB;
-import com.skybooking.skygatewayservice.provider.fallback.StakeholderFB;
+import com.skybooking.skygatewayservice.provider.fallback.*;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
@@ -83,6 +80,11 @@ public class SkygatewayServiceApplication {
     @Bean
     public StakeholderFB stakeholderFB() {
         return new StakeholderFB();
+    }
+
+    @Bean
+    public SkyflightFB skyflightFB() {
+        return new SkyflightFB();
     }
 
 }

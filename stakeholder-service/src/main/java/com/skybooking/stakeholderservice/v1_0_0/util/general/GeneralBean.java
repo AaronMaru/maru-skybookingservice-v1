@@ -12,6 +12,7 @@ import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.Errors;
 import org.springframework.validation.FieldError;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.beans.FeatureDescriptor;
 import java.sql.Timestamp;
@@ -59,7 +60,6 @@ public class GeneralBean {
         }
 
         String firstCode = lastCode.substring(0, 6);//Ex: SKYU01
-        String year = lastCode.substring(lastCode.length() - 2); //Ex: 19
         String numUser = lastCode.substring(lastCode.length() - 6).substring(0, 4); //Ex: 0001
 
         String numIncr = lastCode.substring(prefix.length(), prefix.length() + 1);//Ex: SKYU71000119 => 7
@@ -152,7 +152,7 @@ public class GeneralBean {
             int diffMin = (int) (diff / (60 * 1000));
 
             if ((verify.size() % 5) == 0 && diffMin < 60) {
-                throw new BadRequestException("sent_vf_limit_sp", "");
+                throw new BadRequestException("sent_vf_limit", "");
             }
         }
 
@@ -187,5 +187,17 @@ public class GeneralBean {
     }
 
 
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Validation file size
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param verifyUserEntity
+     */
+    public void errorMultipart(MultipartFile multipartFile) {
+        if (multipartFile != null && multipartFile.getSize() > 6000000) {
+           throw new BadRequestException("Oop the file size to large", "");
+        }
+    }
 
 }

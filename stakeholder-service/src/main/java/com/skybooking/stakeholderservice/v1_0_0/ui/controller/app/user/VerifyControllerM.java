@@ -4,6 +4,7 @@ import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.user.VerifySV
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user.SendVerifyRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user.VerifyRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,8 +41,8 @@ public class VerifyControllerM {
      */
     @PatchMapping("/verify")
     public ResRS verifyUser(@Valid @RequestBody VerifyRQ verifyRQ) {
-        verifySV.verifyUser(verifyRQ, Integer.parseInt(environment.getProperty("spring.verifyStatus.verify")));
-        return localization.resAPI(HttpStatus.OK,"vf_succ", "");
+        UserDetailsTokenRS userDetailsTokenRS = verifySV.verifyUser(verifyRQ, Integer.parseInt(environment.getProperty("spring.verifyStatus.verify")));
+        return localization.resAPI(HttpStatus.OK,"vf_succ", userDetailsTokenRS);
     }
 
 

@@ -29,6 +29,9 @@ spring:
       auth: true
       starttls.enable: true
       ssl.trust: smtp.gmail.
+      
+  awsImageUrl:
+    mailTemplate: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/mail/images/
 
 native-query:
   package-scan: com.skybooking.staffservice

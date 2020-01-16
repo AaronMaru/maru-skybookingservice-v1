@@ -125,7 +125,7 @@
             <artifactId>spring-native-query</artifactId>
             <version>1.0.0</version>
             <scope>system</scope>
-            <systemPath>${basedir}/lib/spring-native-query-1.0.0.jar</systemPath>
+            <systemPath>${basedir}/lib/spring-native-query-1.0.1.jar</systemPath>
         </dependency>
 
         <dependency>
@@ -182,6 +182,12 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-tomcat</artifactId>
             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.jhonnymertz</groupId>
+            <artifactId>java-wkhtmltopdf-wrapper</artifactId>
+            <version>1.1.11-RELEASE</version>
         </dependency>
     </dependencies>
 

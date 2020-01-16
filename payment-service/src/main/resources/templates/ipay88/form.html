@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<title>IPay88</title>
+</head>
+<body>
+<form name="ePayment" id="ePayment" method="post" th:action="@{ ${EntryUrl} }">
+	<input type="hidden" name="MerchantCode" th:value="${MerchantCode}"/>
+	<input type="hidden" name="PaymentId" th:value="${PaymentId}"/>
+	<input type="hidden" name="RefNo" th:value="${RefNo}"/>
+	<input type="hidden" name="Amount" th:value="${Amount}"/>
+	<input type="hidden" name="Currency" th:value="${Currency}"/>
+	<input type="hidden" name="ProdDesc" th:value="${ProdDesc}"/>
+	<input type="hidden" name="UserName" th:value="${UserName}"/>
+	<input type="hidden" name="UserEmail" th:value="${UserEmail}"/>
+	<input type="hidden" name="UserContact" th:value="${UserContact}"/>
+	<input type="hidden" name="Remark" th:value="${Remark}"/>
+	<input type="hidden" name="Lang" th:value="${Lang}"/>
+	<input type="hidden" name="Signature" th:value="${Signature}"/>
+	<input type="hidden" name="ResponseURL" th:value="${ResponseURL}"/>
+	<input type="hidden" name="BackendURL" th:value="${BackendURL}"/>
+</form>
+
+<script type="text/javascript">
+	document.ePayment.submit();
+</script>
+
+</body>
+</html>

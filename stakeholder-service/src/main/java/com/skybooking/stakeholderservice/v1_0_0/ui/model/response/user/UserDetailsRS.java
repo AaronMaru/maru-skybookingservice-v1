@@ -3,6 +3,7 @@ package com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.CompanyRS;
 
 import javax.persistence.Column;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,9 +35,14 @@ public class UserDetailsRS {
     private String photoMedium;
     private String photoSmall;
 
-    private int status;
+//    private int status;
 
     private String address = "";
+    private String dob = "";
+
+    private String joined = "";
+    private String nationality = "";
+    private BigInteger totalBooking;
 
     private List<CompanyRS> companies = new ArrayList<>();
 
@@ -108,13 +114,13 @@ public class UserDetailsRS {
         this.gender = gender;
     }
 
-    public int getStatus() {
-        return status;
-    }
-
-    public void setStatus(int status) {
-        this.status = status;
-    }
+//    public int getStatus() {
+//        return status;
+//    }
+//
+//    public void setStatus(int status) {
+//        this.status = status;
+//    }
 
     public String getAddress() {
         return address;
@@ -171,4 +177,45 @@ public class UserDetailsRS {
     public void setUserCode(String userCode) {
         this.userCode = userCode;
     }
+
+    public int getIsSkyowner() {
+        return isSkyowner;
+    }
+
+    public void setIsSkyowner(int isSkyowner) {
+        this.isSkyowner = isSkyowner;
+    }
+
+    public String getDob() {
+        return dob;
+    }
+
+    public void setDob(String dob) {
+        this.dob = dob;
+    }
+
+    public String getJoined() {
+        return joined;
+    }
+
+    public void setJoined(String joined) {
+        this.joined = joined;
+    }
+
+    public String getNationality() {
+        return nationality;
+    }
+
+    public void setNationality(String nationality) {
+        this.nationality = nationality;
+    }
+
+    public BigInteger getTotalBooking() {
+        return totalBooking;
+    }
+
+    public void setTotalBooking(BigInteger totalBooking) {
+        this.totalBooking = totalBooking;
+    }
+
 }

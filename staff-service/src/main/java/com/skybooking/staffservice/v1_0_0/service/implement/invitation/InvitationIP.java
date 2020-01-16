@@ -17,10 +17,10 @@ import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.InviteStaf
 import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.SkyuserIdStaffRQ;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.invitation.PendingEmailStaffRS;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.invitation.SkyuserDetailsRS;
-import com.skybooking.staffservice.v1_0_0.util.ApiBean;
-import com.skybooking.staffservice.v1_0_0.util.GeneralBean;
 import com.skybooking.staffservice.v1_0_0.util.JwtUtils;
-import com.skybooking.staffservice.v1_0_0.util.cls.Duplicate;
+import com.skybooking.staffservice.v1_0_0.util.general.ApiBean;
+import com.skybooking.staffservice.v1_0_0.util.general.Duplicate;
+import com.skybooking.staffservice.v1_0_0.util.general.GeneralBean;
 import com.skybooking.staffservice.v1_0_0.util.notification.NotificationBean;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class InvitationIP implements InvitationSV {
@@ -66,6 +67,10 @@ public class InvitationIP implements InvitationSV {
 
     @Autowired
     private NotificationBean notificationBean;
+
+    @Autowired
+    private Duplicate duplicate;
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -127,17 +132,19 @@ public class InvitationIP implements InvitationSV {
 
         Long companyId = jwtUtils.getClaim("companyId", Long.class);
 
-        general.addStaff(companyId, skyuser.getStakeHolderUser().getId(), roleTO.get(0).getUserType());
+//        general.addStaff(companyId, skyuser.getStakeHolderUser().getId(), roleTO.get(0).getUserType());
+        general.addInvitation(skyuser.getStakeHolderUser().getId(), companyId,null);
 
         notificationBean.sendNotiSkyuser(skyuser.getStakeHolderUser().getId());
 
         StakeHolderUserEntity stakeHolderUser = skyuser.getStakeHolderUser();
         String fullName = stakeHolderUser.getFirstName() + " " + stakeHolderUser.getLastName();
 
-        apiBean.sendEmailSMS(skyuser.getEmail(), "Invitation",
-                Duplicate.mailTemplateData(fullName, 0, "invite-skyowner"));
+        Map<String, Object> mailData = duplicate.mailData(fullName, 0, "invitation_is_waiting_for_your_confirmation");
+        apiBean.sendEmailSMS(skyuser.getEmail(),"Invitation", mailData);
 
     }
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -155,19 +162,15 @@ public class InvitationIP implements InvitationSV {
 
         checkExistInv(inviteStaffNoAccRQ);
 
-        StakeholderUserInvitationEntity userInv = new StakeholderUserInvitationEntity();
-
         Long companyId = jwtUtils.getClaim("companyId", Long.class);
 
-        userInv.setStakeholderCompanyId(companyId);
-        userInv.setInviteFrom(inviteStaffNoAccRQ.getUsername());
+        general.addInvitation(null, companyId,inviteStaffNoAccRQ.getUsername());
 
-        userInvRP.save(userInv);
-
-        apiBean.sendEmailSMS(inviteStaffNoAccRQ.getUsername(), "Invitation",
-                Duplicate.mailTemplateData("", 0, "invite-nonskyowner"));
+        Map<String, Object> mailData = duplicate.mailData("", 0, "invitation_is_waiting_for_your_confirmation");
+        apiBean.sendEmailSMS(inviteStaffNoAccRQ.getUsername(),"Invitation", mailData);
 
     }
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -178,13 +181,14 @@ public class InvitationIP implements InvitationSV {
      */
     public void checkExistInv(InviteStaffNoAccRQ inviteStaffNoAccRQ) {
 
-        StakeholderUserInvitationEntity userInv = userInvRP.findFirstByInviteFrom(inviteStaffNoAccRQ.getUsername());
+        StakeholderUserInvitationEntity userInv = userInvRP.findFirstByInviteTo(inviteStaffNoAccRQ.getUsername());
 
         if (userInv != null) {
             throw new BadRequestException("inv_ald", "");
         }
 
     }
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -212,6 +216,7 @@ public class InvitationIP implements InvitationSV {
 
     }
 
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Remove pending email
@@ -233,6 +238,7 @@ public class InvitationIP implements InvitationSV {
 
     }
 
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Resend pending email
@@ -241,8 +247,11 @@ public class InvitationIP implements InvitationSV {
      * @Param inviteStaffNoAccRQ
      */
     public void resendPendingEmail(InviteStaffNoAccRQ inviteStaffNoAccRQ) {
-        apiBean.sendEmailSMS(inviteStaffNoAccRQ.getUsername(), "Invitation again",
-                Duplicate.mailTemplateData("", 0, "invite-nonskyowner"));
+
+        Map<String, Object> mailData = duplicate.mailData("", 0, "invitation_is_waiting_for_your_confirmation");
+        apiBean.sendEmailSMS(inviteStaffNoAccRQ.getUsername(),"Invitation again", mailData);
+
     }
+
 
 }

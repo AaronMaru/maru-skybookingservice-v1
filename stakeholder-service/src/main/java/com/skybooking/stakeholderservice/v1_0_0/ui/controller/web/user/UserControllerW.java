@@ -6,9 +6,11 @@ import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company.Company
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user.*;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsRS;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -55,9 +57,9 @@ public class UserControllerW {
      * Get user details
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @Return ResponseEntity
+     * @Return ResRS
      */
-    @GetMapping("/user")
+    @GetMapping("/profile")
     public ResRS getUser() {
         UserDetailsRS userDetailsRS = userSV.getUser();
         return localization.resAPI(HttpStatus.OK,"res_succ",userDetailsRS);
@@ -70,9 +72,9 @@ public class UserControllerW {
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @Param profileRequest
-     * @Return ResponseEntity
+     * @Return ResRS
      */
-    @PatchMapping(value = "/update-profile", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PatchMapping(value = "/profile", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResRS updateProfile(@Valid ProfileRQ profileRQ, @RequestParam(value = "file", required = false) MultipartFile multipartFile) throws ParseException {
         UserDetailsRS userDetailsRS = userSV.updateProfile(profileRQ, multipartFile);
         return localization.resAPI(HttpStatus.OK,"res_succ",userDetailsRS);
@@ -85,7 +87,7 @@ public class UserControllerW {
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @Param pwdRequest
-     * @Return ResponseEntity
+     * @Return ResRS
      */
     @PatchMapping("/change-password")
     public ResRS changPassword(@Valid @RequestBody ChangePasswordRQ passwordRQ) {
@@ -100,12 +102,12 @@ public class UserControllerW {
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @Param verifyRequest
-     * @Return ResponseEntity
+     * @Return ResRS
      */
     @PatchMapping("/auth/forgot-password")
-    public ResRS resetPassword(@Valid @RequestBody ResetPasswordRQ passwordRQ) {
-        userSV.resetPassword(passwordRQ);
-        return localization.resAPI(HttpStatus.OK,"reset_pwd_succ", "");
+    public ResRS resetPassword(@Valid @RequestBody ResetPasswordRQ passwordRQ, @RequestHeader HttpHeaders httpHeaders) {
+        UserDetailsTokenRS userDetail = userSV.resetPassword(passwordRQ, httpHeaders);
+        return localization.resAPI(HttpStatus.OK,"reset_pwd_succ", userDetail);
     }
 
 
@@ -115,7 +117,7 @@ public class UserControllerW {
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @Param verifyRequest
-     * @Return ResponseEntity
+     * @Return ResRS
      */
     @PostMapping("/auth/send-forgot-password")
     public ResRS sendCodeResetPassword(@RequestBody SendVerifyRQ sendVerifyRQ) {
@@ -130,7 +132,7 @@ public class UserControllerW {
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @Param updateContactRequest
-     * @Return ResponseEntity
+     * @Return ResRS
      */
     @PatchMapping("/update-contact")
     public ResRS updateContact(@Valid @RequestBody UpdateContactRQ contactRQ) {
@@ -145,7 +147,7 @@ public class UserControllerW {
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @Param updateContactRequest
-     * @Return ResponseEntity
+     * @Return ResRS
      */
     @PostMapping("/send-update-contact")
     public ResRS sendCodeUpdateContact(@RequestBody UpdateContactRQ contactRQ) {
@@ -178,7 +180,7 @@ public class UserControllerW {
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @Param deactiveAccount
-     * @Return ResponseEntity
+     * @Return ResRS
      */
     @PatchMapping("/deactive-account")
     public ResRS deactiveAccount(@Valid @RequestBody DeactiveAccountRQ accountRQ) {
@@ -193,7 +195,7 @@ public class UserControllerW {
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @Param skyownerRequest
-     * @Return ResponseEntity
+     * @Return Object
      */
     @PostMapping(value = "/apply-skyowner", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public Object applySkyowner(@Valid @ModelAttribute("companyRQ") CompanyRQ companyRQ, Errors errors) {
@@ -208,5 +210,31 @@ public class UserControllerW {
 
     }
 
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Listing invitation of user from skyowner
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Return ResRS
+     */
+    @GetMapping("/invitations")
+    public ResRS invitations() {
+        return localization.resAPI(HttpStatus.OK,"res_succ", userSV.getInvitations());
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Option for user to accept or refuse
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param optionStaffRQ;
+     */
+    @PostMapping("/invitations")
+    public ResRS optionInv(@Valid @RequestBody OptionStaffRQ optionRQ) {
+        userSV.options(optionRQ);
+        return localization.resAPI(HttpStatus.OK,"res_succ", "");
+    }
 
 }

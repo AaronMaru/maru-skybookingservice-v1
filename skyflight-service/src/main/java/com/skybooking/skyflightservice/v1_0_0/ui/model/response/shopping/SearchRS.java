@@ -20,4 +20,5 @@ public class SearchRS extends BaseRS {
     public SearchRS(HttpStatus httpStatus, String message) {
         super(httpStatus, message);
     }
+
 }

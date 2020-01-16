@@ -8,6 +8,7 @@ import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -30,12 +31,13 @@ public class LocaleControllerW {
      * get module translation by locale id
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @return Response
+     * @Return Response
      */
-    @GetMapping("/language-module")
-    public ResRS getLanguageModuleByLocaleId() {
-        ModuleLanguageRS response = localeSV.findModuleLanguageByLocaleId(headerBean.getLocalizationId());
-        return localization.resAPI(HttpStatus.OK, "res_succ", response);
+    @GetMapping("/language-module/{lang}")
+    public ResRS getLanguageModuleByLocaleId(@PathVariable String lang) {
+        System.out.println(headerBean.getLocalizationId(lang));
+        ModuleLanguageRS response = localeSV.findModuleLanguageByLocaleId(headerBean.getLocalizationId(lang));
+        return localization.resAPI(HttpStatus.OK, "res_succ", response.getRoot());
     }
 
 
@@ -44,10 +46,11 @@ public class LocaleControllerW {
      * list all locale
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @return List
+     * @Return List
      */
     @GetMapping(value = "/locale")
     public ResRS getAllLocale() {
         return localization.resAPI(HttpStatus.OK, "res_succ", localeSV.findAllLocale());
     }
+
 }

@@ -2,11 +2,15 @@ package com.skybooking.stakeholderservice.v1_0_0.service.interfaces.user;
 
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company.CompanyRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user.*;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.InvitationRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsRS;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.text.ParseException;
+import java.util.List;
 
 @Service
 public interface UserSV {
@@ -15,10 +19,12 @@ public interface UserSV {
     void changePassword(ChangePasswordRQ passwordRQ);
     UserDetailsRS updateProfile(ProfileRQ profileRQ, MultipartFile multipartFile) throws ParseException;
     void deactiveAccount(DeactiveAccountRQ accountRQ);
-    void resetPassword(ResetPasswordRQ passwordRQ);
+    UserDetailsTokenRS resetPassword(ResetPasswordRQ passwordRQ, HttpHeaders httpHeaders);
     int sendCodeResetPassword(SendVerifyRQ sendVerifyRQ);
     void updateContact(UpdateContactRQ contactRQ);
     int sendCodeUpdateContact(UpdateContactRQ contactRQ);
     void applySkyowner(CompanyRQ companyRQ);
+    List<InvitationRS> getInvitations();
+    void options(OptionStaffRQ optionStaffRQ);
 
 }

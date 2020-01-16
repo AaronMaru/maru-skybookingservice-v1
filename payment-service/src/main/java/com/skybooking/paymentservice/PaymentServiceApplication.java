@@ -1,46 +1,29 @@
 package com.skybooking.paymentservice;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import com.skybooking.paymentservice.v1_0_0.util.General;
+import com.skybooking.paymentservice.v1_0_0.util.Payments;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.core.env.Environment;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 @SpringBootApplication
+@Configuration
 public class PaymentServiceApplication {
 
     public static void main(String[] args) {
+
         SpringApplication.run(PaymentServiceApplication.class, args);
+
     }
 
-}
+    @Bean
+    public Payments payments() {
+        return new Payments();
+    };
 
-@RestController
-class FlightPaymentController {
-
-    @Autowired
-    Environment environment;
-
-    @GetMapping("/flights")
-    public Flight getFlight() {
-
-        Flight flight = new Flight();
-        flight.setMessage("Get Flight Available (Payment) " + environment.getProperty("local.server.port"));
-
-        return flight;
-    }
-}
-
-class Flight {
-
-    private String message;
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
+    @Bean
+    public General general() {
+        return new General();
     }
 }

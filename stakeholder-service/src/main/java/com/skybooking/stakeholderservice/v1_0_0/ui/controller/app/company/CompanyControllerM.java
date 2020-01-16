@@ -2,6 +2,7 @@ package com.skybooking.stakeholderservice.v1_0_0.ui.controller.app.company;
 
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.company.CompanySV;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company.CompanyRQ;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.CompanyRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
@@ -27,13 +28,14 @@ public class CompanyControllerM {
     private Localization localization;
 
 
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Update user profile
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @Param profileRequest
-     * @Return ResponseEntity
+     * @Return Object
      */
     @PatchMapping(value = "/company/{id}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
     public Object updateCompany(@ModelAttribute("companyRQ") @Valid CompanyRQ companyRQ, Errors errors, @PathVariable Long id) {
@@ -47,5 +49,33 @@ public class CompanyControllerM {
         return localization.resAPI(HttpStatus.OK, "res_succ", companyRS);
 
     }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Bussiness Type
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Return ResRS
+     */
+    @GetMapping("/auth/bussiness-type")
+    public ResRS businessType() {
+        return localization.resAPI(HttpStatus.OK, "res_succ", companySV.bussinessTypes());
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Bussiness doc
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Return ResRS
+     * @Param id
+     */
+    @GetMapping("/auth/bussiness-doc/{id}")
+    public ResRS businessDocs(@PathVariable Long id) {
+        return localization.resAPI(HttpStatus.OK, "res_succ", companySV.bussinessDoc(id));
+    }
+
 
 }

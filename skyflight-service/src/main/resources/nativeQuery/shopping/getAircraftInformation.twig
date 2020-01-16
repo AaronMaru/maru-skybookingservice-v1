@@ -1,0 +1,12 @@
+SELECT
+ai.id,
+ai.aircraft_code as code,
+(
+SELECT al.`name` as craftName
+FROM aircraft_locale al
+WHERE al.aircraft_id = ai.id
+AND al.locale_id = 1
+) AS aircraft
+
+FROM aircrafts_info ai
+WHERE ai.aircraft_code = :aircraft

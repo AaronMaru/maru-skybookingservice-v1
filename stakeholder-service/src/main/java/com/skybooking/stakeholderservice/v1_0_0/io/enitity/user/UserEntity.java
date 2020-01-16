@@ -1,19 +1,15 @@
 package com.skybooking.stakeholderservice.v1_0_0.io.enitity.user;
 
-import com.skybooking.stakeholderservice.v1_0_0.io.enitity.notification.NotificationEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.verify.VerifyUserEntity;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
 import javax.persistence.*;
 import java.util.Date;
 import java.util.List;
 
-
 @Entity
 @Table(name = "users")
 public class UserEntity {
-
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,7 +23,6 @@ public class UserEntity {
 
     @Column(nullable = true)
     private String slug;
-
 
     @Column(nullable = true)
     private String username;
@@ -223,6 +218,14 @@ public class UserEntity {
 
     public void setVerifyUserEntity(List<VerifyUserEntity> verifyUserEntity) {
         this.verifyUserEntity = verifyUserEntity;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
     }
 
 }

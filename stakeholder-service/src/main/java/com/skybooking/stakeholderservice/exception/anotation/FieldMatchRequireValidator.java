@@ -1,11 +1,18 @@
 package com.skybooking.stakeholderservice.exception.anotation;
 
+import com.skybooking.stakeholderservice.v1_0_0.io.enitity.company.BussinessTypeEntity;
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.BussinessTypeRP;
 import org.apache.commons.beanutils.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
+import java.util.Optional;
 
 public class FieldMatchRequireValidator implements ConstraintValidator<FieldMatchRequire, Object> {
+
+    @Autowired
+    private BussinessTypeRP bussinessTypeRP;
 
     private String firstFieldName;
     private String secondFieldName;
@@ -31,9 +38,13 @@ public class FieldMatchRequireValidator implements ConstraintValidator<FieldMatc
             final Object secondObj = BeanUtils.getProperty(value, secondFieldName);
             final Object thirdObj = BeanUtils.getProperty(value, thirdFieldName);
 
-           if (firstObj.equals("com_gov")) {
-               valid = secondObj != null && !secondObj.equals("") && thirdObj != null && !thirdObj.equals("");
-           }
+            Optional<BussinessTypeEntity> bussinessType = bussinessTypeRP.findById(Long.parseLong(firstObj));
+            if(!bussinessType.isEmpty()) {
+                if (bussinessType.get().getName().equals("Goverment")) {
+                    valid = secondObj != null && !secondObj.equals("") && thirdObj != null && !thirdObj.equals("");
+                }
+            }
+
         }
 
         catch (final Exception ignore)

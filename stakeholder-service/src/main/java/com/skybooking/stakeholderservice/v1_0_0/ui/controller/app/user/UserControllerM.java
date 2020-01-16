@@ -6,9 +6,11 @@ import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company.Company
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user.*;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsRS;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -56,7 +58,7 @@ public class UserControllerM {
      *
      * @Return ResponseEntity
      */
-    @GetMapping("/user")
+    @GetMapping("/profile")
     public ResRS getUser() {
         UserDetailsRS userDetailsRS = userSV.getUser();
         return localization.resAPI(HttpStatus.OK,"res_succ",userDetailsRS);
@@ -71,7 +73,7 @@ public class UserControllerM {
      * @Param profileRequest
      * @Return ResponseEntity
      */
-    @PatchMapping(value = "/update-profile", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PatchMapping(value = "/profile", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResRS updateProfile(@Valid ProfileRQ profileRQ, @RequestParam(value = "file", required = false) MultipartFile multipartFile) throws ParseException {
         UserDetailsRS userDetailsRS = userSV.updateProfile(profileRQ, multipartFile);
         return localization.resAPI(HttpStatus.OK,"res_succ",userDetailsRS);
@@ -102,9 +104,9 @@ public class UserControllerM {
      * @Return ResponseEntity
      */
     @PatchMapping("/auth/forgot-password")
-    public ResRS resetPassword(@Valid @RequestBody ResetPasswordRQ passwordRQ) {
-        userSV.resetPassword(passwordRQ);
-        return localization.resAPI(HttpStatus.OK, "reset_pwd_succ", "");
+    public ResRS resetPassword(@Valid @RequestBody ResetPasswordRQ passwordRQ, @RequestHeader HttpHeaders httpHeaders) {
+        UserDetailsTokenRS userDetail = userSV.resetPassword(passwordRQ, httpHeaders);
+        return localization.resAPI(HttpStatus.OK, "reset_pwd_succ", userDetail);
     }
 
 
@@ -204,6 +206,17 @@ public class UserControllerM {
 
         return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"apl_skyowner_succ", "");
 
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Listing invitation of user from skyowner
+     * -----------------------------------------------------------------------------------------------------------------
+     */
+    @GetMapping("/invitations")
+    public ResRS invitations() {
+        return localization.resAPI(HttpStatus.OK,"res_succ", userSV.getInvitations());
     }
 
 

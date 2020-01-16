@@ -33,7 +33,7 @@ public class CurrencyControllerM {
      */
     @GetMapping(value = "currency")
     public ResRS getCurrencyByLocaleId() {
-        var responses = currencySV.findAllCurrencyByLocaleId(headerBean.getLocalizationId());
+        var responses = currencySV.findAllCurrencyByLocaleId(headerBean.getLocalizationId(null));
         return localization.resAPI(HttpStatus.OK, "res_succ", responses);
     }
 }

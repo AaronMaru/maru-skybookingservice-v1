@@ -12,7 +12,6 @@ import javax.validation.constraints.Size;
 @UsernameUnique(first = "username", second = "code", message = "Username already exists")
 public class SkyUserRegisterRQ {
 
-
     @Phone
     @Email
     @NotEmpty(message = "Please provide a email or phone number")
@@ -30,9 +29,13 @@ public class SkyUserRegisterRQ {
     @Size(min = 6, max = 25)
     @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*?[#?!@$%^&*-]).+$", message = "Invalid password")
     private String password;
+
     @NotEmpty(message = "Please provide a confirm password")
     private String confirmPassword;
 
+    @NotEmpty(message = "Please provide a sky type")
+    @Include(contains = "personal|bussiness", delimiter = "\\|")
+    private String typeSky;
 
     public String getUsername() {
         return username;
@@ -81,6 +84,14 @@ public class SkyUserRegisterRQ {
 
     public void setConfirmPassword(String confirmPassword) {
         this.confirmPassword = confirmPassword;
+    }
+
+    public String getTypeSky() {
+        return typeSky;
+    }
+
+    public void setTypeSky(String typeSky) {
+        this.typeSky = typeSky;
     }
 
 }

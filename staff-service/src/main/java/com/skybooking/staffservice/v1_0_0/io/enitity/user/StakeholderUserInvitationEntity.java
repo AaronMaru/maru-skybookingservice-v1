@@ -17,7 +17,7 @@ public class StakeholderUserInvitationEntity {
     private String slug;
 
     @Column(name = "invite_stakeholder_user_id")
-    private Integer inviteStakeholderUserId;
+    private Long inviteStakeholderUserId;
 
     @Column(name = "invite_from")
     private String inviteFrom;
@@ -58,11 +58,11 @@ public class StakeholderUserInvitationEntity {
         this.slug = slug;
     }
 
-    public Integer getInviteStakeholderUserId() {
-        return this.inviteStakeholderUserId;
+    public Long getInviteStakeholderUserId() {
+        return inviteStakeholderUserId;
     }
 
-    public void setInviteStakeholderUserId(Integer inviteStakeholderUserId) {
+    public void setInviteStakeholderUserId(Long inviteStakeholderUserId) {
         this.inviteStakeholderUserId = inviteStakeholderUserId;
     }
 

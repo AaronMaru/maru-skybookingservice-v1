@@ -23,19 +23,22 @@ public class HeaderBean {
      * @Param key
      * @Return String
      */
-    public String getLocalization() {
+    public String getLocalization(String lang) {
 
         Object result = entityManager
                 .createNativeQuery("SELECT CASE WHEN COUNT(name) > 0 THEN 'true' ELSE 'false' END FROM frontend_locales WHERE locale = :locale AND status = 1")
-                .setParameter("locale", request.getHeader("X-localization"))
+                .setParameter("locale", lang == null ? request.getHeader("X-localization") : lang)
                 .getSingleResult();
 
         Boolean b = Boolean.parseBoolean(result.toString());
 
-        String reqLocale = request.getHeader("X-localization");
+        String reqLocale = lang == null ? request.getHeader("X-localization") : lang;
+
         String locale = reqLocale == null ? "en" : (reqLocale.equals("")) ? "en" : (b ? reqLocale : "en");
 
         return locale;
+
+
     }
 
 
@@ -46,12 +49,11 @@ public class HeaderBean {
      *
      * @return id of localization
      */
-
-    public long getLocalizationId() {
+    public long getLocalizationId(String lang) {
 
         Object result = entityManager
                 .createNativeQuery("SELECT id FROM frontend_locales WHERE locale = :locale AND status = 1")
-                .setParameter("locale", this.getLocalization())
+                .setParameter("locale", this.getLocalization(lang))
                 .getSingleResult();
 
         return Long.valueOf(result.toString());
@@ -67,6 +69,7 @@ public class HeaderBean {
      * @Return String
      */
     public String getCurrencyCode() {
+
         Object result = entityManager
                 .createNativeQuery("SELECT CASE WHEN COUNT(code) > 0 THEN 'true' ELSE 'false' END FROM currency WHERE code = :currency AND status = 1")
                 .setParameter("currency", request.getHeader("CurrencyCode"))
@@ -78,6 +81,7 @@ public class HeaderBean {
         String currency = reqCurrency == null ? "USD" : (reqCurrency.equals("")) ? "USD" : (b ? reqCurrency : "USD");
 
         return currency;
+
     }
 
 

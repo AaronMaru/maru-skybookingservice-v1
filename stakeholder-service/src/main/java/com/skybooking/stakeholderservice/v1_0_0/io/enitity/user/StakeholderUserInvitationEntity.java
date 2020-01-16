@@ -11,19 +11,21 @@ import java.util.Date;
 public class StakeholderUserInvitationEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @Column(name = "slug")
     private String slug;
 
     @Column(name = "invite_stakeholder_user_id")
-    private Integer inviteStakeholderUserId;
+    private Long inviteStakeholderUserId;
 
     @Column(name = "invite_from")
     private String inviteFrom;
 
     @Column(name = "invite_to")
     private String inviteTo;
+
+    private Integer status;
 
     @Column(name = "deleted_at")
     private java.util.Date deletedAt;
@@ -41,12 +43,11 @@ public class StakeholderUserInvitationEntity {
     @Column(name = "stakeholder_company_id")
     private Long stakeholderCompanyId;
 
-
-    public Integer getId() {
-        return this.id;
+    public Long getId() {
+        return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -58,11 +59,11 @@ public class StakeholderUserInvitationEntity {
         this.slug = slug;
     }
 
-    public Integer getInviteStakeholderUserId() {
-        return this.inviteStakeholderUserId;
+    public Long getInviteStakeholderUserId() {
+        return inviteStakeholderUserId;
     }
 
-    public void setInviteStakeholderUserId(Integer inviteStakeholderUserId) {
+    public void setInviteStakeholderUserId(Long inviteStakeholderUserId) {
         this.inviteStakeholderUserId = inviteStakeholderUserId;
     }
 
@@ -112,6 +113,14 @@ public class StakeholderUserInvitationEntity {
 
     public void setStakeholderCompanyId(Long stakeholderCompanyId) {
         this.stakeholderCompanyId = stakeholderCompanyId;
+    }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
     }
 
 }

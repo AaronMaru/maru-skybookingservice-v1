@@ -1,0 +1,16 @@
+SELECT
+mru.id as id,
+(
+SELECT (percentage / 100)
+FROM mockup_rule_user_item mrui
+WHERE mrui.mockup_rule_user_id = mru.id
+
+-- where cabin class of flight
+AND mrui.class = :cabinClass
+
+) AS markup
+
+FROM mockup_rule_user mru
+
+-- where stakeholder_user_id for skyuser
+WHERE mru.skyuser_id = :userId

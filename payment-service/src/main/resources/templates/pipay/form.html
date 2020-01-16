@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>IPay88</title>
+</head>
+<body>
+
+<form name="pipayform" id="pipayform" th:action="@{${startTransaction}}" th:method="post">
+    <input type="hidden" name="mid" th:value="${mid}" />
+    <input type="hidden" name="lang" th:value="${lang}" />
+    <input type="hidden" name="orderid" th:value="${orderId}" />
+    <input type="hidden" name="orderDesc" th:value="${orderDesc}" />
+    <input type="hidden" name="orderAmount" th:value="${orderAmount}" />
+    <input type="hidden" name="currency" th:value="${currency}" />
+    <input type="hidden" name="payerPhone" th:value="${payerPhone}" />
+    <input type="hidden" name="sid" th:value="${sid}" />
+    <input type="hidden" name="did" th:value="${did}" />
+    <input type="hidden" name="orderDate" th:value="${orderDate}" />
+    <input type="hidden" name="payMethod" th:value="${payMethod}" />
+    <input type="hidden" name="trType" th:value="${trType}" />
+    <input type="hidden" name="cancelTimer" th:value="${cancelLimer}" />
+    <input type="hidden" name="confirmURL" th:value="${confirmURL}" />
+    <input type="hidden" name="cancelURL" th:value="${cancelURL}" />
+    <input type="hidden" name="var1"  th:value="${var1}" />
+    <input type="hidden" name="description" th:value="${description}" />
+    <input type="hidden" name="successScreenDelay" th:value="${succesScrDelay}" />
+    <input type="hidden" name="digest" th:value="${digest}" />
+</form>
+
+
+<script type="text/javascript">
+    document.pipayform.submit();
+</script>
+
+</body>
+</html>

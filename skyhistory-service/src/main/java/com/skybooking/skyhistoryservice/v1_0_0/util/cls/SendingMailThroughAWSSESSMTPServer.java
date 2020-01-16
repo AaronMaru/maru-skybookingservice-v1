@@ -1,19 +1,17 @@
 package com.skybooking.skyhistoryservice.v1_0_0.util.cls;
 
-import com.lowagie.text.DocumentException;
+import com.github.jhonnymertz.wkhtmltopdf.wrapper.Pdf;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
-import org.xhtmlrenderer.pdf.ITextRenderer;
 
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.MimeMessage;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -22,6 +20,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class SendingMailThroughAWSSESSMTPServer {
+
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Send mail throw amazon
@@ -55,8 +55,12 @@ public class SendingMailThroughAWSSESSMTPServer {
             Template template = configuration.getTemplate("index.ftl");
             String html = FreeMarkerTemplateUtils.processTemplateIntoString(template, mailTemplateData);
 
+            if (mailTemplateData.containsKey("fullName")) {
+                html = this.replaceCode(html, "{{FULL_NAME}}", mailTemplateData.get("fullName").toString());
+            }
+
             if (pdfData != null) {
-                File file = this.generatePDF(configuration, pdfData);
+                File file = this.pdfMultiLang(configuration, pdfData);
                 helper.addAttachment(file.getName(), file);
             }
 
@@ -74,30 +78,36 @@ public class SendingMailThroughAWSSESSMTPServer {
         }
     }
 
-    private File generatePDF(Configuration configuration, Map<String, Object> pdfData) {
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Generate pdf file
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param configuration
+     * @Param pdfData
+     */
+
+    private String replaceCode(String html, String target, String code) {
+        return html.replace(target, code);
+    }
+
+    private File pdfMultiLang(Configuration configuration, Map<String, Object> pdfData) throws IOException, InterruptedException {
+
+        Pdf pdf = new Pdf();
 
         ClassPathResource resource = new ClassPathResource(pdfData.get("templateName") + ".pdf");
         File file = new File(resource.getPath());
-        ITextRenderer renderer = new ITextRenderer();
+
         try {
+            Template template = configuration.getTemplate("pdf/" + pdfData.get("templateName") + ".ftl");
+            String htmlTemplate = FreeMarkerTemplateUtils.processTemplateIntoString(template, pdfData);
 
-            Template template = configuration.getTemplate(pdfData.get("templateName") + ".ftl");
-
-            String html = FreeMarkerTemplateUtils.processTemplateIntoString(template, pdfData);
-
-            renderer.setDocumentFromString(html);
-            renderer.layout();
-            renderer.createPDF(new FileOutputStream(file));
-
-        } catch (IOException e) {
-            e.printStackTrace();
+            pdf.addPageFromString(htmlTemplate);
+            pdf.saveAs(pdfData.get("templateName") + ".pdf");
         } catch (TemplateException e) {
             e.printStackTrace();
-        } catch (DocumentException e) {
-            e.printStackTrace();
-
         }
+
         return file;
     }
-
 }

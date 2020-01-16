@@ -9,16 +9,21 @@ import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserReposito
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.passenger.PassengerSV;
 import com.skybooking.stakeholderservice.v1_0_0.transformer.passenger.PassengerTF;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.passenger.PassengerRQ;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.passenger.PassengerPagingRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.passenger.PassengerRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.activitylog.ActivityLoggingBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.activitylog.ActivityLoggingBean.Action;
+import com.skybooking.stakeholderservice.v1_0_0.util.cls.DateValidatorUsingDateFormat;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.skyuser.UserBean;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.awt.print.Pageable;
+import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -39,18 +44,43 @@ public class PassengerIP implements PassengerSV {
     @Autowired
     private ActivityLoggingBean logger;
 
+    @Autowired
+    private HttpServletRequest request;
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * get list of passengers
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @param pageRequest
      * @return List<PassengerRS>
      */
     @Override
-    public List<PassengerRS> getItems(Pageable pageRequest) {
-        return PassengerTF.getResponseList(this.getPassengerList());
+    public PassengerPagingRS getItems() {
+
+        UserEntity userEntity = userBean.getUserPrincipal();
+        StakeHolderUserEntity stakeHolder = userEntity.getStakeHolderUser();
+
+        Integer size = (request.getParameter("size") != null && !request.getParameter("size").isEmpty()) ? Integer.valueOf(request.getParameter("size")) : 10;
+        Integer page = (request.getParameter("page") != null && !request.getParameter("page").isEmpty()) ? Integer.valueOf(request.getParameter("page")) - 1 : 0;
+
+        Page<PassengerEntity> passengers = repository.findByStakeHolderUserEntity(stakeHolder, PageRequest.of(page, size));
+
+        List<PassengerRS> PassengerRSS = new ArrayList<>();
+
+        for (PassengerEntity passenger : passengers) {
+            PassengerRS passengerRS = new PassengerRS();
+            BeanUtils.copyProperties(passenger, passengerRS);
+            PassengerRSS.add(passengerRS);
+        }
+
+        PassengerPagingRS passengerPagingRS = new PassengerPagingRS();
+        passengerPagingRS.setSize(size);
+        passengerPagingRS.setPage(page + 1);
+        passengerPagingRS.setData(PassengerRSS);
+        passengerPagingRS.setTotals(passengers.getTotalElements());
+
+        return passengerPagingRS;
     }
 
 
@@ -79,9 +109,16 @@ public class PassengerIP implements PassengerSV {
     @Override
     public PassengerRS createItem(PassengerRQ request) {
 
+        DateValidatorUsingDateFormat cl = new DateValidatorUsingDateFormat();
+
+        if (!cl.valid(request.getBirthDate(), "yyyy-MM-dd") || !cl.valid(request.getExpireDate(), "yyyy-MM-dd")) {
+            throw new BadRequestException("Wrong date format", "");
+        }
+
         UserEntity userEntity = userBean.getUserPrincipal();
         StakeHolderUserEntity stakeHolder = userEntity.getStakeHolderUser();
         PassengerEntity passenger = PassengerTF.getEntity(request);
+
         passenger.setStakeHolderUserEntity(stakeHolder);
 
         this.logger.activities(Action.CREATE_PASSENGER);
@@ -160,20 +197,4 @@ public class PassengerIP implements PassengerSV {
 
     }
 
-
-    /**
-     * -----------------------------------------------------------------------------------------------------------------
-     * This method will get all passenger of stakeholder
-     * -----------------------------------------------------------------------------------------------------------------
-     *
-     * @return List<PassengerEntity>
-     */
-    private List<PassengerEntity> getPassengerList() {
-
-        UserEntity userEntity = userBean.getUserPrincipal();
-        StakeHolderUserEntity stakeHolder = userEntity.getStakeHolderUser();
-        List<PassengerEntity> passengers = stakeHolder.getPassengerEntities();
-
-        return passengers;
-    }
 }

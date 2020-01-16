@@ -1,7 +1,5 @@
 package com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user;
 
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.skybooking.stakeholderservice.exception.anotation.Code;
 import com.skybooking.stakeholderservice.exception.anotation.FieldMatch;
 
@@ -18,7 +16,7 @@ public class ResetPasswordRQ {
 
     private String code;
 
-    @NotEmpty(message = "Please provide username")
+    @NotEmpty(message = "Please provide token")
     private String token;
 
     @NotEmpty(message = "Please provide new password")

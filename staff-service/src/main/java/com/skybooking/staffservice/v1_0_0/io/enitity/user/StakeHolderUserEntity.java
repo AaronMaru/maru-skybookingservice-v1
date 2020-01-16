@@ -44,7 +44,7 @@ public class StakeHolderUserEntity {
     @Column(name = "is_skyowner")
     private int isSkyowner = 0;
 
-    private int status = 1;
+    private Integer status = 1;
 
     private int code = 0;
 
@@ -112,10 +112,6 @@ public class StakeHolderUserEntity {
         this.isSkyowner = isSkyowner;
     }
 
-    public void setStatus(int status) {
-        this.status = status;
-    }
-
     public Long getId() {
         return id;
     }
@@ -156,9 +152,6 @@ public class StakeHolderUserEntity {
         return isSkyowner;
     }
 
-    public int getStatus() {
-        return status;
-    }
 
     public int getCode() {
         return code;
@@ -204,5 +197,11 @@ public class StakeHolderUserEntity {
         this.updatedAt = updatedAt;
     }
 
+    public Integer getStatus() {
+        return status;
+    }
 
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
 }

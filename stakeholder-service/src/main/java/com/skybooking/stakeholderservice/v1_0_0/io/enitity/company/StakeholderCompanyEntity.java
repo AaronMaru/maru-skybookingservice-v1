@@ -8,6 +8,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import javax.persistence.*;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "stakeholder_companies")
@@ -23,8 +24,8 @@ public class StakeholderCompanyEntity {
     inverseJoinColumns = @JoinColumn(name = "stakeholder_user_id", referencedColumnName = "id"))
     private List<StakeHolderUserEntity> stakeHolderUsers;
 
-    @OneToMany(mappedBy = "stakeholderCompany", cascade = CascadeType.ALL)
-    private List<StakeholderCompanyDocsEntity> stakeholderCompanyDocs;
+    @OneToMany(mappedBy = "stakeholderCompany", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<StakeholderCompanyDocsEntity> stakeholderCompanyDocs;
 
     @Column(name = "slug")
     private String slug;
@@ -95,8 +96,8 @@ public class StakeholderCompanyEntity {
     @Column(name = "created_from")
     private String createdFrom;
 
-    @Column(name = "type_value")
-    private String typeValue;
+    @Column(name = "bussiness_type_id")
+    private Long bussinessTypeId;
 
     @Column(name = "contact_person")
     private String contactPerson;
@@ -265,12 +266,12 @@ public class StakeholderCompanyEntity {
         this.createdFrom = createdFrom;
     }
 
-    public String getTypeValue() {
-        return this.typeValue;
+    public Long getBussinessTypeId() {
+        return bussinessTypeId;
     }
 
-    public void setTypeValue(String typeValue) {
-        this.typeValue = typeValue;
+    public void setBussinessTypeId(Long bussinessTypeId) {
+        this.bussinessTypeId = bussinessTypeId;
     }
 
     public String getContactPerson() {
@@ -305,19 +306,22 @@ public class StakeholderCompanyEntity {
         this.description = description;
     }
 
-//    public List<StakeHolderUserEntity> getStakeHolderUsers() {
-//        return stakeHolderUsers;
-//    }
-
     public void setStakeHolderUsers(List<StakeHolderUserEntity> stakeHolderUsers) {
         this.stakeHolderUsers = stakeHolderUsers;
     }
 
-    public List<StakeholderCompanyDocsEntity> getStakeholderCompanyDocs() {
+    public Set<StakeholderCompanyDocsEntity> getStakeholderCompanyDocs() {
         return stakeholderCompanyDocs;
     }
 
-    public void setStakeholderCompanyDocs(List<StakeholderCompanyDocsEntity> stakeholderCompanyDocs) {
+    public void setStakeholderCompanyDocsSet(Set<StakeholderCompanyDocsEntity> stakeholderCompanyDocs) {
+        this.stakeholderCompanyDocs.clear();
+        this.stakeholderCompanyDocs.addAll(stakeholderCompanyDocs);
+    }
+
+    public void setStakeholderCompanyDocPut(Set<StakeholderCompanyDocsEntity> stakeholderCompanyDocs) {
         this.stakeholderCompanyDocs = stakeholderCompanyDocs;
     }
+
+
 }

@@ -3,6 +3,7 @@ package com.skybooking.staffservice.v1_0_0.ui.model.response.invitation;
 public class SkyuserDetailsRS {
 
     private Integer id;
+//    private Integer skyuserId;
     private String firstName;
     private String lastName;
 
@@ -42,6 +43,14 @@ public class SkyuserDetailsRS {
         this.photoMedium = photoMedium;
     }
 
+//    public Integer getSkyuserId() {
+//        return skyuserId;
+//    }
+//
+//    public void setSkyuserId(Integer skyuserId) {
+//        this.skyuserId = skyuserId;
+//    }
+
     public Integer getId() {
         return id;
     }
@@ -49,4 +58,5 @@ public class SkyuserDetailsRS {
     public void setId(Integer id) {
         this.id = id;
     }
+
 }

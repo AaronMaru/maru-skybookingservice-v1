@@ -6,17 +6,19 @@ import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.skybooking.stakeholderservice.exception.httpstatus.InternalServerError;
 import com.skybooking.stakeholderservice.exception.httpstatus.UnauthorizedException;
-import com.skybooking.stakeholderservice.v1_0_0.io.enitity.company.StakeholderCompanyDocsEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.company.StakeholderCompanyEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.contact.ContactEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.notification.UserPlayerEntity;
+import com.skybooking.stakeholderservice.v1_0_0.io.enitity.redis.UserTokenEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.user.PermissionTO;
+import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.user.TotalBookingTO;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.user.UserNQ;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.user.UserProfileTO;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyHasUserRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.contact.ContactRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.notification.UserPlayerRP;
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.redis.UserTokenRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserRepository;
 import com.skybooking.stakeholderservice.v1_0_0.transformer.TokenTF;
 import com.skybooking.stakeholderservice.v1_0_0.transformer.UserDetailsTF;
@@ -39,7 +41,6 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
 import java.awt.*;
@@ -49,10 +50,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Optional;
 
 @Component
 public class UserBean {
@@ -86,6 +85,9 @@ public class UserBean {
 
     @Autowired
     private UserPlayerRP userPlayerRP;
+
+    @Autowired
+    private UserTokenRP userTokenRP;
 
 
     /**
@@ -144,6 +146,7 @@ public class UserBean {
         headers.add("Authorization", credential);
 
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+
         map.add("username", username);
         map.add("password", password);
         map.add("code", code);
@@ -173,7 +176,7 @@ public class UserBean {
         String encCredentials = "Basic " + new String(Base64.encodeBase64(credentials.getBytes()));
 
         if (!httpHeaders.getFirst("Authorization").equals(encCredentials)) {
-            throw new UnauthorizedException("Unauthorized", null);
+            throw new UnauthorizedException("Unauthorized", "");
         }
         return httpHeaders.getFirst("Authorization");
 
@@ -200,9 +203,15 @@ public class UserBean {
         userDetailDao.setPhone(generalBean.strCv(user.getPhone()));
         userDetailDao.setCode(generalBean.strCv(user.getCode()));
         userDetailDao.setGender(generalBean.strCv(user.getStakeHolderUser().getGender()));
-        userDetailDao.setStatus(user.getStakeHolderUser().getStatus());
+//        userDetailDao.setStatus(user.getStakeHolderUser().getStatus());
         userDetailDao.setSkyowner(user.getStakeHolderUser().getIsSkyowner());
         userDetailDao.setUserCode(user.getStakeHolderUser().getUserCode());
+        userDetailDao.setDob(generalBean.strCv(user.getStakeHolderUser().getDateOfBirth()));
+        userDetailDao.setJoined(generalBean.strCv(user.getCreatedAt().toString()));
+        userDetailDao.setNationality(generalBean.strCv(user.getStakeHolderUser().getNationality()));
+
+        TotalBookingTO totalBooking = userNQ.totalBooking(user.getStakeHolderUser().getId());
+        userDetailDao.setTotalBooking(totalBooking.getBookingQty());
 
         if (user.getStakeHolderUser().getIsSkyowner() == 1) {
             List<CompanyRS> companyRS = companiesDetails(user.getStakeHolderUser().getStakeholderCompanies());
@@ -235,6 +244,14 @@ public class UserBean {
     }
 
 
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Getting a listing of permission
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param role
+     * @Return List<PermissionRS>
+     */
     public List<PermissionRS> getPermissions(String role) {
 
         List<PermissionTO> pmsTO = userNQ.listPermission(role);
@@ -256,7 +273,8 @@ public class UserBean {
      * Fields list companies details
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @Return stkCompanies
+     * @Param companies
+     * @Return List<CompanyRS>
      */
     public List<CompanyRS> companiesDetails(List<StakeholderCompanyEntity> companies) {
 
@@ -270,17 +288,15 @@ public class UserBean {
             companyRS.setContactPerson(company.getContactPerson());
             companyRS.setContactPosition(company.getContactPosition());
 
-            if (company.getStakeholderCompanyDocs().size() > 0) {
-                Optional<StakeholderCompanyDocsEntity> stkCompanyDocs = company.getStakeholderCompanyDocs().stream().findFirst();
-                companyRS.setLicense(environment.getProperty("spring.awsImageUrl.companyLicense") + stkCompanyDocs.get().getImage());
-            }
-            if (company.getStakeholderCompanyDocs().size() > 1) {
-                Optional<StakeholderCompanyDocsEntity> stkCompanyDocsSecond = company.getStakeholderCompanyDocs().stream().skip(company.getStakeholderCompanyDocs().size() - 1).findFirst();
-                companyRS.setLicenseSecond(environment.getProperty("spring.awsImageUrl.companyLicense") + stkCompanyDocsSecond.get().getImage());
-            }
+//            List<LicenseRS> licenses = new ArrayList<>();
+//            for (StakeholderCompanyDocsEntity doc : company.getStakeholderCompanyDocs()) {
+//                LicenseRS license = new LicenseRS();
+//                license.setDocUrl(environment.getProperty("spring.awsImageUrl.companyLicense") + doc.getFileName());
+//                licenses.add(license);
+//            }
+//            companyRS.setLicenses(licenses);
 
             companyRS.setProfileImg(company.getProfileImg());
-            companyRS.setTypeValue(company.getTypeValue());
 
             companyContacts(company, companyRS);
 
@@ -297,23 +313,27 @@ public class UserBean {
      * Get company contacts
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @Return stkCompanies
+     * @Return company
+     * @Return companyRS
      */
     public void companyContacts(StakeholderCompanyEntity company, CompanyRS companyRS) {
 
         List<ContactEntity> contacts = contactRP.getContactCM(company.getId());
         for (ContactEntity contact : contacts) {
-            if (contact.getType().equals("a")) {
-                companyRS.setAddress(contact.getValue());
-            }
-            if (contact.getType().equals("e")) {
-                companyRS.setEmail(contact.getValue());
-            }
-            if (contact.getType().equals("p")) {
-                companyRS.setPhone(contact.getValue());
+            switch (contact.getType()) {
+                case "a" :
+                    companyRS.setAddress(contact.getValue());
+                    break;
+                case "p" :
+                    companyRS.setPhone(contact.getValue());
+                    break;
+                case "z" :
+                    companyRS.setPostalOrZipCode(contact.getValue());
+                    break;
+                case "w" :
+                    companyRS.setWebiste(contact.getValue());
             }
         }
-
     }
 
 
@@ -411,11 +431,13 @@ public class UserBean {
     }
 
     private File convertMultiPartToFile(MultipartFile file) throws IOException {
+
         File convFile = new File(file.getOriginalFilename());
         FileOutputStream fos = new FileOutputStream(convFile);
         fos.write(file.getBytes());
         fos.close();
         return convFile;
+
     }
 
 
@@ -550,6 +572,7 @@ public class UserBean {
         profile.setUserType(user.getStakeHolderUser().getIsSkyowner() == 1 ? "skyowner" : "skyuser");
 
         return profile;
+
     }
 
 
@@ -580,7 +603,33 @@ public class UserBean {
 
     }
 
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Get staff profile
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param skyuserRQ
+     * @Param httpHeaders
+     * @Param id
+     * @Param password
+     */
+    public void storeTokenRedis(UserEntity user, String password) {
 
+        String username = (user.getEmail() != null) ? user.getEmail()
+                : user.getPhone();
+
+        String credentials = environment.getProperty("spring.oauth2.client-id") + ":" + environment.getProperty("spring.oauth2.client-secret");
+        String encCredentials = "Basic " + new String(Base64.encodeBase64(credentials.getBytes()));
+        TokenTF data = getCredential(username, password, encCredentials, user.getCode(), null);
+
+        UserTokenEntity userToken = userTokenRP.findById(user.getId()).orElse(new UserTokenEntity());
+
+        userToken.setUserId(user.getId());
+        userToken.setToken(data.getAccess_token());
+
+        userTokenRP.save(userToken);
+
+    }
 
 
 }

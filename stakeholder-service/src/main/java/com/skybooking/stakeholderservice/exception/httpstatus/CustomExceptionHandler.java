@@ -152,6 +152,28 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
+     * FORBIDDEN
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @return Error
+     * @Status 403
+     */
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<CustomErrorResponse> handleForbidden(ForbiddenException ex, WebRequest request) {
+
+        CustomErrorResponse errors = new CustomErrorResponse();
+        errors.setTimestamp(LocalDateTime.now());
+        errors.setMessage(localization.multiLanguageRes(ex.getMessage()));
+        errors.setStatus(HttpStatus.FORBIDDEN.value());
+        errors.setData(ex.getData());
+
+        return new ResponseEntity<>(errors, HttpStatus.FORBIDDEN);
+
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
      * Temporary redirect
      * -----------------------------------------------------------------------------------------------------------------
      *

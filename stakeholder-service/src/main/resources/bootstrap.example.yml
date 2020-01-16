@@ -16,5 +16,16 @@ spring:
     active: 4
     deactive: 5
 
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    password:
+
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+      enabled: true
+
 native-query:
   package-scan: com.skybooking.stakeholderservice

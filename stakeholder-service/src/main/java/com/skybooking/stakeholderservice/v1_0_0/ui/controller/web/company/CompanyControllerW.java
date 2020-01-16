@@ -2,6 +2,7 @@ package com.skybooking.stakeholderservice.v1_0_0.ui.controller.web.company;
 
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.company.CompanySV;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company.CompanyRQ;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.CompanyRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
@@ -42,6 +43,33 @@ public class CompanyControllerW {
         }
         CompanyRS companyRS = companySV.updateCompany(companyRQ, id);
         return localization.resAPI(HttpStatus.OK, "res_succ", companyRS);
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Bussiness Type
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Return ResRS
+     */
+    @GetMapping("/auth/bussiness-type")
+    public ResRS businessType() {
+        return localization.resAPI(HttpStatus.OK, "res_succ", companySV.bussinessTypes());
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Bussiness doc
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Return ResRS
+     * @Param id
+     */
+    @GetMapping("/auth/bussiness-doc/{id}")
+    public ResRS businessDocs(@PathVariable Long id) {
+        return localization.resAPI(HttpStatus.OK, "res_succ", companySV.bussinessDoc(id));
     }
 
 

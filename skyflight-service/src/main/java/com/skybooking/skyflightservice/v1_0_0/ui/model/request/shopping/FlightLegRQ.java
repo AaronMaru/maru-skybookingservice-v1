@@ -21,6 +21,7 @@ public class FlightLegRQ {
     private String destination;
 
     @NotNull(message = "The departure date is required.")
+//    @FutureOrPresent(message = "The departure date must be in present or future.")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     @Temporal(TemporalType.DATE)
     private Date date;

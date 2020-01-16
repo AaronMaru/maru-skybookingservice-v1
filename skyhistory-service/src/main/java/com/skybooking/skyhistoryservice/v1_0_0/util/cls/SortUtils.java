@@ -1,7 +1,6 @@
 package com.skybooking.skyhistoryservice.v1_0_0.util.cls;
 
 import org.springframework.data.domain.Sort;
-
 import java.util.List;
 
 public class SortUtils {

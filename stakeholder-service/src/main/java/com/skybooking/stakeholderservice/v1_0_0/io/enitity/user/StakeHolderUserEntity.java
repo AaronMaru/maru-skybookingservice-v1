@@ -6,7 +6,6 @@ import com.skybooking.stakeholderservice.v1_0_0.io.enitity.notification.Notifica
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.passenger.PassengerEntity;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.annotations.WhereJoinTable;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -59,7 +58,7 @@ public class StakeHolderUserEntity {
     @Column(name = "is_skyowner")
     private int isSkyowner = 0;
 
-    private int status = 1;
+    private Integer status;
 
     private int code = 0;
 
@@ -184,6 +183,11 @@ public class StakeHolderUserEntity {
     }
 
     public int getStatus() {
+        if (status != null) {
+            return status;
+        }
+        status = null;
+
         return status;
     }
 
@@ -254,5 +258,6 @@ public class StakeHolderUserEntity {
     public void setNotification(List<NotificationEntity> notification) {
         this.notification = notification;
     }
+
 
 }

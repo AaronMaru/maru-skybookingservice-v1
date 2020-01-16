@@ -1,7 +1,8 @@
 package com.skybooking.staffservice;
 
-import com.skybooking.staffservice.v1_0_0.util.ApiBean;
-import com.skybooking.staffservice.v1_0_0.util.GeneralBean;
+import com.skybooking.staffservice.v1_0_0.util.general.ApiBean;
+import com.skybooking.staffservice.v1_0_0.util.general.Duplicate;
+import com.skybooking.staffservice.v1_0_0.util.general.GeneralBean;
 import com.skybooking.staffservice.v1_0_0.util.header.HeaderBean;
 import com.skybooking.staffservice.v1_0_0.util.localization.Localization;
 import com.skybooking.staffservice.v1_0_0.util.notification.NotificationBean;
@@ -38,5 +39,10 @@ public class StaffServiceApplication {
 
     @Bean
     NotificationBean notificationBean() { return new NotificationBean(); }
+
+    @Bean
+    Duplicate duplicate() {
+        return new Duplicate();
+    }
 
 }

@@ -1,12 +1,11 @@
 package com.skybooking.stakeholderservice.v1_0_0.transformer;
 
-import com.skybooking.stakeholderservice.v1_0_0.io.enitity.company.StakeholderCompanyEntity;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.CompanyRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.PermissionRS;
 
 import javax.persistence.Column;
+import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class UserDetailsTF {
@@ -35,10 +34,12 @@ public class UserDetailsTF {
     @Column(name = "user_code")
     private String userCode;
 
-    private int status;
-
+//    private int status;
     private String address = "";
-
+    private String dob = "";
+    private String joined = "";
+    private String nationality = "";
+    private BigInteger totalBooking;
     private String role = "";
 
     private List<PermissionRS> permission = new ArrayList<>();
@@ -49,6 +50,8 @@ public class UserDetailsTF {
 
     private String photoMedium;
     private String photoSmall;
+
+    private String typeSky = "";
 
     public String getFirstName() {
         return firstName;
@@ -114,13 +117,13 @@ public class UserDetailsTF {
         this.gender = gender;
     }
 
-    public int getStatus() {
-        return status;
-    }
-
-    public void setStatus(int status) {
-        this.status = status;
-    }
+//    public int getStatus() {
+//        return status;
+//    }
+//
+//    public void setStatus(int status) {
+//        this.status = status;
+//    }
 
     public String getAddress() {
         return address;
@@ -184,6 +187,46 @@ public class UserDetailsTF {
 
     public void setUserCode(String userCode) {
         this.userCode = userCode;
+    }
+
+    public String getDob() {
+        return dob;
+    }
+
+    public void setDob(String dob) {
+        this.dob = dob;
+    }
+
+    public String getJoined() {
+        return joined;
+    }
+
+    public void setJoined(String joined) {
+        this.joined = joined;
+    }
+
+    public String getNationality() {
+        return nationality;
+    }
+
+    public void setNationality(String nationality) {
+        this.nationality = nationality;
+    }
+
+    public BigInteger getTotalBooking() {
+        return totalBooking;
+    }
+
+    public void setTotalBooking(BigInteger totalBooking) {
+        this.totalBooking = totalBooking;
+    }
+
+    public String getTypeSky() {
+        return typeSky;
+    }
+
+    public void setTypeSky(String typeSky) {
+        this.typeSky = typeSky;
     }
 
 }

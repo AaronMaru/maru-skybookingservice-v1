@@ -30,4 +30,5 @@ public interface LocaleSV {
      */
     List<LocaleRS> findAllLocale();
 
+
 }

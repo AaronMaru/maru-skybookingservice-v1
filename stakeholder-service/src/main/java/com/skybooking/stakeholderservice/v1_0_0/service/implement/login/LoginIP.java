@@ -16,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+
 @Service
 public class LoginIP implements LoginSV {
 
@@ -42,6 +43,7 @@ public class LoginIP implements LoginSV {
     public UserDetailsTokenRS login(HttpHeaders httpHeaders, LoginRQ loginRQ) {
 
         String credential = userBean.oauth2Credential(httpHeaders);
+        String password = loginRQ.getPassword();
 
         UserEntity user = userRepository.findByUsernameOrEmail(loginRQ.getUsername());
 
@@ -57,7 +59,7 @@ public class LoginIP implements LoginSV {
             throw new UnauthorizedException("Incorrect username or password", "");
         }
 
-        checkUserStatus(user);
+        checkUserStatus(user, password);
 
         TokenTF data = userBean.getCredential(loginRQ.getUsername(),loginRQ.getPassword(), credential, loginRQ.getCode(), null);
 
@@ -78,13 +80,18 @@ public class LoginIP implements LoginSV {
      *
      * @Param user
      */
-    public void checkUserStatus(UserEntity user) {
+    public void checkUserStatus(UserEntity user, String password) {
 
         if (user.getVerified() != 1) {
+            userBean.storeTokenRedis(user, password);
             throw new TemporaryException("You need to confirm your account. We have sent you an activation code, please check your email or SMS.", "");
         }
 
         if (user.getStakeHolderUser() == null) {
+            throw new UnauthorizedException("sth_w_w", "");
+        }
+
+        if (user.getStakeHolderUser().getIsSkyowner() == 1 && user.getStakeHolderUser().getStakeholderCompanies().size() == 0) {
             throw new UnauthorizedException("sth_w_w", "");
         }
 
@@ -94,6 +101,7 @@ public class LoginIP implements LoginSV {
             case 2:
                 throw new UnauthorizedException("Your account was ban", "");
         }
+
 
     }
 

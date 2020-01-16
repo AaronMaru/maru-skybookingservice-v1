@@ -1,18 +1,18 @@
 package com.skybooking.stakeholderservice.v1_0_0.service.interfaces;
 
+import java.text.ParseException;
 import java.util.List;
 
-public interface CrudSV<RS, RQ, ID, PR> {
+public interface CrudSV<RS, PRS, RQ, ID> {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * get list of items with pagination
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @param pageRequest
      * @return List<RS>
      */
-    List<RS> getItems(PR pageRequest);
+    PRS getItems();
 
 
     /**
@@ -34,7 +34,7 @@ public interface CrudSV<RS, RQ, ID, PR> {
      * @param request
      * @return RS
      */
-    RS createItem(RQ request);
+    RS createItem(RQ request) throws ParseException;
 
 
     /**
@@ -46,7 +46,7 @@ public interface CrudSV<RS, RQ, ID, PR> {
      * @param request
      * @return RS
      */
-    RS updateItem(Long id, RQ request);
+    RS updateItem(Long id, RQ request) throws ParseException;
 
 
     /**

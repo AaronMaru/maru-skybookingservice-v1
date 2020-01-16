@@ -1,9 +1,7 @@
 package com.skybooking.stakeholderservice.v1_0_0.io.enitity.company;
 
-import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.StakeHolderUserEntity;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.annotations.WhereJoinTable;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -11,6 +9,7 @@ import java.util.Date;
 @Entity
 @Table(name = "stakeholder_company_docs")
 public class StakeholderCompanyDocsEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -19,15 +18,18 @@ public class StakeholderCompanyDocsEntity {
     @JoinColumn(name = "stcompany_id", nullable = false)
     private StakeholderCompanyEntity stakeholderCompany;
 
-    @Column(name = "image")
+    @Column(name = "file_name")
     @Lob
-    private String image;
+    private String fileName;
 
     @Column(name = "type")
     private String type = "license";
 
-    @Column(name = "status")
-    private Integer status = 1;
+    @Column(name = "doc_name")
+    private String docName;
+
+    @Column(name = "is_required")
+    private Integer isRequired;
 
     @Column(name = "deleted_at")
     private java.util.Date deletedAt;
@@ -42,7 +44,6 @@ public class StakeholderCompanyDocsEntity {
     @Temporal(TemporalType.TIMESTAMP)
     private Date updatedAt;
 
-
     public Long getId() {
         return this.id;
     }
@@ -51,12 +52,12 @@ public class StakeholderCompanyDocsEntity {
         this.id = id;
     }
 
-    public String getImage() {
-        return this.image;
+    public String getFileName() {
+        return fileName;
     }
 
-    public void setImage(String image) {
-        this.image = image;
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
     }
 
     public String getType() {
@@ -65,14 +66,6 @@ public class StakeholderCompanyDocsEntity {
 
     public void setType(String type) {
         this.type = type;
-    }
-
-    public Integer getStatus() {
-        return this.status;
-    }
-
-    public void setStatus(Integer status) {
-        this.status = status;
     }
 
     public java.util.Date getDeletedAt() {
@@ -105,5 +98,25 @@ public class StakeholderCompanyDocsEntity {
 
     public void setStakeholderCompany(StakeholderCompanyEntity stakeholderCompany) {
         this.stakeholderCompany = stakeholderCompany;
+    }
+
+    public String getDocName() {
+        return docName;
+    }
+
+    public void setDocName(String docName) {
+        this.docName = docName;
+    }
+
+    public Integer getIsRequired() {
+        return isRequired;
+    }
+
+    public void setIsRequired(Integer isRequired) {
+        this.isRequired = isRequired;
+    }
+
+    public StakeholderCompanyEntity getStakeholderCompany() {
+        return stakeholderCompany;
     }
 }

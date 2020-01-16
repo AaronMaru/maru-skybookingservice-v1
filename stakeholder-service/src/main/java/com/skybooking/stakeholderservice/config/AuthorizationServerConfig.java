@@ -62,14 +62,13 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
                 .scopes("read", "write")
                 .resourceIds("oauth2-resource", "skybooking-resource")
                 .accessTokenValiditySeconds(60 * 60 * 24)
-                .refreshTokenValiditySeconds(60 * 60 * 24);
+                .refreshTokenValiditySeconds(60 * 60 * 48);
     }
 
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
         TokenEnhancerChain enhancerChain = new TokenEnhancerChain();
         enhancerChain.setTokenEnhancers(Arrays.asList(customJWTEnhancer, accessTokenConverter()));
-        System.out.println(enhancerChain);
         endpoints
                 .tokenStore(tokenStore())
                 .accessTokenConverter(accessTokenConverter())

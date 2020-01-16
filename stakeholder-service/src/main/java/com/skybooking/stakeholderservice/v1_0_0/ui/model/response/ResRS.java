@@ -2,7 +2,6 @@ package com.skybooking.stakeholderservice.v1_0_0.ui.model.response;
 
 public class ResRS {
 
-
     private int status;
     private String message;
     private Object data;

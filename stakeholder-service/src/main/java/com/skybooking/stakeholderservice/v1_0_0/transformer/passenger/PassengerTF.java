@@ -10,6 +10,7 @@ import java.util.List;
 
 public class PassengerTF {
 
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Get passenger entity
@@ -28,6 +29,7 @@ public class PassengerTF {
 
     }
 
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Get passenger response
@@ -36,7 +38,6 @@ public class PassengerTF {
      * @param entity
      * @return PassengerRS
      */
-
     public static PassengerRS getResponse(PassengerEntity entity) {
 
         PassengerRS response = new PassengerRS();

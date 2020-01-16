@@ -1,6 +1,7 @@
 package com.skybooking.skyhistoryservice;
 
 import com.skybooking.skyhistoryservice.v1_0_0.util.calculator.Calculator;
+import com.skybooking.skyhistoryservice.v1_0_0.util.general.Duplicate;
 import com.skybooking.skyhistoryservice.v1_0_0.util.flight.FlightShoppingBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.general.ApiBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.header.HeaderBean;
@@ -8,7 +9,6 @@ import com.skybooking.skyhistoryservice.v1_0_0.util.localization.Localization;
 import com.skybooking.skyhistoryservice.v1_0_0.util.notification.NotificationBean;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.client.RestTemplate;
 
@@ -50,4 +50,8 @@ public class SkyhistoryServiceApplication {
     @Bean
     ApiBean apiBean() { return new ApiBean(); }
 
+    @Bean
+    Duplicate duplicate() {
+        return new Duplicate();
+    }
 }

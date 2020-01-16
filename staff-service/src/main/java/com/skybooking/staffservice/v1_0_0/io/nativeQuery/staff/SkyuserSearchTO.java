@@ -3,6 +3,7 @@ package com.skybooking.staffservice.v1_0_0.io.nativeQuery.staff;
 public class SkyuserSearchTO {
 
     private Integer id;
+    private Integer skyuserId;
     private String email;
     private String phone;
     private String code;
@@ -66,5 +67,11 @@ public class SkyuserSearchTO {
         this.photo = photo;
     }
 
+    public Integer getSkyuserId() {
+        return skyuserId;
+    }
 
+    public void setSkyuserId(Integer skyuserId) {
+        this.skyuserId = skyuserId;
+    }
 }

@@ -1,14 +1,7 @@
 package com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.skybooking.stakeholderservice.exception.anotation.Include;
-
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
-import javax.validation.constraints.NotEmpty;
-import java.util.Date;
 
 public class ProfileRQ {
 

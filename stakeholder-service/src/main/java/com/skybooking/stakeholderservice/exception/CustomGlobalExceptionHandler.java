@@ -12,10 +12,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @ControllerAdvice
 public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler {
@@ -37,11 +34,18 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
         List<FieldError> fieldErrors = result.getFieldErrors();
         String validation = "";
 
+        body.put("data", "");
         for (FieldError fieldError: fieldErrors) {
             validation = localization.multiLanguageRes(fieldError.getDefaultMessage());
+            if (fieldError.getCode().equals("UsernameUnique")) {
+                if (result.getFieldValue("typeSky").equals("bussiness")) {
+                    HashMap<String, Object> skyowner = new HashMap<>();
+                    skyowner.put("email", result.getFieldValue("username"));
+                    skyowner.put("typeSky", result.getFieldValue("typeSky"));
+                    body.put("data", skyowner);
+                }
+            }
         }
-
-        body.put("error", status.getReasonPhrase());
         body.put("message", validation);
 
         return new ResponseEntity<>(body, headers, status);

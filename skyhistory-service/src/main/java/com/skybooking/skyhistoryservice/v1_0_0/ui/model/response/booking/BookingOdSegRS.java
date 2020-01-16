@@ -1,5 +1,7 @@
 package com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.booking;
 
+import java.util.Date;
+
 public class BookingOdSegRS {
 
     private String airlineCode;
@@ -7,12 +9,12 @@ public class BookingOdSegRS {
     private Integer flightNumber;
     private String equipType;
     private String airCraftName;
-    private String depDateTime;
+    private Date depDateTime;
     private String depLocation;
     private String depLocationName;
     private String depCity;
     private String depCountry;
-    private String arrDateTime;
+    private Date arrDateTime;
     private String arrLocation;
     private String arrLocationName;
     private String arrCity;
@@ -63,15 +65,19 @@ public class BookingOdSegRS {
         this.airCraftName = airCraftName;
     }
 
-    public String getDepDateTime() {
+    public Date getDepDateTime() {
         return depDateTime;
     }
 
-    public void setDepDateTime(String depDateTime) {
+    public void setDepDateTime(Date depDateTime) {
         this.depDateTime = depDateTime;
     }
 
-    public void setArrDateTime(String arrDateTime) {
+    public Date getArrDateTime() {
+        return arrDateTime;
+    }
+
+    public void setArrDateTime(Date arrDateTime) {
         this.arrDateTime = arrDateTime;
     }
 
@@ -159,9 +165,6 @@ public class BookingOdSegRS {
         return status;
     }
 
-    public String getArrDateTime() {
-        return arrDateTime;
-    }
 
     public void setStatus(String status) {
         this.status = status;

@@ -1,0 +1,17 @@
+SELECT
+mr.id as id,
+(
+SELECT (mri.percentage / 100)
+FROM mockup_rule_item mri
+WHERE mri.mockup_rule_id = mr.id
+
+-- where cabin class of flight
+AND mri.class = :cabinClass
+) AS markup
+
+FROM mockup_rule mr
+
+-- General markup for skyuser or skyowner
+WHERE mr.type = "skyuser"
+ORDER BY id DESC
+LIMIT 1

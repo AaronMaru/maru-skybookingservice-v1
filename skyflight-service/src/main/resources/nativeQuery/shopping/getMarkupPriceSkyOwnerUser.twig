@@ -1,0 +1,16 @@
+SELECT
+mrc.id as id,
+(
+SELECT (percentage / 100)
+FROM mockup_rule_company_item mrci
+WHERE mrci.mockup_rule_company_id = mrc.id
+
+-- where cabin class of flight
+AND mrci.class = :cabinClass
+) AS markup
+
+FROM mockup_rule_company mrc
+
+-- Where by company id
+WHERE mrc.company_id = :companyId
+AND mrc.`status` = 1

@@ -34,8 +34,8 @@ public class LocaleControllerM {
      */
     @GetMapping("/language-module")
     public ResRS getLanguageModuleByLocaleId() {
-        ModuleLanguageRS response = localeSV.findModuleLanguageByLocaleId(headerBean.getLocalizationId());
-        return localization.resAPI(HttpStatus.OK, "res_succ", response);
+        ModuleLanguageRS response = localeSV.findModuleLanguageByLocaleId(headerBean.getLocalizationId(null));
+        return localization.resAPI(HttpStatus.OK, "res_succ", response.getRoot());
     }
 
 

@@ -4,6 +4,7 @@ select u.id,
        u.code,
        su.first_name AS firstName,
        su.last_name AS lastName,
+       su.id AS skyuserId,
        (CASE WHEN su.photo IS NULL THEN  'default.png' ELSE su.photo END) AS photo
 FROM users u
 

@@ -13,4 +13,6 @@ public interface BookingRP extends JpaRepository<BookingEntity, Long> {
     @Query(value = "SELECT * FROM bookings WHERE status in (1, 3, 10, 11, 12)", nativeQuery = true)
     List<BookingEntity> getBookings();
 
+    BookingEntity findByBookingCode(String code);
+
 }

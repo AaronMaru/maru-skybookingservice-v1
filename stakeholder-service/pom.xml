@@ -190,7 +190,7 @@
             <artifactId>spring-native-query</artifactId>
             <version>1.0.0</version>
             <scope>system</scope>
-            <systemPath>${basedir}/lib/spring-native-query-1.0.0.jar</systemPath>
+            <systemPath>${basedir}/lib/spring-native-query-1.0.1.jar</systemPath>
         </dependency>
 
         <dependency>
@@ -202,6 +202,19 @@
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-jwt</artifactId>
             <version>1.0.9.RELEASE</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-redis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-pool2</artifactId>
         </dependency>
 
         <!--mail-->

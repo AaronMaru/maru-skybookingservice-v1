@@ -52,7 +52,7 @@ public class NotificationIP implements NotificationSV {
             throw new BadRequestException("sth_w_w", "");
         }
 
-        List<NotificationTO> notiTO = notificationNQ.notificationDetail(headerBean.getLocalizationId(), id);
+        List<NotificationTO> notiTO = notificationNQ.notificationDetail(headerBean.getLocalizationId(null), id);
         NotificationDetailRS notiRS = new NotificationDetailRS();
 
         if (notiTO.size() == 0) {
@@ -80,7 +80,7 @@ public class NotificationIP implements NotificationSV {
             companyId  = user.getStakeHolderUser().getStakeholderCompanies().stream().findFirst().get().getId();
         }
 
-        List<NotificationTO> notiesTO = notificationNQ.listNotification(action, headerBean.getLocalizationId(), companyId, user.getStakeHolderUser().getId());
+        List<NotificationTO> notiesTO = notificationNQ.listNotification(action, headerBean.getLocalizationId(null), companyId, user.getStakeHolderUser().getId());
         List<NotificationRS> notiesRS = new ArrayList<>();
 
         for (NotificationTO notiTO : notiesTO) {

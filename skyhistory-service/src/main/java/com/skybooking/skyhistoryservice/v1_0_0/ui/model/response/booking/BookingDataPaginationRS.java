@@ -10,7 +10,6 @@ public class BookingDataPaginationRS {
 
     private List<BookingRS> data;
 
-
     public Integer getSize() {
         return size;
     }
@@ -42,4 +41,5 @@ public class BookingDataPaginationRS {
     public void setData(List<BookingRS> data) {
         this.data = data;
     }
+
 }

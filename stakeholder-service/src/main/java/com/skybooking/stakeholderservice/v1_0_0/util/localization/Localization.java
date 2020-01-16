@@ -6,7 +6,6 @@ import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.header.HeaderBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 
 public class Localization {
 
@@ -26,7 +25,7 @@ public class Localization {
      */
     public String multiLanguageRes(String key) {
 
-        String locale = headerBean.getLocalization();
+        String locale = headerBean.getLocalization(null);
         TranslationEntity translationByLocale = translationRP.findByKey(key, locale);
 
         if (translationByLocale != null) {

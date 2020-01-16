@@ -2,8 +2,9 @@ package com.skybooking.stakeholderservice.v1_0_0.io.repository.users;
 
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.StakeholderUserInvitationEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 @Repository
 public interface StakeholderUserInvitationRP extends JpaRepository<StakeholderUserInvitationEntity, Long> {
@@ -12,7 +13,7 @@ public interface StakeholderUserInvitationRP extends JpaRepository<StakeholderUs
     /**
      * Find email invited
      */
-    StakeholderUserInvitationEntity findFirstByInviteFrom(String username);
+    StakeholderUserInvitationEntity findFirstByInviteTo(String username);
 
 
     /**
@@ -21,5 +22,15 @@ public interface StakeholderUserInvitationRP extends JpaRepository<StakeholderUs
     StakeholderUserInvitationEntity findByIdAndStakeholderCompanyId(Integer id, Long companyId);
 
 
+    /**
+     * Find by skyuser id
+     */
+    List<StakeholderUserInvitationEntity> findByInviteStakeholderUserId(Long skyuserId);
+
+
+    /**
+     * Find by id and skyuserId
+     */
+    StakeholderUserInvitationEntity findByIdAndInviteStakeholderUserId(Long id, Long skyuserId);
 
 }

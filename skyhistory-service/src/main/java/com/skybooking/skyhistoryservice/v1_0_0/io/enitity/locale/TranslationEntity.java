@@ -17,8 +17,11 @@ public class TranslationEntity {
     @Column(name = "locale_id")
     private Long localeId;
 
+    @Column(name = "module")
     private String module;
+    @Column(name = "key")
     private String key;
+    @Column(name = "value")
     private String value;
 
     @CreationTimestamp

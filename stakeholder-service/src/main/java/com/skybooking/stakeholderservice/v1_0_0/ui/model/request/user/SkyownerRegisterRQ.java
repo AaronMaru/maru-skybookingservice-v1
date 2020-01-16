@@ -2,29 +2,13 @@ package com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user;
 
 import com.skybooking.stakeholderservice.exception.anotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
+import java.util.HashMap;
 
-
-@FieldMatch(first = "password", second = "confirmPassword", message = "The password fields must match")
-@FieldMatchRequire(first = "businessType", second = "contactPerson", third = "contactPosition", message = "Please provide contact persion and contact position")
-@LicenseMatchRequire(first = "businessType", second = "licenseSecond", message = "Please provide secode license")
+@FieldMatchRequire(first = "businessTypeId", second = "contactPerson", third = "contactPosition", message = "Please provide contact persion and contact position")
 @UsernameUnique(first = "phone", second = "code", message = "Phone number already exists")
-@EmailUnique(first = "username", message = "Username already exists")
 public class SkyownerRegisterRQ {
-
-    @Email
-    @NotEmpty(message = "Please provide a email")
-    private String username;
-
-    @NotEmpty(message = "Please provide a first name")
-    private String firstName;
-
-    @NotEmpty(message = "Please provide a last name")
-    private String lastName;
 
     @Phone
     @NotEmpty(message = "Please provide a phone number")
@@ -33,17 +17,9 @@ public class SkyownerRegisterRQ {
     @NotEmpty(message = "Please provide a country code")
     private String code;
 
-    @NotEmpty(message = "Please provide a password")
-    @Size(min = 6, max = 25)
-    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*?[#?!@$%^&*-]).+$", message = "Invalid password")
-    private String password;
-
-    @NotEmpty(message = "Please provide a confirm password")
-    private String confirmPassword;
-
-    @Include(contains = "com_tra|com_biz|com_gov", delimiter = "\\|")
+    @BussinessType
     @NotEmpty(message = "Please provide a business type")
-    private String businessType;
+    private Long businessTypeId;
 
     @NotEmpty(message = "Please provide a business name")
     @CompanyName
@@ -52,34 +28,16 @@ public class SkyownerRegisterRQ {
     private String contactPerson;
     private String contactPosition;
 
-//    @NotEmpty(message = "Please provide a license")
     @NotNull(message = "Please provide a license")
-    private MultipartFile license;
-    private MultipartFile licenseSecond;
+    private HashMap<String, MultipartFile> licenses;
 
-    public String getUsername() {
-        return username;
-    }
+    private String website;
+    private String postalOrZipCode;
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
+    @NotNull(message = "Please provide a country id")
+    @Country
+    private Long countryId;
+    private Long cityId;
 
     public String getCode() {
         return code;
@@ -97,28 +55,12 @@ public class SkyownerRegisterRQ {
         this.phone = phone;
     }
 
-    public String getPassword() {
-        return password;
+    public Long getBusinessTypeId() {
+        return businessTypeId;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getConfirmPassword() {
-        return confirmPassword;
-    }
-
-    public void setConfirmPassword(String confirmPassword) {
-        this.confirmPassword = confirmPassword;
-    }
-
-    public String getBusinessType() {
-        return businessType;
-    }
-
-    public void setBusinessType(String businessType) {
-        this.businessType = businessType;
+    public void setBusinessTypeId(Long businessTypeId) {
+        this.businessTypeId = businessTypeId;
     }
 
     public String getBusinessName() {
@@ -145,20 +87,45 @@ public class SkyownerRegisterRQ {
         this.contactPosition = contactPosition;
     }
 
-    public MultipartFile getLicense() {
-        return license;
+    public HashMap<String, MultipartFile> getLicenses() {
+        return licenses;
     }
 
-    public void setLicense(MultipartFile license) {
-        this.license = license;
+    public void setLicenses(HashMap<String, MultipartFile> licenses) {
+        this.licenses = licenses;
     }
 
-    public MultipartFile getLicenseSecond() {
-        return licenseSecond;
+    public String getWebsite() {
+        return website;
     }
 
-    public void setLicenseSecond(MultipartFile licenseSecond) {
-        this.licenseSecond = licenseSecond;
+    public void setWebsite(String website) {
+        this.website = website;
     }
+
+    public String getPostalOrZipCode() {
+        return postalOrZipCode;
+    }
+
+    public void setPostalOrZipCode(String postalOrZipCode) {
+        this.postalOrZipCode = postalOrZipCode;
+    }
+
+    public Long getCountryId() {
+        return countryId;
+    }
+
+    public void setCountryId(Long countryId) {
+        this.countryId = countryId;
+    }
+
+    public Long getCityId() {
+        return cityId;
+    }
+
+    public void setCityId(Long cityId) {
+        this.cityId = cityId;
+    }
+
 
 }
