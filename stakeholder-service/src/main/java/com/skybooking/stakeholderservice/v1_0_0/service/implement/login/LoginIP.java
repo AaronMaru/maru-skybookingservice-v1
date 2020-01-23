@@ -43,6 +43,7 @@ public class LoginIP implements LoginSV {
     public UserDetailsTokenRS login(HttpHeaders httpHeaders, LoginRQ loginRQ) {
 
         String credential = userBean.oauth2Credential(httpHeaders);
+        System.out.println(credential);
         String password = loginRQ.getPassword();
 
         UserEntity user = userRepository.findByUsernameOrEmail(loginRQ.getUsername());
@@ -101,7 +102,6 @@ public class LoginIP implements LoginSV {
             case 2:
                 throw new UnauthorizedException("Your account was ban", "");
         }
-
 
     }
 

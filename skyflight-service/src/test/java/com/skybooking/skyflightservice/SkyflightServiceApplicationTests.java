@@ -16,6 +16,8 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 @RunWith(SpringRunner.class)
@@ -77,6 +79,24 @@ public class SkyflightServiceApplicationTests {
         var result = ZonedDateTime.parse(dateTime).toLocalDateTime();
         System.out.println(result);
         System.out.println(date.toLocaleString());
+
+    }
+
+    @Test
+    public void mapCollectionTest() {
+
+        var data = List.of("A", "B", "C");
+
+        data = data.stream().map(str -> str.toLowerCase()).collect(Collectors.toList());
+
+        System.out.println(data);
+    }
+
+    @Test
+    public void zonedDateTimeStringtoDateTime() {
+        var dateTime = "2020-01-25T21:00:00+11:00";
+
+        System.out.println(Date.from(ZonedDateTime.parse(dateTime).toInstant()));
 
     }
 

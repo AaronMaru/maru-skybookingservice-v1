@@ -11,8 +11,10 @@ import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.QueryS
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.ResponseSV;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.ShoppingSV;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.TransformSV;
-import com.skybooking.skyflightservice.v1_0_0.transformer.observer.BookingOS;
+import com.skybooking.skyflightservice.v1_0_0.transformer.shopping.FlighShoppingTF;
+import com.skybooking.skyflightservice.v1_0_0.ui.model.request.booking.BCreateRQ;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.shopping.FlightShoppingRQ;
+import com.skybooking.skyflightservice.v1_0_0.ui.model.response.shopping.FlightShoppingRS;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +23,9 @@ public class ShoppingIP implements ShoppingSV {
 
     @Autowired
     private ShoppingAction shoppingAction;
+
+    @Autowired
+    private RevalidateFlight revalidateFlight;
 
     @Autowired
     private QuerySV querySV;
@@ -69,7 +74,7 @@ public class ShoppingIP implements ShoppingSV {
 
         var responses = shoppingAction.getShoppingList(shoppingRQ);
 
-        return responseSV.flightShoppingCreate(query.getId(), responses);
+        return responseSV.flightShoppingCreate(query.getId(), responses, query);
 
     }
 
@@ -85,7 +90,7 @@ public class ShoppingIP implements ShoppingSV {
      * @return ShoppingTransformEntity
      */
     @Override
-    public ShoppingTransformEntity shoppingTransformMarkup(FlightShoppingRQ shoppingRQ, String userType, Integer userId) {
+    public FlightShoppingRS shoppingTransformMarkup(FlightShoppingRQ shoppingRQ, String userType, Integer userId) {
 
         var markupTO = new MarkupTO();
 
@@ -97,22 +102,9 @@ public class ShoppingIP implements ShoppingSV {
             markupTO = markupNQ.getMarkupPriceSkyOwnerUser(userId, shoppingRQ.getClassType().toUpperCase());
         }
 
-//        return transformSV.getShoppingTransformDetailMarkup(this.shoppingTransform(shoppingRQ), markupTO.getMarkup().doubleValue());
-
-        return transformSV.getShoppingTransformDetailMarkup(this.shoppingTransform(shoppingRQ), 0);
+        return FlighShoppingTF.getResponse(transformSV.getShoppingTransformDetailWithFilter(transformSV.getShoppingTransformDetailMarkup(this.shoppingTransform(shoppingRQ), markupTO.getMarkup().doubleValue())));
 
     }
-
-    @Override
-    public BookingOS revalidate(String[] legs) {
-        return null;
-    }
-
-    @Override
-    public BookingOS checkSeats() {
-        return null;
-    }
-
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -131,7 +123,18 @@ public class ShoppingIP implements ShoppingSV {
             return transformSV.getShoppingTransformById(query.getId());
         }
 
-        return transformSV.getShoppingTransformDetail(transformSV.getShoppingTransform(this.shoppingAsync(shoppingRQ)));
+        var transform = transformSV.getShoppingTransformDetail(transformSV.getShoppingTransform(this.shoppingAsync(shoppingRQ)));
+
+        if (transform == null) {
+            querySV.flightShoppingRemove(shoppingRQ);
+        }
+
+        return transform;
+    }
+
+    @Override
+    public Boolean revalidate(BCreateRQ request) {
+        return revalidateFlight.revalidate(request);
     }
 
 }

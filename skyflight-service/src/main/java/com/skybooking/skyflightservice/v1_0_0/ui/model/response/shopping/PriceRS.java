@@ -2,13 +2,16 @@ package com.skybooking.skyflightservice.v1_0_0.ui.model.response.shopping;
 
 import lombok.Data;
 
-@Data
-public class PriceRS {
+import java.io.Serializable;
+import java.math.BigDecimal;
 
-    private String id;
+@Data
+public class PriceRS implements Serializable {
+
     private String type;
-    private String tax;
-    private String baseFare;
-    private String quantity;
+    private BigDecimal tax = BigDecimal.ZERO;
+    private BigDecimal baseFare = BigDecimal.ZERO;
+    private String currency;
+    private int quantity;
 
 }

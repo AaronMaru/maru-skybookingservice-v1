@@ -23,10 +23,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -65,6 +62,8 @@ public class TransformIP implements TransformSV {
         if (responses.getResponses() == null) return null;
 
         var transform = new ShoppingTransformEntity();
+
+        transform.setTrip(responses.getQuery().getQuery().getTripType());
 
         // transform items
         var mAirlines = new TreeMap<String, Airline>();
@@ -175,12 +174,12 @@ public class TransformIP implements TransformSV {
                 segment.setDirectionIndex(responseIndex);
 
                 // inner adjustment segment
-                var arrivalAdjustmentDate = schedule.getArrival().getDateAdjustment() == null ? 0: schedule.getArrival().getDateAdjustment();
+                var arrivalAdjustmentDate = schedule.getArrival().getDateAdjustment() == null ? 0 : schedule.getArrival().getDateAdjustment();
 
                 if (arrivalAdjustmentDate > 0) {
                     segment.setArrivalTime(DateUtility.plusDays(segment.getArrivalTime(), arrivalAdjustmentDate));
                 }
-                
+
                 if (segment.getStopCount() > 0) {
 
                     var hiddenStops = schedule
@@ -398,6 +397,7 @@ public class TransformIP implements TransformSV {
                         baggage.setPiece(baggageAllowance.getPieceCount());
                         baggage.setUnit(baggageAllowance.getUnit());
                         baggage.setWeight(baggageAllowance.getWeight());
+                        baggage.setNonRefundable(passenger.getNonRefundable());
 
                         baggageDetail.getDetails().add(baggage);
 
@@ -424,7 +424,9 @@ public class TransformIP implements TransformSV {
                             var cabinName = cabin;
                             var meal = segmentStatus.getMealCode() == null ? "" : segmentStatus.getMealCode();
                             var mealName = meal;
+                            var bookingCode = segmentStatus.getBookingCode();
 
+                            segment.setBookingCode(bookingCode);
                             segment.setSeatsRemain(seats);
                             segment.setCabin(cabin);
                             segment.setCabinName(cabinName);
@@ -501,7 +503,7 @@ public class TransformIP implements TransformSV {
         }
 
         // arrange cheapest flight elements
-        var cheapest = new ArrayList<Itinerary>();
+        List<Itinerary> cheapest = new ArrayList<Itinerary>();
 
         cheapestResponseIndex = 0;
 
@@ -526,30 +528,6 @@ public class TransformIP implements TransformSV {
 
             cheapestResponseIndex++;
         }
-
-        cheapest
-            .stream()
-            .map(itinerary -> {
-                itinerary
-                    .getLegGroups()
-                    .stream()
-                    .map(legDirection -> {
-
-                        legDirection.getLegsDesc().stream().sorted((previous, next) -> {
-
-                            var previousPrice = mPrices.get(mLegs.get(previous.getLeg()).getPrice()).getTotal();
-                            var nextPrice = mPrices.get(mLegs.get(next.getLeg()).getPrice()).getTotal();
-
-                            return Double.compare(previousPrice, nextPrice);
-
-                        }).collect(Collectors.toList());
-
-                        return legDirection;
-
-                    }).collect(Collectors.toList());
-
-                return itinerary;
-            });
 
         // calculate duration of leg and segment
         var legs = mLegs
@@ -586,15 +564,15 @@ public class TransformIP implements TransformSV {
                     for (LegSegmentDetail segment : segments) {
 
                         // skip first segment
-                        if (segmentIndex == 0 ) {
+                        if (segmentIndex == 0) {
                             segmentIndex++;
                             continue;
                         }
 
                         var previousId = segments.get(segmentIndex - 1).getSegment();
 
-                        var previousSegment =  mSegments.values().stream().filter(mSegment -> mSegment.getId().equalsIgnoreCase(previousId)).findFirst().get();
-                        var currentSegment =  mSegments.values().stream().filter(mSegment -> mSegment.getId().equalsIgnoreCase(segment.getSegment())).findFirst().get();
+                        var previousSegment = mSegments.values().stream().filter(mSegment -> mSegment.getId().equalsIgnoreCase(previousId)).findFirst().get();
+                        var currentSegment = mSegments.values().stream().filter(mSegment -> mSegment.getId().equalsIgnoreCase(segment.getSegment())).findFirst().get();
 
                         segment.setLayOverDuration(DateUtility.getMinuteDurations(previousSegment.getArrivalTime(), currentSegment.getDepartureTime()));
                     }
@@ -616,8 +594,7 @@ public class TransformIP implements TransformSV {
 
             }).collect(Collectors.toList());
 
-
-        transform.setId(responses.getId());
+        transform.setRequestId(responses.getId());
         transform.setAirlines(new ArrayList<>(mAirlines.values()));
         transform.setAircrafts(new ArrayList<>(mAircrafts.values()));
         transform.setLocations(new ArrayList<>(mLocations.values()));
@@ -627,6 +604,8 @@ public class TransformIP implements TransformSV {
         transform.setBaggages(new ArrayList<>(mBaggages.values()));
         transform.setDirect(direct);
         transform.setCheapest(cheapest);
+
+        transform = this.getShoppingTransformDetailMarkup(transform, 0);
 
         return transform;
     }
@@ -690,7 +669,7 @@ public class TransformIP implements TransformSV {
         source.setAircrafts(aircrafts);
         source.setLocations(locations);
 
-        instance.getMap(TRANSFORM_CACHED_NAME).put(source.getId(), source, appConfig.getHAZELCAST_EXPIRED_TIME(), TimeUnit.SECONDS);
+        instance.getMap(TRANSFORM_CACHED_NAME).put(source.getRequestId(), source, appConfig.getHAZELCAST_EXPIRED_TIME(), TimeUnit.SECONDS);
 
         return source;
     }
@@ -720,8 +699,8 @@ public class TransformIP implements TransformSV {
 
         for (PriceDetail price : prices) {
 
-            var total = price.getTotal();
-            var average = price.getTotalAvg();
+            var total = 0.0;
+            var average = 0.0;
             var passengers = 0;
 
             for (Price detail : price.getDetails()) {
@@ -742,9 +721,114 @@ public class TransformIP implements TransformSV {
 
             price.setTotal(total);
             price.setTotalAvg(average);
+
         }
 
         source.setPrices(prices);
+
+        return source;
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get shopping data detail with filter lowest price
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param source
+     * @return ShoppingTransformEntity
+     */
+    @Override
+    public ShoppingTransformEntity getShoppingTransformDetailWithFilter(ShoppingTransformEntity source) {
+
+        if (source == null) return null;
+
+        var formatter = NumberFormat.getInstance(new Locale("en"));
+        formatter.setMinimumFractionDigits(2);
+        formatter.setMaximumFractionDigits(2);
+        formatter.setGroupingUsed(false);
+        formatter.setRoundingMode(RoundingMode.HALF_UP);
+
+        // apply lowest price to airline
+        List<Airline> airlines = source.getAirlines();
+
+        // apply sorting and filter lowest price
+        List<Itinerary> cheapest = source.getCheapest()
+            .stream()
+            .map(itinerary -> {
+                List<LegGroup> legGroups = itinerary
+                    .getLegGroups()
+                    .stream()
+                    .map(legGroup -> {
+                        List<LegDescription> legDescriptions = legGroup.getLegsDesc()
+                            .stream()
+                            .sorted((previous, next) -> {
+
+                                var previousLeg = source.getLegs().stream().filter(leg -> leg.getId().equalsIgnoreCase(previous.getLeg())).findFirst().get();
+                                var nextLeg = source.getLegs().stream().filter(leg -> leg.getId().equalsIgnoreCase(next.getLeg())).findFirst().get();
+                                var previousPrice = source.getPrices().stream().filter(priceDetail -> priceDetail.getId().equalsIgnoreCase(previousLeg.getPrice())).findFirst().get();
+                                var nextPrice = source.getPrices().stream().filter(priceDetail -> priceDetail.getId().equalsIgnoreCase(nextLeg.getPrice())).findFirst().get();
+
+                                return Double.compare(previousPrice.getTotal(), nextPrice.getTotal());
+                            }).collect(Collectors.toList());
+
+                        legGroup.setLegsDesc(legDescriptions);
+
+                        return legGroup;
+                    }).collect(Collectors.toList());
+                itinerary.setLegGroups(legGroups);
+                return itinerary;
+            })
+            .map(itinerary -> {
+                itinerary.getLegGroups()
+                    .stream()
+                    .forEach(legGroup -> {
+                        if (legGroup.getLegsDesc().size() > 0) {
+                            itinerary.getLowest().add(legGroup.getLegsDesc().get(0).getLeg());
+                        }
+                    });
+                return itinerary;
+            }).collect(Collectors.toList());
+
+        cheapest
+            .stream()
+            .forEach(itinerary -> {
+                var totalDirection = itinerary.getLegGroups().size();
+                if (totalDirection > 0) {
+
+                    var airlineCode = itinerary.getLegGroups().get(0).getAirline();
+
+                    var lowestPrice = itinerary
+                        .getLowest()
+                        .stream()
+                        .map(legId -> {
+                            var legDetail = source.getLegs().stream().filter(leg -> leg.getId().equalsIgnoreCase(legId)).findFirst().get();
+                            var priceDetail = source.getPrices().stream().filter(price -> price.getId().equalsIgnoreCase(legDetail.getPrice())).findFirst().get();
+
+                            return priceDetail.getTotal();
+                        }).collect(Collectors.summingDouble(Double::doubleValue));
+
+                    lowestPrice = Double.parseDouble(formatter.format(lowestPrice));
+
+                    for (Airline airline : airlines) {
+                        if (airline.getCode().equalsIgnoreCase(airlineCode)) {
+
+                            if (airline.getPrice() == 0) {
+                                airline.setPrice(lowestPrice);
+                            }
+
+                            if (airline.getPrice() > lowestPrice) {
+                                airline.setPrice(lowestPrice);
+                            }
+
+                            break;
+                        }
+                    }
+                }
+            });
+
+        source.setAirlines(airlines);
+        source.setCheapest(cheapest);
 
         return source;
     }

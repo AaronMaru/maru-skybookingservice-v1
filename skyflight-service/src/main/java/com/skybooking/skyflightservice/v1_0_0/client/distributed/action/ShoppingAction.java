@@ -1,7 +1,9 @@
 package com.skybooking.skyflightservice.v1_0_0.client.distributed.action;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.skybooking.skyflightservice.config.AppConfig;
+import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.shopping.RevalidateRQ;
 import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.response.bargainfinder.SabreBargainFinderRS;
 import com.skybooking.skyflightservice.v1_0_0.security.token.DSTokenHolder;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.shopping.FlightLegRQ;
@@ -91,6 +93,32 @@ public class ShoppingAction {
             return results;
 
         }).block();
+
+
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Revalidate flight shopping for price and seats available
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param request
+     * @return JsonNode
+     */
+    public JsonNode revalidate(RevalidateRQ request) {
+
+        return client.mutate()
+                .exchangeStrategies(ExchangeStrategies.builder().codecs(clientCodecConfigurer -> {
+                    clientCodecConfigurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024);
+                }).build())
+                .build()
+                .post()
+                .uri(appConfig.getDISTRIBUTED_URI() + "/flight/" + appConfig.getDISTRIBUTED_VERSION() + "/shopping/revalidate")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(JsonNode.class).block();
     }
 
 }

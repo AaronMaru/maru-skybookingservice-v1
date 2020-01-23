@@ -2,12 +2,15 @@ package com.skybooking.skyflightservice.v1_0_0.ui.model.response.shopping;
 
 import lombok.Data;
 
-@Data
-public class AirlineRS {
+import java.io.Serializable;
 
-    private String code;
-    private String name;
-    private String url45;
-    private String url90;
+@Data
+public class AirlineRS implements Serializable {
+
+    private String code = "";
+    private String name = "";
+    private String url45 = "";
+    private String url90 = "";
+    private double price;
 
 }

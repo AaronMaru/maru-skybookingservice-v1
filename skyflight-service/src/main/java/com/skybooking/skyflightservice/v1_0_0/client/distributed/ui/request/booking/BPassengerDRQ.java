@@ -10,9 +10,9 @@ public class BPassengerDRQ {
     private String firstName;
     private String lastName;
     private String gender;
-    private Date birthDate;
+    private String birthDate;
     private String nationality;
     private Integer idType;
     private String idNumber;
-    private Date expireDate;
+    private String expireDate;
 }

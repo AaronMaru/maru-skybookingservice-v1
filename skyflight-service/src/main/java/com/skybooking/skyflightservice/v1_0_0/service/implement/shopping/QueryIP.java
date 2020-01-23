@@ -19,8 +19,10 @@ import java.util.concurrent.TimeUnit;
 public class QueryIP implements QuerySV {
 
     private final static String QUERY_CACHED_NAME = "shopping-query";
+
     @Autowired
     private HazelcastInstance instance;
+
     @Autowired
     private AppConfig appConfig;
 
@@ -69,4 +71,35 @@ public class QueryIP implements QuerySV {
     }
 
 
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * remove shopping request from cached
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param request
+     */
+    @Override
+    public void flightShoppingRemove(FlightShoppingRQ request) {
+
+        var cached = this.flightShoppingExist(request);
+
+        if (cached != null) {
+            instance.getMap(QUERY_CACHED_NAME).remove(cached.getId());
+        }
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get shopping request query by request id
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param requestId
+     * @return ShoppingQueryEntity
+     */
+    @Override
+    public ShoppingQueryEntity flightShoppingById(String requestId) {
+        return (ShoppingQueryEntity) instance.getMap(QUERY_CACHED_NAME).getOrDefault(requestId, null);
+    }
 }
+

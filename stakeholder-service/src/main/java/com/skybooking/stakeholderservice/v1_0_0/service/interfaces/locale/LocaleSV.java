@@ -16,7 +16,7 @@ public interface LocaleSV {
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @param id
-     * @return ModuleLanguageRS
+     * @Return ModuleLanguageRS
      */
     ModuleLanguageRS findModuleLanguageByLocaleId(long id);
 
@@ -26,7 +26,7 @@ public interface LocaleSV {
      * get all locale information
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @return List
+     * @Return List
      */
     List<LocaleRS> findAllLocale();
 

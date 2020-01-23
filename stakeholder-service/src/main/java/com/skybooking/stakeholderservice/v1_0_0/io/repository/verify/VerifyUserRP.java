@@ -13,7 +13,7 @@ public interface VerifyUserRP extends JpaRepository<VerifyUserEntity, Integer> {
 
 
     /**
-     * Find token verify user
+     * Find token login user
      */
     @Query(value = "SELECT * FROM verify_users WHERE token = ?1 AND status = ?2  ORDER BY created_at DESC LIMIT 1", nativeQuery = true)
     VerifyUserEntity findByTokenAndStatus(String token, int status);

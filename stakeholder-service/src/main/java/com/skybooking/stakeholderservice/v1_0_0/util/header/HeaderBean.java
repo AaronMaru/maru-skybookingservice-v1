@@ -25,18 +25,18 @@ public class HeaderBean {
      */
     public String getLocalization(String lang) {
 
-        Object result = entityManager
-                .createNativeQuery("SELECT CASE WHEN COUNT(name) > 0 THEN 'true' ELSE 'false' END FROM frontend_locales WHERE locale = :locale AND status = 1")
-                .setParameter("locale", lang == null ? request.getHeader("X-localization") : lang)
-                .getSingleResult();
+//        Object result = entityManager
+//                .createNativeQuery("SELECT CASE WHEN COUNT(name) > 0 THEN 'true' ELSE 'false' END FROM frontend_locales WHERE locale = :locale AND status = 1")
+//                .setParameter("locale", lang == null ? request.getHeader("X-localization") : lang)
+//                .getSingleResult();
+//
+//        Boolean b = Boolean.parseBoolean(result.toString());
+//
+//        String reqLocale = lang == null ? request.getHeader("X-localization") : lang;
+//
+//        String locale = reqLocale == null ? "en" : (reqLocale.equals("")) ? "en" : (b ? reqLocale : "en");
 
-        Boolean b = Boolean.parseBoolean(result.toString());
-
-        String reqLocale = lang == null ? request.getHeader("X-localization") : lang;
-
-        String locale = reqLocale == null ? "en" : (reqLocale.equals("")) ? "en" : (b ? reqLocale : "en");
-
-        return locale;
+        return "en";
 
 
     }

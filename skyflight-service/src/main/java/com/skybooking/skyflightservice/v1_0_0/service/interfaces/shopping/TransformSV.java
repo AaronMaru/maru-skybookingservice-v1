@@ -5,9 +5,9 @@ import com.skybooking.skyflightservice.v1_0_0.io.entity.shopping.ShoppingTransfo
 
 public interface TransformSV {
     ShoppingTransformEntity getShoppingTransform(ShoppingResponseEntity response);
-
     ShoppingTransformEntity getShoppingTransformDetail(ShoppingTransformEntity source);
-
     ShoppingTransformEntity getShoppingTransformDetailMarkup(ShoppingTransformEntity source, double markup);
+
+    ShoppingTransformEntity getShoppingTransformDetailWithFilter(ShoppingTransformEntity source);
     ShoppingTransformEntity getShoppingTransformById(String id);
 }

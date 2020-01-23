@@ -262,7 +262,7 @@ public class UserIP implements UserSV {
         userRepository.save(user);
 
         Map<String, Object> mailData = duplicate.mailData(fullName, code, "reset_your_password");
-        apiBean.sendEmailSMS(username,"send-verify", mailData);
+        apiBean.sendEmailSMS(username,"send-login", mailData);
 
         return code;
 
@@ -338,7 +338,7 @@ public class UserIP implements UserSV {
         userRepository.save(user);
 
         Map<String, Object> mailData = duplicate.mailData(fullName, code, "account_verification_code");
-        apiBean.sendEmailSMS(username,"send-verify", mailData);
+        apiBean.sendEmailSMS(username,"send-login", mailData);
 
         return code;
 

@@ -11,5 +11,6 @@ public class Baggage implements Serializable {
     private int piece;
     private int weight;
     private String unit;
+    private boolean nonRefundable;
 
 }

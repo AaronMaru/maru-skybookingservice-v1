@@ -9,7 +9,8 @@ import java.util.List;
 @Data
 public class ShoppingTransformEntity implements Serializable {
 
-    private String id;
+    private String requestId;
+    private String trip;
     private List<Airline> airlines = new ArrayList<>();
     private List<Aircraft> aircrafts = new ArrayList<>();
     private List<Location> locations = new ArrayList<>();

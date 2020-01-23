@@ -2,6 +2,7 @@ package com.skybooking.skyflightservice.v1_0_0.service.implement.shopping;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.response.bargainfinder.SabreBargainFinderRS;
+import com.skybooking.skyflightservice.v1_0_0.io.entity.shopping.ShoppingQueryEntity;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.shopping.ShoppingResponseEntity;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.ResponseSV;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,8 +28,8 @@ public class ResponseIP implements ResponseSV {
      * @return ShoppingResponseEntity
      */
     @Override
-    public ShoppingResponseEntity flightShoppingCreate(String id, List<SabreBargainFinderRS> responses) {
-        var shopping = new ShoppingResponseEntity(id, responses);
+    public ShoppingResponseEntity flightShoppingCreate(String id, List<SabreBargainFinderRS> responses, ShoppingQueryEntity query) {
+        var shopping = new ShoppingResponseEntity(id, responses, query);
 
         instance.getMap(RESPONSE_CACHED_NAME).put(shopping.getId(), shopping);
 

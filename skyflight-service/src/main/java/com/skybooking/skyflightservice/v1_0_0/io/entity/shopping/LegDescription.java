@@ -6,6 +6,8 @@ import java.io.Serializable;
 
 @Data
 public class LegDescription implements Serializable {
+
     private boolean status;
     private String leg;
+
 }

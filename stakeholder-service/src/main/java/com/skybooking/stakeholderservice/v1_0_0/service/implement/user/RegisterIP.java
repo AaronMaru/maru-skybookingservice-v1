@@ -152,7 +152,7 @@ public class RegisterIP implements RegisterSV {
         user = userRepository.save(user);
 
         apiBean.storeUserStatus(user, Integer.parseInt(environment.getProperty("spring.stakeUser.inactive")),
-                "Waiting verify");
+                "Waiting login");
 
         logger.activities(ActivityLoggingBean.Action.REGISTER, user);
 
@@ -200,7 +200,7 @@ public class RegisterIP implements RegisterSV {
         String fullName = skyuserRQ.getFirstName() + " " + skyuserRQ.getLastName();
 
         Map<String, Object> mailData = duplicate.mailData(fullName, code, "account_verification_code");
-        apiBean.sendEmailSMS(skyuserRQ.getUsername(), "send-verify", mailData);
+        apiBean.sendEmailSMS(skyuserRQ.getUsername(), "send-login", mailData);
 
         return code;
 

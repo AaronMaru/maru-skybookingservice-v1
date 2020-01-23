@@ -6,5 +6,6 @@ import lombok.Data;
 public class BookingOS {
 
     private Boolean status = false;
+    private String message = "";
     private Object result;
 }

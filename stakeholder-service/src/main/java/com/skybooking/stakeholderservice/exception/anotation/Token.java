@@ -17,7 +17,7 @@ public @interface Token {
 
     public int status();
 
-    String message() default "Invalid verify code";
+    String message() default "Invalid login code";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 

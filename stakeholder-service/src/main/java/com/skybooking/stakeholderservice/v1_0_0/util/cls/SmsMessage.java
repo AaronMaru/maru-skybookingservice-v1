@@ -15,14 +15,14 @@ public class SmsMessage {
     public String sendSMS(String cases, int code) {
 
         switch (cases) {
-            case "send-verify":
-                return code + " is your verify code";
+            case "send-login":
+                return code + " is your login code";
             case "success-reset-password":
                 return "Password reset successfully";
             case "deactive-account":
                 return "Your account deactive success";
-            case "verify-success":
-                return "Your account verify success";
+            case "login-success":
+                return "Your account login success";
             case "send-download-link":
                 return "Welcome to skybooking download the skybooking!! app and enjoy your travel and book cheap flight ticket click  https://www.skybooking.net";
             default:

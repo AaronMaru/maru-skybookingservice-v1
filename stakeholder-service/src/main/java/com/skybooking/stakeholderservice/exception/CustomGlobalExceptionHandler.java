@@ -1,5 +1,7 @@
 package com.skybooking.stakeholderservice.exception;
 
+import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserEntity;
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserRepository;
 import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -19,6 +21,9 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
 
     @Autowired
     private Localization localization;
+
+    @Autowired
+    private UserRepository userRepository;
     // Error handle for @Valid
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
@@ -39,15 +44,17 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
             validation = localization.multiLanguageRes(fieldError.getDefaultMessage());
             if (fieldError.getCode().equals("UsernameUnique")) {
                 if (result.getFieldValue("typeSky").equals("bussiness")) {
-                    HashMap<String, Object> skyowner = new HashMap<>();
-                    skyowner.put("email", result.getFieldValue("username"));
-                    skyowner.put("typeSky", result.getFieldValue("typeSky"));
-                    body.put("data", skyowner);
+                    UserEntity user = userRepository.findByEmailOrPhone(result.getFieldValue("username").toString(), result.getFieldValue("code").toString());
+                    if (user.getStakeHolderUser().getIsSkyowner() != 1) {
+                        HashMap<String, Object> skyowner = new HashMap<>();
+                        skyowner.put("email", result.getFieldValue("username"));
+                        skyowner.put("typeSky", result.getFieldValue("typeSky"));
+                        body.put("data", skyowner);
+                    }
                 }
             }
         }
         body.put("message", validation);
-
         return new ResponseEntity<>(body, headers, status);
 
     }

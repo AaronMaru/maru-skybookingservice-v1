@@ -10,10 +10,12 @@ import java.util.List;
 public class ShoppingResponseEntity implements Serializable {
 
     private String id;
+    private ShoppingQueryEntity query;
     private List<SabreBargainFinderRS> responses;
 
-    public ShoppingResponseEntity(String id, List<SabreBargainFinderRS> responses) {
+    public ShoppingResponseEntity(String id, List<SabreBargainFinderRS> responses, ShoppingQueryEntity query) {
         this.id = id;
         this.responses = responses;
+        this.query = query;
     }
 }

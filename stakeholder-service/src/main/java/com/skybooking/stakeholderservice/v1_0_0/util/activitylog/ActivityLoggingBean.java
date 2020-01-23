@@ -423,7 +423,7 @@ public class ActivityLoggingBean {
             put(REGISTER, "registered skyuser");
             put(REGISTER_SKY_OWNER, "registered skyowner");
             put(LOGIN, "signed in");
-            put(VERIFY_USER_ACTIVE, "verify active account");
+            put(VERIFY_USER_ACTIVE, "login active account");
             put(UPDATE_STAKE_USER, "update profile");
             put(RESET_PASSWORD, "reset your password");
             put(UPDATE_CONTACT, "update contact");

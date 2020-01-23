@@ -11,7 +11,7 @@ public interface StakeHolderUserRP extends JpaRepository<StakeHolderUserEntity, 
     /**
      * Get last stakeholder user code
      */
-    @Query(value = "SELECT * FROM stakeholder_users WHERE user_code LIKE %?1% ORDER BY created_at DESC LIMIT 1", nativeQuery = true)
+    @Query(value = "SELECT * FROM stakeholder_users WHERE user_code LIKE %?1% ORDER BY id DESC LIMIT 1", nativeQuery = true)
     StakeHolderUserEntity findByUserCode(String userCode);
 
 }

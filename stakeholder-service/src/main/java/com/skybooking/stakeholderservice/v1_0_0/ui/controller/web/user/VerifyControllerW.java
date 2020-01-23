@@ -36,6 +36,7 @@ public class VerifyControllerW {
      */
     @PatchMapping("/verify")
     public ResRS verifyUser(@Valid @RequestBody VerifyRQ verifyRQ) {
+        System.out.println(environment.getProperty("spring.verifyStatus.login"));
         UserDetailsTokenRS userDetailsTokenRS = verifySV.verifyUser(verifyRQ, Integer.parseInt(environment.getProperty("spring.verifyStatus.verify")));
         return localization.resAPI(HttpStatus.OK,"vf_succ", userDetailsTokenRS);
     }
@@ -43,7 +44,7 @@ public class VerifyControllerW {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * Resend verify
+     * Resend login
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @Param sendVerifyRequest
@@ -73,7 +74,7 @@ public class VerifyControllerW {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * Send verify to active account
+     * Send login to active account
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @Param sendVerifyRequest

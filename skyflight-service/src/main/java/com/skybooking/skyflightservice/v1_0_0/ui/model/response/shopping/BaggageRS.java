@@ -2,13 +2,15 @@ package com.skybooking.skyflightservice.v1_0_0.ui.model.response.shopping;
 
 import lombok.Data;
 
-@Data
-public class BaggageRS {
+import java.io.Serializable;
 
-    private String id;
-    private String type;
-    private String piece;
-    private String weight;
-    private String unit;
+@Data
+public class BaggageRS implements Serializable {
+
+    private String type = "";
+    private int piece;
+    private int weight;
+    private String unit = "";
+    private boolean nonRefundable;
 
 }

@@ -4,7 +4,7 @@ import javax.validation.constraints.NotEmpty;
 
 public class VerifyRQ {
 
-    @NotEmpty(message = "Please provide verify code")
+    @NotEmpty(message = "Please provide login code")
     private String token;
 
     public String getToken() {

@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-
 @Service
 public class LocaleIP implements LocaleSV {
 
@@ -62,7 +61,6 @@ public class LocaleIP implements LocaleSV {
             response.getRoot().get(module).add(keyValue);
         }
 
-
         return response;
     }
 
@@ -72,11 +70,12 @@ public class LocaleIP implements LocaleSV {
      * list all locale information
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @return List
+     * @Return List
      */
     @Override
     public List<LocaleRS> findAllLocale() {
         return LocaleTF.getResponseList(localeRP.findAll());
     }
+
 
 }

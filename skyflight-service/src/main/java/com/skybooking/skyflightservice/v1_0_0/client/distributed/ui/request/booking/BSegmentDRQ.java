@@ -13,5 +13,7 @@ public class BSegmentDRQ {
     private String depCode;
     private String arrCode;
     private String airline;
-    private String numInParty;
+    private String type;
+    private String optAirline;
+    private String numInParty = "";
 }

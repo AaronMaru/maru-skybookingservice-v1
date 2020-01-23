@@ -78,12 +78,12 @@ public class VerifyIP implements VerifySV {
                 : user.getCode() + user.getPhone();
 
         apiBean.storeUserStatus(verify.getUserEntity(),
-                Integer.parseInt(environment.getProperty("spring.stakeUser.inactive")), "Waiting verify");
+                Integer.parseInt(environment.getProperty("spring.stakeUser.inactive")), "Waiting login");
 
         String keyScript = status == 1 ? "account_verified_successfully" : "account_reactivated_successfully";
 
         Map<String, Object> mailData = duplicate.mailData(fullName, 0, keyScript);
-        apiBean.sendEmailSMS(username,"verify-success", mailData);
+        apiBean.sendEmailSMS(username,"login-success", mailData);
 
         logger.activities(ActivityLoggingBean.Action.VERIFY_USER_ACTIVE, verify.getUserEntity());
 
@@ -101,7 +101,7 @@ public class VerifyIP implements VerifySV {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * Resend verify user
+     * Resend login user
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @Param sendVerifyRequest
@@ -127,7 +127,7 @@ public class VerifyIP implements VerifySV {
         String keyScript = status == 1 ? "resend_new_verification_code" : "new_verification_code_reactivating_account";
 
         Map<String, Object> mailData = duplicate.mailData(fullName, code, keyScript);
-        apiBean.sendEmailSMS(username,"send-verify", mailData);
+        apiBean.sendEmailSMS(username,"send-login", mailData);
 
         return code;
 

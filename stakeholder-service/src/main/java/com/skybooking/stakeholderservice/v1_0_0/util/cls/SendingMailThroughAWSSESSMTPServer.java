@@ -2,6 +2,7 @@ package com.skybooking.stakeholderservice.v1_0_0.util.cls;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;
+import org.slf4j.LoggerFactory;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
@@ -11,10 +12,18 @@ import javax.mail.internet.MimeMessage;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class SendingMailThroughAWSSESSMTPServer {
+
+    private org.slf4j.Logger logger = LoggerFactory.getLogger(SendingMailThroughAWSSESSMTPServer.class);
+
+    public static int noOfQuickServiceThreads = 20;
+
+    private ScheduledExecutorService quickService = Executors.newScheduledThreadPool(noOfQuickServiceThreads);
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -64,7 +73,18 @@ public class SendingMailThroughAWSSESSMTPServer {
             Transport transport = session.getTransport();
             transport.connect(mailProperty.get("SMTP_SERVER_HOST"), mailProperty.get("SMTP_USER_NAME"),
                     mailProperty.get("SMTP_USER_PASSWORD"));
-            transport.sendMessage(message, message.getAllRecipients());
+
+
+            quickService.submit(new Runnable(){
+                @Override
+                public void run() {
+                    try {
+                        transport.sendMessage(message, message.getAllRecipients());
+                    }catch (Exception e) {
+                        logger.error("Exception occur while send a mail : ",e);
+                    }
+                }
+            });
         } catch (Exception ex) {
             Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, ex.getMessage(), ex);
         }

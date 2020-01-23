@@ -11,6 +11,7 @@ public class StaffServiceApplicationTests {
 
     @Test
     public void contextLoads() {
+        System.out.println("gg");
     }
 
 }

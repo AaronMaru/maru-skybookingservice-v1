@@ -13,4 +13,5 @@ public class Airline implements Serializable {
     private String name;
     private String url45;
     private String url90;
+    private double price;
 }

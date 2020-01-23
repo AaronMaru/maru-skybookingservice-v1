@@ -19,6 +19,14 @@ public class SendDownloadLinkRQ {
 
     private String code;
 
+    public SendDownloadLinkRQ() {
+    }
+
+    public SendDownloadLinkRQ(@NotNull(message = "Please provide a username") @NotEmpty(message = "Please provide a username") String username, String code) {
+        this.username = username;
+        this.code = code;
+    }
+
     public String getUsername() {
         return username;
     }

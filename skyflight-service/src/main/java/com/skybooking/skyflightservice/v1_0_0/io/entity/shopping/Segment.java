@@ -28,6 +28,7 @@ public class Segment implements Serializable {
     private String cabinName;
     private String meal;
     private String mealName;
+    private String bookingCode;
     private int stopCount;
     private int directionIndex;
     private List<HiddenStop> hiddenStops = new ArrayList<>();
