@@ -1,15 +1,19 @@
 package com.skybooking.skyflightservice.v1_0_0.service.implement.shopping;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.skybooking.skyflightservice.config.passenger.PassengerCode;
+import com.skybooking.skyflightservice.constant.MessageConstant;
+import com.skybooking.skyflightservice.constant.RevalidateConstant;
+import com.skybooking.skyflightservice.constant.passenger.PassengerCode;
 import com.skybooking.skyflightservice.v1_0_0.client.distributed.action.ShoppingAction;
-import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.booking.BSegmentDRQ;
+import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.booking.BookingSegmentDRQ;
 import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.shopping.OriginDestination;
 import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.shopping.RevalidateRQ;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.shopping.*;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.DetailSV;
-import com.skybooking.skyflightservice.v1_0_0.ui.model.request.booking.BCreateRQ;
-import com.skybooking.skyflightservice.v1_0_0.ui.model.request.booking.BPassengerRQ;
+import com.skybooking.skyflightservice.v1_0_0.service.model.shopping.RevalidateM;
+import com.skybooking.skyflightservice.v1_0_0.ui.model.request.booking.BookingCreateRQ;
+import com.skybooking.skyflightservice.v1_0_0.ui.model.request.booking.BookingPassengerRQ;
+import com.skybooking.skyflightservice.v1_0_0.util.DateUtility;
 import com.skybooking.skyflightservice.v1_0_0.util.calculator.NumberFormatter;
 import com.skybooking.skyflightservice.v1_0_0.util.passenger.PassengerUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,14 +40,14 @@ public class RevalidateFlight {
      * @param bookingRQ
      * @return Boolean
      */
-    public Boolean revalidate(BCreateRQ bookingRQ) {
+    public RevalidateM revalidate(BookingCreateRQ bookingRQ) {
 
         var adult = 0;
         var child = 0;
         var infant = 0;
         var requestId = bookingRQ.getRequestId();
 
-        for (BPassengerRQ passenger: bookingRQ.getPassengers()) {
+        for (BookingPassengerRQ passenger: bookingRQ.getPassengers()) {
             if (PassengerUtil.type(passenger.getBirthDate()) == PassengerCode.ADULT) {
                 adult++;
             } else if (PassengerUtil.type(passenger.getBirthDate()) == PassengerCode.CHILD) {
@@ -57,13 +61,26 @@ public class RevalidateFlight {
 
         for (String leg: bookingRQ.getLegIds()) {
             List<OriginDestination> originDestinations = new ArrayList<>();
-            List<BSegmentDRQ> segments = new ArrayList<>();
+            List<BookingSegmentDRQ> segments = new ArrayList<>();
             Leg legDetail = detailSV.getLegDetail(requestId, leg);
             for (LegSegmentDetail legSegment: legDetail.getSegments()) {
-                segments.add(this.setDSegment(detailSV.getSegmentDetail(requestId, legSegment.getSegment()), null));
+                segments.add(
+                        this.setDSegment(
+                                detailSV.getSegmentDetail(requestId, legSegment.getSegment()),
+                                legSegment.getDateAdjustment(),
+                                legSegment.getBookingCode()
+                        )
+                );
             }
 
-            originDestinations.add(new OriginDestination(segments, legDetail.getDepartureTime(), legDetail.getDeparture(), legDetail.getArrival()));
+            originDestinations.add(
+                    new OriginDestination(
+                            segments,
+                            legDetail.getDepartureTime(),
+                            legDetail.getDeparture(),
+                            legDetail.getArrival()
+                    )
+            );
 
             RevalidateRQ request = new RevalidateRQ();
             request.setAdult(adult);
@@ -72,16 +89,37 @@ public class RevalidateFlight {
             request.setOriginDestinations(originDestinations);
 
             JsonNode airItineraryPriceInfo = shoppingAction.revalidate(request);
+            System.out.println(airItineraryPriceInfo);
             if (!this.checkPrice(airItineraryPriceInfo, detailSV.getPriceDetail(requestId, legDetail.getPrice()), adult, child, infant)) {
-                return false;
+                return new RevalidateM(RevalidateConstant.PRICE_CHANGED, MessageConstant.PRICE_CHANGED);
             }
             if (!this.checkSeats(airItineraryPriceInfo, seats)) {
-                return false;
+                return new RevalidateM(RevalidateConstant.UNAVAILABLE_SEATS, MessageConstant.UNAVAILABLE_SEATS);
             }
         }
 
-        return true;
+        return new RevalidateM(RevalidateConstant.SUCCESS);
     }
+
+
+    public BookingSegmentDRQ setDSegment(Segment segmentDetail, int dateAdjustment, String resBookDesigCode, int seats) {
+
+        var segment = this.setDistSegment(segmentDetail, dateAdjustment, resBookDesigCode);
+        segment.setNumInParty(seats + "");
+        segment.setStatus("NN");
+
+        return segment;
+    }
+
+
+    public BookingSegmentDRQ setDSegment(Segment segmentDetail, int dateAdjustment, String resBookDesigCode) {
+
+        var segment = this.setDistSegment(segmentDetail, dateAdjustment, resBookDesigCode);
+        segment.setType("A");
+
+        return segment;
+    }
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -89,25 +127,21 @@ public class RevalidateFlight {
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @param segmentDetail
-     * @param seats
-     * @return BSegmentDRQ
+     * @param dateAdjustment
+     * @param resBookDesigCode
+     * @return
      */
-    public BSegmentDRQ setDSegment(Segment segmentDetail, String seats) {
-        var segment = new BSegmentDRQ();
+    private BookingSegmentDRQ setDistSegment(Segment segmentDetail, int dateAdjustment, String resBookDesigCode) {
 
-        segment.setDepDateTime(segmentDetail.getDepartureTime());
-        segment.setArrDateTime(segmentDetail.getArrivalTime());
+        var segment = new BookingSegmentDRQ();
+        segment.setDepDateTime(DateUtility.plusDays(segmentDetail.getDepartureTime(), dateAdjustment));
+        segment.setArrDateTime(DateUtility.plusDays(segmentDetail.getArrivalTime(), dateAdjustment));
         segment.setDepCode(segmentDetail.getDeparture());
         segment.setArrCode(segmentDetail.getArrival());
         segment.setFlightNum(segmentDetail.getFlightNumber());
         segment.setAirline(segmentDetail.getAirline());
         segment.setOptAirline(segmentDetail.getOperatingAirline());
-        segment.setResBookDesignCode(segmentDetail.getBookingCode());
-        segment.setStatus("NN");
-        segment.setType("A");
-        if (!(seats == null)) {
-            segment.setNumInParty(seats);
-        }
+        segment.setResBookDesignCode(resBookDesigCode);
 
         return segment;
     }
@@ -156,17 +190,14 @@ public class RevalidateFlight {
         for (Price price: priceDetail.getDetails()) {
             BigDecimal pricePsg = price.getBaseFare().add(price.getTax());
 
-            if (adult > 1 && price.getType().equals(PassengerCode.ADULT)) {
+            if (adult > 0 && price.getType().equals(PassengerCode.ADULT)) {
                 amount = amount.add(pricePsg.multiply(BigDecimal.valueOf(adult)));
-            } else if (child > 1 && price.getType().equals(PassengerCode.CHILD)) {
+            } else if (child > 0 && price.getType().equals(PassengerCode.CHILD)) {
                 amount = amount.add(pricePsg.multiply(BigDecimal.valueOf(child)));
-            } else if (infant > 1 && price.getType().equals(PassengerCode.INFANT)) {
+            } else if (infant > 0 && price.getType().equals(PassengerCode.INFANT)) {
                 amount = amount.add(pricePsg.multiply(BigDecimal.valueOf(infant)));
-            } else {
-                amount = amount.add(pricePsg);
             }
         }
-
         return priceValid.equals(NumberFormatter.amount(amount.doubleValue()));
     }
 

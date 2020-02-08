@@ -5,6 +5,7 @@ SELECT
 	su.last_name AS lastName,
 	su.user_code AS userCode,
 	su.date_of_birth AS dob,
+	(CASE WHEN su.photo IS NULL THEN  'default.png' ELSE su.photo END) AS photo,
 	su.gender,
 	(
 		SELECT c.`value`

@@ -4,7 +4,11 @@ ai.`code`,
 SELECT ail.`name` as airName
 FROM airport_info_locale ail
 WHERE ail.airport_info_id = ai.id
-AND ail.locale_id = 1
+AND IF(:localeId NOT IN (SELECT id FROM frontend_locales) ,
+ail.locale_id = 1
+,
+ail.locale_id = :localeId
+)
 ) as airport,
 cc_city.cityName as city,
 cc_city.countryName as country,
@@ -24,7 +28,11 @@ cc_city.id,
 SELECT ccl.`name`
 FROM country_city_locale ccl
 WHERE ccl.country_city_id = cc_city.id
-AND ccl.locale_id = 1
+AND IF(:localeId NOT IN (SELECT id FROM frontend_locales) ,
+ccl.locale_id = 1
+,
+ccl.locale_id = :localeId
+)
 ) as cityName,
 (
 
@@ -33,7 +41,11 @@ SELECT (
 SELECT ccl.`name`
 FROM country_city_locale ccl
 WHERE ccl.country_city_id = cc_country.id
-AND ccl.locale_id = 1
+AND IF(:localeId NOT IN (SELECT id FROM frontend_locales) ,
+ccl.locale_id = 1
+,
+ccl.locale_id = :localeId
+)
 ) as countryName
 
 FROM country_city cc_country

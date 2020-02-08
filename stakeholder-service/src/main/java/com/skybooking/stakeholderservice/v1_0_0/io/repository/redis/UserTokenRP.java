@@ -9,6 +9,6 @@ import java.util.List;
 @Repository
 public interface UserTokenRP extends CrudRepository<UserTokenEntity, Long> {
 
-//    UserTokenEntity findTopByUserIdOrderByIdAsc(Long id);
+//    UserTokenApiEntity findTopByUserIdOrderByIdAsc(Long id);
 
 }

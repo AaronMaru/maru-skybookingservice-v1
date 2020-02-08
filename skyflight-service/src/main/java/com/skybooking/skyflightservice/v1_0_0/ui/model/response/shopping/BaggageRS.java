@@ -7,10 +7,11 @@ import java.io.Serializable;
 @Data
 public class BaggageRS implements Serializable {
 
-    private String type = "";
-    private int piece;
-    private int weight;
-    private String unit = "";
+    private String type;
+    private int pieces;
+    private int weights;
+    private String unit;
     private boolean nonRefundable;
+    private boolean isPiece;
 
 }

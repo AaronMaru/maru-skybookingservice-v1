@@ -11,7 +11,7 @@ import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.BussinessT
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.contact.ContactRP;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.company.CompanySV;
-import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company.CompanyRQ;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company.CompanyUpdateRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user.SkyownerRegisterRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.BussinessDocRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.BussinessTypeRS;
@@ -24,6 +24,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 
@@ -57,6 +58,7 @@ public class CompanyIP implements CompanySV {
     @Autowired
     private GeneralBean generalBean;
 
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Update company profile
@@ -66,41 +68,63 @@ public class CompanyIP implements CompanySV {
      * @Param id
      * @Return ResponseEntity
      */
-    public CompanyRS updateCompany(CompanyRQ companyRQ, Long id) {
+    public CompanyRS updateCompany(CompanyUpdateRQ companyRQ, Long id) {
 
         UserEntity user = userBean.getUserPrincipal();
-
         StakeholderCompanyEntity company = skyownerBean.findCompany(user, id);
 
         if (company.getStatus() == Integer.parseInt(environment.getProperty("spring.companyStatus.waiting"))) {
             throw new BadRequestException("sth_w_w", "");
         }
 
-        company.setCompanyName(companyRQ.getBusinessName());
+        statusCompanyVld(company, companyRQ);
 
-        Optional<BussinessTypeEntity> bizType = bussinessTypeRP.findById(companyRQ.getBusinessTypeId());
-        if (bizType.get().getName().equals("Goverment")) {
-            company.setContactPerson(companyRQ.getContactPerson());
-            company.setContactPosition(companyRQ.getContactPosition());
-        }
+        setByFields(companyRQ, company);
 
         List<ContactEntity> contacts = updateContacts(company, companyRQ);
+
         if (company.getStatus() == Integer.parseInt(environment.getProperty("spring.companyStatus.reject"))) {
 
-            company.getStakeholderCompanyDocs().removeAll(company.getStakeholderCompanyDocs());
+            Optional<BussinessTypeEntity> bizType = bussinessTypeRP.findById(companyRQ.getBusinessTypeId());
+            if (bizType.get().getName().equals("Goverment")) {
+                company.setContactPerson(companyRQ.getContactPerson());
+                company.setContactPosition(companyRQ.getContactPosition());
+            }
 
+            company.getStakeholderCompanyDocs().removeAll(company.getStakeholderCompanyDocs());
             company.setBussinessTypeId(companyRQ.getBusinessTypeId());
             updateLicense(company, companyRQ, user.getId());
+
+        }
+
+        if (companyRQ.getProfile() != null) {
+            String fileName = userBean.uploadFileForm(companyRQ.getProfile(), "/company_profiles/origin", "/company_profiles/_thumbnail");
+            company.setProfileImg(fileName);
         }
 
         contactRP.saveAll(contacts);
         companyRP.save(company);
 
-        apiBean.storeOrUpdateCountry(companyRQ.getCountryId(), "company", company.getId());
+        if (companyRQ.getCountryId() != null) {
+            apiBean.storeOrUpdateCountry(companyRQ.getCountryId(), "company", company.getId());
+        }
 
         CompanyRS companyRS = userBean.companiesDetails(user.getStakeHolderUser().getStakeholderCompanies()).stream().findFirst().get();
 
         return companyRS;
+
+    }
+
+
+    public void setByFields(CompanyUpdateRQ companyRQ, StakeholderCompanyEntity company) {
+
+        if (companyRQ.getBusinessName() != null && !companyRQ.getBusinessName().equals("")) {
+            company.setCompanyName(companyRQ.getBusinessName());
+        }
+        if (companyRQ.getDescription() != null && !companyRQ.getDescription().equals("")) {
+            company.setDescription(companyRQ.getDescription());
+        }
+
     }
 
 
@@ -113,25 +137,47 @@ public class CompanyIP implements CompanySV {
      * @Param companyRQ
      * @Return ContactEntity
      */
-    public List<ContactEntity> updateContacts(StakeholderCompanyEntity company, CompanyRQ companyRQ) {
+    public List<ContactEntity> updateContacts(StakeholderCompanyEntity company, CompanyUpdateRQ companyRQ) {
+
         List<ContactEntity> contacts = contactRP.getContactCM(company.getId());
         for (ContactEntity contact: contacts) {
+            switch (contact.getType()) {
+                case "p" :
+                    if (companyRQ.getPhone() != null && !companyRQ.getPhone().equals("")) {
+                        contact.setValue(companyRQ.getCode() + "-" + companyRQ.getPhone());
+                    }
+                    break;
+                case "a" :
+                    if (companyRQ.getAddress() != null && !companyRQ.getAddress().equals("")) {
+                        contact.setValue(companyRQ.getAddress());
+                    }
+                    break;
+                case "e" :
+                    if (companyRQ.getEmail() != null && !companyRQ.getEmail().equals("")) {
+                        contact.setValue(companyRQ.getEmail());
+                    }
+                    break;
+                case "w" :
+                    if (companyRQ.getWebsite() != null && !companyRQ.getWebsite().equals("")) {
+                        contact.setValue(companyRQ.getWebsite());
+                    }
+                    break;
+                case "z" :
+                    if (companyRQ.getPostalOrZipCode() != null && !companyRQ.getPostalOrZipCode().equals("")) {
+                        contact.setValue(companyRQ.getPostalOrZipCode());
+                    }
+                    break;
+                case "c" :
+                    if (companyRQ.getCity() != null && !companyRQ.getCity().equals("")) {
+                        contact.setValue(companyRQ.getCity());
+                    }
+                    break;
+            }
 
-            if (contact.getType().equals("p")) {
-                contact.setValue(companyRQ.getCode() + "-" + companyRQ.getPhone());
-            }
-            if (contact.getType().equals("a")) {
-                contact.setValue(companyRQ.getAddress());
-            }
-            if (contact.getType().equals("w")) {
-                contact.setValue(companyRQ.getWebsite());
-            }
-            if (contact.getType().equals("z")) {
-                contact.setValue(companyRQ.getPostalOrZipCode());
-            }
         }
 
         return contacts;
+
     }
 
 
@@ -144,7 +190,7 @@ public class CompanyIP implements CompanySV {
      * @Param companyRQ
      * @Return ContactEntity
      */
-    public void updateLicense(StakeholderCompanyEntity company, CompanyRQ companyRQ, Long useID) {
+    public void updateLicense(StakeholderCompanyEntity company, CompanyUpdateRQ companyRQ, Long useID) {
 
         companyRQ.getLicenses().forEach((k, file) -> {
             BussinessDocEntity existLc = bussinessDocRP.findFirstByName(k);
@@ -212,6 +258,15 @@ public class CompanyIP implements CompanySV {
         }
 
         return BussinessDocsRS;
+    }
+
+
+    public void statusCompanyVld(StakeholderCompanyEntity company, CompanyUpdateRQ companyRQ) {
+        if (company.getStatus() == 1) {
+            if (companyRQ.getBusinessTypeId() == null || companyRQ.getBusinessTypeId().equals("")) {
+                throw new BadRequestException("Please provide business type id", "");
+            }
+        }
     }
 
 

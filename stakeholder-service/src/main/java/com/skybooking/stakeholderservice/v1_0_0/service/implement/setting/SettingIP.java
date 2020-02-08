@@ -5,8 +5,8 @@ import com.skybooking.stakeholderservice.v1_0_0.io.repository.setting.SettingRP;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.setting.SettingSV;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.setting.SendDownloadLinkRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.setting.SettingRS;
+import com.skybooking.stakeholderservice.v1_0_0.util.email.EmailBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
-import com.skybooking.stakeholderservice.v1_0_0.util.general.Duplicate;
 import org.apache.commons.lang.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,7 +25,8 @@ public class SettingIP implements SettingSV {
     private ApiBean apiBean;
 
     @Autowired
-    private Duplicate duplicate;
+    private EmailBean emailBean;
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -98,12 +99,12 @@ public class SettingIP implements SettingSV {
      */
     public void sendLinkDownload(SendDownloadLinkRQ sendDownloadLinkRQ) {
 
-        String username = NumberUtils.isNumber(sendDownloadLinkRQ.getUsername())
+        String receiver = NumberUtils.isNumber(sendDownloadLinkRQ.getUsername())
                 ? sendDownloadLinkRQ.getCode() + sendDownloadLinkRQ.getUsername().replaceFirst("^0+(?!$)", "")
                 : sendDownloadLinkRQ.getUsername();
 
-        Map<String, Object> mailData = duplicate.mailData(null, 0, "download_skybooking_apps");
-        apiBean.sendEmailSMS(username,"send-download-link", mailData);
+        Map<String, Object> mailData = emailBean.mailData(receiver,null, 0, "download_skybooking_apps");
+        emailBean.sendEmailSMS("send-download-link", mailData);
 
     }
 

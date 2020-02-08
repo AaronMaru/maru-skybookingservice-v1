@@ -239,30 +239,30 @@
     <div class="logo-sec">
         <div class="back-logo">
             <img src="https://s3.amazonaws.com/skybooking/uploads/mail/images/iata.png" class="pull-right">
-            <img src="https://s3.amazonaws.com/skybooking/uploads/mail/images/logo.png">
+            <img src=${logoPdf} alt="No Logo Yet">
         </div>
         <hr>
         <hr>
 
         <div class="booking-ref">
             <div class="pull-right">
-                <span>${booking_no}.</span>
+                <span>${booking_no??? then(booking_no, 'NO LABEL YET')}.</span>
                 <b>${data.bookingCode}</b>
             </div>
-            <h3>${itinerary}</h3>
+            <h3>${itinerary??? then(itinerary, 'NO LABEL YET')}</h3>
             <div class="pull-right">
-                <span>${booking_on}:</span>
+                <span>${booking_on??? then(booking_on, 'NO LABEL YET')}:</span>
                 <b>${data.bookDate}</b>
             </div>
-            <h4>${booking_reference}: <b> ${data.pnrCode} </b> </h4>
+            <h4>${booking_reference??? then(booking_reference, 'NO LABEL YET')}: <b> ${data.pnrCode} </b> </h4>
         </div>
 
         <div class="fight-details line-head">
-            <h3>${flight_details}</h3>
+            <h3>${flight_details??? then(flight_details, 'NO LABEL YET')}</h3>
             <#list data.bookingOd as item>
                 <ul>
                     <li>
-                        <small>${item.fSegs.depDateTime?string["d MMM | hh:mm"]}</small>
+                        <small>${item.fSegs.depDateTime?datetime("yyyy-MM-dd HH:mm:ss")?string["d MMM | hh:mm"]}</small>
                         <h2>${item.fSegs.depLocation}</h2>
                         <span>${item.fSegs.depCity}, ${item.fSegs.depCountry}</span>
                     </li>
@@ -271,7 +271,7 @@
                         <small>${(item.stop != 0) ? then('Stop ${item.stop}', 'Non Stop')}</small>
                     </li>
                     <li>
-                        <small>${item.fSegs.arrDateTime?string["d MMM | hh:mm"]}</small>
+                        <small>${item.fSegs.arrDateTime?datetime("yyyy-MM-dd HH:mm:ss")?string["d MMM | hh:mm"]}</small>
                         <h2>${item.fSegs.arrLocation}</h2>
                         <span>${item.fSegs.arrCity}, ${item.fSegs.arrCountry}</span>
                     </li>
@@ -288,19 +288,19 @@
 
         <div class="dep-arrive">
             <h4>
-                <span>${flight_no}</span>
-                <span>${depart_arrive_time}</span>
-                <span>${depart_arrive_Airport}</span>
+                <span>${flight_no??? then(flight_no, 'NO LABEL YET')}</span>
+                <span>${depart_arrive_time??? then(depart_arrive_time, 'NO LABEL YET')}</span>
+                <span>${depart_arrive_Airport??? then(depart_arrive_Airport, 'NO LABEL YET')}</span>
             </h4>
             <#list data.bookingOd as item>
                 <div class="time-airport">
                     <span>${item.fSegs.flightNumber}</span>
-                    <span>${item.fSegs.depDateTime?string["hh:mm EEE, dd MMM YYYY"]}</span>
+                    <span>${item.fSegs.depDateTime?datetime("yyyy-MM-dd HH:mm:ss")?string["hh:mm EEE, dd MMM YYYY"]}</span>
                     <span>${item.fSegs.depLocationName} </span>
                 </div>
                 <div class="time-airport">
                     <span>&nbsp;</span>
-                    <span>${item.fSegs.arrDateTime?string["hh:mm EEE, dd MMM YYYY"]}</span>
+                    <span>${item.fSegs.arrDateTime?datetime("yyyy-MM-dd HH:mm:ss")?string["hh:mm EEE, dd MMM YYYY"]}</span>
                     <span>${item.fSegs.arrLocationName}</span>
                 </div>
             </#list>
@@ -309,14 +309,14 @@
 
         </div>
         <div class="passenger-details line-head">
-            <h3>${passenger}</h3>
+            <h3>${passenger??? then(passenger, 'NO LABEL YET')}</h3>
             <table>
                 <thead>
                     <tr>
-                        <th>${ticket_number}</th>
-                        <th>${name}</th>
-                        <th>${pass_type}</th>
-                        <th>${class}</th>
+                        <th>${ticket_number??? then(ticket_number, 'NO LABEL YET')}</th>
+                        <th>${name??? then(name, 'NO LABEL YET')}</th>
+                        <th>${pass_type??? then(pass_type, 'NO LABEL YET')}</th>
+                        <th>${class??? then(class, 'NO LABEL YET')}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -344,24 +344,23 @@
                 </#if>
 
                 <div class="each-person">
-                    <b>[${checked_baggage}]</b>
+                    <b>[${checked_baggage??? then(checked_baggage, 'NO LABEL YET')}]</b>
                     <#if item.bookingBaggageInfoRS.pieceStatus == 0>
-                        ${item.bookingBaggageInfoRS.bagWeight}${item.bookingBaggageInfoRS.bagUnit}&nbsp;${per_person}
+                        ${item.bookingBaggageInfoRS.bagWeight}${item.bookingBaggageInfoRS.bagUnit}&nbsp;${per_person??? then(per_person, 'NO LABEL YET')}
                     <#else>
-                        ${item.bookingBaggageInfoRS.bagPiece} ${each_piece}, ${item.bookingBaggageInfoRS.bagWeight}${item.bookingBaggageInfoRS.bagUnit}&nbsp;${each_piece}
+                        ${item.bookingBaggageInfoRS.bagPiece} ${each_piece??? then(each_piece, 'NO LABEL YET')}, ${item.bookingBaggageInfoRS.bagWeight}${item.bookingBaggageInfoRS.bagUnit}&nbsp;${each_piece??? then(each_piece, 'NO LABEL YET')}
                     </#if>
-                    ${baggage_more_info}
-
+                    ${baggage_more_info??? then(baggage_more_info, 'NO LABEL YET')}
                 </div>
 
                 <div class="each-person" style="margin-bottom:15px;">
-                    <b> [${carry_on_baggage}] </b>
+                    <b> [${carry_on_baggage??? then(carry_on_baggage, 'NO LABEL YET')}] </b>
                     <#if item.bookingBaggageInfoRS.passType == "INF">
-                        ${carry_on_inf}
+                        ${carry_on_inf??? then(carry_on_inf, 'NO LABEL YET')}
                     <#else>
-                        ${carry_on}
+                        ${carry_on??? then(carry_on, 'NO LABEL YET')}
                     </#if>
-                    ${baggage_more_info}
+                    ${baggage_more_info??? then(baggage_more_info, 'NO LABEL YET')}
                 </div>
             </#list>
 
@@ -369,9 +368,9 @@
 
         </div>
         <div class="impo-info line-head">
-            <h3>${important_information}</h3>
-            <span>${important_information_1}</span>
-            <span>${important_information_2}</span>
+            <h3>${important_information??? then(important_information, 'NO LABEL YET')}</h3>
+            <span>${important_information_1??? then(important_information_1, 'NO LABEL YET')}</span>
+            <span>${important_information_2??? then(important_information_2, 'NO LABEL YET')}</span>
         </div>
 
     </div>

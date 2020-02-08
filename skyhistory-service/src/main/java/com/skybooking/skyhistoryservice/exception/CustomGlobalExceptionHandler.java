@@ -1,6 +1,6 @@
 package com.skybooking.skyhistoryservice.exception;
 
-import com.skybooking.skyhistoryservice.v1_0_0.util.localization.Localization;
+import com.skybooking.skyhistoryservice.v1_0_0.util.localization.LocalizationBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -21,7 +21,7 @@ import java.util.Map;
 public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @Autowired
-    private Localization localization;
+    private LocalizationBean localization;
 
     // Error handle for @Valid
     @Override

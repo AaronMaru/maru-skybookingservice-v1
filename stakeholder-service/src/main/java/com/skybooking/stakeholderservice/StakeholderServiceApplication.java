@@ -1,10 +1,10 @@
 package com.skybooking.stakeholderservice;
 
-import com.skybooking.stakeholderservice.v1_0_0.util.general.Duplicate;
+import com.skybooking.stakeholderservice.v1_0_0.util.email.EmailBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.header.HeaderBean;
-import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
+import com.skybooking.stakeholderservice.v1_0_0.util.localization.LocalizationBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.notification.NotificationBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.skyowner.SkyownerBean;
 import org.springframework.boot.SpringApplication;
@@ -29,8 +29,8 @@ public class StakeholderServiceApplication {
     }
 
     @Bean
-    Localization localization() {
-        return new Localization();
+    LocalizationBean localization() {
+        return new LocalizationBean();
     }
 
     @Bean
@@ -49,9 +49,8 @@ public class StakeholderServiceApplication {
     }
 
     @Bean
-    Duplicate duplicate() {
-        return new Duplicate();
+    EmailBean emailBean() {
+        return new EmailBean();
     }
-
 
 }

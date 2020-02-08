@@ -1,22 +1,8 @@
 package com.skybooking.skyflightservice.exception.httpstatus;
 
-public class NotFoundException extends RuntimeException {
+public class NotFoundException extends ExceptionResponse {
 
-    private String message;
-    private Object data;
-
-    public NotFoundException(String message, Object data) {
-        this.message = message;
-        this.data = data;
+    public NotFoundException(String message, Object error) {
+        super(message, error);
     }
-
-    @Override
-    public String getMessage() {
-        return message;
-    }
-
-    public Object getData() {
-        return data;
-    }
-
 }

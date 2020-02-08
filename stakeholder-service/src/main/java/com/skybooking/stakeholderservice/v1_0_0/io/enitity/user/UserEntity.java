@@ -21,6 +21,9 @@ public class UserEntity {
     @OneToMany(mappedBy = "userEntity", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<VerifyUserEntity> verifyUserEntity;
 
+//    @OneToMany(mappedBy = "userEntity", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+//    private List<UserTokenApiEntity> userTokenEntities;
+
     @Column(nullable = true)
     private String slug;
 
@@ -227,5 +230,13 @@ public class UserEntity {
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
     }
+
+//    public List<UserTokenApiEntity> getUserTokenEntities() {
+//        return userTokenEntities;
+//    }
+//
+//    public void setUserTokenEntities(List<UserTokenApiEntity> userTokenEntities) {
+//        this.userTokenEntities = userTokenEntities;
+//    }
 
 }

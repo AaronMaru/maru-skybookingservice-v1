@@ -19,7 +19,7 @@ import com.skybooking.staffservice.v1_0_0.ui.model.response.invitation.PendingEm
 import com.skybooking.staffservice.v1_0_0.ui.model.response.invitation.SkyuserDetailsRS;
 import com.skybooking.staffservice.v1_0_0.util.JwtUtils;
 import com.skybooking.staffservice.v1_0_0.util.general.ApiBean;
-import com.skybooking.staffservice.v1_0_0.util.general.Duplicate;
+import com.skybooking.staffservice.v1_0_0.util.general.DuplicateBean;
 import com.skybooking.staffservice.v1_0_0.util.general.GeneralBean;
 import com.skybooking.staffservice.v1_0_0.util.notification.NotificationBean;
 import org.springframework.beans.BeanUtils;
@@ -47,9 +47,6 @@ public class InvitationIP implements InvitationSV {
     @Autowired
     private UserRepository userRepository;
 
-    // @Autowired
-    // private UserBean userBean;
-
     @Autowired
     private GeneralBean general;
 
@@ -69,7 +66,7 @@ public class InvitationIP implements InvitationSV {
     private NotificationBean notificationBean;
 
     @Autowired
-    private Duplicate duplicate;
+    private DuplicateBean duplicate;
 
 
     /**
@@ -79,26 +76,26 @@ public class InvitationIP implements InvitationSV {
      *
      * @Return List
      */
-    public List<SkyuserDetailsRS> findSkyusers() {
+    public List<SkyuserDetailsRS> findSkyUsers() {
 
         String userType = jwtUtils.getClaim("userType", String.class);
         if (userType.equals("skyuser")) {
             throw new UnauthorizedException("Opp something went wrong", "");
         }
 
-        List<SkyuserSearchTO> skyusers = invitationNQ.listSkyuserByEmailOrPhone(request.getParameter("email"));
-        List<SkyuserDetailsRS> skyusersRS = new ArrayList<>();
+        List<SkyuserSearchTO> skyUsers = invitationNQ.listSkyuserByEmailOrPhone(request.getParameter("email"));
+        List<SkyuserDetailsRS> skyUsersRS = new ArrayList<>();
 
-        for (SkyuserSearchTO skyuser : skyusers) {
-            SkyuserDetailsRS skyuserRS = new SkyuserDetailsRS();
+        for (SkyuserSearchTO skyUser : skyUsers) {
+            SkyuserDetailsRS skyUserRS = new SkyuserDetailsRS();
 
-            BeanUtils.copyProperties(skyuser, skyuserRS);
-            skyuserRS.setPhotoMedium(
-                    environment.getProperty("spring.awsImageUrl.profile.url_larg") + skyuser.getPhoto());
-            skyusersRS.add(skyuserRS);
+            BeanUtils.copyProperties(skyUser, skyUserRS);
+            skyUserRS.setPhotoMedium(
+                    environment.getProperty("spring.awsImageUrl.profile.url_larg") + skyUser.getPhoto());
+            skyUsersRS.add(skyUserRS);
         }
 
-        return skyusersRS;
+        return skyUsersRS;
 
     }
 
@@ -109,7 +106,7 @@ public class InvitationIP implements InvitationSV {
      *
      * @Return
      */
-    public void invSkyuser(SkyuserIdStaffRQ inviteStaff) {
+    public void inviteSkyUser(SkyuserIdStaffRQ inviteStaff) {
 
         String userType = jwtUtils.getClaim("userType", String.class);
         if (userType.equals("skyuser")) {
@@ -132,16 +129,15 @@ public class InvitationIP implements InvitationSV {
 
         Long companyId = jwtUtils.getClaim("companyId", Long.class);
 
-//        general.addStaff(companyId, skyuser.getStakeHolderUser().getId(), roleTO.get(0).getUserType());
-        general.addInvitation(skyuser.getStakeHolderUser().getId(), companyId,null);
+        general.addInvitation(skyuser.getStakeHolderUser().getId(), companyId,null, "hasAcc");
 
         notificationBean.sendNotiSkyuser(skyuser.getStakeHolderUser().getId());
 
         StakeHolderUserEntity stakeHolderUser = skyuser.getStakeHolderUser();
         String fullName = stakeHolderUser.getFirstName() + " " + stakeHolderUser.getLastName();
 
-        Map<String, Object> mailData = duplicate.mailData(fullName, 0, "invitation_is_waiting_for_your_confirmation");
-        apiBean.sendEmailSMS(skyuser.getEmail(),"Invitation", mailData);
+        Map<String, Object> mailData = duplicate.mailData(skyuser.getEmail(), fullName, 0, "invitation_is_waiting_for_your_confirmation");
+        apiBean.sendEmailSMS("Invitation", mailData);
 
     }
 
@@ -153,7 +149,7 @@ public class InvitationIP implements InvitationSV {
      *
      * @Param inviteStaffNoAccRQ
      */
-    public void invSkyuserNotExistsAcc(InviteStaffNoAccRQ inviteStaffNoAccRQ) {
+    public void inviteSkyUserNotExistsAcc(InviteStaffNoAccRQ inviteStaffNoAccRQ) {
 
         String userType = jwtUtils.getClaim("userType", String.class);
         if (userType.equals("skyuser")) {
@@ -164,10 +160,10 @@ public class InvitationIP implements InvitationSV {
 
         Long companyId = jwtUtils.getClaim("companyId", Long.class);
 
-        general.addInvitation(null, companyId,inviteStaffNoAccRQ.getUsername());
+        general.addInvitation(null, companyId,inviteStaffNoAccRQ.getUsername(), "noAcc");
 
-        Map<String, Object> mailData = duplicate.mailData("", 0, "invitation_is_waiting_for_your_confirmation");
-        apiBean.sendEmailSMS(inviteStaffNoAccRQ.getUsername(),"Invitation", mailData);
+        Map<String, Object> mailData = duplicate.mailData(inviteStaffNoAccRQ.getUsername(),"", 0, "invitation_is_waiting_for_your_confirmation");
+        apiBean.sendEmailSMS("Invitation", mailData);
 
     }
 
@@ -182,7 +178,6 @@ public class InvitationIP implements InvitationSV {
     public void checkExistInv(InviteStaffNoAccRQ inviteStaffNoAccRQ) {
 
         StakeholderUserInvitationEntity userInv = userInvRP.findFirstByInviteTo(inviteStaffNoAccRQ.getUsername());
-
         if (userInv != null) {
             throw new BadRequestException("inv_ald", "");
         }
@@ -248,8 +243,8 @@ public class InvitationIP implements InvitationSV {
      */
     public void resendPendingEmail(InviteStaffNoAccRQ inviteStaffNoAccRQ) {
 
-        Map<String, Object> mailData = duplicate.mailData("", 0, "invitation_is_waiting_for_your_confirmation");
-        apiBean.sendEmailSMS(inviteStaffNoAccRQ.getUsername(),"Invitation again", mailData);
+        Map<String, Object> mailData = duplicate.mailData(inviteStaffNoAccRQ.getUsername(),"", 0, "invitation_is_waiting_for_your_confirmation");
+        apiBean.sendEmailSMS("Invitation again", mailData);
 
     }
 

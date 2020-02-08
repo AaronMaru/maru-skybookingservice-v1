@@ -6,26 +6,35 @@ import java.math.BigInteger;
 
 public class StaffTotalBookingTO {
 
-    private BigInteger bookingQty;
-    private BigDecimal totalAmount;
+    private BigInteger quantity;
+    private BigDecimal amount;
     private Byte status;
 
     private String statusKey;
 
-    public BigInteger getBookingQty() {
-        return bookingQty;
+    public StaffTotalBookingTO() {
     }
 
-    public void setBookingQty(BigInteger bookingQty) {
-        this.bookingQty = bookingQty;
+    public StaffTotalBookingTO(BigInteger quantity, BigDecimal amount, String statusKey) {
+        this.quantity = quantity;
+        this.amount = amount;
+        this.statusKey = statusKey;
     }
 
-    public BigDecimal getTotalAmount() {
-        return totalAmount;
+    public BigInteger getQuantity() {
+        return quantity;
     }
 
-    public void setTotalAmount(BigDecimal totalAmount) {
-        this.totalAmount = totalAmount;
+    public void setQuantity(BigInteger quantity) {
+        this.quantity = quantity;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
     }
 
     public Byte getStatus() {

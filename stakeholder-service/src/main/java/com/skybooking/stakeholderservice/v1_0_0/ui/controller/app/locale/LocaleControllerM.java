@@ -4,7 +4,7 @@ import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.locale.Locale
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.locale.ModuleLanguageRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.header.HeaderBean;
-import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
+import com.skybooking.stakeholderservice.v1_0_0.util.localization.LocalizationBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,7 +22,7 @@ public class LocaleControllerM {
     private LocaleSV localeSV;
 
     @Autowired
-    private Localization localization;
+    private LocalizationBean localization;
 
 
     /**

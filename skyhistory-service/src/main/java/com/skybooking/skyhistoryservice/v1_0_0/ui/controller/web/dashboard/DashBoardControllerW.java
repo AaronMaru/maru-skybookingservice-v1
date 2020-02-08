@@ -5,7 +5,7 @@ import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.dashboard.Dash
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.skyhistoryservice.v1_0_0.util.JwtUtils;
 import com.skybooking.skyhistoryservice.v1_0_0.util.header.HeaderBean;
-import com.skybooking.skyhistoryservice.v1_0_0.util.localization.Localization;
+import com.skybooking.skyhistoryservice.v1_0_0.util.localization.LocalizationBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -30,11 +30,11 @@ public class DashBoardControllerW {
     private JwtUtils jwtUtils;
 
     @Autowired
-    private Localization localization;
+    private LocalizationBean localization;
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * get recent booking by company's id and user's id
+     * get recent booking by companyConstant's id and user's id
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @return ResponseEntity
@@ -42,7 +42,7 @@ public class DashBoardControllerW {
     @GetMapping(value = "/recent-booking")
     public ResRS getRecentBooking() {
 
-        var responses = dashboardSV.getRecentBooking(jwtUtils.getClaim("companyId", Long.class), jwtUtils.getClaim("stakeholderId", Long.class), jwtUtils.getClaim("userType", String.class), jwtUtils.getClaim("userRole", String.class), 5);
+        var responses = dashboardSV.getRecentBooking(5);
 
         return localization.resAPI(HttpStatus.OK,"res_succ", responses);
 
@@ -51,7 +51,7 @@ public class DashBoardControllerW {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * get booking progress summary by company's id and user's id with filter option
+     * get booking progress summary by companyConstant's id and user's id with filter option
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @param filter    options: range, daily, monthly, yearly
@@ -75,7 +75,7 @@ public class DashBoardControllerW {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * get booking timeline summary by company, user and filter
+     * get booking timeline summary by companyConstant, user and filter
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @param filter options: daily, weekly, monthly
@@ -93,7 +93,7 @@ public class DashBoardControllerW {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * get top sellers report by company's id and filter
+     * get top sellers report by companyConstant's id and filter
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @param filter    options: range, daily, weekly, monthly, yearly
@@ -117,7 +117,7 @@ public class DashBoardControllerW {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * get booking activity logging by company, user and filter
+     * get booking activity logging by companyConstant, user and filter
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @param filter
@@ -158,7 +158,7 @@ public class DashBoardControllerW {
                                            @RequestParam(name = "endDate", defaultValue = "#{T(java.time.LocalDate).now()}")
                                            @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
 
-        var response = dashboardSV.getBookingReport(jwtUtils.getClaim("companyId", Long.class), jwtUtils.getClaim("stakeholderId", Long.class), jwtUtils.getClaim("userType", String.class), /* JwtUtils.getClaim("userRole", String.class)*/ "company", classType, tripType, startDate.toString(), endDate.toString());
+        var response = dashboardSV.getBookingReport(jwtUtils.getClaim("companyId", Long.class), jwtUtils.getClaim("stakeholderId", Long.class), jwtUtils.getClaim("userType", String.class), /* JwtUtils.getClaim("userRole", String.class)*/ "companyConstant", classType, tripType, startDate.toString(), endDate.toString());
 
         return localization.resAPI(HttpStatus.OK,"res_succ", response);
 

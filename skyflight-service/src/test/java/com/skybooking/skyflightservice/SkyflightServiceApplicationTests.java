@@ -1,8 +1,15 @@
 package com.skybooking.skyflightservice;
 
+import com.skybooking.skyflightservice.v1_0_0.io.entity.shopping.Airline;
+import com.skybooking.skyflightservice.v1_0_0.io.entity.shopping.LegAirline;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.AircraftNQ;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.AirlineNQ;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.FlightLocationNQ;
+import com.skybooking.skyflightservice.v1_0_0.util.DateUtility;
+import org.eclipse.collections.api.map.sorted.MutableSortedMap;
+import org.eclipse.collections.impl.block.factory.Comparators;
+import org.eclipse.collections.impl.list.mutable.FastList;
+import org.eclipse.collections.impl.map.sorted.mutable.TreeSortedMap;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +22,7 @@ import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -34,23 +42,7 @@ public class SkyflightServiceApplicationTests {
     @Autowired
     private AircraftNQ aircraftNQ;
 
-    @Test
-    public void flightLocation() {
-        var location = flightLocationNQ.getFlightLocationInformation("PNH");
-        System.out.println(location);
-    }
 
-    @Test
-    public void airlineInformation() {
-        var airline = airlineNQ.getAirlineInformation("JC");
-        System.out.println(airline);
-    }
-
-    @Test
-    public void aircraftInformation() {
-        var aircraft = aircraftNQ.getAircraftInformation("M81");
-        System.out.println(aircraft);
-    }
 
     @Test
     public void markUp() {
@@ -95,9 +87,70 @@ public class SkyflightServiceApplicationTests {
     @Test
     public void zonedDateTimeStringtoDateTime() {
         var dateTime = "2020-01-25T21:00:00+11:00";
+        System.out.println(DateUtility.convertZonedDateTimeToDateTime(dateTime));
 
-        System.out.println(Date.from(ZonedDateTime.parse(dateTime).toInstant()));
+        var airline1 = new LegAirline();
+        var airline2 = new LegAirline();
+        var airline3 = new LegAirline();
+        airline1.setAirline("A");
+        airline2.setAirline("B");
+        airline3.setAirline("C");
+
+        var data = Arrays.asList(airline1, airline2, airline3);
+        var count = data.stream().map(airline -> airline.getAirline()).distinct().count();
+
+        var firstSegment = data.stream().findFirst();
+        var lastSegment = data.stream().reduce((previous, next) -> next).get();
+
+        var loop = data.listIterator();
+
+        while (loop.hasNext()) {
+            var current = loop.next();
+            var previous = loop.previous();
+            current.setFlightNumber("Changed");
+        }
+
+
+        System.out.println(data);
+
+//        System.out.println(firstSegment);
+//        System.out.println(lastSegment);
+
+//        System.out.println(Date.from(ZonedDateTime.parse(dateTime).toInstant()));
+
 
     }
+
+    @Test
+    public void testEC() {
+        MutableSortedMap<String, Airline> airlines = TreeSortedMap.newMap();
+
+        var airline1 = new Airline();
+        airline1.setCode("Z");
+
+        var airline2 = new Airline();
+        airline2.setCode("T");
+
+        var airline3 = new Airline();
+        airline3.setCode("B");
+
+        var list = FastList.newListWith(1, 4, 3, 5);
+
+        list
+            .toSortedList(Comparators.byIntFunction(integer -> integer))
+            .stream()
+            .forEach(integer -> System.out.println(integer));
+
+//        airlines.put(airline1.getCode(), airline1);
+//        airlines.put(airline2.getCode(), airline2);
+//        airlines.put(airline3.getCode(), airline3);
+
+
+
+//        airlines.values().forEach(airline -> System.out.println(airline));
+//        airlines.select(airline -> airline.getCode().equalsIgnoreCase("b")).getFirstOptional().ifPresent(airline -> System.out.println(airline));
+//        System.out.println(airlines.get("Z"));
+    }
+
 
 }

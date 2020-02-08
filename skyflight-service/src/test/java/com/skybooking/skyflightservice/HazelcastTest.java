@@ -14,6 +14,7 @@ public class HazelcastTest {
     @Autowired
     private DetailSV detailSV;
 
+
     @Test
     public void getDetail() {
 
@@ -42,5 +43,13 @@ public class HazelcastTest {
 
     }
 
+
+    @Test
+    public void getExpired() {
+
+        final String shopping = "3c712e5c-67e4-4c15-a228-7f66db8bbdff";
+        System.out.println("Key will expired in " + detailSV.getMinutesTimeToLive(shopping) + " minutes.");
+
+    }
 
 }

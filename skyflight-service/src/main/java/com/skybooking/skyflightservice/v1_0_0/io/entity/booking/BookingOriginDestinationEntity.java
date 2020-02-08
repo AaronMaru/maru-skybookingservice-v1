@@ -5,6 +5,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
+import java.util.Date;
 
 @Entity
 @Table(name = "booking_origin_destinations")
@@ -50,10 +51,10 @@ public class BookingOriginDestinationEntity {
     private String meal;
 
     @Column(name = "dep_date")
-    private java.sql.Timestamp depDate;
+    private Date depDate;
 
     @Column(name = "arr_date")
-    private java.sql.Timestamp arrDate;
+    private Date arrDate;
 
     @Column(name = "stop_qty")
     private Integer stopQty;
@@ -139,11 +140,11 @@ public class BookingOriginDestinationEntity {
     @CreationTimestamp
     @Column(name = "created_at")
     @Temporal(TemporalType.TIMESTAMP)
-    private java.util.Date createdAt;
+    private Date createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
     @Temporal(TemporalType.TIMESTAMP)
-    private java.util.Date updatedAt;
+    private Date updatedAt;
 
 }

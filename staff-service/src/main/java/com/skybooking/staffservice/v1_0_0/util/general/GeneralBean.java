@@ -19,7 +19,7 @@ public class GeneralBean {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * Find a company
+     * Find a companyConstant
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @Param companyId
@@ -48,9 +48,13 @@ public class GeneralBean {
      * @Param invFrom
      * @Param invTo
      */
-    public void addInvitation(Long skyuserId, Long companyId, String invTo) {
+    public void addInvitation(Long skyuserId, Long companyId, String invTo, String acc) {
 
         StakeholderUserInvitationEntity exits = invitationRP.findByInviteStakeholderUserIdAndStakeholderCompanyId(skyuserId, companyId);
+
+        if (acc.equals("noAcc")) {
+            exits = invitationRP.findByInviteToAndStakeholderCompanyId(invTo, companyId);
+        }
 
         if (exits != null) {
             throw new BadRequestException("The user already invited", "");

@@ -12,11 +12,11 @@ import java.util.List;
 @Service
 public interface InvitationSV {
 
-    List<SkyuserDetailsRS> findSkyusers();
+    List<SkyuserDetailsRS> findSkyUsers();
 
-    void invSkyuser(SkyuserIdStaffRQ inviteStaff);
+    void inviteSkyUser(SkyuserIdStaffRQ inviteStaff);
 
-    void invSkyuserNotExistsAcc(InviteStaffNoAccRQ inviteStaffNoAccRQ);
+    void inviteSkyUserNotExistsAcc(InviteStaffNoAccRQ inviteStaffNoAccRQ);
 
     List<PendingEmailStaffRS> getPendingEmail();
 

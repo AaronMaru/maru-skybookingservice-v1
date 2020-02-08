@@ -11,8 +11,9 @@ import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.QueryS
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.ResponseSV;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.ShoppingSV;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.TransformSV;
+import com.skybooking.skyflightservice.v1_0_0.service.model.shopping.RevalidateM;
 import com.skybooking.skyflightservice.v1_0_0.transformer.shopping.FlighShoppingTF;
-import com.skybooking.skyflightservice.v1_0_0.ui.model.request.booking.BCreateRQ;
+import com.skybooking.skyflightservice.v1_0_0.ui.model.request.booking.BookingCreateRQ;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.shopping.FlightShoppingRQ;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.response.shopping.FlightShoppingRS;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,7 +66,6 @@ public class ShoppingIP implements ShoppingSV {
     @Override
     public ShoppingResponseEntity shoppingAsync(FlightShoppingRQ shoppingRQ) {
 
-
         var query = querySV.flightShoppingExist(shoppingRQ);
 
         if (query == null) {
@@ -87,10 +87,12 @@ public class ShoppingIP implements ShoppingSV {
      * @param shoppingRQ
      * @param userType
      * @param userId
+     * @param currency
+     * @param locale
      * @return ShoppingTransformEntity
      */
     @Override
-    public FlightShoppingRS shoppingTransformMarkup(FlightShoppingRQ shoppingRQ, String userType, Integer userId) {
+    public FlightShoppingRS shoppingTransformMarkup(FlightShoppingRQ shoppingRQ, String userType, Integer userId, String currency, long locale) {
 
         var markupTO = new MarkupTO();
 
@@ -102,7 +104,7 @@ public class ShoppingIP implements ShoppingSV {
             markupTO = markupNQ.getMarkupPriceSkyOwnerUser(userId, shoppingRQ.getClassType().toUpperCase());
         }
 
-        return FlighShoppingTF.getResponse(transformSV.getShoppingTransformDetailWithFilter(transformSV.getShoppingTransformDetailMarkup(this.shoppingTransform(shoppingRQ), markupTO.getMarkup().doubleValue())));
+        return FlighShoppingTF.getResponse(transformSV.getShoppingTransformDetailWithFilter(transformSV.getShoppingTransformDetailMarkup(this.shoppingTransform(shoppingRQ, locale), markupTO.getMarkup().doubleValue(), currency)));
 
     }
 
@@ -112,18 +114,27 @@ public class ShoppingIP implements ShoppingSV {
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @param shoppingRQ
+     * @param locale
      * @return ShoppingTransformEntity
      */
     @Override
-    public ShoppingTransformEntity shoppingTransform(FlightShoppingRQ shoppingRQ) {
+    public ShoppingTransformEntity shoppingTransform(FlightShoppingRQ shoppingRQ, long locale) {
 
         var query = querySV.flightShoppingExist(shoppingRQ);
 
+        var transform = new ShoppingTransformEntity();
+
         if (query != null) {
-            return transformSV.getShoppingTransformById(query.getId());
+            transform = transformSV.getShoppingTransformDetail(transformSV.getShoppingTransformById(query.getId()), locale);
+
+            if (transform == null) {
+                querySV.flightShoppingRemove(shoppingRQ);
+            } else {
+                return transform;
+            }
         }
 
-        var transform = transformSV.getShoppingTransformDetail(transformSV.getShoppingTransform(this.shoppingAsync(shoppingRQ)));
+        transform = transformSV.getShoppingTransformDetail(transformSV.getShoppingTransform(this.shoppingAsync(shoppingRQ)), locale);
 
         if (transform == null) {
             querySV.flightShoppingRemove(shoppingRQ);
@@ -132,8 +143,9 @@ public class ShoppingIP implements ShoppingSV {
         return transform;
     }
 
+
     @Override
-    public Boolean revalidate(BCreateRQ request) {
+    public RevalidateM revalidate(BookingCreateRQ request) {
         return revalidateFlight.revalidate(request);
     }
 

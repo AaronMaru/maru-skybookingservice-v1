@@ -1,23 +1,9 @@
 package com.skybooking.skyflightservice.exception.httpstatus;
 
-public class PermanentException extends RuntimeException {
+public class PermanentException extends ExceptionResponse {
 
-    private String message;
-    private Object data;
-
-    public PermanentException(String message, Object data) {
-        this.message = message;
-        this.data = data;
+    public PermanentException(String message, Object error) {
+        super(message, error);
     }
-
-    @Override
-    public String getMessage() {
-        return message;
-    }
-
-    public Object getData() {
-        return data;
-    }
-
 }
 

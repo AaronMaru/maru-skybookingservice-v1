@@ -7,8 +7,8 @@ import java.io.Serializable;
 @Data
 public class LegAirlineRS implements Serializable {
 
-    private String airline = "";
-    private String aircraft = "";
-    private String flightNumber = "";
+    private String airline;
+    private String aircraft;
+    private String flightNumber;
 
 }

@@ -1,11 +1,7 @@
 package com.skybooking.stakeholderservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.user.RegisterSV;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.setting.SendDownloadLinkRQ;
-import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
-import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
-import com.skybooking.stakeholderservice.v1_0_0.util.skyuser.UserBean;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;

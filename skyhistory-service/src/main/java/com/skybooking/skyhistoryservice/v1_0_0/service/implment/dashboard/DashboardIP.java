@@ -1,10 +1,12 @@
 package com.skybooking.skyhistoryservice.v1_0_0.service.implment.dashboard;
 
+import com.skybooking.skyhistoryservice.exception.httpstatus.BadRequestException;
 import com.skybooking.skyhistoryservice.v1_0_0.io.nativeQuery.dashboard.BookingProgressTO;
 import com.skybooking.skyhistoryservice.v1_0_0.io.nativeQuery.dashboard.DashboardNQ;
 import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.dashboard.DashboardSV;
 import com.skybooking.skyhistoryservice.v1_0_0.transformer.dashboard.*;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.dashboard.*;
+import com.skybooking.skyhistoryservice.v1_0_0.util.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -23,23 +25,31 @@ public class DashboardIP implements DashboardSV {
     @Autowired
     private Environment environment;
 
+    @Autowired
+    private JwtUtils jwtUtils;
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * get recently dashboard by company and user id
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @param companyId
-     * @param userId
-     * @param userType
-     * @param userRole
      * @param take
      * @return List
      */
     @Override
-    public List<RecentBookingRS> getRecentBooking(long companyId, long userId, String userType, String userRole,
-            long take) {
+    public List<RecentBookingRS> getRecentBooking(long take) {
 
-        var bookings = dashboardNQ.getRecentBooking(companyId, userId, userType, userRole, take);
+        Long companyId = jwtUtils.getClaim("companyId", Long.class);
+        Long skyuserId = jwtUtils.getClaim("stakeholderId", Long.class);
+        String userType = jwtUtils.getClaim("userType", String.class);
+        String userRole = jwtUtils.getClaim("userRole", String.class);
+
+        if (userType.equals("skyuser")) {
+            throw new BadRequestException("sth_w_w", "");
+        }
+
+        var bookings = dashboardNQ.getRecentBooking(companyId, skyuserId, userType, userRole, take);
+
         var responses = RecentBookingTF.getResponseList(bookings);
 
         responses.forEach(response -> {
@@ -61,7 +71,7 @@ public class DashboardIP implements DashboardSV {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * get dashboard progress summary by company id, user id and filter
+     * get dashboard progress summary by companyConstant id, user id and filter
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @param companyId
@@ -107,7 +117,7 @@ public class DashboardIP implements DashboardSV {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * get dashboard timeline summary report by company, user and filter
+     * get dashboard timeline summary report by companyConstant, user and filter
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @param companyId
@@ -152,7 +162,7 @@ public class DashboardIP implements DashboardSV {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * get dashboard activity log by company, user and filter
+     * get dashboard activity log by companyConstant, user and filter
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @param companyId

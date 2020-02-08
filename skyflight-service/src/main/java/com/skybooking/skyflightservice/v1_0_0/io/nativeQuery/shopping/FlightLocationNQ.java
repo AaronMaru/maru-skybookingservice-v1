@@ -21,5 +21,5 @@ public interface FlightLocationNQ extends NativeQuery {
      */
 
     @Transactional
-    FlightLocationTO getFlightLocationInformation(@NativeQueryParam(value = "airport") String airport);
+    FlightLocationTO getFlightLocationInformation(@NativeQueryParam(value = "airport") String airport, @NativeQueryParam(value = "localeId") long localeId);
 }

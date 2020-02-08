@@ -11,9 +11,13 @@ FROM flight_info fi
 INNER JOIN
 (
 -- get airline with localization
-SELECT *
+SELECT flight_id, `name`, business_name
 FROM flight_info_locale fil
-WHERE fil.locale_id = 1
+WHERE IF(:localeId NOT IN (SELECT id FROM frontend_locales) ,
+fil.locale_id = 1
+,
+fil.locale_id = :localeId
+)
 
 ) fil ON fil.flight_id = fi.id
 

@@ -33,7 +33,7 @@ public class SkyUserRegisterRQ {
     @NotEmpty(message = "Please provide a confirm password")
     private String confirmPassword;
 
-    @NotEmpty(message = "Please provide a sky type")
+//    @NotEmpty(message = "Please provide a sky type")
     @Include(contains = "personal|bussiness", delimiter = "\\|")
     private String typeSky;
 

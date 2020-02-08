@@ -28,6 +28,9 @@ public class CompanyRQ {
     @NotEmpty(message = "Please provide a country code")
     private String code;
 
+    @Email
+    private String email = "";
+
     @NotNull(message = "Please provide a license")
     private HashMap<String, MultipartFile> licenses;
 
@@ -134,6 +137,14 @@ public class CompanyRQ {
 
     public void setLicenses(HashMap<String, MultipartFile> licenses) {
         this.licenses = licenses;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
 }

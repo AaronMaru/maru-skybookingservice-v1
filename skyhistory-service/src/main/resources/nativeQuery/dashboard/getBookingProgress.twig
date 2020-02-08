@@ -1,30 +1,92 @@
 SELECT
 COUNT(b.id) AS amount,
 CASE
-WHEN (b.`status` = 11 AND (
+    WHEN (b.`status` = 11 AND (
 
-SELECT IF(COUNT(dep_date) = 0, FALSE, TRUE)
-FROM booking_origin_destinations bod
-WHERE bod.booking_id = b.id
-AND dep_date >= CURRENT_TIMESTAMP
+        SELECT COUNT(bod.id)
+        FROM booking_origin_destinations bod
+        WHERE bod.booking_id = b.id
 
-) = TRUE
+        -- Where Date and Convert TZ date
+        AND DATE(
 
-) THEN "Upcoming"
+            -- Flight depature datetime and convert to UTC
+                CONVERT_TZ(bod.dep_date,
 
-WHEN (b.`status` = 11 AND (
+                    CONCAT(
+                        CASE WHEN bod.dep_timezone >= 0 THEN
+                            CONCAT('+', bod.dep_timezone,':00')
+                        ELSE
+                            CONCAT(bod.dep_timezone,':00')
+                        END
+                    )
 
-SELECT IF(COUNT(dep_date) = 0, FALSE, TRUE)
-FROM booking_origin_destinations bod
-WHERE bod.booking_id = b.id
-AND dep_date < CURRENT_TIMESTAMP
+                , '+00:00')
 
-) = TRUE
+            -- User locale current time zone and convert to UTC
+            ) >= CONVERT_TZ(CURRENT_TIMESTAMP,
 
-) THEN "Completed"
+                    CONCAT(
+                        CASE WHEN bod.dep_timezone >= 0 THEN
+                            CONCAT('+', bod.dep_timezone,':00')
+                        ELSE
+                            CONCAT(bod.dep_timezone,':00')
+                        END
+                    )
 
-WHEN (b.`status` IN (3)) THEN "Cancelled"
-WHEN (b.`status` IN (10, 12, 4)) THEN  "Failed"
+                , '+00:00')
+
+        ORDER BY bod.id DESC
+        LIMIT 1
+
+        ) > 0
+
+    ) THEN "Upcoming"
+
+    WHEN (b.`status` = 11 AND (
+
+            SELECT COUNT(bod.id)
+            FROM booking_origin_destinations bod
+            WHERE bod.booking_id = b.id
+
+            -- Where Date and Convert TZ date
+            AND DATE(
+
+                -- Flight depature datetime and convert to UTC
+                    CONVERT_TZ(bod.dep_date,
+
+                        CONCAT(
+                            CASE WHEN bod.dep_timezone >= 0 THEN
+                                CONCAT('+', bod.dep_timezone,':00')
+                            ELSE
+                                CONCAT(bod.dep_timezone,':00')
+                            END
+                        )
+
+                    , '+00:00')
+
+                -- User locale current time zone and convert to UTC
+                ) < CONVERT_TZ(CURRENT_TIMESTAMP,
+
+                        CONCAT(
+                            CASE WHEN bod.dep_timezone >= 0 THEN
+                                CONCAT('+', bod.dep_timezone,':00')
+                            ELSE
+                                CONCAT(bod.dep_timezone,':00')
+                            END
+                        )
+
+                    , '+00:00')
+
+            ORDER BY bod.id DESC
+            LIMIT 1
+
+        ) > 0
+
+    ) THEN "Completed"
+
+    WHEN (b.`status` IN (3)) THEN "Cancelled"
+    WHEN (b.`status` IN (10, 12, 4)) THEN  "Failed"
 
 END AS `status`
 

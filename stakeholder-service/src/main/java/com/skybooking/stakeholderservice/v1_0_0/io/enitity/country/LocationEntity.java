@@ -91,4 +91,6 @@ public class LocationEntity {
     public void setUpdatedAt(java.util.Date updatedAt) {
         this.updatedAt = updatedAt;
     }
+
+
 }

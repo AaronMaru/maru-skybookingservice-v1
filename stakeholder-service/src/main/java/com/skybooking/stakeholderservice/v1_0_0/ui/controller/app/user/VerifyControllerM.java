@@ -1,12 +1,13 @@
 package com.skybooking.stakeholderservice.v1_0_0.ui.controller.app.user;
 
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.user.VerifySV;
-import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user.SendVerifyRQ;
-import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user.VerifyRQ;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.verify.SendVerifyRQ;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.verify.VerifyMRQ;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.verify.VerifyRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
-import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
+import com.skybooking.stakeholderservice.v1_0_0.util.localization.LocalizationBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
@@ -26,7 +27,7 @@ public class VerifyControllerM {
     GeneralBean generalBean;
 
     @Autowired
-    private Localization localization;
+    private LocalizationBean localization;
 
     @Autowired
     private Environment environment;
@@ -57,7 +58,7 @@ public class VerifyControllerM {
     @PostMapping("/resend-verify")
     public ResRS resendVerify(@RequestBody SendVerifyRQ sendVerifyRQ) {
         verifySV.resendVerify(sendVerifyRQ, Integer.parseInt(environment.getProperty("spring.verifyStatus.verify")));
-        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"vf_rdy_sent", "");
+        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"vf_rdy_sent", null);
     }
 
 
@@ -72,7 +73,7 @@ public class VerifyControllerM {
     @PatchMapping("/verify-active")
     public ResRS verifyUserToActive(@Valid @RequestBody VerifyRQ verifyRQ) {
         verifySV.verifyUser(verifyRQ, Integer.parseInt(environment.getProperty("spring.verifyStatus.activeUser")));
-        return localization.resAPI(HttpStatus.OK,"acc_act_succ", "");
+        return localization.resAPI(HttpStatus.OK,"acc_act_succ", null);
     }
 
 
@@ -87,7 +88,32 @@ public class VerifyControllerM {
     @PostMapping("/send-verify-active")
     public ResRS sendVerifyToActive(@RequestBody SendVerifyRQ sendVerifyRQ) {
         verifySV.resendVerify(sendVerifyRQ, Integer.parseInt(environment.getProperty("spring.verifyStatus.activeUser")));
-        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"vf_rdy_sent", "");
+        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"vf_rdy_sent", null);
     }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Send verify
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param sendVerifyRQ
+     */
+    @PostMapping("/send-verify")
+    public ResRS sendVerify(@RequestBody SendVerifyRQ sendVerifyRQ) {
+        verifySV.sendVerify(sendVerifyRQ);
+        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"vf_rdy_sent", null);
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Verify
+     * -----------------------------------------------------------------------------------------------------------------
+     */
+    @PostMapping("/verify-app")
+    public ResRS verify(@RequestBody VerifyMRQ verifyMRQ) {
+        verifySV.verify(verifyMRQ);
+        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"vf_succ", null);
+    }
+
 
 }

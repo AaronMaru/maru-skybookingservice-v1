@@ -1,13 +1,13 @@
 package com.skybooking.skyflightservice.v1_0_0.util.booking;
 
-import com.skybooking.skyflightservice.config.passenger.PassengerCode;
+import com.skybooking.skyflightservice.constant.passenger.PassengerCode;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.MarkupNQ;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.MarkupTO;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.DetailSV;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.QuerySV;
 import com.skybooking.skyflightservice.v1_0_0.service.model.booking.BookingMetadataTA;
 import com.skybooking.skyflightservice.v1_0_0.service.model.booking.BookingRequestTA;
-import com.skybooking.skyflightservice.v1_0_0.ui.model.request.booking.BPassengerRQ;
+import com.skybooking.skyflightservice.v1_0_0.ui.model.request.booking.BookingPassengerRQ;
 import com.skybooking.skyflightservice.v1_0_0.util.calculator.NumberFormatter;
 import com.skybooking.skyflightservice.v1_0_0.util.passenger.PassengerUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,11 +40,37 @@ public class BookingUtility {
      */
     public String getTripType(String type) {
 
-        if (type.equalsIgnoreCase("one")) return "OneWay";
-        if (type.equalsIgnoreCase("round")) return "Round";
-        if (type.equalsIgnoreCase("multiple")) return "Other";
+        var tripType = switch (type.toLowerCase()) {
+            case "one" -> "OneWay";
+            case "round" -> "Return";
+            case "multiple" -> "Other";
+            default -> throw new IllegalArgumentException("Invalid trip type: " + type);
+        };
 
-        return "Other";
+        return tripType;
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get passenger type for insert into database
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param type
+     * @return String
+     */
+    public String getPassengerType(String type) {
+
+        var passengerType = switch (type.toUpperCase()) {
+            case PassengerCode.ADULT -> "Adult";
+            case PassengerCode.CHILD -> "Child";
+            case PassengerCode.INFANT -> "Infant";
+            default -> throw new IllegalArgumentException("Invalid passenger type: " + type);
+        };
+
+
+        return passengerType;
+
     }
 
 
@@ -57,15 +83,15 @@ public class BookingUtility {
      * @return Number
      */
 
-    public Integer getPassengerQuantityCodeNumber(List<BPassengerRQ> passengerRQList) {
+    public Integer getPassengerQuantityCodeNumber(List<BookingPassengerRQ> passengerRQList) {
 
         var types = new HashMap<String, String>();
 
         var codeNumber = 0;
 
-        for (BPassengerRQ bPassengerRQ : passengerRQList) {
+        for (BookingPassengerRQ bookingPassengerRQ : passengerRQList) {
 
-            var type = PassengerUtil.type(bPassengerRQ.getBirthDate());
+            var type = PassengerUtil.type(bookingPassengerRQ.getBirthDate());
             types.put(type, type);
         }
 
@@ -151,6 +177,31 @@ public class BookingUtility {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
+     * get passenger booking total amount by passenger type
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param requestId
+     * @param legId
+     * @param passengerType
+     * @return double
+     */
+    public double getBookingPassengerTotalAmount(String requestId, String legId, String passengerType) {
+
+        var legDetail = detailSV.getLegDetail(requestId, legId);
+        var priceDetail = detailSV.getPriceDetail(requestId, legDetail.getPrice());
+
+        return priceDetail
+            .getDetails()
+            .stream()
+            .filter(price -> price.getType().equalsIgnoreCase(passengerType))
+            .mapToDouble(price -> NumberFormatter.amount(price.getBaseFare().add(price.getTax()).doubleValue()))
+            .findFirst()
+            .getAsDouble();
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
      * get booking departure date time
      * -----------------------------------------------------------------------------------------------------------------
      *
@@ -161,10 +212,12 @@ public class BookingUtility {
     public String getBookingDepartureDateTime(String requestId, String[] legIds) {
 
         if (legIds.length > 0) {
+
             var leg = detailSV.getLegDetail(requestId, legIds[0]);
             if (leg != null) {
                 return leg.getDepartureTime();
             }
+
         }
 
         return null;

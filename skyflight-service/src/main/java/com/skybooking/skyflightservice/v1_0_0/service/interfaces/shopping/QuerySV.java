@@ -9,9 +9,7 @@ public interface QuerySV {
 
     ShoppingQueryEntity flightShoppingCreate(FlightShoppingRQ request);
     ShoppingQueryEntity flightShoppingExist(FlightShoppingRQ request);
-
     ShoppingQueryEntity flightShoppingById(String requestId);
-
     void flightShoppingRemove(FlightShoppingRQ request);
 
 }

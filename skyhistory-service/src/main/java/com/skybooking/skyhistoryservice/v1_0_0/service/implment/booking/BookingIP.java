@@ -13,7 +13,10 @@ import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+
 import javax.servlet.http.HttpServletRequest;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -46,8 +49,8 @@ public class BookingIP implements BookingSV {
      * Getting data bookings detail
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @Param id
      * @return a booking
+     * @Param id
      */
     public BookingDetailRS getBookingDetail(Long id) {
 
@@ -82,8 +85,8 @@ public class BookingIP implements BookingSV {
      * Getting data bookings detail data to email
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @Param id
      * @return a booking
+     * @Param id
      */
     public BookingEmailDetailRS getBookingDetailEmail(Long id) {
 
@@ -146,7 +149,7 @@ public class BookingIP implements BookingSV {
 
         BookingDataPaginationRS bookingData = new BookingDataPaginationRS();
         List<BookingRS> bookingRSList = bookings(keyword, bookStatus, startRange, endRange, tripType, className, bookDate,
-                paymentType, flyingFrom, flyingTo, bookByName, action, stake,skyuserId,companyId, page, size);
+                paymentType, flyingFrom, flyingTo, bookByName, action, stake, skyuserId, companyId, page, size);
 
         bookingData.setSize(size);
         bookingData.setPage(page);
@@ -163,11 +166,11 @@ public class BookingIP implements BookingSV {
      * Getting a list of bookings
      * -----------------------------------------------------------------------------------------------------------------
      *
+     * @return list of bookings
      * @Param keyword
      * @Param bookingStatus
      * @Param page
      * @Param size
-     * @return list of bookings
      */
     public List<BookingRS> bookings(String keyword, String bookStatus, String startRange, String endRange, String tripType,
                                     String className, String bookDate, String paymentType, String flyingFrom, String flyingTo,
@@ -177,7 +180,7 @@ public class BookingIP implements BookingSV {
                 paymentType, flyingFrom, flyingTo, bookByName, action, stake, skyuserId, companyId, PageRequest.of(page, size));
         List<BookingRS> bookingRSList = new ArrayList<>();
 
-        for (BookingTO booking: bookingTO) {
+        for (BookingTO booking : bookingTO) {
 
             BookingRS bookingRS = new BookingRS();
 
@@ -234,8 +237,8 @@ public class BookingIP implements BookingSV {
      * Booking origin destination
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @Param booking
      * @return String
+     * @Param booking
      */
     public List<BookingOdRS> bookingOD(BookingTO booking) {
 
@@ -243,7 +246,7 @@ public class BookingIP implements BookingSV {
         List<BookingOdTO> bookingOdTOList = bookingNQ.listBookingOd(booking.getBookingId());
         List<BookingOdRS> bookingOdRSList = new ArrayList<>();
 
-        for (BookingOdTO bookingOdTO: bookingOdTOList) {
+        for (BookingOdTO bookingOdTO : bookingOdTOList) {
             BookingOdRS bookingOdRS = new BookingOdRS();
             BeanUtils.copyProperties(bookingOdTO, bookingOdRS);
 
@@ -252,15 +255,22 @@ public class BookingIP implements BookingSV {
 
             BeanUtils.copyProperties(bookingOdSegTO, bookingOdSegRS);
 
-            String statusOdSeg = (setBookingStatus(booking.getStatus()) != null) ? setBookingStatus(booking.getStatus()) : ((bookingOdSegTO.getDepDateTime().compareTo(now) > 0) ? "Upcoming" : "Completed");
-            bookingOdSegRS.setStatus(statusOdSeg);
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+            try {
+                Date departDateTime = formatter.parse(bookingOdSegTO.getDepDateTime().toString());
+                String statusOdSeg = (setBookingStatus(booking.getStatus()) != null) ? setBookingStatus(booking.getStatus()) : ((departDateTime.compareTo(now) > 0) ? "Upcoming" : "Completed");
+                bookingOdSegRS.setStatus(statusOdSeg);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
 
             HashMap<String, String> logo = flightBean.getAirlineInfoLogo(bookingOdSegTO.getAirlineCode());
             bookingOdSegRS.setAirlineLogo45(logo.get("logo45"));
             bookingOdSegRS.setAirlineLogo90(logo.get("logo90"));
 
-            bookingOdSegRS.setArrDateTime(bookingOdSegTO.getArrDateTime());
-            bookingOdSegRS.setDepDateTime(bookingOdSegTO.getDepDateTime());
+            bookingOdSegRS.setArrDateTime(bookingOdSegTO.getArrDateTime().toString());
+            bookingOdSegRS.setDepDateTime(bookingOdSegTO.getDepDateTime().toString());
 
             bookingOdRS.setfSegs(bookingOdSegRS);
 
@@ -276,8 +286,8 @@ public class BookingIP implements BookingSV {
      * Getting a listing of Airtickets
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @Param bookingId
      * @return BookingTicketRS
+     * @Param bookingId
      */
     public List<BookingTicketRS> getAirTickets(Long bookingId) {
 
@@ -309,8 +319,8 @@ public class BookingIP implements BookingSV {
      * Getting a listing of Airtickets
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @Param bookingId
      * @return BookingAirItinPriceRS
+     * @Param bookingId
      */
     public List<BookingAirItinPriceRS> getAirItinPrice(Long bookingId) {
 
@@ -335,8 +345,8 @@ public class BookingIP implements BookingSV {
      * Find status of booking cancel and fail
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @Param status
      * @return String
+     * @Param status
      */
     public String setBookingStatus(int status) {
 

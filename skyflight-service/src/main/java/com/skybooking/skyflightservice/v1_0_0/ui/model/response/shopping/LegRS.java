@@ -11,12 +11,12 @@ public class LegRS implements Serializable {
 
     private String id;
     private int duration;
-    private String departure = "";
-    private String departureTime = "";
-    private String departureTerminal = "";
-    private String arrival = "";
-    private String arrivalTime = "";
-    private String arrivalTerminal = "";
+    private String departure;
+    private String departureTime;
+    private String departureTerminal;
+    private String arrival;
+    private String arrivalTime;
+    private String arrivalTerminal;
     private List<LegAirlineRS> airlines = new ArrayList<>();
     private boolean multiAir;
     private List<LegSegmentDetailRS> segments = new ArrayList<>();

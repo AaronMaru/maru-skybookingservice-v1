@@ -61,7 +61,7 @@ public class SkyownerBean {
         stkCompany.setSlug(apiBean.createSlug("companyTypes"));
 
         StakeholderCompanyEntity lastCode = companyRP.findByCompanyCode("SKYO");
-        String companyCode = generalBean.stakeUniqueCode("SKYO", (lastCode != null) ? lastCode.getCompanyCode() : null, "02");
+        String companyCode = generalBean.stakeUniqueCode("SKYO", (lastCode != null) ? lastCode.getCompanyCode() : null, "2");
         stkCompany.setCompanyCode(companyCode);
 
         Optional<BussinessTypeEntity> bizType = bussinessTypeRP.findById(skyownerRQ.getBusinessTypeId());
@@ -105,7 +105,9 @@ public class SkyownerBean {
         apiBean.addSimpleContact(id,skyownerRQ.getCode() + "-" + skyownerRQ.getPhone().replaceFirst("^0+(?!$)", ""), "p", "skyowner");
         apiBean.addSimpleContact(id, skyownerRQ.getWebsite(), "w", "skyowner");
         apiBean.addSimpleContact(id, skyownerRQ.getPostalOrZipCode(), "z", "skyowner");
-        apiBean.addSimpleContact(id, "", "a", "skyowner");
+        apiBean.addSimpleContact(id, skyownerRQ.getEmail(), "e", "skyowner");
+        apiBean.addSimpleContact(id, skyownerRQ.getAddress(), "a", "skyowner");
+        apiBean.addSimpleContact(id, "", "c", "skyowner");
     }
 
 

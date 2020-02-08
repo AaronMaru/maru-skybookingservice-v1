@@ -6,7 +6,7 @@ import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.SkyuserIdS
 import com.skybooking.staffservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.invitation.PendingEmailStaffRS;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.invitation.SkyuserDetailsRS;
-import com.skybooking.staffservice.v1_0_0.util.localization.Localization;
+import com.skybooking.staffservice.v1_0_0.util.localization.LocalizationBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +23,7 @@ public class InvitationControllerM {
     private InvitationSV invitationSV;
 
     @Autowired
-    private Localization localization;
+    private LocalizationBean localization;
 
 
 
@@ -36,7 +36,7 @@ public class InvitationControllerM {
      */
     @GetMapping("/find-skyuser")
     public ResRS findSkyuser() {
-        List<SkyuserDetailsRS> skyusers =  invitationSV.findSkyusers();
+        List<SkyuserDetailsRS> skyusers =  invitationSV.findSkyUsers();
         return localization.resAPI(HttpStatus.OK,"vf_succ", skyusers);
     }
 
@@ -50,7 +50,7 @@ public class InvitationControllerM {
      */
     @PostMapping("/invite-skyuser")
     public ResRS invSkyuser(@Valid @RequestBody SkyuserIdStaffRQ inviteRQ) {
-        invitationSV.invSkyuser(inviteRQ);
+        invitationSV.inviteSkyUser(inviteRQ);
         return localization.resAPI(HttpStatus.OK,"inv_succ", "");
     }
 
@@ -64,7 +64,7 @@ public class InvitationControllerM {
      */
     @PostMapping("/invite-skyuser-no-acc")
     public ResRS invSkyuserNoAcc(@Valid @RequestBody InviteStaffNoAccRQ inviteStaffNoAccRQ) {
-        invitationSV.invSkyuserNotExistsAcc(inviteStaffNoAccRQ);
+        invitationSV.inviteSkyUserNotExistsAcc(inviteStaffNoAccRQ);
         return localization.resAPI(HttpStatus.OK,"inv_succ", "");
     }
 

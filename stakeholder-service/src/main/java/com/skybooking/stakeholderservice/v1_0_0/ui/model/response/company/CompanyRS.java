@@ -1,5 +1,8 @@
 package com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class CompanyRS {
 
     private Long id;
@@ -7,11 +10,17 @@ public class CompanyRS {
     private String profileImg = "";
     private String contactPerson = "";
     private String contactPosition = "";
-//    private List<LicenseRS> licenses = new ArrayList<>();
+    private List<LicenseRS> licenses = new ArrayList<>();
     private String address = "";
     private String phone = "";
+    private String email = "";
     private String webiste = "";
     private String postalOrZipCode = "";
+    private Long bussinessTypeId;
+    private Long countryId;
+    private String status;
+    private String description = "";
+    private String city = "";
 
     public Long getId() {
         return id;
@@ -56,13 +65,13 @@ public class CompanyRS {
         this.contactPosition = contactPosition;
     }
 
-//    public List<LicenseRS> getLicenses() {
-//        return licenses;
-//    }
-//
-//    public void setLicenses(List<LicenseRS> licenses) {
-//        this.licenses = licenses;
-//    }
+    public List<LicenseRS> getLicenses() {
+        return licenses;
+    }
+
+    public void setLicenses(List<LicenseRS> licenses) {
+        this.licenses = licenses;
+    }
 
     public String getAddress() {
         return address;
@@ -94,6 +103,54 @@ public class CompanyRS {
 
     public void setPostalOrZipCode(String postalOrZipCode) {
         this.postalOrZipCode = postalOrZipCode;
+    }
+
+    public Long getBussinessTypeId() {
+        return bussinessTypeId;
+    }
+
+    public void setBussinessTypeId(Long bussinessTypeId) {
+        this.bussinessTypeId = bussinessTypeId;
+    }
+
+    public Long getCountryId() {
+        return countryId;
+    }
+
+    public void setCountryId(Long countryId) {
+        this.countryId = countryId;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
 }

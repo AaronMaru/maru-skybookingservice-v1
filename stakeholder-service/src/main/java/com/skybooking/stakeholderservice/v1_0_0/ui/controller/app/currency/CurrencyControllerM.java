@@ -3,7 +3,7 @@ package com.skybooking.stakeholderservice.v1_0_0.ui.controller.app.currency;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.currency.CurrencySV;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.header.HeaderBean;
-import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
+import com.skybooking.stakeholderservice.v1_0_0.util.localization.LocalizationBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,7 +21,7 @@ public class CurrencyControllerM {
     private HeaderBean headerBean;
 
     @Autowired
-    private Localization localization;
+    private LocalizationBean localization;
 
 
     /**

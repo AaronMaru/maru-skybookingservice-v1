@@ -1,38 +1,32 @@
 package com.skybooking.staffservice.v1_0_0.ui.model.response.staff;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-
 public class StaffTotalBookingRS {
 
-    private BigInteger bookingQty;
-    private BigDecimal totalAmount;
+    private Upcoming upcoming;
+    private Completed completed;
+    private Cancellation cancellation;
 
-    private String statusKey;
-
-    public BigInteger getBookingQty() {
-        return bookingQty;
+    public Upcoming getUpcoming() {
+        return upcoming;
     }
 
-    public void setBookingQty(BigInteger bookingQty) {
-        this.bookingQty = bookingQty;
+    public void setUpcoming(Upcoming upcoming) {
+        this.upcoming = upcoming;
     }
 
-    public BigDecimal getTotalAmount() {
-        return totalAmount;
+    public Completed getCompleted() {
+        return completed;
     }
 
-    public void setTotalAmount(BigDecimal totalAmount) {
-        this.totalAmount = totalAmount;
+    public void setCompleted(Completed completed) {
+        this.completed = completed;
     }
 
-
-    public String getStatusKey() {
-        return statusKey;
+    public Cancellation getCancellation() {
+        return cancellation;
     }
 
-    public void setStatusKey(String statusKey) {
-        this.statusKey = statusKey;
+    public void setCancellation(Cancellation cancellation) {
+        this.cancellation = cancellation;
     }
-
 }

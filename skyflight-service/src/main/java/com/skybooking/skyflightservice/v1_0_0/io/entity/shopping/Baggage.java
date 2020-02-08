@@ -8,9 +8,10 @@ import java.io.Serializable;
 public class Baggage implements Serializable {
 
     private String type;
-    private int piece;
-    private int weight;
+    private int pieces;
+    private int weights;
     private String unit;
     private boolean nonRefundable;
+    private boolean isPiece;
 
 }

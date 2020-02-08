@@ -1,11 +1,11 @@
 package com.skybooking.stakeholderservice.v1_0_0.ui.controller.web.user;
 
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.user.VerifySV;
-import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user.SendVerifyRQ;
-import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user.VerifyRQ;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.verify.SendVerifyRQ;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.verify.VerifyRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
-import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
+import com.skybooking.stakeholderservice.v1_0_0.util.localization.LocalizationBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
@@ -21,10 +21,11 @@ public class VerifyControllerW {
     private VerifySV verifySV;
 
     @Autowired
-    private Localization localization;
+    private LocalizationBean localization;
 
     @Autowired
     private Environment environment;
+
 
 
     /**

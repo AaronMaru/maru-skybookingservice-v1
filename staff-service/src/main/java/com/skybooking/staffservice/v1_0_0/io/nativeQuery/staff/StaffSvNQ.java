@@ -23,7 +23,7 @@ public interface StaffSvNQ extends NativeQuery {
                             @NativeQueryParam(value = "startPRange") Integer startPRange,
                             @NativeQueryParam(value = "endPRange") Integer endPRange,
                             @NativeQueryParam(value = "joinDate") String joinDate,
-                            @NativeQueryParam(value = "status") String status,
+                            @NativeQueryParam(value = "joinStatus") String joinStatus,
                             @NativeQueryParam(value = "action") String action, Pageable pageable);
 
     List<StaffTotalBookingTO> listStaffTotalBooking(@NativeQueryParam(value = "skyuserId") Integer skyuserId, @NativeQueryParam(value = "companyId") Long companyId);

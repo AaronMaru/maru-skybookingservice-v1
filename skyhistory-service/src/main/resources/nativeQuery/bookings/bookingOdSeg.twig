@@ -199,8 +199,7 @@ FROM booking_origin_destinations bod_seg
 			INNER JOIN
 			(
 
-				SELECT
-					cc_county.id,
+				SELECT cc_county.id,
 					(
 						SELECT cc_lcountry.`name` AS arr_country
 						FROM country_city_locale cc_lcountry
@@ -220,10 +219,11 @@ FROM booking_origin_destinations bod_seg
 
 
 	) arr_ai ON arr_ai.`code` = (SELECT arr_seg.arr_location_code
-																FROM booking_origin_destinations arr_seg
-																WHERE arr_seg.parent_id = 31
-																ORDER BY arr_seg.id DESC
-																LIMIT 1)
+                                FROM booking_origin_destinations arr_seg
+                                WHERE arr_seg.parent_id = :bodId
+                                ORDER BY arr_seg.id DESC
+                                LIMIT 1
+                                )
 	-- The end of arrival information
 
 WHERE bod_seg.parent_id = :bodId

@@ -10,23 +10,17 @@ import java.util.List;
 public class SegmentRS implements Serializable {
 
     private String id;
-    private String departure = "";
-    private String departureTime = "";
-    private String departureTerminal = "";
-    private String arrival = "";
-    private String arrivalTime = "";
-    private String arrivalTerminal = "";
+    private String departure;
+    private String departureTime;
+    private String departureTerminal;
+    private String arrival;
+    private String arrivalTime;
+    private String arrivalTerminal;
     private String flightNumber;
-    private String airline = "";
-    private String aircraft = "";
-    private String operatingAirline = "";
-    private String operatingFlightNumber = "";
-    private int seatsRemain;
-    private String cabin = "";
-    private String cabinName = "";
-    private String meal = "";
-    private String mealName = "";
-    private String bookingCode = "";
+    private String airline;
+    private String aircraft;
+    private String operatingAirline;
+    private String operatingFlightNumber;
     private int stopCount;
     private List<HiddenStopRS> hiddenStops = new ArrayList<>();
 

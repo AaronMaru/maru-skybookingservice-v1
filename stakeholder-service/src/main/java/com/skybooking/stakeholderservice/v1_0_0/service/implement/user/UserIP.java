@@ -17,12 +17,13 @@ import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.user.UserSV;
 import com.skybooking.stakeholderservice.v1_0_0.transformer.TokenTF;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company.CompanyRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user.*;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.verify.SendVerifyRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.InvitationRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.activitylog.ActivityLoggingBean;
+import com.skybooking.stakeholderservice.v1_0_0.util.email.EmailBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
-import com.skybooking.stakeholderservice.v1_0_0.util.general.Duplicate;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.skyowner.SkyownerBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.skyuser.UserBean;
@@ -74,14 +75,13 @@ public class UserIP implements UserSV {
     private CompanyHasUserRP companyHasUserRP;
 
     @Autowired
-    private Duplicate duplicate;
-
-    @Autowired
     private StakeholderUserInvitationRP invitationsRP;
 
     @Autowired
     private CompanyRP companyRP;
 
+    @Autowired
+    private EmailBean emailBean;
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -195,10 +195,10 @@ public class UserIP implements UserSV {
      */
     public UserDetailsTokenRS resetPassword(ResetPasswordRQ passwordRQ, HttpHeaders httpHeaders) {
 
-        String username = passwordRQ.getUsername();
+        String receiver = passwordRQ.getUsername();
 
         if (NumberUtils.isNumber(passwordRQ.getUsername())) {
-            username = passwordRQ.getCode() + passwordRQ.getUsername();
+            receiver = passwordRQ.getCode() + passwordRQ.getUsername();
         }
 
         UserEntity user = userRepository.findByEmailOrPhone(passwordRQ.getUsername(), passwordRQ.getCode().replaceAll(" ", ""));
@@ -219,9 +219,9 @@ public class UserIP implements UserSV {
 
         logger.activities(ActivityLoggingBean.Action.RESET_PASSWORD, user);
 
-        Map<String, Object> mailData = duplicate.mailData(fullName, 0, "password_reset_successfully");
+        Map<String, Object> mailData = emailBean.mailData(receiver, fullName, 0, "password_reset_successfully");
 
-        apiBean.sendEmailSMS(username,"success-reset-password", mailData);
+        emailBean.sendEmailSMS("success-reset-password", mailData);
 
         UserDetailsTokenRS userDetailsTokenRS = new UserDetailsTokenRS();
         String credentials = environment.getProperty("spring.oauth2.client-id") + ":" + environment.getProperty("spring.oauth2.client-secret");
@@ -251,18 +251,18 @@ public class UserIP implements UserSV {
 
         StakeHolderUserEntity stakeHolderUser = user.getStakeHolderUser();
         String fullName = stakeHolderUser.getFirstName() + " " + stakeHolderUser.getLastName();
-        String username = NumberUtils.isNumber(verifyRQ.getUsername())
+        String receiver = NumberUtils.isNumber(verifyRQ.getUsername())
                 ? verifyRQ.getCode() + verifyRQ.getUsername().replaceFirst("^0+(?!$)", "")
                 : verifyRQ.getUsername();
 
         generalBean.expireRequest(user,
                 Integer.parseInt(environment.getProperty("spring.verifyStatus.forgotPassword")));
         int code = apiBean.createVerifyCode(user,
-                Integer.parseInt(environment.getProperty("spring.verifyStatus.forgotPassword")));
+                Integer.parseInt(environment.getProperty("spring.verifyStatus.forgotPassword")), null);
         userRepository.save(user);
 
-        Map<String, Object> mailData = duplicate.mailData(fullName, code, "reset_your_password");
-        apiBean.sendEmailSMS(username,"send-login", mailData);
+        Map<String, Object> mailData = emailBean.mailData(receiver, fullName, code, "reset_your_password");
+        emailBean.sendEmailSMS("send-login", mailData);
 
         return code;
 
@@ -329,16 +329,16 @@ public class UserIP implements UserSV {
         generalBean.expireRequest(user, Integer.parseInt(environment.getProperty("spring.verifyStatus.updateContact")));
 
         int code = apiBean.createVerifyCode(user,
-                Integer.parseInt(environment.getProperty("spring.verifyStatus.updateContact")));
+                Integer.parseInt(environment.getProperty("spring.verifyStatus.updateContact")), null);
         String fullName = user.getStakeHolderUser().getFirstName() + " " + user.getStakeHolderUser().getLastName();
-        String username = NumberUtils.isNumber(contactRQ.getUsername())
+        String receiver = NumberUtils.isNumber(contactRQ.getUsername())
                 ? contactRQ.getCode() + contactRQ.getUsername().replaceFirst("^0+(?!$)", "")
                 : contactRQ.getUsername();
 
         userRepository.save(user);
 
-        Map<String, Object> mailData = duplicate.mailData(fullName, code, "account_verification_code");
-        apiBean.sendEmailSMS(username,"send-login", mailData);
+        Map<String, Object> mailData = emailBean.mailData(receiver, fullName, code, "account_verification_code");
+        emailBean.sendEmailSMS("send-login", mailData);
 
         return code;
 
@@ -368,15 +368,15 @@ public class UserIP implements UserSV {
         apiBean.storeUserStatus(user, Integer.parseInt(environment.getProperty("spring.stakeUser.inactive")),
                 "User was deactive account");
 
-        String username = (user.getEmail() != null) ? user.getEmail() : user.getCode() + user.getPhone();
+        String receiver = (user.getEmail() != null) ? user.getEmail() : user.getCode() + user.getPhone();
 
         StakeHolderUserEntity stakeHolderUser = user.getStakeHolderUser();
         String fullName = stakeHolderUser.getFirstName() + " " + stakeHolderUser.getLastName();
 
         logger.activities(ActivityLoggingBean.Action.DEACTIVE_USER, user);
 
-        Map<String, Object> mailData = duplicate.mailData(fullName, 0, "account_deactivated_successfully");
-        apiBean.sendEmailSMS(username,"deactive-account", mailData);
+        Map<String, Object> mailData = emailBean.mailData(receiver, fullName, 0, "account_deactivated_successfully");
+        emailBean.sendEmailSMS("deactive-account", mailData);
 
     }
 
@@ -432,7 +432,7 @@ public class UserIP implements UserSV {
             StakeholderCompanyEntity companys = companyRP.findById(invitation.getStakeholderCompanyId()).orElse(null);
             if (companys != null) {
                 invitationRS.setCompanyName(companys.getCompanyName());
-
+                invitationRS.setId(invitation.getId());
                 String imageName = companys.getProfileImg() != null ? companys.getProfileImg() : "default.png";
 
                 invitationRS.setPhotoMedium(environment.getProperty("spring.awsImageUrl.companyProfile") + "/medium/" + imageName);

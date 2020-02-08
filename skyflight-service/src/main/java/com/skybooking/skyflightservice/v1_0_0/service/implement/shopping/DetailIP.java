@@ -3,6 +3,7 @@ package com.skybooking.skyflightservice.v1_0_0.service.implement.shopping;
 import com.hazelcast.core.HazelcastInstance;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.shopping.*;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.DetailSV;
+import com.skybooking.skyflightservice.v1_0_0.util.DateUtility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -42,11 +43,11 @@ public class DetailIP implements DetailSV {
         if (shopping == null) return null;
 
         return shopping
-                .getAirlines()
-                .stream()
-                .filter(airline -> airline.getCode().equalsIgnoreCase(airlineId))
-                .findFirst()
-                .orElse(null);
+            .getAirlines()
+            .stream()
+            .filter(airline -> airline.getCode().equalsIgnoreCase(airlineId))
+            .findFirst()
+            .orElse(null);
     }
 
 
@@ -65,11 +66,11 @@ public class DetailIP implements DetailSV {
         if (shopping == null) return null;
 
         return shopping
-                .getAircrafts()
-                .stream()
-                .filter(aircraft -> aircraft.getCode().equalsIgnoreCase(aircraftId))
-                .findFirst()
-                .orElse(null);
+            .getAircrafts()
+            .stream()
+            .filter(aircraft -> aircraft.getCode().equalsIgnoreCase(aircraftId))
+            .findFirst()
+            .orElse(null);
     }
 
 
@@ -88,11 +89,11 @@ public class DetailIP implements DetailSV {
         if (shopping == null) return null;
 
         return shopping
-                .getBaggages()
-                .stream()
-                .filter(baggageDetail -> baggageDetail.getId().equalsIgnoreCase(baggageId))
-                .findFirst()
-                .orElse(null);
+            .getBaggages()
+            .stream()
+            .filter(baggageDetail -> baggageDetail.getId().equalsIgnoreCase(baggageId))
+            .findFirst()
+            .orElse(null);
     }
 
 
@@ -111,11 +112,11 @@ public class DetailIP implements DetailSV {
         if (shopping == null) return null;
 
         return shopping
-                .getLocations()
-                .stream()
-                .filter(location -> location.getCode().equalsIgnoreCase(locationId))
-                .findFirst()
-                .orElse(null);
+            .getLocations()
+            .stream()
+            .filter(location -> location.getCode().equalsIgnoreCase(locationId))
+            .findFirst()
+            .orElse(null);
     }
 
 
@@ -134,11 +135,11 @@ public class DetailIP implements DetailSV {
         if (shopping == null) return null;
 
         return shopping
-                .getLegs()
-                .stream()
-                .filter(leg -> leg.getId().equalsIgnoreCase(legId))
-                .findFirst()
-                .orElse(null);
+            .getLegs()
+            .stream()
+            .filter(leg -> leg.getId().equalsIgnoreCase(legId))
+            .findFirst()
+            .orElse(null);
     }
 
 
@@ -157,11 +158,11 @@ public class DetailIP implements DetailSV {
         if (shopping == null) return null;
 
         return shopping
-                .getPrices()
-                .stream()
-                .filter(priceDetail -> priceDetail.getId().equalsIgnoreCase(priceId))
-                .findFirst()
-                .orElse(null);
+            .getPrices()
+            .stream()
+            .filter(priceDetail -> priceDetail.getId().equalsIgnoreCase(priceId))
+            .findFirst()
+            .orElse(null);
     }
 
 
@@ -180,10 +181,29 @@ public class DetailIP implements DetailSV {
         if (shopping == null) return null;
 
         return shopping
-                .getSegments()
-                .stream()
-                .filter(segment -> segment.getId().equalsIgnoreCase(segmentId))
-                .findFirst()
-                .orElse(null);
+            .getSegments()
+            .stream()
+            .filter(segment -> segment.getId().equalsIgnoreCase(segmentId))
+            .findFirst()
+            .orElse(null);
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get expiration remaining time of shopping in minutes
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param shoppingId
+     * @return long
+     */
+    @Override
+    public long getMinutesTimeToLive(String shoppingId) {
+
+        var entry = instance.getMap(TransformIP.TRANSFORM_CACHED_NAME).getEntryView(shoppingId);
+
+        if (entry == null) return 0;
+
+        return DateUtility.getMinutesMillisecondsSystemTimeStamp(entry.getExpirationTime());
     }
 }

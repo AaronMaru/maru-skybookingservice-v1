@@ -7,9 +7,9 @@ import java.io.Serializable;
 @Data
 public class LocationRS implements Serializable {
 
-    private String code = "";
-    private String airport = "";
-    private String city = "";
+    private String code;
+    private String airport;
+    private String city;
     private double latitude;
     private double longitude;
 

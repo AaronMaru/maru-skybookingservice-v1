@@ -6,7 +6,7 @@ import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.passenger.Passe
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.passenger.PassengerPagingRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.passenger.PassengerRS;
-import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
+import com.skybooking.stakeholderservice.v1_0_0.util.localization.LocalizationBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -25,7 +25,7 @@ public class PassengerControllerW {
     private PassengerSV passengerService;
 
     @Autowired
-    private Localization localization;
+    private LocalizationBean localization;
 
 
     /**

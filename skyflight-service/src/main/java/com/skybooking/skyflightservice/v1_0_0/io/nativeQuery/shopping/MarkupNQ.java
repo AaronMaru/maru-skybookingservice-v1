@@ -15,4 +15,6 @@ public interface MarkupNQ extends NativeQuery {
 
     MarkupTO getMarkupPriceSkyOwnerUser(@NativeQueryParam("companyId") Integer companyId, @NativeQueryParam("cabinClass") String cabin);
 
+    MarkupTO getGeneralMarkupPayment();
+
 }

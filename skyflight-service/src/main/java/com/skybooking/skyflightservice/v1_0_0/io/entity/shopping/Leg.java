@@ -25,6 +25,7 @@ public class Leg implements Serializable {
     private String price;
     private String baggage;
     private boolean isDirectFlight;
+    private int legIndex;
     private int directionIndex;
 
 }

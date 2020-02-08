@@ -7,6 +7,7 @@ SELECT
 	su.last_name AS lastName,
 	(CASE WHEN su.photo IS NULL THEN  'default.png' ELSE su.photo END) AS photo,
 	su.user_code AS userCode,
+	suc.joinStatus,
 	suc.created_at AS joinDate
 
 FROM stakeholder_companies sc
@@ -20,52 +21,67 @@ INNER JOIN
 		suc.stakeholder_company_id,
 		suc.stakeholder_user_id,
 		suc.created_at,
-		suc.skyuser_role
+		suc.skyuser_role,
+		CASE
+			WHEN (suc.join_status = 1 ) THEN "Active"
+			WHEN (suc.join_status = 0 ) THEN  "Deactive"
+		END AS joinStatus
+
 	FROM stakeholder_user_has_companies suc
 
 	-- Filter Feature condition
 	WHERE ( IF( :action = 'filter',
-						-- If TRUE
-						-- Param: role
-						IF( :role = 'allrole',
+                -- If TRUE
+                -- Param: role
+                IF( :role = 'allrole',
 
-							-- Static value
-								suc.skyuser_role IN ('admin', 'editor')
-							,
-							-- Dynamic value
-								suc.skyuser_role = :role
-						)
+                    -- Static value
+                        suc.skyuser_role IN ('admin', 'editor')
+                    ,
+                    -- Dynamic value
+                        suc.skyuser_role = :role
+                )
 
-						-- Param: joinDate
-						AND Date(suc.created_at) = :joinDate
+                AND IF(:joinStatus = 'allstatus',
+                            suc.`status` IN (0, 1, 2)
+                        ,
+                            IF(:joinStatus = 'active', suc.`status` = 1, suc.`status` = 0)
+                        )
 
-						-- By dateRange
-						-- Param: startDRange, endDRange
-						AND (
-									SELECT COUNT(b.stakeholder_company_id)
-									FROM bookings b
-									WHERE ( b.total_amount + b.markup_amount + b.markup_pay_amount ) >= :startPRange
-									AND  ( b.total_amount + b.markup_amount + b.markup_pay_amount ) <= :endPRange
-								) > 0
+                -- Param: joinDate
+                AND Date(suc.created_at) = :joinDate
+
+                -- By dateRange
+                -- Param: startDRange, endDRange
+                AND (
+                        SELECT COUNT(b.id)
+                        FROM bookings b
+                        WHERE b.stakeholder_company_id = suc.stakeholder_company_id
+                        AND b.stakeholder_user_id = suc.stakeholder_user_id
+                        AND (
+                                ( b.total_amount + b.markup_amount + b.markup_pay_amount ) >= 0
+                                AND ( b.total_amount + b.markup_amount + b.markup_pay_amount ) <= 2000
+                            )
+                    ) > 0
           ,
-						-- If FALSE
-						suc.stakeholder_company_id = suc.stakeholder_company_id
-					)
-				)
+                    -- If FALSE
+                    suc.stakeholder_company_id = suc.stakeholder_company_id
+                )
+            )
 
 	-- Search Feature condition
-	OR ( IF( :action = 'search',
-						-- If TRUE
-						-- Param: keyword
-						(
-							suc.skyuser_role LIKE :keyword
-							OR Date(suc.created_at) = :joinDate
-						)
+	AND ( IF( :action = 'search',
+            -- If TRUE
+            -- Param: keyword
+            (
+                suc.skyuser_role LIKE :keyword
+                OR Date(suc.created_at) = :joinDate
+            )
           ,
-						-- If FALSE
-						suc.stakeholder_company_id = suc.stakeholder_company_id
-					)
-				)
+            -- If FALSE
+            suc.stakeholder_company_id = suc.stakeholder_company_id
+           )
+        )
 
 ) suc ON suc.stakeholder_company_id = sc.id
 
@@ -82,19 +98,7 @@ INNER JOIN
 	FROM stakeholder_users su
 
 	-- Filter feature condition
-	WHERE (
-				IF( :action = 'filter' ,
-
-					-- by stakeholder users status
-					IF(:status = 'allstatus', su.`status` IN (0, 1, 2), 0)
-					OR IF(:status = 'inactive', su.`status` = 0, 0)
-					OR IF(:status = 'active', su.`status` = 1, 0)
-					OR IF(:status = 'banned', su.`status` = 2, 0)
-
-	        , su.`status` IN (0, 1, 2)
-
-				 )
-			)
+	WHERE su.`status` = 1
 
 	-- Search feature condition
 	AND ( IF( :action = 'search' ,
@@ -102,9 +106,8 @@ INNER JOIN
 				-- Param: keyword
 				 CONCAT(su.first_name,' ',su.last_name) LIKE :keyword
 				 OR su.user_code = :keyword
-				 OR IF( :keyword = 'active', su.`status` = 1, 0)
 
-			 , su.`status` IN (0, 1, 2) ) -- The end of search feature
+			 , su.`status` = 1 ) -- The end of search feature
 			)
 
 ) su ON su.id = suc.stakeholder_user_id

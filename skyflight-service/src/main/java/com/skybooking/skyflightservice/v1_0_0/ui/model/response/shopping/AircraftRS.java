@@ -7,7 +7,7 @@ import java.io.Serializable;
 @Data
 public class AircraftRS implements Serializable {
 
-    private String code = "";
-    private String name = "";
+    private String code;
+    private String name;
 
 }

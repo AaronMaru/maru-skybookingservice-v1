@@ -7,7 +7,7 @@ import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.locale.Locale
 import com.skybooking.stakeholderservice.v1_0_0.transformer.locale.LocaleTF;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.locale.LocaleRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.locale.ModuleLanguageRS;
-import com.skybooking.stakeholderservice.v1_0_0.util.cls.StringUtil;
+import com.skybooking.stakeholderservice.v1_0_0.util.general.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

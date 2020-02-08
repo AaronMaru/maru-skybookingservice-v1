@@ -98,14 +98,6 @@ public class UserDetailsRS {
         this.changedPassword = changedPassword;
     }
 
-    public int getSkyowner() {
-        return isSkyowner;
-    }
-
-    public void setSkyowner(int skyowner) {
-        isSkyowner = skyowner;
-    }
-
     public String getGender() {
         return gender;
     }

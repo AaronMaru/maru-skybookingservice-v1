@@ -1,21 +1,8 @@
 package com.skybooking.skyflightservice.exception.httpstatus;
 
-public class UnauthorizedException extends RuntimeException {
+public class UnauthorizedException extends ExceptionResponse {
 
-    private String message;
-    private Object data;
-
-    public UnauthorizedException(String message, Object data) {
-        this.message = message;
-        this.data = data;
-    }
-
-    @Override
-    public String getMessage() {
-        return message;
-    }
-
-    public Object getData() {
-        return data;
+    public UnauthorizedException(String message, Object error) {
+        super(message, error);
     }
 }

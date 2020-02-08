@@ -8,8 +8,8 @@ import com.skybooking.skyhistoryservice.v1_0_0.io.repository.flight.FlightSaveRP
 import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.flightSave.FlightSaveSV;
 import com.skybooking.skyhistoryservice.v1_0_0.transformer.flightSave.FlightSaveTF;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.flightSave.FlightSaveRS;
-import com.skybooking.skyhistoryservice.v1_0_0.util.cls.FlightSaveODSUtils;
-import com.skybooking.skyhistoryservice.v1_0_0.util.cls.FlightSaveSUtils;
+import com.skybooking.skyhistoryservice.v1_0_0.util.flight.FlightSaveODSUtils;
+import com.skybooking.skyhistoryservice.v1_0_0.util.flight.FlightSaveSUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

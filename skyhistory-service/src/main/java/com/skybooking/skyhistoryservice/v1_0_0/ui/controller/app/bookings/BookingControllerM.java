@@ -2,7 +2,7 @@ package com.skybooking.skyhistoryservice.v1_0_0.ui.controller.app.bookings;
 
 import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.booking.BookingSV;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.ResRS;
-import com.skybooking.skyhistoryservice.v1_0_0.util.localization.Localization;
+import com.skybooking.skyhistoryservice.v1_0_0.util.localization.LocalizationBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,19 +20,19 @@ public class BookingControllerM {
     private BookingSV bookingSV;
 
     @Autowired
-    private Localization localization;
+    private LocalizationBean localization;
 
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * Get bookings company
+     * Get bookings companyConstant
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @Return ResponseEntity
      */
     @GetMapping("/bookings-company")
     public ResRS bookingsCompany() {
-        return localization.resAPI(HttpStatus.OK,"res_succ", bookingSV.getBooking("company"));
+        return localization.resAPI(HttpStatus.OK,"res_succ", bookingSV.getBooking("companyConstant"));
     }
 
 

@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import java.time.LocalDateTime;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 
 @ControllerAdvice
@@ -17,6 +19,32 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
 
     @Autowired
     private Localization localization;
+
+    private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Temporary redirect
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Status 307
+     */
+    @ExceptionHandler(TemporaryException.class)
+    public ResponseEntity<CustomErrorResponse> handleTemporary(TemporaryException ex, WebRequest request) {
+
+        CustomErrorResponse error = new CustomErrorResponse();
+        error.setTimestamp(dateFormat.format(new Date()));
+        error.setMessage(localization.multiLanguageRes(ex.getMessage()));
+        error.setStatus(HttpStatus.TEMPORARY_REDIRECT.value());
+        error.setError(ex.getError());
+
+        return new ResponseEntity<>(error, HttpStatus.TEMPORARY_REDIRECT);
+
+    }
+
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -29,81 +57,16 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(PermanentException.class)
     public ResponseEntity<CustomErrorResponse> handlePermanentRedirect(PermanentException ex, WebRequest request) {
 
-        CustomErrorResponse errors = new CustomErrorResponse();
-        errors.setTimestamp(LocalDateTime.now());
-        errors.setMessage(localization.multiLanguageRes(ex.getMessage()));
-        errors.setStatus(HttpStatus.PERMANENT_REDIRECT.value());
-        errors.setData(ex.getData());
+        CustomErrorResponse error = new CustomErrorResponse();
+        error.setTimestamp(dateFormat.format(new Date()));
+        error.setMessage(localization.multiLanguageRes(ex.getMessage()));
+        error.setStatus(HttpStatus.PERMANENT_REDIRECT.value());
+        error.setError(ex.getError());
 
-        return new ResponseEntity<>(errors, HttpStatus.PERMANENT_REDIRECT);
-
-    }
-
-
-    /**
-     * -----------------------------------------------------------------------------------------------------------------
-     * Unauthorized
-     * -----------------------------------------------------------------------------------------------------------------
-     *
-     * @Status 401
-     * @Return Errors
-     */
-    @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<CustomErrorResponse> handleUnauthorized(UnauthorizedException ex, WebRequest request) {
-
-        CustomErrorResponse errors = new CustomErrorResponse();
-        errors.setTimestamp(LocalDateTime.now());
-        errors.setMessage(localization.multiLanguageRes(ex.getMessage()));
-        errors.setStatus(HttpStatus.UNAUTHORIZED.value());
-        errors.setData(ex.getData());
-
-        return new ResponseEntity<>(errors, HttpStatus.UNAUTHORIZED);
+        return new ResponseEntity<>(error, HttpStatus.PERMANENT_REDIRECT);
 
     }
 
-
-    /**
-     * -----------------------------------------------------------------------------------------------------------------
-     * Internal server error
-     * -----------------------------------------------------------------------------------------------------------------
-     *
-     * @Status 500
-     * @Return Errors
-     */
-    @ExceptionHandler(InternalServerError.class)
-    public ResponseEntity<CustomErrorResponse> handleInternalError(InternalServerError ex, WebRequest request) {
-
-        CustomErrorResponse errors = new CustomErrorResponse();
-        errors.setTimestamp(LocalDateTime.now());
-        errors.setMessage(localization.multiLanguageRes(ex.getMessage()));
-        errors.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
-        errors.setData(ex.getData());
-
-        return new ResponseEntity<>(errors, HttpStatus.INTERNAL_SERVER_ERROR);
-
-    }
-
-
-
-    /**
-     * -----------------------------------------------------------------------------------------------------------------
-     * Gone
-     * -----------------------------------------------------------------------------------------------------------------
-     *
-     * @Status 410
-     */
-    @ExceptionHandler(GoneException.class)
-    public ResponseEntity<CustomErrorResponse> handleGone(GoneException ex, WebRequest request) {
-
-        CustomErrorResponse errors = new CustomErrorResponse();
-        errors.setTimestamp(LocalDateTime.now());
-        errors.setMessage(localization.multiLanguageRes(ex.getMessage()));
-        errors.setStatus(HttpStatus.GONE.value());
-        errors.setData(ex.getData());
-
-        return new ResponseEntity<>(errors, HttpStatus.GONE);
-
-    }
 
 
     /**
@@ -117,37 +80,39 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<CustomErrorResponse> handleBadRequest(BadRequestException ex, WebRequest request) {
 
-        CustomErrorResponse errors = new CustomErrorResponse();
-        errors.setTimestamp(LocalDateTime.now());
-        errors.setMessage(localization.multiLanguageRes(ex.getMessage()));
-        errors.setStatus(HttpStatus.BAD_REQUEST.value());
-        errors.setData(ex.getData());
+        CustomErrorResponse error = new CustomErrorResponse();
+        error.setTimestamp(dateFormat.format(new Date()));
+        error.setMessage(localization.multiLanguageRes(ex.getMessage()));
+        error.setStatus(HttpStatus.BAD_REQUEST.value());
+        error.setError(ex.getError());
 
-        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
 
     }
+
 
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * Not Found
+     * Unauthorized
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @return Error
-     * @Status 404
+     * @Status 401
+     * @Return Errors
      */
-    @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<CustomErrorResponse> handleNotFound(NotFoundException ex, WebRequest request) {
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<CustomErrorResponse> handleUnauthorized(UnauthorizedException ex, WebRequest request) {
 
-        CustomErrorResponse errors = new CustomErrorResponse();
-        errors.setTimestamp(LocalDateTime.now());
-        errors.setMessage(localization.multiLanguageRes(ex.getMessage()));
-        errors.setStatus(HttpStatus.NOT_FOUND.value());
-        errors.setData(ex.getData());
+        CustomErrorResponse error = new CustomErrorResponse();
+        error.setTimestamp(dateFormat.format(new Date()));
+        error.setMessage(localization.multiLanguageRes(ex.getMessage()));
+        error.setStatus(HttpStatus.UNAUTHORIZED.value());
+        error.setError(ex.getError());
 
-        return new ResponseEntity<>(errors, HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
 
     }
+
 
 
     /**
@@ -161,34 +126,82 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<CustomErrorResponse> handleForbidden(ForbiddenException ex, WebRequest request) {
 
-        CustomErrorResponse errors = new CustomErrorResponse();
-        errors.setTimestamp(LocalDateTime.now());
-        errors.setMessage(localization.multiLanguageRes(ex.getMessage()));
-        errors.setStatus(HttpStatus.FORBIDDEN.value());
-        errors.setData(ex.getData());
+        CustomErrorResponse error = new CustomErrorResponse();
+        error.setTimestamp(dateFormat.format(new Date()));
+        error.setMessage(localization.multiLanguageRes(ex.getMessage()));
+        error.setStatus(HttpStatus.FORBIDDEN.value());
+        error.setError(ex.getError());
 
-        return new ResponseEntity<>(errors, HttpStatus.FORBIDDEN);
+        return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
 
     }
 
 
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * Temporary redirect
+     * Not Found
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @Status 307
+     * @return Error
+     * @Status 404
      */
-    @ExceptionHandler(TemporaryException.class)
-    public ResponseEntity<CustomErrorResponse> handleTemporary(TemporaryException ex, WebRequest request) {
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<CustomErrorResponse> handleNotFound(NotFoundException ex, WebRequest request) {
 
-        CustomErrorResponse errors = new CustomErrorResponse();
-        errors.setTimestamp(LocalDateTime.now());
-        errors.setMessage(localization.multiLanguageRes(ex.getMessage()));
-        errors.setStatus(HttpStatus.TEMPORARY_REDIRECT.value());
-        errors.setData(ex.getData());
+        CustomErrorResponse error = new CustomErrorResponse();
+        error.setTimestamp(dateFormat.format(new Date()));
+        error.setMessage(localization.multiLanguageRes(ex.getMessage()));
+        error.setStatus(HttpStatus.NOT_FOUND.value());
+        error.setError(ex.getError());
 
-        return new ResponseEntity<>(errors, HttpStatus.TEMPORARY_REDIRECT);
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+
+    }
+
+
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Gone
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Status 410
+     */
+    @ExceptionHandler(GoneException.class)
+    public ResponseEntity<CustomErrorResponse> handleGone(GoneException ex, WebRequest request) {
+
+        CustomErrorResponse error = new CustomErrorResponse();
+        error.setTimestamp(dateFormat.format(new Date()));
+        error.setMessage(localization.multiLanguageRes(ex.getMessage()));
+        error.setStatus(HttpStatus.GONE.value());
+        error.setError(ex.getError());
+
+        return new ResponseEntity<>(error, HttpStatus.GONE);
+
+    }
+
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Internal server error
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Status 500
+     * @Return Errors
+     */
+    @ExceptionHandler(InternalServerError.class)
+    public ResponseEntity<CustomErrorResponse> handleInternalError(InternalServerError ex, WebRequest request) {
+
+        CustomErrorResponse error = new CustomErrorResponse();
+        error.setTimestamp(dateFormat.format(new Date()));
+        error.setMessage(localization.multiLanguageRes(ex.getMessage()));
+        error.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+        error.setError(ex.getError());
+
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
 
     }
 }

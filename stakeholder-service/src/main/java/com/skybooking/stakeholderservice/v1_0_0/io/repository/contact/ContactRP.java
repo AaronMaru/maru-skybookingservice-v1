@@ -23,7 +23,7 @@ public interface ContactRP extends JpaRepository<ContactEntity, Long> {
     /**
      * Get contacts of company
      */
-    @Query(value = "SELECT * FROM contacts WHERE contactable_id  = ?1", nativeQuery = true)
+    @Query(value = "SELECT * FROM contacts WHERE contactable_id  = ?1 AND contactable_type = 'skyowner'", nativeQuery = true)
     List<ContactEntity> getContactCM(Long stkId);
 
 

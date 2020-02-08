@@ -1,11 +1,11 @@
 package com.skybooking.skyhistoryservice;
 
-import com.skybooking.skyhistoryservice.v1_0_0.util.calculator.Calculator;
-import com.skybooking.skyhistoryservice.v1_0_0.util.general.Duplicate;
+import com.skybooking.skyhistoryservice.v1_0_0.util.calculator.CalculatorBean;
+import com.skybooking.skyhistoryservice.v1_0_0.util.general.DuplicateBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.flight.FlightShoppingBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.general.ApiBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.header.HeaderBean;
-import com.skybooking.skyhistoryservice.v1_0_0.util.localization.Localization;
+import com.skybooking.skyhistoryservice.v1_0_0.util.localization.LocalizationBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.notification.NotificationBean;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -20,13 +20,13 @@ public class SkyhistoryServiceApplication {
     }
 
     @Bean
-    Calculator calculator() {
-        return new Calculator();
+    CalculatorBean calculator() {
+        return new CalculatorBean();
     }
 
     @Bean
-    Localization localization() {
-        return new Localization();
+    LocalizationBean localization() {
+        return new LocalizationBean();
     }
 
     @Bean
@@ -51,7 +51,7 @@ public class SkyhistoryServiceApplication {
     ApiBean apiBean() { return new ApiBean(); }
 
     @Bean
-    Duplicate duplicate() {
-        return new Duplicate();
+    DuplicateBean duplicate() {
+        return new DuplicateBean();
     }
 }

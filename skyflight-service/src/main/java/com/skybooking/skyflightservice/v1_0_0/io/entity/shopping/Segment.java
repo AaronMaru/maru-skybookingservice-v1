@@ -23,13 +23,8 @@ public class Segment implements Serializable {
     private String aircraft;
     private String operatingAirline;
     private String operatingFlightNumber;
-    private int seatsRemain;
-    private String cabin;
-    private String cabinName;
-    private String meal;
-    private String mealName;
-    private String bookingCode;
     private int stopCount;
+    private int segmentIndex;
     private int directionIndex;
     private List<HiddenStop> hiddenStops = new ArrayList<>();
 

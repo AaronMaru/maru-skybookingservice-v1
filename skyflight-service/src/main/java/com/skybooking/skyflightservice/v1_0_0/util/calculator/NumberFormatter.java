@@ -1,5 +1,6 @@
 package com.skybooking.skyflightservice.v1_0_0.util.calculator;
 
+import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.util.Locale;
@@ -16,14 +17,12 @@ public class NumberFormatter {
         return formatter;
     }
 
+    public static BigDecimal trimAmount(BigDecimal amount) {
+        return amount.setScale(2, RoundingMode.UP);
+    }
+
     public static Double amount(Double n) {
         return Double.parseDouble(numberFormat().format(n));
     }
 
-    /**
-     * TODO
-     */
-//    public static BigDecimal amount(BigDecimal n) {
-//        return BigDecimal.valueOf(numberFormat().format(n));
-//    }
 }

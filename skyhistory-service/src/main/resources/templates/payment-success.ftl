@@ -1,19 +1,19 @@
 <div class="booking-ref">
-    <h3 style="font-size:20px;margin: 10px 0;">${payment_information}</h3>
+    <h3 style="font-size:20px;margin: 10px 0;">${payment_information??? then(payment_information, 'NO LABEL YET')}</h3>
     <div style="font-size:14px;font-weight:500;color:#606060;padding:0px 10px;">
-        <h4 style="color: black; margin: 20px 0px 13px 0px">${flight_info}</h4>
+        <h4 style="color: black; margin: 20px 0px 13px 0px">${flight_info??? then(flight_info, 'NO LABEL YET')}</h4>
         <div style="padding: 0px 10px;">
             <table cellpadding="5">
                 <thead style="text-align: left;">
                 <tr>
-                    <td style="width:20%;">${flight_date}</td>
-                    <td style="width:20%;">${route}</td>
+                    <td style="width:20%;">${flight_date??? then(flight_date, 'NO LABEL YET')}</td>
+                    <td style="width:20%;">${route??? then(route, 'NO LABEL YET')}</td>
                 </tr>
                 </thead>
                 <tbody style="width: 25%;">
                 <#list data.bookingOd as item>
                     <tr style="font-weight:300">
-                        <td>${item.fSegs.depDateTime?string["d MMM | hh:mm"]}</td>
+                        <td>${item.fSegs.depDateTime?datetime("yyyy-MM-dd HH:mm:ss")?string["d MMM | hh:mm"]}</td>
                         <td style="color: black;">${item.fSegs.depCity} (${item.fSegs.depLocation})&nbsp;${item.fSegs.arrCity} (${item.fSegs.arrLocation})</td>
                     </tr>
                 </#list>
@@ -23,13 +23,13 @@
     </div>
 
     <div style="font-size:14px;font-weight:500;color:#606060;padding:0px 10px;">
-        <h4 style="color: black; margin: 20px 0px 13px 0px">${passenger}</h4>
+        <h4 style="color: black; margin: 20px 0px 13px 0px">${passenger??? then(passenger, 'NO LABEL YET')}</h4>
         <div style="padding: 0px 10px;">
             <table cellpadding="5">
                 <thead style="text-align: left;">
                 <tr>
-                    <td style="width:20%;">${ticket_type}</td>
-                    <td style="width:20%;">${name}</td>
+                    <td style="width:20%;">${ticket_type??? then(ticket_type, 'NO LABEL YET')}</td>
+                    <td style="width:20%;">${name??? then(name, 'NO LABEL YET')}</td>
                 </tr>
                 </thead>
                 <tbody style="width: 25%;">
@@ -45,16 +45,16 @@
     </div>
 
     <div style="font-size:14px;font-weight:500;color:#606060;padding:0px 10px;">
-        <h4 style="color: black; margin: 20px 0px 13px 0px">${payment_summary}</h4>
+        <h4 style="color: black; margin: 20px 0px 13px 0px">${payment_summary??? then(payment_summary, 'NO LABEL YET')}</h4>
         <div>
 
             <table cellpadding="5" style="background:#ebeff6;padding:0 10px;width:100%;">
                 <thead style="text-align: left;">
                 <tr>
-                    <th style="width:25%;padding-left: 0px;">${passtype}</th>
-                    <th style="width:25%;">${fare}</th>
-                    <th style="width:25%;">${taxes_fees}</th>
-                    <th style="width:25%;text-align: right;">${total}</th>
+                    <th style="width:25%;padding-left: 0px;">${passtype??? then(passtype, 'NO LABEL YET')}</th>
+                    <th style="width:25%;">${fare??? then(fare, 'NO LABEL YET')}</th>
+                    <th style="width:25%;">${taxes_fees??? then(taxes_fees, 'NO LABEL YET')}</th>
+                    <th style="width:25%;text-align: right;">${total??? then(total, 'NO LABEL YET')}</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -73,7 +73,7 @@
                     </tr>
                 </#list>
                 <tr>
-                    <td style="padding-left: 0px;">${discount_payment}</td>
+                    <td style="padding-left: 0px;">${discount_payment??? then(discount_payment, 'NO LABEL YET')}</td>
                     <td></td>
                     <td></td>
                     <td style="padding-left: 0px;text-align: right;">USD ${data.disPayment}</td>
@@ -87,7 +87,7 @@
 
                 <tr style="color:black;font-weight:600;font-size:17px;">
                     <td style="padding-left:0px;">
-                        ${total} :
+                        ${total??? then(total, 'NO LABEL YET')} :
                     </td>
                     <td></td>
                     <td></td>

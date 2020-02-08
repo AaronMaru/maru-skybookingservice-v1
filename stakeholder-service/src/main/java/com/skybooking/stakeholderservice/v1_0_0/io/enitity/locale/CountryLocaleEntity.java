@@ -16,6 +16,8 @@ public class CountryLocaleEntity {
 
     private String name;
 
+    private String nationality;
+
     @CreationTimestamp
     @Column(name = "created_at")
     @Temporal(TemporalType.TIMESTAMP)
@@ -50,6 +52,14 @@ public class CountryLocaleEntity {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getNationality() {
+        return nationality;
+    }
+
+    public void setNationality(String nationality) {
+        this.nationality = nationality;
     }
 
     public Date getCreatedAt() {

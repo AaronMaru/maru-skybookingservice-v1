@@ -16,6 +16,7 @@ public class PassengerUtil {
      * @throws Exception
      */
     public static String type(Date birthday) {
+
         int year = DatetimeFormat.age(birthday).getYears();
         String type = "ADT";
 
@@ -26,5 +27,15 @@ public class PassengerUtil {
         }
 
         return type;
+    }
+
+    public static String gender(String gender) {
+        var passengerGender = switch (gender) {
+            case "male" -> "M";
+            case "female" -> "F";
+            default -> throw new IllegalArgumentException("Invalid passenger gender: " + gender);
+        };
+
+        return passengerGender;
     }
 }

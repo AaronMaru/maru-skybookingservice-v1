@@ -6,7 +6,7 @@ import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.SkyuserIdS
 import com.skybooking.staffservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.invitation.PendingEmailStaffRS;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.invitation.SkyuserDetailsRS;
-import com.skybooking.staffservice.v1_0_0.util.localization.Localization;
+import com.skybooking.staffservice.v1_0_0.util.localization.LocalizationBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +22,7 @@ public class InvitationControllerW {
     private InvitationSV invitationSV;
 
     @Autowired
-    private Localization localization;
+    private LocalizationBean localization;
 
 
     /**
@@ -33,9 +33,9 @@ public class InvitationControllerW {
      * @Return ResponseEntity
      */
     @GetMapping("/find-skyuser")
-    public ResRS findSkyuser() {
-        List<SkyuserDetailsRS> skyusers =  invitationSV.findSkyusers();
-        return localization.resAPI(HttpStatus.OK,"res_succ", skyusers);
+    public ResRS findSkyUser() {
+        List<SkyuserDetailsRS> skyUsers =  invitationSV.findSkyUsers();
+        return localization.resAPI(HttpStatus.OK,"res_succ", skyUsers);
     }
 
 
@@ -47,8 +47,8 @@ public class InvitationControllerW {
      * @Return ResponseEntity
      */
     @PostMapping("/invite-skyuser")
-    public ResRS invSkyuser(@Valid @RequestBody SkyuserIdStaffRQ inviteRQ) {
-        invitationSV.invSkyuser(inviteRQ);
+    public ResRS inviteSkyUser(@Valid @RequestBody SkyuserIdStaffRQ inviteRQ) {
+        invitationSV.inviteSkyUser(inviteRQ);
         return localization.resAPI(HttpStatus.OK,"inv_succ", "");
     }
 
@@ -61,8 +61,8 @@ public class InvitationControllerW {
      * @Return ResponseEntity
      */
     @PostMapping("/invite-skyuser-no-acc")
-    public ResRS invSkyuserNoAcc(@Valid @RequestBody InviteStaffNoAccRQ inviteStaffNoAccRQ) {
-        invitationSV.invSkyuserNotExistsAcc(inviteStaffNoAccRQ);
+    public ResRS inviteSkyUserNoAcc(@Valid @RequestBody InviteStaffNoAccRQ inviteStaffNoAccRQ) {
+        invitationSV.inviteSkyUserNotExistsAcc(inviteStaffNoAccRQ);
         return localization.resAPI(HttpStatus.OK,"inv_succ", "");
     }
 

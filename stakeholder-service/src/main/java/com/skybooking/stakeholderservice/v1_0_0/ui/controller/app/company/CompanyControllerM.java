@@ -2,10 +2,11 @@ package com.skybooking.stakeholderservice.v1_0_0.ui.controller.app.company;
 
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.company.CompanySV;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company.CompanyRQ;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company.CompanyUpdateRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.CompanyRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
-import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
+import com.skybooking.stakeholderservice.v1_0_0.util.localization.LocalizationBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -25,7 +26,7 @@ public class CompanyControllerM {
     private GeneralBean generalBean;
 
     @Autowired
-    private Localization localization;
+    private LocalizationBean localization;
 
 
 
@@ -38,7 +39,7 @@ public class CompanyControllerM {
      * @Return Object
      */
     @PatchMapping(value = "/company/{id}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE}, produces = {MediaType.APPLICATION_JSON_VALUE})
-    public Object updateCompany(@ModelAttribute("companyRQ") @Valid CompanyRQ companyRQ, Errors errors, @PathVariable Long id) {
+    public Object updateCompany(@ModelAttribute("companyRQ") @Valid CompanyUpdateRQ companyRQ, Errors errors, @PathVariable Long id) {
 
         if(errors.hasErrors()) {
             return generalBean.errors(errors);

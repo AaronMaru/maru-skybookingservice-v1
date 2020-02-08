@@ -7,7 +7,6 @@ import com.skybooking.staffservice.v1_0_0.io.nativeQuery.notification.Stakeholde
 import com.skybooking.staffservice.v1_0_0.ui.model.response.notification.CompanyByRolePlayerRS;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.notification.CompanyPlayerRS;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.notification.StakeholderUserPlayerRS;
-import com.skybooking.staffservice.v1_0_0.util.cls.notification.PushNotificationOptions;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -30,7 +29,7 @@ public class NotificationBean {
     public void sendNotiSkyuser(Long skyuserId) {
         List<StakeholderUserPlayerRS> userPlayers = userPlayerId(skyuserId);
         for (StakeholderUserPlayerRS userPlayer : userPlayers) {
-            PushNotificationOptions.sendMessageToUsers(userPlayer.getPlayerId(), "Skyowner invite you to join company");
+            PushNotificationOptions.sendMessageToUsers(userPlayer.getPlayerId(), "Skyowner invite you to join companyConstant");
         }
     }
 

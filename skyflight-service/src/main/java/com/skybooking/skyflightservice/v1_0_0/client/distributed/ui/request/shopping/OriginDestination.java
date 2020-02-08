@@ -1,6 +1,6 @@
 package com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.shopping;
 
-import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.booking.BSegmentDRQ;
+import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.booking.BookingSegmentDRQ;
 import lombok.Data;
 
 import java.util.List;
@@ -8,12 +8,12 @@ import java.util.List;
 @Data
 public class OriginDestination {
 
-    private List<BSegmentDRQ> segments;
+    private List<BookingSegmentDRQ> segments;
     private String depDateTime;
     private String depCode;
     private String arrCode;
 
-    public OriginDestination(List<BSegmentDRQ> segments, String depDateTime, String depCode, String arrCode) {
+    public OriginDestination(List<BookingSegmentDRQ> segments, String depDateTime, String depCode, String arrCode) {
         this.segments = segments;
         this.depDateTime = depDateTime;
         this.depCode = depCode;

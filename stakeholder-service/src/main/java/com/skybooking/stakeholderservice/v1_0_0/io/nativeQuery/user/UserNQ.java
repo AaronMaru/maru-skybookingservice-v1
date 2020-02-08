@@ -11,7 +11,7 @@ import java.util.List;
 @Component
 public interface UserNQ extends NativeQuery {
 
-    List<PermissionTO> listPermission(@NativeQueryParam(value = "role") String role);
+    List<PermissionTO> listPermission(@NativeQueryParam(value = "roles") String roles);
     TotalBookingTO totalBooking(@NativeQueryParam(value = "skyuserId") Long skyuserId);
 
 }

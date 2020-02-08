@@ -17,6 +17,9 @@ public class SkyownerRegisterRQ {
     @NotEmpty(message = "Please provide a country code")
     private String code;
 
+    @Email
+    private String email;
+
     @BussinessType
     @NotEmpty(message = "Please provide a business type")
     private Long businessTypeId;
@@ -33,6 +36,7 @@ public class SkyownerRegisterRQ {
 
     private String website;
     private String postalOrZipCode;
+    private String address;
 
     @NotNull(message = "Please provide a country id")
     @Country
@@ -127,5 +131,19 @@ public class SkyownerRegisterRQ {
         this.cityId = cityId;
     }
 
+    public String getEmail() {
+        return email;
+    }
 
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
 }

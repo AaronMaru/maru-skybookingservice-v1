@@ -19,7 +19,7 @@ public class CountryValidator implements ConstraintValidator<Country, Long> {
         boolean b = true;
 
         if (id == null) {
-            return false;
+            return true;
         }
 
         Optional<CountryEntity> country = countryRP.findById(id);

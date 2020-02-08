@@ -7,10 +7,11 @@ import java.io.Serializable;
 @Data
 public class HiddenStopRS implements Serializable {
 
-    private String airport = "";
-    private String city = "";
-    private String country = "";
-    private String arrivalTime = "";
-    private String departureTime = "";
+    private String airport;
+    private String city;
+    private String country;
+    private String arrivalTime;
+    private String departureTime;
     private long duration;
+
 }

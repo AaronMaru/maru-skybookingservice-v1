@@ -11,5 +11,5 @@ import org.springframework.transaction.annotation.Transactional;
 public interface AirlineNQ extends NativeQuery {
 
     @Transactional
-    AirlineTO getAirlineInformation(@NativeQueryParam("airline") String airline);
+    AirlineTO getAirlineInformation(@NativeQueryParam("airline") String airline, @NativeQueryParam(value = "localeId") long localeId);
 }

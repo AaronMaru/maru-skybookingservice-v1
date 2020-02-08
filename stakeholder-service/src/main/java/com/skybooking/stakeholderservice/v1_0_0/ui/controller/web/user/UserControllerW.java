@@ -4,11 +4,12 @@ import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserReposito
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.user.UserSV;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company.CompanyRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user.*;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.verify.SendVerifyRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
-import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
+import com.skybooking.stakeholderservice.v1_0_0.util.localization.LocalizationBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -45,7 +46,7 @@ public class UserControllerW {
     AuthenticationManager authenticationManager;
 
     @Autowired
-    private Localization localization;
+    private LocalizationBean localization;
 
     @Autowired
     private GeneralBean generalBean;
@@ -183,7 +184,7 @@ public class UserControllerW {
      * @Return ResRS
      */
     @PatchMapping("/deactive-account")
-    public ResRS deactiveAccount(@Valid @RequestBody DeactiveAccountRQ accountRQ) {
+    public ResRS deActiveAccount(@Valid @RequestBody DeactiveAccountRQ accountRQ) {
         userSV.deactiveAccount(accountRQ);
         return localization.resAPI(HttpStatus.OK,"succ_deact", "");
     }
@@ -198,7 +199,7 @@ public class UserControllerW {
      * @Return Object
      */
     @PostMapping(value = "/apply-skyowner", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public Object applySkyowner(@Valid @ModelAttribute("companyRQ") CompanyRQ companyRQ, Errors errors) {
+    public Object applySkyOwner(@Valid @ModelAttribute("companyRQ") CompanyRQ companyRQ, Errors errors) {
 
         if (errors.hasErrors()) {
             return new ResponseEntity<>(generalBean.errors(errors), HttpStatus.BAD_REQUEST);

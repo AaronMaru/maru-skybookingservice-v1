@@ -68,8 +68,7 @@ b.reciept_file AS recieptFile,
 b.reciept_path AS recieptPath,
 b.cont_fullname AS contName,
 (
-	SELECT
-		(
+	SELECT (
 			SELECT ccl.`name`
 			FROM country_city_locale ccl
 			WHERE ccl.country_city_id = cc.id
@@ -88,23 +87,85 @@ CASE
 
 	WHEN (b.`status` = 11 AND (
 
-							SELECT IF(COUNT(dep_date) = 0, FALSE, TRUE)
+							SELECT COUNT(bod.id)
 							FROM booking_origin_destinations bod
 							WHERE bod.booking_id = b.id
-							AND dep_date >= CURRENT_TIMESTAMP
 
-						) = TRUE
+                            -- Where Date and Convert TZ date
+                            AND DATE(
+
+                                -- Flight depature datetime and convert to UTC
+                                    CONVERT_TZ(bod.dep_date,
+
+                                        CONCAT(
+                                            CASE WHEN bod.dep_timezone >= 0 THEN
+                                                CONCAT('+', bod.dep_timezone,':00')
+                                            ELSE
+                                                CONCAT(bod.dep_timezone,':00')
+                                            END
+                                        )
+
+                                    , '+00:00')
+
+                                -- User locale current time zone and convert to UTC
+                                ) >= CONVERT_TZ(CURRENT_TIMESTAMP,
+
+                                        CONCAT(
+                                            CASE WHEN bod.dep_timezone >= 0 THEN
+                                                CONCAT('+', bod.dep_timezone,':00')
+                                            ELSE
+                                                CONCAT(bod.dep_timezone,':00')
+                                            END
+                                        )
+
+                                    , '+00:00')
+
+                            ORDER BY bod.id DESC
+                            LIMIT 1
+
+						) > 0
 
 			) THEN "upcoming"
 
 	WHEN (b.`status` = 11 AND (
 
-							SELECT IF(COUNT(dep_date) = 0, FALSE, TRUE)
+							SELECT COUNT(bod.id)
 							FROM booking_origin_destinations bod
 							WHERE bod.booking_id = b.id
-							AND dep_date < CURRENT_TIMESTAMP
 
-						) = TRUE
+                            -- Where Date and Convert TZ date
+                            AND DATE(
+
+                                -- Flight depature datetime and convert to UTC
+                                    CONVERT_TZ(bod.dep_date,
+
+                                        CONCAT(
+                                            CASE WHEN bod.dep_timezone >= 0 THEN
+                                                CONCAT('+', bod.dep_timezone,':00')
+                                            ELSE
+                                                CONCAT(bod.dep_timezone,':00')
+                                            END
+                                        )
+
+                                    , '+00:00')
+
+                                -- User locale current time zone and convert to UTC
+                                ) < CONVERT_TZ(CURRENT_TIMESTAMP,
+
+                                        CONCAT(
+                                            CASE WHEN bod.dep_timezone >= 0 THEN
+                                                CONCAT('+', bod.dep_timezone,':00')
+                                            ELSE
+                                                CONCAT(bod.dep_timezone,':00')
+                                            END
+                                        )
+
+                                    , '+00:00')
+
+                            ORDER BY bod.id DESC
+                            LIMIT 1
+
+						) > 0
 
 			) THEN "complete"
 

@@ -10,7 +10,7 @@ public class StaffProfileTO {
     private String position;
     private BigInteger bookingQty;
     private BigDecimal bookAmount;
-    private String statusKey;
+    private String joinStatus;
     private String skyuserRole;
     private Date joinDate;
 
@@ -30,12 +30,12 @@ public class StaffProfileTO {
         this.bookAmount = bookAmount;
     }
 
-    public String getStatusKey() {
-        return statusKey;
+    public String getJoinStatus() {
+        return joinStatus;
     }
 
-    public void setStatusKey(String statusKey) {
-        this.statusKey = statusKey;
+    public void setJoinStatus(String joinStatus) {
+        this.joinStatus = joinStatus;
     }
 
     public String getSkyuserRole() {

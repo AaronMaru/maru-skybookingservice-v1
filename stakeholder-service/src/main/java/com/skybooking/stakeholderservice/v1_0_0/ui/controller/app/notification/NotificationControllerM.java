@@ -2,7 +2,7 @@ package com.skybooking.stakeholderservice.v1_0_0.ui.controller.app.notification;
 
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.notification.NotificationSV;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
-import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
+import com.skybooking.stakeholderservice.v1_0_0.util.localization.LocalizationBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +16,7 @@ public class NotificationControllerM {
     private NotificationSV notificationSV;
 
     @Autowired
-    private Localization localization;
+    private LocalizationBean localization;
 
 
     /**

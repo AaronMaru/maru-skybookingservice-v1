@@ -11,7 +11,7 @@
 				</div>
 
 				<div class="cnt-outer" style="display:block;font-size: 14px;text-align: justify;">
-					<p style="">${script.subject}</p>
+					<p style="">${script??? then(script.subject, 'No template yet')}</p>
 				</div>
 
 				<div class="logo-sec" style="background:#fff; clear:both; display:block;width: auto;margin: 0 auto;max-width:700px;padding:10px 20px;">

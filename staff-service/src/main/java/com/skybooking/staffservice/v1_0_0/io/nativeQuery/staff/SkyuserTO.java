@@ -10,6 +10,7 @@ public class SkyuserTO {
     private String lastName;
     private String userCode;
     private Date dob;
+    private String photo;
     private String gender;
     private String contPhone;
     private String contAddress;
@@ -19,7 +20,7 @@ public class SkyuserTO {
     private Integer currencyId;
     private Integer languageId;
     private String deviceName;
-    private byte status;
+    private int status;
     private Timestamp createdAt;
 
     public Integer getId() {
@@ -68,6 +69,14 @@ public class SkyuserTO {
 
     public void setDob(Date dob) {
         this.dob = dob;
+    }
+
+    public String getPhoto() {
+        return photo;
+    }
+
+    public void setPhoto(String photo) {
+        this.photo = photo;
     }
 
     public String getGender() {
@@ -142,11 +151,11 @@ public class SkyuserTO {
         this.deviceName = deviceName;
     }
 
-    public byte getStatus() {
+    public int getStatus() {
         return status;
     }
 
-    public void setStatus(byte status) {
+    public void setStatus(int status) {
         this.status = status;
     }
 

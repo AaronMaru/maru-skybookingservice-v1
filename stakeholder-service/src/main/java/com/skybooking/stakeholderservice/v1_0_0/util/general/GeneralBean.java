@@ -5,7 +5,7 @@ import com.skybooking.stakeholderservice.exception.httpstatus.GoneException;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.verify.VerifyUserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.verify.VerifyUserRP;
-import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
+import com.skybooking.stakeholderservice.v1_0_0.util.localization.LocalizationBean;
 import org.apache.commons.lang.math.NumberUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
@@ -22,11 +22,13 @@ import java.util.stream.Stream;
 
 public class GeneralBean {
 
+    public Calendar calendar = Calendar.getInstance();
+
     @Autowired
     private VerifyUserRP verifyUserRP;
 
     @Autowired
-    private Localization localization;
+    private LocalizationBean localization;
 
 
     /**
@@ -51,36 +53,56 @@ public class GeneralBean {
      */
     public String stakeUniqueCode(String prefix, String lastCode, String type) {
 
-        String uniqueCode = "";
-        String currentYear = Integer.toString(Calendar.getInstance().get(Calendar.YEAR)).substring(2, 4);
+        String newYear = Integer.toString(calendar.get(Calendar.YEAR)).substring(2, 4);
 
+        /**
+         * Set first unique code when null
+         */
         if (lastCode == null) {
-            uniqueCode = prefix + "0" + type + "0001" + currentYear;
-            return uniqueCode;
+            return prefix + "0" + type + "0001" + newYear;
+        }
+
+        String currentYear = lastCode.substring(lastCode.length() - 2).substring(0, 2);
+
+        /**
+         * Set first unique code for new year
+         */
+        if (!currentYear.equals(newYear)) {
+            return prefix + "0" + type + "0001" + newYear;
         }
 
         String firstCode = lastCode.substring(0, 6);//Ex: SKYU01
         String numUser = lastCode.substring(lastCode.length() - 6).substring(0, 4); //Ex: 0001
-
         String numIncr = lastCode.substring(prefix.length(), prefix.length() + 1);//Ex: SKYU71000119 => 7
 
+        /**
+         * Check 4 digits when equall = 9999
+         * This 4 digits will reset to 0001
+         */
         if (numUser.equals("9999")) {
-            numUser = "0001";
 
+            numUser = "0001";
             if (numIncr.equals("9")) {
-                uniqueCode = prefix + "A" + type + numUser + currentYear;
+
+                return prefix + "A" + type + numUser + currentYear;
+
             } else if (!NumberUtils.isNumber(numIncr)) {
-                uniqueCode = prefix + (char) (numIncr.charAt(0) + 1) + type + numUser + currentYear;
+
+                return prefix + (char) (numIncr.charAt(0) + 1) + type + numUser + currentYear;
+
             } else {
-                uniqueCode = prefix + (NumberUtils.toInt(numIncr) + 1) + type + numUser + currentYear;
+
+                return prefix + (NumberUtils.toInt(numIncr) + 1) + type + numUser + currentYear;
+
             }
 
         } else {
+
             String numInc = Integer.toString(NumberUtils.toInt(numUser) + 1);
-            uniqueCode = firstCode + "0000".substring(numInc.length()) + numInc + currentYear;
+            return firstCode + "0000".substring(numInc.length()) + numInc + currentYear;
+
         }
 
-        return uniqueCode;
 
     }
 
@@ -133,20 +155,35 @@ public class GeneralBean {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * Set expire request login
+     * Set expire request
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @Param verifyUserEntity
+     * @Param userEntity
+     * @Param status
      */
     public void expireRequest(UserEntity userEntity, Integer status) {
-
         List<VerifyUserEntity> verify = verifyUserRP.findByUserId(userEntity.getId(), status);
+        setExpireTime(verify);
+    }
 
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Set expire request for mobile app
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param username
+     */
+    public void expireRequestMobile(String username) {
+        List<VerifyUserEntity> verify = verifyUserRP.findByUsername(username);
+        setExpireTime(verify);
+    }
+
+    public void setExpireTime(List<VerifyUserEntity> verify) {
         Date d = new Date();
         Timestamp ts = new Timestamp(d.getTime());
 
         if (!verify.isEmpty()) {
-            VerifyUserEntity verifyLast = verify.stream().skip(verify.size() -1).findFirst().get();
+            VerifyUserEntity verifyLast = verify.stream().skip(verify.size() - 1).findFirst().get();
             long diff = ts.getTime() - verifyLast.getCreatedAt().getTime();
 
             int diffMin = (int) (diff / (60 * 1000));
@@ -155,7 +192,6 @@ public class GeneralBean {
                 throw new BadRequestException("sent_vf_limit", "");
             }
         }
-
     }
 
 
@@ -175,7 +211,7 @@ public class GeneralBean {
         List<FieldError> fieldErrors = errors.getFieldErrors();
         String validation = "";
 
-        for (FieldError fieldError: fieldErrors) {
+        for (FieldError fieldError : fieldErrors) {
             validation = localization.multiLanguageRes(fieldError.getDefaultMessage());
         }
 
@@ -196,7 +232,7 @@ public class GeneralBean {
      */
     public void errorMultipart(MultipartFile multipartFile) {
         if (multipartFile != null && multipartFile.getSize() > 6000000) {
-           throw new BadRequestException("Oop the file size to large", "");
+            throw new BadRequestException("Oop the file size to large", "");
         }
     }
 

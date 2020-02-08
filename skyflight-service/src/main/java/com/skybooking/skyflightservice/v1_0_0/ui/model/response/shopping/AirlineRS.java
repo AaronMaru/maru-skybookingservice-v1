@@ -7,10 +7,11 @@ import java.io.Serializable;
 @Data
 public class AirlineRS implements Serializable {
 
-    private String code = "";
-    private String name = "";
-    private String url45 = "";
-    private String url90 = "";
+    private String code;
+    private String name;
+    private String operatingBy;
+    private String url45;
+    private String url90;
     private double price;
 
 }

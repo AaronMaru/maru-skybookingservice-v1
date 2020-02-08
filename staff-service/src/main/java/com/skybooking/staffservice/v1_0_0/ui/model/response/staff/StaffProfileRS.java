@@ -15,9 +15,11 @@ public class StaffProfileRS {
     private String position;
     private BigInteger bookingQty;
     private BigDecimal bookAmount;
-    private String statusKey;
+    private String joinStatus;
     private String skyuserRole;
     private Date joinDate;
+    private String photoMedium;
+    private String photoSmall;
 
     public String getFirstName() {
         return firstName;
@@ -75,12 +77,12 @@ public class StaffProfileRS {
         this.bookAmount = bookAmount;
     }
 
-    public String getStatusKey() {
-        return statusKey;
+    public String getJoinStatus() {
+        return joinStatus;
     }
 
-    public void setStatusKey(String statusKey) {
-        this.statusKey = statusKey;
+    public void setJoinStatus(String joinStatus) {
+        this.joinStatus = joinStatus;
     }
 
     public String getSkyuserRole() {
@@ -115,6 +117,19 @@ public class StaffProfileRS {
         this.position = position;
     }
 
+    public String getPhotoMedium() {
+        return photoMedium;
+    }
 
+    public void setPhotoMedium(String photoMedium) {
+        this.photoMedium = photoMedium;
+    }
 
+    public String getPhotoSmall() {
+        return photoSmall;
+    }
+
+    public void setPhotoSmall(String photoSmall) {
+        this.photoSmall = photoSmall;
+    }
 }

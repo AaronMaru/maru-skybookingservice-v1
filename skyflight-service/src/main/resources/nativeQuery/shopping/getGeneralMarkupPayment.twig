@@ -1,0 +1,10 @@
+SELECT
+    dpm.id as id,
+    dpm.general_markup_payment AS markup
+FROM
+    dis_payment_methods AS dpm
+WHERE
+    dpm.start_date < UTC_TIMESTAMP()
+ORDER BY
+    dpm.start_date DESC
+LIMIT 1;

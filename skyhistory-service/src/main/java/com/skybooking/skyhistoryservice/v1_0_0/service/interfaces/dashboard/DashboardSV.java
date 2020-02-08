@@ -14,14 +14,10 @@ public interface DashboardSV {
      * get recently dashboard by company and user id
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @param companyId
-     * @param userId
-     * @param userType
-     * @param userRole
      * @param take
      * @return List
      */
-    List<RecentBookingRS> getRecentBooking(long companyId, long userId, String userType, String userRole, long take);
+    List<RecentBookingRS> getRecentBooking(long take);
 
 
     /**

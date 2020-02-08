@@ -4,7 +4,7 @@ import com.skybooking.staffservice.v1_0_0.service.interfaces.staff.StaffSV;
 import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.DeactiveStaffRQ;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.staff.StaffPaginationRS;
-import com.skybooking.staffservice.v1_0_0.util.localization.Localization;
+import com.skybooking.staffservice.v1_0_0.util.localization.LocalizationBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +18,7 @@ public class StaffControllerM {
     private StaffSV staffSV;
 
     @Autowired
-    private Localization localization;
+    private LocalizationBean localization;
 
 
     /**

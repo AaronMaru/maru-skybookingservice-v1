@@ -5,7 +5,7 @@ import com.skybooking.stakeholderservice.exception.anotation.*;
 import javax.validation.constraints.NotEmpty;
 
 @Code(first = "username", second = "code", message = "Please provide country code")
-@UsernameUnique(first = "username", second = "code", message = "Username alraedy exists")
+@UsernameUnique(first = "username", second = "code", message = "Username already exists")
 public class UpdateContactRQ {
 
     @Phone

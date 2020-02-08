@@ -2,6 +2,8 @@ package com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user;
 
 public class InvitationRS {
 
+    private Long id;
+
     private String companyName;
 
     private String photoMedium;
@@ -29,5 +31,13 @@ public class InvitationRS {
 
     public void setPhotoSmall(String photoSmall) {
         this.photoSmall = photoSmall;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 }

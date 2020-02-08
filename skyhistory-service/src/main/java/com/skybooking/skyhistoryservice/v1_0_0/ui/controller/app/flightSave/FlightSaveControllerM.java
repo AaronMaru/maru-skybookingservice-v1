@@ -3,7 +3,7 @@ package com.skybooking.skyhistoryservice.v1_0_0.ui.controller.app.flightSave;
 import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.flightSave.FlightSaveSV;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.flightSave.FlightSaveRS;
-import com.skybooking.skyhistoryservice.v1_0_0.util.localization.Localization;
+import com.skybooking.skyhistoryservice.v1_0_0.util.localization.LocalizationBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +18,7 @@ public class FlightSaveControllerM {
     private FlightSaveSV flightSaveSV;
 
     @Autowired
-    private Localization localization;
+    private LocalizationBean localization;
 
 
     /**

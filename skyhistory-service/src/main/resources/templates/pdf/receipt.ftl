@@ -200,44 +200,44 @@
                 <img src="https://s3.amazonaws.com/skybooking/uploads/mail/images/stamp.png">
             </div>
             <div class="billing-details">
-                <h2>${e_receipt}</h2>
+                <h2>${e_receipt??? then(e_receipt, 'NO LABEL YET')}</h2>
                 <ul>
                     <li>
-                        <b>${booking_reference}</b>
+                        <b>${booking_reference??? then(booking_reference, 'NO LABEL YET')}</b>
                         <span>:&nbsp; ${data.pnrCode}</span>
                     </li>
                     <li>
-                        <b>${transaction_id}</b>
+                        <b>${transaction_id??? then(transaction_id, 'NO LABEL YET')}</b>
                         <span>:&nbsp; ${data.transId}</span>
                     </li>
                     <li>
-                        <b>${booking_no}</b>
+                        <b>${booking_no??? then(booking_no, 'NO LABEL YET')}</b>
                         <span>:&nbsp; ${data.bookingCode}</span>
                     </li>
                     <li>
-                        <b>${payment_method}</b>
+                        <b>${payment_method??? then(payment_method, 'NO LABEL YET')}</b>
                         <span>:&nbsp; ${data.payMethod}</span>
                     </li>
                     <li>
-                        <b>${booking_date}</b>
+                        <b>${booking_date??? then(booking_date, 'NO LABEL YET')}</b>
                         <span>:&nbsp; ${data.bookDate}</span>
                     </li>
                 </ul>
             </div>
         </div>
         <div class="fight-details line-head">
-            <h3>${flight_details}</h3>
+            <h3>${flight_details??? then(flight_details, 'NO LABEL YET')}</h3>
             <table>
                 <tbody>
                 <tr>
-                    <th>${flight_no}</th>
-                    <th>${flight_date}</th>
-                    <th>${route}</th>
+                    <th>${flight_no??? then(flight_no, 'NO LABEL YET')}</th>
+                    <th>${flight_date??? then(flight_date, 'NO LABEL YET')}</th>
+                    <th>${route??? then(route, 'NO LABEL YET')}</th>
                 </tr>
                 <#list data.bookingOd as item>
                     <tr>
                         <td>${item.fSegs.flightNumber}</td>
-                        <td>${item.fSegs.depDateTime?string["EEE, dd MMM YYYY"]}</td>
+                        <td>${item.fSegs.depDateTime?datetime("yyyy-MM-dd HH:mm:ss")?string["EEE, dd MMM YYYY"]}</td>
                         <td>${item.fSegs.depCity} --- ${item.fSegs.arrCity}</td>
                     </tr>
                 </#list>
@@ -245,14 +245,14 @@
             </table>
         </div>
         <div class="fight-details line-head">
-            <h3>${passenger}</h3>
+            <h3>${passenger??? then(passenger, 'NO LABEL YET')}</h3>
             <table>
                 <tbody>
                 <tr>
-                    <th>${ticket_number}</th>
-                    <th>${name}</th>
-                    <th>${pass_type}</th>
-                    <th>${class}</th>
+                    <th>${ticket_number??? then(ticket_number, 'NO LABEL YET')}</th>
+                    <th>${name??? then(name, 'NO LABEL YET')}</th>
+                    <th>${pass_type??? then(pass_type, 'NO LABEL YET')}</th>
+                    <th>${class??? then(class, 'NO LABEL YET')}</th>
                 </tr>
                 <#list data.airTickets as item>
                     <tr>
@@ -266,14 +266,14 @@
             </table>
         </div>
         <div class="pay-summary">
-            <h3>${payment_summary}</h3>
+            <h3>${payment_summary??? then(payment_summary, 'NO LABEL YET')}</h3>
             <table>
                 <tbody>
                 <tr>
-                    <th>${pass_type}</th>
-                    <th>${fare}</th>
-                    <th>${tax_fee}</th>
-                    <th style="text-align:right;">${total}</th>
+                    <th>${pass_type??? then(pass_type, 'NO LABEL YET')}</th>
+                    <th>${fare??? then(fare, 'NO LABEL YET')}</th>
+                    <th>${tax_fee??? then(tax_fee, 'NO LABEL YET')}</th>
+                    <th style="text-align:right;">${total??? then(total, 'NO LABEL YET')}</th>
                 </tr>
 
                 <#list data.airItinPrices as item>
@@ -291,13 +291,13 @@
                     </tr>
                 </#list>
                 <tr>
-                    <td>${discount_payment}</td>
+                    <td>${discount_payment??? then(discount_payment, 'NO LABEL YET')}</td>
                     <td></td>
                     <td></td>
                     <td style="text-align:right;">${data.disPayment}</td>
                 </tr>
                 <tr class="tot-sec">
-                    <td><b>${total}</b></td>
+                    <td><b>${total??? then(total, 'NO LABEL YET')}</b></td>
                     <td></td>
                     <td></td>
                     <td style="text-align:right;"><b>${data.totalAmount}</b></td>
@@ -306,16 +306,16 @@
             </table>
         </div>
         <div class="rec-date">
-            <span><b>${e_receipt_issued_date} : </b> ${data.bookDate}</span>
-            <p>${e_receipt_issued_date_desc}</p>
+            <span><b>${e_receipt_issued_date??? then(e_receipt_issued_date, 'NO LABEL YET')} : </b> ${data.bookDate}</span>
+            <p>${e_receipt_issued_date_desc??? then(e_receipt_issued_date_desc, 'NO LABEL YET')}</p>
         </div>
         <div class="term-info">
             <div class="call-service col-md-7">
-                <b>${terms_and_condition}</b>
-                <p>${terms_and_condition_desc}</p>
+                <b>${terms_and_condition??? then(terms_and_condition, 'NO LABEL YET')}</b>
+                <p>${terms_and_condition_desc??? then(terms_and_condition_desc, 'NO LABEL YET')}</p>
             </div>
             <div class="call-service col-md-4 col-md-offset-1">
-                <b> ${call_service_center}</b>
+                <b> ${call_service_center??? then(call_service_center, 'NO LABEL YET')}</b>
                 <p><img src="https://skybooking.s3.amazonaws.com/uploads/mail/images/phone.png">(+855) 98888100 / (+855) 98888200</p>
             </div>
         </div>

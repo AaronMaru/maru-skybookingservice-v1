@@ -26,7 +26,7 @@ public interface DashboardNQ extends NativeQuery {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * get recently dashboard by company and user id
+     * get recently dashboard by companyConstant and user id
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @param companyId
@@ -58,7 +58,7 @@ public interface DashboardNQ extends NativeQuery {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * get dashboard progress summary list by user, company and filter
+     * get dashboard progress summary list by user, companyConstant and filter
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @param companyId
@@ -82,7 +82,7 @@ public interface DashboardNQ extends NativeQuery {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * get dashboard timeline report by company and user's id
+     * get dashboard timeline report by companyConstant and user's id
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @param companyId
@@ -122,7 +122,7 @@ public interface DashboardNQ extends NativeQuery {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * get dashboard activity by company and user's id
+     * get dashboard activity by companyConstant and user's id
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @param id

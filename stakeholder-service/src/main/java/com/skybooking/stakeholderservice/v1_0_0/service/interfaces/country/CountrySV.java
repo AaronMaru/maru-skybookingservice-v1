@@ -5,5 +5,5 @@ import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.country.Countr
 import java.util.List;
 
 public interface CountrySV {
-    List<CountryRS> getItems();
+    List<CountryRS> getItems(String type);
 }

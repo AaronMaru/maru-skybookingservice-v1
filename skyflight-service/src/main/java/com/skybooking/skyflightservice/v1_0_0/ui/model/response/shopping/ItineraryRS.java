@@ -9,7 +9,8 @@ import java.util.List;
 @Data
 public class ItineraryRS implements Serializable {
 
-    private String airline = "";
+    private String id;
+    private String airline;
     private List<LegGroupRS> legGroups = new ArrayList<>();
     private List<String> lowest = new ArrayList<>();
 

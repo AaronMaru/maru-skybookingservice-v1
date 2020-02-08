@@ -1,10 +1,10 @@
 package com.skybooking.staffservice;
 
 import com.skybooking.staffservice.v1_0_0.util.general.ApiBean;
-import com.skybooking.staffservice.v1_0_0.util.general.Duplicate;
+import com.skybooking.staffservice.v1_0_0.util.general.DuplicateBean;
 import com.skybooking.staffservice.v1_0_0.util.general.GeneralBean;
 import com.skybooking.staffservice.v1_0_0.util.header.HeaderBean;
-import com.skybooking.staffservice.v1_0_0.util.localization.Localization;
+import com.skybooking.staffservice.v1_0_0.util.localization.LocalizationBean;
 import com.skybooking.staffservice.v1_0_0.util.notification.NotificationBean;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -23,8 +23,8 @@ public class StaffServiceApplication {
     }
 
     @Bean
-    Localization localization() {
-        return new Localization();
+    LocalizationBean localization() {
+        return new LocalizationBean();
     }
 
     @Bean
@@ -41,8 +41,8 @@ public class StaffServiceApplication {
     NotificationBean notificationBean() { return new NotificationBean(); }
 
     @Bean
-    Duplicate duplicate() {
-        return new Duplicate();
+    DuplicateBean duplicate() {
+        return new DuplicateBean();
     }
 
 }

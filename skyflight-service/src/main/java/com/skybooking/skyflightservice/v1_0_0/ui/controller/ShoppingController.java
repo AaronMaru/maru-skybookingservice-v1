@@ -8,6 +8,7 @@ import com.skybooking.skyflightservice.v1_0_0.ui.model.response.shopping.FlightD
 import com.skybooking.skyflightservice.v1_0_0.ui.model.response.shopping.PolicyRS;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.response.shopping.SearchRS;
 import com.skybooking.skyflightservice.v1_0_0.util.JwtUtils;
+import com.skybooking.skyflightservice.v1_0_0.util.header.HeaderBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -29,13 +30,16 @@ public class ShoppingController {
     @Autowired
     JwtUtils jwtUtils;
 
+    @Autowired
+    HeaderBean headerBean;
+
     @PostMapping("/search")
     public ResponseEntity<SearchRS> search(@Valid @RequestBody FlightShoppingRQ request) {
 
         var userType = jwtUtils.getClaim("userType", String.class) == null ? "anonymous" : jwtUtils.getClaim("userType", String.class);
         var userId = userType == "anonymouse" ? null : userType == "skyowner" ? jwtUtils.getClaim("stakeholderId", Integer.class) : jwtUtils.getClaim("companyId", Integer.class);
 
-        return new ResponseEntity<>(new SearchRS(HttpStatus.OK, shoppingSV.shoppingTransformMarkup(request, userType, userId)), HttpStatus.OK);
+        return new ResponseEntity<>(new SearchRS(HttpStatus.OK, shoppingSV.shoppingTransformMarkup(request, userType, userId, headerBean.getCurrencyCode(), headerBean.getLocalizationId())), HttpStatus.OK);
 
     }
 

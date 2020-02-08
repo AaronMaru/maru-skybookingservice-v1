@@ -5,7 +5,11 @@ ai.aircraft_code as code,
 SELECT al.`name` as craftName
 FROM aircraft_locale al
 WHERE al.aircraft_id = ai.id
-AND al.locale_id = 1
+AND IF(:localeId NOT IN (SELECT id FROM frontend_locales) ,
+al.locale_id = 1
+,
+al.locale_id = :localeId
+)
 ) AS aircraft
 
 FROM aircrafts_info ai

@@ -1,6 +1,6 @@
 package com.skybooking.stakeholderservice.exception.httpstatus;
 
-import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
+import com.skybooking.stakeholderservice.v1_0_0.util.localization.LocalizationBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
 
     @Autowired
-    private Localization localization;
+    private LocalizationBean localization;
 
     /**
      * -----------------------------------------------------------------------------------------------------------------

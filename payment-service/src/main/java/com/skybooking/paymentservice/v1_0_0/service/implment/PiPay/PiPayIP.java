@@ -33,7 +33,7 @@ public class PiPayIP implements PiPaySV {
         paymentRQ.setToken(general.paymentEncode(paymentRQ));
         paymentRQ.setProviderType("pipay");
 
-        var url_token = general.getBaseUrl() + "/pipay/form?token=" + general.tokenEncodeBase64(payments.addUrlToken(paymentRQ).getToken());
+        var url_token = general.getBaseUrl() + "pipay/form?token=" + general.tokenEncodeBase64(payments.addUrlToken(paymentRQ).getToken());
 
         UrlPaymentRS urlPaymentRS = new UrlPaymentRS();
         urlPaymentRS.setUrlPayment(url_token);

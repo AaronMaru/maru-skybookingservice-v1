@@ -3,7 +3,7 @@ package com.skybooking.skyhistoryservice.v1_0_0.ui.controller.app.bookings;
 import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.booking.SendBookingSV;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.request.SendBookingPDFRQ;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.ResRS;
-import com.skybooking.skyhistoryservice.v1_0_0.util.localization.Localization;
+import com.skybooking.skyhistoryservice.v1_0_0.util.localization.LocalizationBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,7 +22,7 @@ public class SendBookingControllerM {
     private SendBookingSV sendBookingSV;
 
     @Autowired
-    private Localization localization;
+    private LocalizationBean localization;
 
 
     /**

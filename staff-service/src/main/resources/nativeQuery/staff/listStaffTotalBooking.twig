@@ -1,7 +1,7 @@
 SELECT
 
-	COUNT(b.id) AS bookingQty,
-	SUM( b.total_amount + b.markup_amount + b.markup_pay_amount ) AS totalAmount,
+	COUNT(b.id) AS quantity,
+	SUM( b.total_amount + b.markup_amount + b.markup_pay_amount ) AS amount,
 	b.`status`,
 	(CASE
 		WHEN (b.`status` = 11 AND (
@@ -37,4 +37,4 @@ WHERE ( b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id = :compa
 AND b.`status` IN (11, 10, 12, 4)
 
 GROUP BY statusKey
-ORDER BY bookingQty DESC
+ORDER BY quantity DESC

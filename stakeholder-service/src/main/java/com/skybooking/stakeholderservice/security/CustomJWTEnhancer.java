@@ -1,10 +1,12 @@
 package com.skybooking.stakeholderservice.security;
 
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyHasUserRP;
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserRepository;
 import com.skybooking.stakeholderservice.v1_0_0.service.UserPrinciple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
+import org.springframework.core.env.Environment;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
@@ -24,6 +26,12 @@ public class CustomJWTEnhancer implements TokenEnhancer {
     @Autowired
     private CompanyHasUserRP companyHasUserRP;
 
+    @Autowired
+    private CompanyRP companyRP;
+
+    @Autowired
+    private Environment environment;
+
     @Override
     public OAuth2AccessToken enhance(OAuth2AccessToken accessToken, OAuth2Authentication authentication) {
 
@@ -37,11 +45,18 @@ public class CustomJWTEnhancer implements TokenEnhancer {
         additionalInfo.put("stakeholderId", user.getStakeHolderUser().getId());
 
         if (company != null) {
+
+            var companyDetail = companyRP.findById(company.getStakeholderCompanyId());
+
             additionalInfo.put("companyId", company.getStakeholderCompanyId());
             additionalInfo.put("userRole", company.getSkyuserRole());
+
+            String profile = companyDetail.get().getProfileImg() == null ? "default.png" : companyDetail.get().getProfileImg();
+            additionalInfo.put("profile", environment.getProperty("spring.awsImageUrl.companyProfile") + "/origin/" + profile);
+
         }
 
-        additionalInfo.put("userType", user.getStakeHolderUser().getIsSkyowner() == 0 ? "skyuser" : "skyowner");
+            additionalInfo.put("userType", user.getStakeHolderUser().getIsSkyowner() == 0 ? "skyuser" : "skyowner");
 
         ((DefaultOAuth2AccessToken) accessToken).setAdditionalInformation(additionalInfo);
         return accessToken;

@@ -13,7 +13,7 @@ import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.passenger.Pass
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.passenger.PassengerRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.activitylog.ActivityLoggingBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.activitylog.ActivityLoggingBean.Action;
-import com.skybooking.stakeholderservice.v1_0_0.util.cls.DateValidatorUsingDateFormat;
+import com.skybooking.stakeholderservice.v1_0_0.util.general.DateValidatorUsingDateFormat;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.skyuser.UserBean;
 import org.springframework.beans.BeanUtils;

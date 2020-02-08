@@ -177,7 +177,7 @@ public class FlightShoppingValidator implements ConstraintValidator<FlightShoppi
         var legs = flightShopping.getLegs();
         var size = legs.size();
 
-        if (size <= 2) {
+        if (size < 2) {
             this.message = message;
             return false;
         }

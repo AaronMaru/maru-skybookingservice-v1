@@ -1,7 +1,5 @@
 package com.skybooking.staffservice.v1_0_0.ui.model.response.staff;
 
-import java.util.List;
-
 public class StaffRS {
 
     private Integer companyId;
@@ -10,9 +8,11 @@ public class StaffRS {
     private String firstName;
     private String lastName;
     private String photoMedium;
+    private String photoSmall;
     private String userCode;
+    private String joinStatus;
 
-    private List<StaffTotalBookingRS> bookingDetail;
+    private StaffTotalBookingRS flightBooking;
 
     public String getSkyuserRole() {
         return skyuserRole;
@@ -54,12 +54,20 @@ public class StaffRS {
         this.photoMedium = photoMedium;
     }
 
-    public List<StaffTotalBookingRS> getBookingDetail() {
-        return bookingDetail;
+    public String getPhotoSmall() {
+        return photoSmall;
     }
 
-    public void setBookingDetail(List<StaffTotalBookingRS> bookingDetail) {
-        this.bookingDetail = bookingDetail;
+    public void setPhotoSmall(String photoSmall) {
+        this.photoSmall = photoSmall;
+    }
+
+    public StaffTotalBookingRS getFlightBooking() {
+        return flightBooking;
+    }
+
+    public void setFlightBooking(StaffTotalBookingRS flightBooking) {
+        this.flightBooking = flightBooking;
     }
 
     public Integer getCompanyId() {
@@ -78,4 +86,11 @@ public class StaffRS {
         this.skyuserId = skyuserId;
     }
 
+    public String getJoinStatus() {
+        return joinStatus;
+    }
+
+    public void setJoinStatus(String joinStatus) {
+        this.joinStatus = joinStatus;
+    }
 }

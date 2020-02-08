@@ -6,6 +6,7 @@ import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.skybooking.stakeholderservice.exception.httpstatus.InternalServerError;
 import com.skybooking.stakeholderservice.exception.httpstatus.UnauthorizedException;
+import com.skybooking.stakeholderservice.v1_0_0.io.enitity.company.StakeholderCompanyDocsEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.company.StakeholderCompanyEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.contact.ContactEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.notification.UserPlayerEntity;
@@ -17,12 +18,14 @@ import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.user.UserNQ;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.user.UserProfileTO;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyHasUserRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.contact.ContactRP;
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.country.LocationRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.notification.UserPlayerRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.redis.UserTokenRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserRepository;
 import com.skybooking.stakeholderservice.v1_0_0.transformer.TokenTF;
 import com.skybooking.stakeholderservice.v1_0_0.transformer.UserDetailsTF;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.CompanyRS;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.LicenseRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.PermissionRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
@@ -89,6 +92,9 @@ public class UserBean {
     @Autowired
     private UserTokenRP userTokenRP;
 
+    @Autowired
+    private LocationRP locationRP;
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -100,7 +106,6 @@ public class UserBean {
     public UserEntity getUserPrincipal() {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//        UserPrinciple userPrinciple = (UserPrinciple) authentication.getPrincipal();
 
         UserEntity user = userRepository.findByUsername(authentication.getName());
 
@@ -203,7 +208,6 @@ public class UserBean {
         userDetailDao.setPhone(generalBean.strCv(user.getPhone()));
         userDetailDao.setCode(generalBean.strCv(user.getCode()));
         userDetailDao.setGender(generalBean.strCv(user.getStakeHolderUser().getGender()));
-//        userDetailDao.setStatus(user.getStakeHolderUser().getStatus());
         userDetailDao.setSkyowner(user.getStakeHolderUser().getIsSkyowner());
         userDetailDao.setUserCode(user.getStakeHolderUser().getUserCode());
         userDetailDao.setDob(generalBean.strCv(user.getStakeHolderUser().getDateOfBirth()));
@@ -233,6 +237,7 @@ public class UserBean {
         userDetailDao.setPhotoSmall(environment.getProperty("spring.awsImageUrl.profile.url_small") + photoName);
 
         var userHasCompany = companyHasUserRP.findByStakeholderUserId(user.getStakeHolderUser().getId());
+
         if (userHasCompany != null) {
             userDetailDao.setRole(userHasCompany.getSkyuserRole());
             List<PermissionRS> permissions = getPermissions(userHasCompany.getSkyuserRole());
@@ -253,16 +258,13 @@ public class UserBean {
      * @Return List<PermissionRS>
      */
     public List<PermissionRS> getPermissions(String role) {
-
         List<PermissionTO> pmsTO = userNQ.listPermission(role);
         List<PermissionRS> pmsRS = new ArrayList<>();
-
         for (PermissionTO pmTO : pmsTO) {
             PermissionRS pmRS = new PermissionRS();
             BeanUtils.copyProperties(pmTO, pmRS);
             pmsRS.add(pmRS);
         }
-
         return pmsRS;
 
     }
@@ -283,18 +285,29 @@ public class UserBean {
         for (StakeholderCompanyEntity company: companies) {
 
             CompanyRS companyRS = new CompanyRS();
+
             companyRS.setId(company.getId());
             companyRS.setCompanyName(company.getCompanyName());
             companyRS.setContactPerson(company.getContactPerson());
             companyRS.setContactPosition(company.getContactPosition());
+            companyRS.setBussinessTypeId(company.getBussinessTypeId());
+            companyRS.setDescription(company.getDescription());
 
-//            List<LicenseRS> licenses = new ArrayList<>();
-//            for (StakeholderCompanyDocsEntity doc : company.getStakeholderCompanyDocs()) {
-//                LicenseRS license = new LicenseRS();
-//                license.setDocUrl(environment.getProperty("spring.awsImageUrl.companyLicense") + doc.getFileName());
-//                licenses.add(license);
-//            }
-//            companyRS.setLicenses(licenses);
+            String status = companyStatus(company.getStatus());
+            companyRS.setStatus(status);
+
+            var country = locationRP.findByLocationableId(company.getId());
+            if (country != null) {
+                companyRS.setCountryId(country.getCountryId());
+            }
+
+            List<LicenseRS> licenses = new ArrayList<>();
+            for (StakeholderCompanyDocsEntity doc : company.getStakeholderCompanyDocs()) {
+                LicenseRS license = new LicenseRS();
+                license.setDocUrl(environment.getProperty("spring.awsImageUrl.companyLicense") + doc.getFileName());
+                licenses.add(license);
+            }
+            companyRS.setLicenses(licenses);
 
             companyRS.setProfileImg(company.getProfileImg());
 
@@ -304,6 +317,42 @@ public class UserBean {
         }
 
         return companyRSS;
+
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Get company status
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Return String
+     */
+    public String companyStatus(int status) {
+
+        String companyStatus = "";
+
+        switch(status) {
+            case 0 :
+                companyStatus = "pending";
+                break;
+            case 1 :
+                companyStatus = "reject";
+                break;
+            case 3 :
+                companyStatus = "banned";
+                break;
+            case 4 :
+                companyStatus = "approved";
+                break;
+            case 5 :
+                companyStatus = "deactive";
+                break;
+            default :
+                companyStatus = "other";
+        }
+
+        return companyStatus;
 
     }
 
@@ -332,6 +381,13 @@ public class UserBean {
                     break;
                 case "w" :
                     companyRS.setWebiste(contact.getValue());
+                    break;
+                case "c" :
+                    companyRS.setCity(contact.getValue());
+                    break;
+                case "e" :
+                    companyRS.setEmail(contact.getValue());
+                    break;
             }
         }
     }
@@ -357,7 +413,7 @@ public class UserBean {
 
         try {
             String patter = "^(http|https|ftp)://.*$";
-          if (url.matches(patter)) {
+            if (url.matches(patter)) {
                 URL urls = new URL(url);
                 image = ImageIO.read(urls);
 
@@ -630,6 +686,32 @@ public class UserBean {
         userTokenRP.save(userToken);
 
     }
+
+//    public void storeToken(UserEntity user, String token) {
+//
+//        String playerId = request.getHeader("X-PlayerId");
+//
+//        UserTokenApiEntity userToken = userTokenApiRP.findByDeviceId(playerId);
+//
+//        if (userToken == null) {
+//            userToken = new UserTokenApiEntity();
+//        }
+//
+//        List<UserTokenApiEntity> userTokens = new ArrayList<>();
+//        userTokens.add(userToken);
+//
+//        userToken.setToken(token);
+//        userToken.setDeviceId(playerId);
+//
+//        for (UserTokenApiEntity tokenUser: userTokens) {
+//            tokenUser.setUserEntity(user);
+//        }
+//
+//        user.setUserTokenEntities(userTokens);
+//
+//        userRepository.save(user);
+//
+//    }
 
 
 }

@@ -12,6 +12,7 @@ public class StaffTO {
     private String photo;
     private String userCode;
     private Date joinDate;
+    private String joinStatus;
 
     public String getSkyuserRole() {
         return skyuserRole;
@@ -77,4 +78,11 @@ public class StaffTO {
         this.joinDate = joinDate;
     }
 
+    public String getJoinStatus() {
+        return joinStatus;
+    }
+
+    public void setJoinStatus(String joinStatus) {
+        this.joinStatus = joinStatus;
+    }
 }

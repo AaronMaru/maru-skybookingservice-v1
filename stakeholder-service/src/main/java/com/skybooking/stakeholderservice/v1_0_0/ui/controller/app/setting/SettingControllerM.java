@@ -2,7 +2,7 @@ package com.skybooking.stakeholderservice.v1_0_0.ui.controller.app.setting;
 
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.setting.SettingSV;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.setting.SettingRS;
-import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
+import com.skybooking.stakeholderservice.v1_0_0.util.localization.LocalizationBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,7 +18,7 @@ public class SettingControllerM {
     private SettingSV settingSV;
 
     @Autowired
-    private Localization localization;
+    private LocalizationBean localization;
 
 
     /**
@@ -30,8 +30,7 @@ public class SettingControllerM {
      */
     @GetMapping("/settings")
     public Object getSetting() {
-        SettingRS settingRS = settingSV.getSetting();
-        return localization.resAPI(HttpStatus.OK, "res_succ", settingRS);
+        return localization.resAPI(HttpStatus.OK, "res_succ", settingSV.getSetting());
     }
 
 

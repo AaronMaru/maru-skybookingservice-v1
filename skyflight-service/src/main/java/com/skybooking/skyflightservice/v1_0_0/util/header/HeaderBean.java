@@ -1,10 +1,13 @@
 package com.skybooking.skyflightservice.v1_0_0.util.header;
 
+import com.skybooking.skyflightservice.v1_0_0.util.classes.SkyHeader;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class HeaderBean {
 
@@ -27,7 +30,7 @@ public class HeaderBean {
 
         Object result = entityManager
                 .createNativeQuery("SELECT CASE WHEN COUNT(name) > 0 THEN 'true' ELSE 'false' END FROM frontend_locales WHERE locale = :locale AND status = 1")
-                .setParameter("locale", request.getHeader("X-localization"))
+            .setParameter("locale", request.getHeader("X-Localization"))
                 .getSingleResult();
 
         Boolean b = Boolean.parseBoolean(result.toString());
@@ -69,15 +72,53 @@ public class HeaderBean {
     public String getCurrencyCode() {
         Object result = entityManager
                 .createNativeQuery("SELECT CASE WHEN COUNT(code) > 0 THEN 'true' ELSE 'false' END FROM currency WHERE code = :currency AND status = 1")
-                .setParameter("currency", request.getHeader("CurrencyCode"))
+            .setParameter("currency", request.getHeader("X-Currency-Code"))
                 .getSingleResult();
 
         Boolean b = Boolean.parseBoolean(result.toString());
 
-        String reqCurrency = request.getHeader("CurrencyCode");
+        String reqCurrency = request.getHeader("X-Currency-Code");
         String currency = reqCurrency == null ? "USD" : (reqCurrency.equals("")) ? "USD" : (b ? reqCurrency : "USD");
 
         return currency;
+    }
+
+    public SkyHeader getHeaders() {
+        var header = new SkyHeader();
+
+        header.setLocalization(this.getLocalization());
+        header.setOriginatingIp(request.getRemoteAddr());
+        header.setCurrencyCode(this.getCurrencyCode());
+
+        if (request.getHeader("X-CompanyId") != null) {
+            header.setCompanyId(Integer.parseInt(request.getHeader("X-CompanyId")));
+        }
+        if (request.getHeader("X-PlayerId") != null) {
+            header.setPlayerId(request.getHeader("X-PlayerId"));
+        }
+        if (request.getHeader("X-User-Agents") != null) {
+            header.setUserAgents(request.getHeader("X-User-Agents"));
+        }
+        if (request.getHeader("X-DeviceId") != null) {
+            header.setDeviceId(request.getHeader("X-DeviceId"));
+        }
+        if (request.getHeader("X-Current-Timezone") != null) {
+            header.setDeviceId(request.getHeader("X-Current-Timezone"));
+        }
+
+        return header;
+    }
+
+
+    public Map<String, Object> getSkyownerHeaderMissing() {
+
+        Map<String, Object> headers = new LinkedHashMap<>();
+
+        if (request.getHeader("X-CompanyId") == null) {
+            headers.put("X-CompanyId", "X-CompanyId is required");
+        }
+
+        return headers;
     }
 
 

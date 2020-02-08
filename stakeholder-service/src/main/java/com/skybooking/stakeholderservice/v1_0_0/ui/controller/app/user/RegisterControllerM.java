@@ -3,9 +3,8 @@ package com.skybooking.stakeholderservice.v1_0_0.ui.controller.app.user;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.user.RegisterSV;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user.SkyUserRegisterRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
-import com.skybooking.stakeholderservice.v1_0_0.util.localization.Localization;
+import com.skybooking.stakeholderservice.v1_0_0.util.localization.LocalizationBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +18,7 @@ public class RegisterControllerM {
     private RegisterSV registerSV;
 
     @Autowired
-    private Localization localization;
+    private LocalizationBean localization;
 
 
     /**
@@ -32,29 +31,9 @@ public class RegisterControllerM {
      */
     @PostMapping("/register")
     public ResRS addSkyuser(@Valid @RequestBody SkyUserRegisterRQ skyuserRQ) {
-        registerSV.skyuser(skyuserRQ);
+        registerSV.skyuser(skyuserRQ, "app");
         return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"reg_succ", "");
     }
 
-
-    /**
-     * -----------------------------------------------------------------------------------------------------------------
-     * Register skyowner
-     * -----------------------------------------------------------------------------------------------------------------
-     *
-     * @Param userRequest
-     * @Return ResponseEntity
-     */
-//    @PostMapping(value = "/register/skyowner", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-//    public Object addSkyowner(@Valid @ModelAttribute("userRequest") SkyownerRegisterRQ skyuserRQ, Errors errors) {
-//
-//        if (errors.hasErrors()) {
-//            return new ResponseEntity<>(generalBean.errors(errors), HttpStatus.BAD_REQUEST);
-//        }
-//
-//        registerSV.skyowner(skyuserRQ);
-//        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"reg_succ", "");
-//
-//    }
 
 }

@@ -1,22 +1,8 @@
 package com.skybooking.skyflightservice.exception.httpstatus;
 
-public class ForbiddenException extends RuntimeException {
+public class ForbiddenException extends ExceptionResponse {
 
-    private String message;
-    private Object data;
-
-    public ForbiddenException(String message, Object data) {
-        this.message = message;
-        this.data = data;
+    public ForbiddenException(String message, Object error) {
+        super(message, error);
     }
-
-    @Override
-    public String getMessage() {
-        return message;
-    }
-
-    public Object getData() {
-        return data;
-    }
-
 }

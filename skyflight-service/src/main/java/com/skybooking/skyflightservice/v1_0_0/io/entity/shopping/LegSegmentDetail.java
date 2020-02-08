@@ -8,10 +8,16 @@ import java.io.Serializable;
 public class LegSegmentDetail implements Serializable {
 
     private String segment;
-    private int stop;
+    private int stops;
     private long duration;
-    private long layOverDuration;
+    private long layoverDuration;
     private int dateAdjustment;
+    private String bookingCode;
+    private int seatsRemain;
+    private String cabin;
+    private String cabinName;
+    private String meal;
+    private String mealName;
     private boolean availabilityBreak;
 
 }

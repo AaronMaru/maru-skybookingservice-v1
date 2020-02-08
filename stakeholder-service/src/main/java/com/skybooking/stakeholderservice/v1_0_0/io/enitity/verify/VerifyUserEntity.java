@@ -21,6 +21,7 @@ public class VerifyUserEntity {
     private String token;
     private int verified = 0;
     private int status = 1;
+    private String username;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_at")
@@ -86,4 +87,13 @@ public class VerifyUserEntity {
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
     }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
 }

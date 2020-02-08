@@ -98,4 +98,15 @@ public interface DetailSV {
      */
     Segment getSegmentDetail(String shoppingId, String segmentId);
 
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get expiration remaining time of shopping in minutes
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param shoppingId
+     * @return long
+     */
+    long getMinutesTimeToLive(String shoppingId);
+
 }

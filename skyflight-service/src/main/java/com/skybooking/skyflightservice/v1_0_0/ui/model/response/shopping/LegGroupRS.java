@@ -9,6 +9,6 @@ import java.util.List;
 @Data
 public class LegGroupRS implements Serializable {
 
-    private String airline = "";
+    private String airline;
     private List<LegDescriptionRS> legsDesc = new ArrayList<>();
 }

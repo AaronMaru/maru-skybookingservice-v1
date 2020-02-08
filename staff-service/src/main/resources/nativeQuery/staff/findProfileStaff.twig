@@ -20,7 +20,7 @@ SELECT
 	CASE
 		WHEN ( suc.`join_status` = 1 ) THEN "Active"
 		WHEN ( suc.`join_status` = 0 OR suc.`join_status` IS NULL ) THEN  "Deactive"
-	END AS statusKey,
+	END AS joinStatus,
 	CASE
 		WHEN ( suc.`status` = 1 ) THEN "Owner"
 		WHEN ( suc.`status` = 0 OR suc.`join_status` IS NULL ) THEN  "status"
