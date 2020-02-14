@@ -29,11 +29,17 @@ public interface VerifyUserRP extends JpaRepository<VerifyUserEntity, Integer> {
     /**
      * Find by tokens and username
      */
-    VerifyUserEntity findByTokenAndUsername(String token, String username);
+    VerifyUserEntity findByTokenAndUsernameAndStatus(String token, String username, Integer status);
 
     /**
      * Find by username
      */
     List<VerifyUserEntity> findByUsername(String username);
+
+    /**
+     * Find by username, verified, status
+     */
+    @Query(value = "SELECT * FROM verify_users WHERE username = ?1 AND verified = ?2 AND status = ?3 ORDER BY id DESC LIMIT 1", nativeQuery = true)
+    VerifyUserEntity findByUsernameAndVerifiedAndStatus(String username, Integer verified, Integer status);
 
 }

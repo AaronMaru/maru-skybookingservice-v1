@@ -24,7 +24,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 
@@ -83,18 +82,23 @@ public class CompanyIP implements CompanySV {
 
         List<ContactEntity> contacts = updateContacts(company, companyRQ);
 
+        Optional<BussinessTypeEntity> bizType = bussinessTypeRP.findById(company.getBussinessTypeId());
         if (company.getStatus() == Integer.parseInt(environment.getProperty("spring.companyStatus.reject"))) {
 
-            Optional<BussinessTypeEntity> bizType = bussinessTypeRP.findById(companyRQ.getBusinessTypeId());
-            if (bizType.get().getName().equals("Goverment")) {
-                company.setContactPerson(companyRQ.getContactPerson());
-                company.setContactPosition(companyRQ.getContactPosition());
-            }
+            bizType = bussinessTypeRP.findById(companyRQ.getBusinessTypeId());
 
             company.getStakeholderCompanyDocs().removeAll(company.getStakeholderCompanyDocs());
             company.setBussinessTypeId(companyRQ.getBusinessTypeId());
             updateLicense(company, companyRQ, user.getId());
 
+        }
+
+        if (bizType.get().getName().equals("Goverment")) {
+            company.setContactPerson(companyRQ.getContactPerson());
+            company.setContactPosition(companyRQ.getContactPosition());
+        } else {
+            company.setContactPerson(null);
+            company.setContactPosition(null);
         }
 
         if (companyRQ.getProfile() != null) {
@@ -114,8 +118,7 @@ public class CompanyIP implements CompanySV {
         return companyRS;
 
     }
-
-
+    
     public void setByFields(CompanyUpdateRQ companyRQ, StakeholderCompanyEntity company) {
 
         if (companyRQ.getBusinessName() != null && !companyRQ.getBusinessName().equals("")) {

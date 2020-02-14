@@ -3,6 +3,7 @@ package com.skybooking.skyflightservice.v1_0_0.service.implement.booking;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.skybooking.skyflightservice.constant.BookingConstant;
 import com.skybooking.skyflightservice.constant.CompanyConstant;
+import com.skybooking.skyflightservice.constant.TicketConstant;
 import com.skybooking.skyflightservice.constant.passenger.PassengerCode;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.booking.*;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.shopping.HiddenStop;
@@ -392,4 +393,29 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
         });
 
     }
+
+    @Override
+    public void updateTicket(JsonNode ticketInfo, BookingEntity booking) {
+
+        var tickets = bookingAirTicketRP.getTickets(booking.getId());
+        var numberTicket = ticketInfo.get("AirTicketRS").get("Summary");
+
+        numberTicket.forEach(item -> {
+
+            tickets
+                    .stream()
+                    .filter(ticket -> ticket.getFirstName().equalsIgnoreCase(item.get("FirstName").textValue()) && ticket.getLastName().equalsIgnoreCase(item.get("LastName").textValue()))
+                    .findFirst()
+                    .ifPresent(ticket -> {
+                        ticket.setTicketNumber(item.get("DocumentNumber").textValue());
+                        ticket.setStatus(1);
+                        bookingAirTicketRP.save(ticket);
+                    });
+
+        });
+
+        booking.setStatus(TicketConstant.TICKET_ISSUED);
+        bookingRP.save(booking);
+    }
+
 }

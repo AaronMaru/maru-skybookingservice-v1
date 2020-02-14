@@ -2,31 +2,31 @@ package com.skybooking.staffservice.v1_0_0.ui.model.response.staff;
 
 public class StaffTotalBookingRS {
 
-    private Upcoming upcoming;
-    private Completed completed;
-    private Cancellation cancellation;
+    private AmountRS upcoming;
+    private AmountRS completed;
+    private AmountRS cancellation;
 
-    public Upcoming getUpcoming() {
+    public AmountRS getUpcoming() {
         return upcoming;
     }
 
-    public void setUpcoming(Upcoming upcoming) {
+    public void setUpcoming(AmountRS upcoming) {
         this.upcoming = upcoming;
     }
 
-    public Completed getCompleted() {
+    public AmountRS getCompleted() {
         return completed;
     }
 
-    public void setCompleted(Completed completed) {
+    public void setCompleted(AmountRS completed) {
         this.completed = completed;
     }
 
-    public Cancellation getCancellation() {
+    public AmountRS getCancellation() {
         return cancellation;
     }
 
-    public void setCancellation(Cancellation cancellation) {
+    public void setCancellation(AmountRS cancellation) {
         this.cancellation = cancellation;
     }
 }

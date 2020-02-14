@@ -43,7 +43,7 @@ public class LoginIP implements LoginSV {
     public UserDetailsTokenRS login(HttpHeaders httpHeaders, LoginRQ loginRQ) {
 
         String credential = userBean.oauth2Credential(httpHeaders);
-        System.out.println(credential);
+
         String password = loginRQ.getPassword();
 
         UserEntity user = userRepository.findByUsernameOrEmail(loginRQ.getUsername());
@@ -53,11 +53,11 @@ public class LoginIP implements LoginSV {
         }
 
         if (user == null) {
-            throw new UnauthorizedException("Incorrect username or password", "");
+            throw new UnauthorizedException("Incorrect username or password", null);
         }
 
         if (! pwdEncode.matches(loginRQ.getPassword(), user.getPassword())) {
-            throw new UnauthorizedException("Incorrect username or password", "");
+            throw new UnauthorizedException("Incorrect username or password", null);
         }
 
         checkUserStatus(user, password);
@@ -89,18 +89,18 @@ public class LoginIP implements LoginSV {
         }
 
         if (user.getStakeHolderUser() == null) {
-            throw new UnauthorizedException("sth_w_w", "");
+            throw new UnauthorizedException("sth_w_w", null);
         }
 
         if (user.getStakeHolderUser().getIsSkyowner() == 1 && user.getStakeHolderUser().getStakeholderCompanies().size() == 0) {
-            throw new UnauthorizedException("sth_w_w", "");
+            throw new UnauthorizedException("sth_w_w", null);
         }
 
         switch (user.getStakeHolderUser().getStatus()) {
             case 0:
-                throw new UnauthorizedException("Your account inactive", "");
+                throw new UnauthorizedException("Your account inactive", null);
             case 2:
-                throw new UnauthorizedException("Your account was ban", "");
+                throw new UnauthorizedException("Your account was ban", null);
         }
 
     }

@@ -1,6 +1,6 @@
 package com.skybooking.skyhistoryservice.listener;
 
-import com.skybooking.skyhistoryservice.v1_0_0.util.general.ApiBean;
+import com.skybooking.skyhistoryservice.v1_0_0.util.email.EmailBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,25 +16,23 @@ import static com.skybooking.skyhistoryservice.config.ActiveMQConfig.SMS;
  * Date  : 1/22/2020
  * Time  : 4:47 PM
  */
-
 @Component
 public class Consumer {
 
     private Logger logger = LoggerFactory.getLogger(Consumer.class);
 
-
     @Autowired
-    private ApiBean apiBean;
+    private EmailBean emailBean;
 
 
     @JmsListener(destination = EMAIL)
     public void email(Map<String, Object> mailTemplateData) {
-        apiBean.email(mailTemplateData);
+        emailBean.email(mailTemplateData);
     }
 
     @JmsListener(destination = SMS)
     public void sms(Map<String, Object> mailTemplateData) {
-        apiBean.sms(mailTemplateData);
+        emailBean.sms(mailTemplateData);
     }
 
 }

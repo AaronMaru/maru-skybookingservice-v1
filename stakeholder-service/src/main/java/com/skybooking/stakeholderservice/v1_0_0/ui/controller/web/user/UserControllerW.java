@@ -34,12 +34,6 @@ public class UserControllerW {
     private UserSV userSV;
 
     @Autowired
-    private DefaultTokenServices tokenServices;
-
-    @Autowired
-    private TokenStore tokenStore;
-
-    @Autowired
     UserRepository userRepository;
 
     @Autowired
@@ -114,21 +108,6 @@ public class UserControllerW {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * Send code to reset password
-     * -----------------------------------------------------------------------------------------------------------------
-     *
-     * @Param verifyRequest
-     * @Return ResRS
-     */
-    @PostMapping("/auth/send-forgot-password")
-    public ResRS sendCodeResetPassword(@RequestBody SendVerifyRQ sendVerifyRQ) {
-        userSV.sendCodeResetPassword(sendVerifyRQ);
-        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"vf_rdy_sent", "");
-    }
-
-
-    /**
-     * -----------------------------------------------------------------------------------------------------------------
      * Update contact
      * -----------------------------------------------------------------------------------------------------------------
      *
@@ -155,24 +134,6 @@ public class UserControllerW {
         userSV.sendCodeUpdateContact(contactRQ);
         return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"vf_rdy_sent", "");
     }
-
-
-//    /**
-//     * -----------------------------------------------------------------------------------------------------------------
-//     * Logout
-//     * -----------------------------------------------------------------------------------------------------------------
-//     *
-//     * @No_return
-//     */
-//    @DeleteMapping("/logout")
-//    public ResponseEntity revokeToken(HttpServletRequest request, HttpServletResponse httpServletResponse) {
-//
-//        String token = request.getHeader("authorization");
-//        OAuth2AccessToken oAuth2AccessToken = tokenStore.readAccessToken(token.split(" ")[1]);
-//        tokenStore.removeAccessToken(oAuth2AccessToken);
-//
-//        return new ResponseEntity<>(localization.resAPI("Logout sucessful", ""), HttpStatus.OK);
-//    }
 
 
     /**

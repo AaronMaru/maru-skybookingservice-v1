@@ -121,7 +121,7 @@ public class VerifyIP implements VerifySV {
         UserEntity user = userRepository.findByEmailOrPhone(verifyRQ.getUsername(), verifyRQ.getCode());
 
         if (user == null) {
-            throw new UnauthorizedException("sth_w_w", "");
+            throw new UnauthorizedException("sth_w_w", null);
         }
         StakeHolderUserEntity stakeHolderUser = user.getStakeHolderUser();
 
@@ -149,17 +149,11 @@ public class VerifyIP implements VerifySV {
      *
      * @Param sendVerifyRQ
      */
-    public void verify(VerifyMRQ verifyMRQ) {
+    public void verify(VerifyMRQ verifyMRQ, Integer status) {
 
-        String receiver = "";
+        String receiver = userBean.getUsername(verifyMRQ.getUsername(), verifyMRQ.getCode());
 
-        if (NumberUtils.isNumber(verifyMRQ.getUsername())) {
-            receiver = verifyMRQ.getCode() + "" + verifyMRQ.getUsername().replaceFirst("^0+(?!$)", "");
-        } else {
-            receiver = verifyMRQ.getUsername();
-        }
-
-        var verify = verifyRP.findByTokenAndUsername(verifyMRQ.getToken(), receiver);
+        var verify = verifyRP.findByTokenAndUsernameAndStatus(verifyMRQ.getToken(), receiver, status);
 
         generalBean.expiredInvalidToken(verify, verifyMRQ.getToken().replaceAll(" ", ""));
 
@@ -177,24 +171,29 @@ public class VerifyIP implements VerifySV {
      *
      * @Param sendVerifyRQ
      */
-    public void sendVerify(SendVerifyRQ sendVerifyRQ) {
+    public void sendVerify(SendVerifyRQ sendVerifyRQ, Integer status) {
 
-        checkOwnerStaff(sendVerifyRQ);
+        String username = userBean.getUsername(sendVerifyRQ.getUsername(),null);
 
-        String receiver = "";
-
-        if (NumberUtils.isNumber(sendVerifyRQ.getUsername())) {
-            receiver = sendVerifyRQ.getCode() + "" + sendVerifyRQ.getUsername().replaceFirst("^0+(?!$)", "");
+        if (status == Integer.parseInt(environment.getProperty("spring.verifyStatus.verifyUserApp"))) {
+            checkOwnerStaff(sendVerifyRQ);
         } else {
-            receiver = sendVerifyRQ.getUsername();
+            UserEntity user = userRepository.findByEmailOrPhone(username, sendVerifyRQ.getCode());
+            if (user == null) {
+                throw new BadRequestException("User already exist", null);
+            }
         }
 
+        String receiver = userBean.getUsername(sendVerifyRQ.getUsername(), sendVerifyRQ.getCode());
+
+//        No delete
         generalBean.expireRequestMobile(receiver);
 
-        int code = apiBean.createVerifyCode(null, 5, receiver);
+        int code = apiBean.createVerifyCode(null, status, receiver);
 
-        Map<String, Object> mailData = emailBean.mailData(receiver, null, code, "account_verification_code");
+        Map<String, Object> mailData = emailBean.mailData(receiver, "", code, "account_verification_code");
         emailBean.sendEmailSMS("send-login", mailData);
+
     }
 
 
@@ -207,25 +206,66 @@ public class VerifyIP implements VerifySV {
      */
     public void checkOwnerStaff(SendVerifyRQ sendVerifyRQ) {
 
-        UserEntity user = userRepository.findByEmailOrPhone(sendVerifyRQ.getUsername(), sendVerifyRQ.getCode());
+        String username = "";
+        if (NumberUtils.isNumber(sendVerifyRQ.getUsername())) {
+            username = sendVerifyRQ.getUsername().replaceFirst("^0+(?!$)", "");
+        } else {
+            username = sendVerifyRQ.getUsername();
+        }
+
+        UserEntity user = userRepository.findByEmailOrPhone(username, sendVerifyRQ.getCode());
 
         if (user != null) {
             Map<String, Object> data = new LinkedHashMap();
             if (user.getStakeHolderUser().getIsSkyowner() == 1) {
                 data.put("type", "skyowner");
-                throw new BadRequestException("sth_w_w", data);
+                throw new BadRequestException("User already exist", data);
             }
 
             var checkStaff = companyHasUserRP.findByStakeholderUserId(user.getStakeHolderUser().getId());
             if (checkStaff != null) {
                 data.put("type", "staff");
-                throw new BadRequestException("sth_w_w", data);
+                throw new BadRequestException("User already exist", data);
             }
 
-            throw new BadRequestException("sth_w_w", null);
+            throw new BadRequestException("User already exist", null);
 
         }
 
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Send code to reset password
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param verifyRequest
+     */
+    public int sendCodeResetPassword(SendVerifyRQ verifyRQ) {
+
+        UserEntity user = userRepository.findByEmailOrPhone(verifyRQ.getUsername(), verifyRQ.getCode());
+
+        if (user == null || user.getProviderId() != null) {
+            throw new UnauthorizedException("Unauthorized", "");
+        }
+
+        StakeHolderUserEntity stakeHolderUser = user.getStakeHolderUser();
+        String fullName = stakeHolderUser.getFirstName() + " " + stakeHolderUser.getLastName();
+        String receiver = NumberUtils.isNumber(verifyRQ.getUsername())
+                ? verifyRQ.getCode() + verifyRQ.getUsername().replaceFirst("^0+(?!$)", "")
+                : verifyRQ.getUsername();
+
+        generalBean.expireRequest(user,
+                Integer.parseInt(environment.getProperty("spring.verifyStatus.forgotPassword")));
+        int code = apiBean.createVerifyCode(user,
+                Integer.parseInt(environment.getProperty("spring.verifyStatus.forgotPassword")), null);
+        userRepository.save(user);
+
+        Map<String, Object> mailData = emailBean.mailData(receiver, fullName, code, "reset_your_password");
+        emailBean.sendEmailSMS("send-login", mailData);
+
+        return code;
     }
 
 }

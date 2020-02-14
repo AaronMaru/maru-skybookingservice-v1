@@ -21,7 +21,7 @@ public class CalculatorUtils {
             var totalTax = NumberFormatter.trimAmount(new BigDecimal(item.get("ItinTotalFare").get("Taxes").get("TotalAmount").textValue()));
             var baseFare = NumberFormatter.trimAmount(new BigDecimal(item.get("ItinTotalFare").get("BaseFare").get("Amount").textValue()));
 
-            if (item.get("ItinTotalFare").get("EquivFare").isObject()) {
+            if (item.get("ItinTotalFare").has("EquivFare")) {
                 baseFare = NumberFormatter.trimAmount(new BigDecimal(item.get("ItinTotalFare").get("EquivFare").get("Amount").textValue()));
             }
 

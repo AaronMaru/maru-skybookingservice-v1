@@ -6,8 +6,8 @@ spring:
     config:
       uri: http://192.168.2.4:8888
 
-  verifyStatus:
-    verifyUser: 5
+  awsImageUrl:
+    companyProfile: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/company_profiles/
 
 native-query:
   package-scan: com.skybooking.stakeholderservice

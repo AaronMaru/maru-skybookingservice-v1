@@ -3,6 +3,7 @@ package com.skybooking.stakeholderservice.v1_0_0.ui.controller.app.user;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.user.RegisterSV;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user.SkyUserRegisterRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.localization.LocalizationBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -31,8 +32,8 @@ public class RegisterControllerM {
      */
     @PostMapping("/register")
     public ResRS addSkyuser(@Valid @RequestBody SkyUserRegisterRQ skyuserRQ) {
-        registerSV.skyuser(skyuserRQ, "app");
-        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"reg_succ", "");
+        UserDetailsTokenRS userDetails = registerSV.skyuser(skyuserRQ, "app");
+        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"Register successfully", userDetails);
     }
 
 

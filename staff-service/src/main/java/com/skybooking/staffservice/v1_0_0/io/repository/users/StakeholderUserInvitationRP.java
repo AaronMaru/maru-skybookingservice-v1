@@ -14,6 +14,7 @@ public interface StakeholderUserInvitationRP extends JpaRepository<StakeholderUs
      */
     StakeholderUserInvitationEntity findFirstByInviteTo(String username);
 
+    StakeholderUserInvitationEntity findStakeholderUserInvitationById(Integer id);
 
     /**
      * Find email and delete

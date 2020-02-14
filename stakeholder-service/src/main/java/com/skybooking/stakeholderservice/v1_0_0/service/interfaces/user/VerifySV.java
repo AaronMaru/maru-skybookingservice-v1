@@ -11,7 +11,8 @@ public interface VerifySV {
 
     UserDetailsTokenRS verifyUser(VerifyRQ verifyRQ, int status);
     int resendVerify(SendVerifyRQ sendVerifyRQ, Integer status);
-    void sendVerify(SendVerifyRQ sendVerifyRQ);
-    void verify(VerifyMRQ verifyMRQ);
+    void sendVerify(SendVerifyRQ sendVerifyRQ, Integer status);
+    void verify(VerifyMRQ verifyMRQ, Integer status);
+    int sendCodeResetPassword(SendVerifyRQ sendVerifyRQ);
 
 }

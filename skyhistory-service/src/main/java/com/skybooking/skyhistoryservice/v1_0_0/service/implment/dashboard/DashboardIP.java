@@ -1,6 +1,7 @@
 package com.skybooking.skyhistoryservice.v1_0_0.service.implment.dashboard;
 
 import com.skybooking.skyhistoryservice.exception.httpstatus.BadRequestException;
+import com.skybooking.skyhistoryservice.exception.httpstatus.UnauthorizedException;
 import com.skybooking.skyhistoryservice.v1_0_0.io.nativeQuery.dashboard.BookingProgressTO;
 import com.skybooking.skyhistoryservice.v1_0_0.io.nativeQuery.dashboard.DashboardNQ;
 import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.dashboard.DashboardSV;
@@ -45,7 +46,7 @@ public class DashboardIP implements DashboardSV {
         String userRole = jwtUtils.getClaim("userRole", String.class);
 
         if (userType.equals("skyuser")) {
-            throw new BadRequestException("sth_w_w", "");
+            throw new UnauthorizedException("unauthorized", null);
         }
 
         var bookings = dashboardNQ.getRecentBooking(companyId, skyuserId, userType, userRole, take);

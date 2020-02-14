@@ -14,9 +14,9 @@ public class CompanyRS {
     private String address = "";
     private String phone = "";
     private String email = "";
-    private String webiste = "";
+    private String website = "";
     private String postalOrZipCode = "";
-    private Long bussinessTypeId;
+    private Long businessTypeId;
     private Long countryId;
     private String status;
     private String description = "";
@@ -89,14 +89,6 @@ public class CompanyRS {
         this.phone = phone;
     }
 
-    public String getWebiste() {
-        return webiste;
-    }
-
-    public void setWebiste(String webiste) {
-        this.webiste = webiste;
-    }
-
     public String getPostalOrZipCode() {
         return postalOrZipCode;
     }
@@ -105,12 +97,20 @@ public class CompanyRS {
         this.postalOrZipCode = postalOrZipCode;
     }
 
-    public Long getBussinessTypeId() {
-        return bussinessTypeId;
+    public String getWebsite() {
+        return website;
     }
 
-    public void setBussinessTypeId(Long bussinessTypeId) {
-        this.bussinessTypeId = bussinessTypeId;
+    public void setWebsite(String website) {
+        this.website = website;
+    }
+
+    public Long getBusinessTypeId() {
+        return businessTypeId;
+    }
+
+    public void setBusinessTypeId(Long businessTypeId) {
+        this.businessTypeId = businessTypeId;
     }
 
     public Long getCountryId() {

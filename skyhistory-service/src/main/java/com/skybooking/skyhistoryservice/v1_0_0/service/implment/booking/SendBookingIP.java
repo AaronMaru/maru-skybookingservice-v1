@@ -8,8 +8,8 @@ import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.booking.SendBo
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.request.SendBookingPDFRQ;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.booking.BookingEmailDetailRS;
 import com.skybooking.skyhistoryservice.v1_0_0.util.JwtUtils;
+import com.skybooking.skyhistoryservice.v1_0_0.util.email.EmailBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.general.ApiBean;
-import com.skybooking.skyhistoryservice.v1_0_0.util.general.DuplicateBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,13 +26,13 @@ public class SendBookingIP implements SendBookingSV {
     private BookingSV bookingSV;
 
     @Autowired
-    private DuplicateBean duplicate;
-
-    @Autowired
     private BookingRP bookingRP;
 
     @Autowired
     private JwtUtils jwtUtils;
+
+    @Autowired
+    private EmailBean emailBean;
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -49,11 +49,11 @@ public class SendBookingIP implements SendBookingSV {
 
         BookingEmailDetailRS bookingEmailDetailRS = bookingSV.getBookingDetailEmail(booking.getId());
 
-        Map<String, Object> mailData = duplicate.mailData(sendBookingPDFRQ.getEmail(),"Customer", 0, "your_flight_ticket",
+        Map<String, Object> mailData = emailBean.mailData(sendBookingPDFRQ.getEmail(),"Customer", 0, "your_flight_ticket",
                 "booking-info", "api_receipt");
         mailData.put("data", bookingEmailDetailRS);
 
-        Map<String, Object> pdfData = duplicate.dataPdfTemplate(pdfTemplate, Label);
+        Map<String, Object> pdfData = emailBean.dataPdfTemplate(pdfTemplate, Label);
         pdfData.put("data", bookingEmailDetailRS);
 
         String userType = jwtUtils.getClaim("userType", String.class);
@@ -62,7 +62,7 @@ public class SendBookingIP implements SendBookingSV {
 
         pdfData.put("logoPdf", userType.equals("skyowner") ? profileOwner : companyLogo) ;
 
-        apiBean.sendEmailSMS( "send-booking", mailData,
+        emailBean.sendEmailSMS( "send-booking", mailData,
                 pdfData);
     }
 
@@ -82,12 +82,12 @@ public class SendBookingIP implements SendBookingSV {
 
         BookingEmailDetailRS bookingEmailDetailRS= bookingSV.getBookingDetailEmail(booking.getId());
 
-        Map<String, Object> mailData = duplicate.mailData(sendBookingPDFRQ.getEmail(),"Customer", 0,
+        Map<String, Object> mailData = emailBean.mailData(sendBookingPDFRQ.getEmail(),"Customer", 0,
                     "flight_booking_successful_payment", "payment-success", "api_payment_succ");
 
         mailData.put("data", bookingEmailDetailRS);
 
-        apiBean.sendEmailSMS( "send-payment", mailData, null);
+        emailBean.sendEmailSMS( "send-payment", mailData, null);
 
     }
 

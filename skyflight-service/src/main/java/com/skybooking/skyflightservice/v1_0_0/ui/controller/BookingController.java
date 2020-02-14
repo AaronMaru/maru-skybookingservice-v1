@@ -45,13 +45,14 @@ public class BookingController {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * Booking or Create PNR (Create Passenger Name Records)
+     * Booking or Create PNR (Create Passenger Name Records) FOR SKYOWNER
      * -----------------------------------------------------------------------------------------------------------------
      *
+     * @param headers
      * @param request
      * @return
      */
-    @PostMapping("/create")
+    @PostMapping("/skyowner/create")
     public ResponseEntity create(@RequestHeader HttpHeaders headers, @Valid @RequestBody BookingCreateRQ request) {
 
         /**
@@ -90,7 +91,7 @@ public class BookingController {
          * 1. request create PNR to supplier
          * 2. save PNR info into DB
          */
-        PNRCreateRS pnr = bookingSV.create(request, bookingSV.getMetadata());
+        PNRCreateRS pnr = bookingSV.create(request, bookingSV.getSkyownerMetadata());
         if (pnr.getBookingRef().equals("")) {
             return new ResponseEntity<>(
                     new BookingFailRS(HttpStatus.FAILED_DEPENDENCY,
@@ -98,6 +99,60 @@ public class BookingController {
                             pnr),
                     HttpStatus.FAILED_DEPENDENCY);
         }
+
+        return new ResponseEntity<>(
+                new BookingRS(HttpStatus.OK,
+                        locale.multiLanguageRes(MessageConstant.BOOKING_SUCCESS),
+                        pnr),
+                HttpStatus.OK);
+    }
+
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Booking or Create PNR (Create Passenger Name Records) FOR SKYUSER
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param request
+     * @return
+     */
+    @PostMapping("/skyuser/create")
+    public ResponseEntity create(@Valid @RequestBody BookingCreateRQ request) {
+
+        /**
+         * Pre-create passenger
+         */
+        passengerSV.create(request.getPassengers());
+
+        /**
+         * Revalidate flight shopping before create PNR
+         * 1. check price
+         * 2. check seats available
+         */
+        var revalidate = shoppingSV.revalidate(request);
+        if (revalidate.getStatus() != RevalidateConstant.SUCCESS) {
+            return new ResponseEntity<>(
+                    new BookingFailRS(HttpStatus.FAILED_DEPENDENCY,
+                            locale.multiLanguageRes(revalidate.getMessage()),
+                            new PNRCreateRS()),
+                    HttpStatus.FAILED_DEPENDENCY);
+        }
+
+        /**
+         * Create PNR
+         * 1. request create PNR to supplier
+         * 2. save PNR info into DB
+         */
+        PNRCreateRS pnr = bookingSV.create(request, bookingSV.getSkyuserMetadata());
+        if (pnr.getBookingRef().equals("")) {
+            return new ResponseEntity<>(
+                    new BookingFailRS(HttpStatus.FAILED_DEPENDENCY,
+                            locale.multiLanguageRes(MessageConstant.BOOKING_FAIL),
+                            pnr),
+                    HttpStatus.FAILED_DEPENDENCY);
+        }
+
 
         return new ResponseEntity<>(
                 new BookingRS(HttpStatus.OK,

@@ -8,7 +8,11 @@ SELECT
 	(CASE WHEN su.photo IS NULL THEN  'default.png' ELSE su.photo END) AS photo,
 	su.user_code AS userCode,
 	suc.joinStatus,
-	suc.created_at AS joinDate
+	suc.created_at AS joinDate,
+	CASE
+        WHEN ( suc.`status` = 1 ) THEN "Owner"
+        WHEN ( suc.`status` = 0 OR suc.`join_status` IS NULL ) THEN  "status"
+    END AS position
 
 FROM stakeholder_companies sc
 
@@ -22,6 +26,8 @@ INNER JOIN
 		suc.stakeholder_user_id,
 		suc.created_at,
 		suc.skyuser_role,
+		suc.status,
+		suc.join_status,
 		CASE
 			WHEN (suc.join_status = 1 ) THEN "Active"
 			WHEN (suc.join_status = 0 ) THEN  "Deactive"

@@ -10,8 +10,10 @@ import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.StakeholderU
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserRepository;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.verify.VerifyUserRP;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.user.RegisterSV;
+import com.skybooking.stakeholderservice.v1_0_0.transformer.TokenTF;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user.SkyUserRegisterRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.verify.VerifyRQ;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.activitylog.ActivityLoggingBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.email.EmailBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
@@ -75,21 +77,28 @@ public class RegisterIP implements RegisterSV {
      * @Param skyownerRQ;
      * @Return code
      */
-    public void skyuser(SkyUserRegisterRQ skyuserRQ, String plateform) {
+    public UserDetailsTokenRS skyuser(SkyUserRegisterRQ skyuserRQ, String plateform) {
+
+        UserDetailsTokenRS userDetails = new UserDetailsTokenRS();
 
         String password = skyuserRQ.getPassword();
+        String username = userBean.getUsername(skyuserRQ.getUsername(), null);
 
         UserEntity user = addSkyuser(skyuserRQ, plateform);
 //        VerifyUserEntity verify = user.getVerifyUserEntity().stream().findFirst().get();
 
-        StakeholderUserInvitationEntity userInv = userInvRP.findFirstByInviteTo(skyuserRQ.getUsername());
+        StakeholderUserInvitationEntity userInv = userInvRP.findFirstByInviteTo(username);
 
         if (userInv != null) {
             skyownerBean.addStaff(userInv.getStakeholderCompanyId(), user.getStakeHolderUser().getId());
         }
         if (plateform == "web") {
             userBean.storeTokenRedis(user, password);
+        } else {
+            userDetails = userBean.userDetailByLogin(user, username, password);
         }
+
+        return userDetails;
 
     }
 
@@ -128,12 +137,12 @@ public class RegisterIP implements RegisterSV {
 
         user.setUsername(userCode);
 
+        addStakeHolderUser(skyuserRQ, user, userCode, plateform);
+        user = userRepository.save(user);
+
         if (plateform == "web") {
             sendVerification(skyuserRQ, user);
         }
-
-        addStakeHolderUser(skyuserRQ, user, userCode, plateform);
-        user = userRepository.save(user);
 
         apiBean.storeUserStatus(user, Integer.parseInt(environment.getProperty("spring.stakeUser.inactive")),
                 "Waiting login");
@@ -173,12 +182,8 @@ public class RegisterIP implements RegisterSV {
 
     public void regMobile(SkyUserRegisterRQ registerRQ, UserEntity userEntity, StakeHolderUserEntity skyuser, String plateform) {
 
-        String reciever = "";
-        if (NumberUtils.isNumber(registerRQ.getUsername())) {
-            reciever = registerRQ.getCode() + "" + registerRQ.getUsername();
-        } else {
-            reciever = registerRQ.getUsername();
-        }
+        String reciever = userBean.getUsername(registerRQ.getUsername(), registerRQ.getCode());
+
         if (plateform == "app") {
             var verify = verifyUserRP.findByUsername(reciever);
             if (verify.size() == 0) {

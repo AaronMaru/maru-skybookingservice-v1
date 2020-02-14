@@ -1,7 +1,7 @@
 package com.skybooking.skyhistoryservice;
 
 import com.skybooking.skyhistoryservice.v1_0_0.util.calculator.CalculatorBean;
-import com.skybooking.skyhistoryservice.v1_0_0.util.general.DuplicateBean;
+import com.skybooking.skyhistoryservice.v1_0_0.util.email.EmailBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.flight.FlightShoppingBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.general.ApiBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.header.HeaderBean;
@@ -51,7 +51,7 @@ public class SkyhistoryServiceApplication {
     ApiBean apiBean() { return new ApiBean(); }
 
     @Bean
-    DuplicateBean duplicate() {
-        return new DuplicateBean();
+    EmailBean email() {
+        return new EmailBean();
     }
 }

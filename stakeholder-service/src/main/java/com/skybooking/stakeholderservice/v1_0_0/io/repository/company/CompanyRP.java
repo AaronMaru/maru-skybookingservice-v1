@@ -11,7 +11,7 @@ public interface CompanyRP extends JpaRepository<StakeholderCompanyEntity, Long>
     @Query(value = "SELECT * FROM stakeholder_companies WHERE company_name = ?1 AND (CASE WHEN ?2 THEN id NOT IN (?2) ELSE id IS NOT NULL END) LIMIT 1", nativeQuery = true)
     StakeholderCompanyEntity findFirstByCompanyName(String name, Long id);
 
-    @Query(value = "SELECT * FROM stakeholder_companies WHERE company_code LIKE %?1% ORDER BY created_at DESC LIMIT 1", nativeQuery = true)
+    @Query(value = "SELECT * FROM stakeholder_companies WHERE company_code LIKE %?1% ORDER BY id DESC LIMIT 1", nativeQuery = true)
     StakeholderCompanyEntity findByCompanyCode(String companyCode);
 
 }

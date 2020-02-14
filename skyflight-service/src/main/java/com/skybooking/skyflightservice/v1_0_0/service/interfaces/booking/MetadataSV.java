@@ -13,6 +13,17 @@ public interface MetadataSV {
      *
      * @return
      */
-    BookingMetadataTA getMetadata();
+    BookingMetadataTA getSkyownerMetadata();
+
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Get metadata
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @return
+     */
+    BookingMetadataTA getSkyuserMetadata();
 
 }

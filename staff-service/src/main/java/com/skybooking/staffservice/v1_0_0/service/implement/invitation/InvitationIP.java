@@ -1,6 +1,7 @@
 package com.skybooking.staffservice.v1_0_0.service.implement.invitation;
 
 import com.skybooking.staffservice.exception.httpstatus.BadRequestException;
+import com.skybooking.staffservice.exception.httpstatus.ConflictException;
 import com.skybooking.staffservice.exception.httpstatus.UnauthorizedException;
 import com.skybooking.staffservice.v1_0_0.io.enitity.user.StakeHolderUserEntity;
 import com.skybooking.staffservice.v1_0_0.io.enitity.user.StakeholderUserInvitationEntity;
@@ -13,13 +14,14 @@ import com.skybooking.staffservice.v1_0_0.io.repository.company.CompanyHasUserRP
 import com.skybooking.staffservice.v1_0_0.io.repository.users.StakeholderUserInvitationRP;
 import com.skybooking.staffservice.v1_0_0.io.repository.users.UserRepository;
 import com.skybooking.staffservice.v1_0_0.service.interfaces.invitation.InvitationSV;
+import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.InvitationExpireRQ;
 import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.InviteStaffNoAccRQ;
 import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.SkyuserIdStaffRQ;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.invitation.PendingEmailStaffRS;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.invitation.SkyuserDetailsRS;
 import com.skybooking.staffservice.v1_0_0.util.JwtUtils;
-import com.skybooking.staffservice.v1_0_0.util.general.ApiBean;
-import com.skybooking.staffservice.v1_0_0.util.general.DuplicateBean;
+import com.skybooking.staffservice.v1_0_0.util.decrypt.AES;
+import com.skybooking.staffservice.v1_0_0.util.email.EmailBean;
 import com.skybooking.staffservice.v1_0_0.util.general.GeneralBean;
 import com.skybooking.staffservice.v1_0_0.util.notification.NotificationBean;
 import org.springframework.beans.BeanUtils;
@@ -28,9 +30,8 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.sql.Timestamp;
+import java.util.*;
 
 @Service
 public class InvitationIP implements InvitationSV {
@@ -60,13 +61,10 @@ public class InvitationIP implements InvitationSV {
     private JwtUtils jwtUtils;
 
     @Autowired
-    private ApiBean apiBean;
-
-    @Autowired
     private NotificationBean notificationBean;
 
     @Autowired
-    private DuplicateBean duplicate;
+    private EmailBean emailBean;
 
 
     /**
@@ -80,7 +78,7 @@ public class InvitationIP implements InvitationSV {
 
         String userType = jwtUtils.getClaim("userType", String.class);
         if (userType.equals("skyuser")) {
-            throw new UnauthorizedException("Opp something went wrong", "");
+            throw new UnauthorizedException("Opp something went wrong", null);
         }
 
         List<SkyuserSearchTO> skyUsers = invitationNQ.listSkyuserByEmailOrPhone(request.getParameter("email"));
@@ -110,13 +108,13 @@ public class InvitationIP implements InvitationSV {
 
         String userType = jwtUtils.getClaim("userType", String.class);
         if (userType.equals("skyuser")) {
-            throw new UnauthorizedException("sth_w_w", "");
+            throw new UnauthorizedException("sth_w_w", null);
         }
 
         UserEntity skyuser = userRepository.findById(inviteStaff.getUserId());
 
         if (skyuser == null) {
-            throw new BadRequestException("sth_w_w", "");
+            throw new BadRequestException("sth_w_w", null);
         }
 
         String b = companyHasUserRP.existUserCompany(skyuser.getStakeHolderUser().getId());
@@ -124,20 +122,20 @@ public class InvitationIP implements InvitationSV {
         List<RoleTO> roleTO = invitationNQ.listOrFindRole("byRole", inviteStaff.getSkyuserRole());
 
         if (b.equals("1") || roleTO.size() == 0) {
-            throw new BadRequestException("sth_w_w", "");
+            throw new BadRequestException("sth_w_w", null);
         }
 
         Long companyId = jwtUtils.getClaim("companyId", Long.class);
 
-        general.addInvitation(skyuser.getStakeHolderUser().getId(), companyId,null, "hasAcc");
+        general.addInvitation(skyuser.getStakeHolderUser().getId(), companyId, null, "hasAcc");
 
         notificationBean.sendNotiSkyuser(skyuser.getStakeHolderUser().getId());
 
         StakeHolderUserEntity stakeHolderUser = skyuser.getStakeHolderUser();
         String fullName = stakeHolderUser.getFirstName() + " " + stakeHolderUser.getLastName();
 
-        Map<String, Object> mailData = duplicate.mailData(skyuser.getEmail(), fullName, 0, "invitation_is_waiting_for_your_confirmation");
-        apiBean.sendEmailSMS("Invitation", mailData);
+        Map<String, Object> mailData = emailBean.mailData(skyuser.getEmail(), fullName, 0, "invitation_is_waiting_for_your_confirmation");
+        emailBean.sendEmailSMS("Invitation", mailData);
 
     }
 
@@ -153,17 +151,19 @@ public class InvitationIP implements InvitationSV {
 
         String userType = jwtUtils.getClaim("userType", String.class);
         if (userType.equals("skyuser")) {
-            throw new UnauthorizedException("sth_w_w", "");
+            throw new UnauthorizedException("sth_w_w", null);
         }
 
         checkExistInv(inviteStaffNoAccRQ);
 
         Long companyId = jwtUtils.getClaim("companyId", Long.class);
 
-        general.addInvitation(null, companyId,inviteStaffNoAccRQ.getUsername(), "noAcc");
+        StakeholderUserInvitationEntity stakeholderUser = general.addInvitation(null, companyId, inviteStaffNoAccRQ.getUsername(), "noAcc");
 
-        Map<String, Object> mailData = duplicate.mailData(inviteStaffNoAccRQ.getUsername(),"", 0, "invitation_is_waiting_for_your_confirmation");
-        apiBean.sendEmailSMS("Invitation", mailData);
+        Map<String, Object> mailData = emailBean.mailData(inviteStaffNoAccRQ.getUsername(), "", 0, "invitation_is_waiting_for_your_confirmation");
+        mailData.put("dataEncrypt", this.encryptId(stakeholderUser.getId().toString()));
+
+        emailBean.sendEmailSMS("Invitation", mailData);
 
     }
 
@@ -179,7 +179,7 @@ public class InvitationIP implements InvitationSV {
 
         StakeholderUserInvitationEntity userInv = userInvRP.findFirstByInviteTo(inviteStaffNoAccRQ.getUsername());
         if (userInv != null) {
-            throw new BadRequestException("inv_ald", "");
+            throw new ConflictException("inv_ald", null);
         }
 
     }
@@ -226,7 +226,7 @@ public class InvitationIP implements InvitationSV {
         StakeholderUserInvitationEntity emailRemove = userInvRP.findByIdAndStakeholderCompanyId(id, companyId);
 
         if (emailRemove == null) {
-            throw new BadRequestException("sth_w_w", "");
+            throw new BadRequestException("sth_w_w", null);
         }
 
         userInvRP.delete(emailRemove);
@@ -243,10 +243,98 @@ public class InvitationIP implements InvitationSV {
      */
     public void resendPendingEmail(InviteStaffNoAccRQ inviteStaffNoAccRQ) {
 
-        Map<String, Object> mailData = duplicate.mailData(inviteStaffNoAccRQ.getUsername(),"", 0, "invitation_is_waiting_for_your_confirmation");
-        apiBean.sendEmailSMS("Invitation again", mailData);
+        StakeholderUserInvitationEntity stakeholderUser = userInvRP.findFirstByInviteTo(inviteStaffNoAccRQ.getUsername());
+
+        if (stakeholderUser == null) {
+            throw new BadRequestException("sth_w_w", "");
+        }
+
+        Map<String, Object> mailData = emailBean.mailData(inviteStaffNoAccRQ.getUsername(), "", 0, "invitation_is_waiting_for_your_confirmation");
+        mailData.put("dataEncrypt", this.encryptId(stakeholderUser.getId().toString()));
+        emailBean.sendEmailSMS("Invitation again", mailData);
 
     }
 
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Check expiration link invitaion
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param InvitationExpireRQ
+     * @Return HashMap<String, Boolean>
+     */
+    @Override
+    public HashMap<String, Boolean> checkExpired(InvitationExpireRQ invitationExpireRQ) {
+
+        int inviteId = Integer.valueOf(this.decryptId(invitationExpireRQ.getInviteKey()));
+
+        StakeholderUserInvitationEntity userInvited = userInvRP.findStakeholderUserInvitationById(inviteId);
+
+        boolean isExpire = this.expiredInvitation(userInvited);
+
+        HashMap<String, Boolean> data = new HashMap<>();
+
+        data.put("expired", isExpire);
+
+        return data;
+
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Check expiration link invitaion
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param StakeholderUserInvitationEntity
+     */
+    private boolean expiredInvitation(StakeholderUserInvitationEntity userInvited) {
+
+        if (userInvited == null) {
+            throw new BadRequestException("sth_w_w", "");
+        }
+
+        Date currentDate = new Date();
+        Timestamp currentTime = new Timestamp(currentDate.getTime());
+
+        long diff = currentTime.getTime() - userInvited.getCreatedAt().getTime();
+
+        int diffMin = (int) (diff / (60 * 1000));
+
+        if (diffMin > 60) {
+            return false;
+        }
+        return true;
+
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Encrypt id
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param String key
+     */
+    private String encryptId(String key) {
+        final String secretKey = "sky-booking";
+
+        return AES.encrypt(key, secretKey);
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Decrypt id
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param String key
+     */
+    private String decryptId(String key) {
+        final String secretKey = "sky-booking";
+
+        return AES.decrypt(key, secretKey);
+    }
 
 }

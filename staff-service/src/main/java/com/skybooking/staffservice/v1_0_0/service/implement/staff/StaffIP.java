@@ -2,6 +2,7 @@ package com.skybooking.staffservice.v1_0_0.service.implement.staff;
 
 import com.skybooking.staffservice.exception.httpstatus.BadRequestException;
 import com.skybooking.staffservice.exception.httpstatus.NotFoundException;
+import com.skybooking.staffservice.exception.httpstatus.UnauthorizedException;
 import com.skybooking.staffservice.v1_0_0.io.enitity.company.StakeholderUserHasCompanyEntity;
 import com.skybooking.staffservice.v1_0_0.io.nativeQuery.staff.*;
 import com.skybooking.staffservice.v1_0_0.io.repository.company.CompanyHasUserRP;
@@ -17,10 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -44,6 +42,11 @@ public class StaffIP implements StaffSV {
     public StaffPaginationRS getStaff() {
 
         Long companyId = jwtUtils.getClaim("companyId", Long.class);
+        String userType = jwtUtils.getClaim("userType", String.class);
+
+        if (userType.equals("skyuser")) {
+            throw new UnauthorizedException("unauthorized", null);
+        }
 
         String keyword = request.getParameter("keyword") != null ? request.getParameter("keyword") : "";
         String role = request.getParameter("role") != null ? request.getParameter("role") : "";
@@ -124,45 +127,34 @@ public class StaffIP implements StaffSV {
             StaffRS staffRS = new StaffRS();
 
             List<StaffTotalBookingTO> bookingListTO = staffNQ.listStaffTotalBooking(staffTO.getSkyuserId(), companyId);
-            List<StaffTotalBookingTO> initialList = Arrays.asList(
-                    new StaffTotalBookingTO(BigInteger.valueOf(0), BigDecimal.valueOf(0.0), "Upcoming"),
-                    new StaffTotalBookingTO(BigInteger.valueOf(0), BigDecimal.valueOf(0.0), "Completed"),
-                    new StaffTotalBookingTO(BigInteger.valueOf(0), BigDecimal.valueOf(0.0), "Cancelled"));
-
-            bookingListTO.forEach(itemBooking -> {
-                initialList.forEach(itemInit -> {
-                    if (itemBooking.getStatusKey().equals(itemInit.getStatusKey())) {
-                        itemInit.setStatus(itemBooking.getStatus());
-                        itemInit.setAmount(itemBooking.getAmount());
-                        itemInit.setQuantity(itemBooking.getQuantity());
-                    }
-                });
-            });
-
-            StaffTotalBookingRS bookingListRS = new StaffTotalBookingRS();
-
-            initialList.forEach(itemInit -> {
-                Upcoming upcoming = new Upcoming();
-                Completed completed = new Completed();
-                Cancellation cancellation = new Cancellation();
-
-                if (itemInit.getStatusKey().equals("Upcoming")) {
-                    upcoming.setAmount(itemInit.getAmount());
-                    upcoming.setQuantity(itemInit.getQuantity());
-                    bookingListRS.setUpcoming(upcoming);
-                } else if (itemInit.getStatusKey().equals("Completed")) {
-                    completed.setAmount(itemInit.getAmount());
-                    completed.setQuantity(itemInit.getQuantity());
-                    bookingListRS.setCompleted(completed);
-                } else if (itemInit.getStatusKey().equals("Cancelled")) {
-                    cancellation.setAmount(itemInit.getAmount());
-                    cancellation.setQuantity(itemInit.getQuantity());
-                    bookingListRS.setCancellation(cancellation);
-                }
-            });
 
             BeanUtils.copyProperties(staffTO, staffRS);
-            staffRS.setFlightBooking(bookingListRS);
+
+            StaffTotalBookingRS bookingStatus = new StaffTotalBookingRS();
+            AmountRS defaults = new AmountRS();
+
+            bookingStatus.setCompleted(defaults);
+            bookingStatus.setCancellation(defaults);
+            bookingStatus.setUpcoming(defaults);
+
+            for (StaffTotalBookingTO item : bookingListTO) {
+                switch (item.getStatusKey()) {
+                    case "Completed" :
+                        AmountRS complete = setAmount(item);
+                        bookingStatus.setCompleted(complete);
+                        break;
+                    case "Cancelled" :
+                        AmountRS cancel = setAmount(item);
+                        bookingStatus.setCancellation(cancel);
+                        break;
+                    case "Upcoming" :
+                        AmountRS upcoming = setAmount(item);
+                        bookingStatus.setUpcoming(upcoming);
+                        break;
+                }
+
+            }
+            staffRS.setFlightBooking(bookingStatus);
 
             staffRS.setPhotoMedium(environment.getProperty("spring.awsImageUrl.profile.url_larg") + staffTO.getPhoto());
             staffRS.setPhotoSmall(environment.getProperty("spring.awsImageUrl.profile.url_larg") + "_thumbnail/"
@@ -173,6 +165,14 @@ public class StaffIP implements StaffSV {
 
         return staffsRS;
 
+    }
+
+    public AmountRS setAmount(StaffTotalBookingTO item) {
+        AmountRS amount = new AmountRS();
+        amount.setAmount(item.getAmount());
+        amount.setQuantity(item.getQuantity());
+
+        return amount;
     }
 
     /**
@@ -191,7 +191,7 @@ public class StaffIP implements StaffSV {
         StaffProfileRS staffRS = new StaffProfileRS();
 
         if (staffTO.stream().findFirst().isEmpty()) {
-            throw new NotFoundException("This url not found", "");
+            throw new NotFoundException("This url not found", null);
         }
 
         BeanUtils.copyProperties(staffTO.stream().findFirst().get(), staffRS);
@@ -227,10 +227,10 @@ public class StaffIP implements StaffSV {
                 .findByStakeholderCompanyIdAndStakeholderUserId(companyId, deactiveStaffRQ.getSkyuserId());
 
         if (staff == null) {
-            throw new BadRequestException("sth_w_w", "");
+            throw new BadRequestException("sth_w_w", null);
         }
 
-        staff.setJoinStatus(0);
+        staff.setJoinStatus(staff.getJoinStatus() == 1 ? 0 : 1);
         companyHasUserRP.save(staff);
 
     }

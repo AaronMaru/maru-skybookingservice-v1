@@ -1,7 +1,6 @@
 package com.skybooking.stakeholderservice.listener;
 
 import com.skybooking.stakeholderservice.v1_0_0.util.email.EmailBean;
-import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

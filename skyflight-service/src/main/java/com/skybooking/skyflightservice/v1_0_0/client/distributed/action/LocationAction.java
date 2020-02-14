@@ -2,7 +2,9 @@ package com.skybooking.skyflightservice.v1_0_0.client.distributed.action;
 
 
 import com.skybooking.skyflightservice.config.AppConfig;
+import com.skybooking.skyflightservice.constant.CustomHeaderConstant;
 import com.skybooking.skyflightservice.v1_0_0.security.token.DSTokenHolder;
+import com.skybooking.skyflightservice.v1_0_0.util.header.HeaderBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,9 @@ public class LocationAction {
 
     @Autowired
     private AppConfig appConfig;
+
+    @Autowired
+    private HeaderBean headerBean;
 
     @Autowired
     private WebClient client;
@@ -42,6 +47,8 @@ public class LocationAction {
                 .get()
                 .uri(appConfig.getDISTRIBUTED_URI() + "/utils/" + appConfig.getDISTRIBUTED_VERSION() + "/sb-quick-search-location?groupByKey=" + groupByKey)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
+                .header(CustomHeaderConstant.LOCALIZATION, headerBean.getLocalization())
+                .header(CustomHeaderConstant.CURRENCY, headerBean.getCurrencyCode())
                 .retrieve()
                 .bodyToMono(Object.class);
 
@@ -67,6 +74,8 @@ public class LocationAction {
                 .get()
                 .uri(appConfig.getDISTRIBUTED_URI() + "/utils/" + appConfig.getDISTRIBUTED_VERSION() + "/sb-auto-complete?keyword=" + keyword + "&groupBy=" + groupBy)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
+                .header(CustomHeaderConstant.LOCALIZATION, headerBean.getLocalization())
+                .header(CustomHeaderConstant.CURRENCY, headerBean.getCurrencyCode())
                 .retrieve()
                 .bodyToMono(Object.class);
 
@@ -90,6 +99,8 @@ public class LocationAction {
                 .get()
                 .uri(appConfig.getDISTRIBUTED_URI() + "/utils/" + appConfig.getDISTRIBUTED_VERSION() + "/sb-countries")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
+                .header(CustomHeaderConstant.LOCALIZATION, headerBean.getLocalization())
+                .header(CustomHeaderConstant.CURRENCY, headerBean.getCurrencyCode())
                 .retrieve()
                 .bodyToMono(Object.class);
 
@@ -114,6 +125,8 @@ public class LocationAction {
                 .get()
                 .uri(appConfig.getDISTRIBUTED_URI() + "/utils/" + appConfig.getDISTRIBUTED_VERSION() + "/sb-cities/" + countryId)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
+                .header(CustomHeaderConstant.LOCALIZATION, headerBean.getLocalization())
+                .header(CustomHeaderConstant.CURRENCY, headerBean.getCurrencyCode())
                 .retrieve()
                 .bodyToMono(Object.class);
 

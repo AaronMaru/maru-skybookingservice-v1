@@ -170,4 +170,37 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(errors, HttpStatus.TEMPORARY_REDIRECT);
 
     }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Gone
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Status 410
+     */
+    @ExceptionHandler(GoneException.class)
+    public ResponseEntity<CustomErrorResponse> handleGone(GoneException ex, WebRequest request) {
+
+        CustomErrorResponse errors = new CustomErrorResponse();
+        errors.setTimestamp(LocalDateTime.now());
+        errors.setMessage(localization.multiLanguageRes(ex.getMessage()));
+        errors.setStatus(HttpStatus.GONE.value());
+        errors.setData(ex.getData());
+
+        return new ResponseEntity<>(errors, HttpStatus.GONE);
+
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<CustomErrorResponse> handleConflict(ConflictException ex, WebRequest request) {
+
+        CustomErrorResponse errors = new CustomErrorResponse();
+        errors.setTimestamp(LocalDateTime.now());
+        errors.setMessage(localization.multiLanguageRes(ex.getMessage()));
+        errors.setStatus(HttpStatus.CONFLICT.value());
+        errors.setData(ex.getData());
+
+        return new ResponseEntity<>(errors, HttpStatus.CONFLICT);
+
+    }
 }

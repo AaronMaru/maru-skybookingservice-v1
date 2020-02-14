@@ -27,9 +27,11 @@ import com.skybooking.stakeholderservice.v1_0_0.transformer.UserDetailsTF;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.CompanyRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.LicenseRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.PermissionRS;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.math.NumberUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -110,11 +112,11 @@ public class UserBean {
         UserEntity user = userRepository.findByUsername(authentication.getName());
 
         if (user == null) {
-            throw new UnauthorizedException("sth_w_w", "");
+            throw new UnauthorizedException("sth_w_w", null);
         }
 
         if (user.getStakeHolderUser().getStatus() != 1) {
-            throw new UnauthorizedException("sth_w_w", "");
+            throw new UnauthorizedException("sth_w_w", null);
         }
 
         return user;
@@ -181,8 +183,9 @@ public class UserBean {
         String encCredentials = "Basic " + new String(Base64.encodeBase64(credentials.getBytes()));
 
         if (!httpHeaders.getFirst("Authorization").equals(encCredentials)) {
-            throw new UnauthorizedException("Unauthorized", "");
+            throw new UnauthorizedException("Unauthorized", null);
         }
+
         return httpHeaders.getFirst("Authorization");
 
     }
@@ -208,7 +211,7 @@ public class UserBean {
         userDetailDao.setPhone(generalBean.strCv(user.getPhone()));
         userDetailDao.setCode(generalBean.strCv(user.getCode()));
         userDetailDao.setGender(generalBean.strCv(user.getStakeHolderUser().getGender()));
-        userDetailDao.setSkyowner(user.getStakeHolderUser().getIsSkyowner());
+        userDetailDao.setIsSkyowner(user.getStakeHolderUser().getIsSkyowner());
         userDetailDao.setUserCode(user.getStakeHolderUser().getUserCode());
         userDetailDao.setDob(generalBean.strCv(user.getStakeHolderUser().getDateOfBirth()));
         userDetailDao.setJoined(generalBean.strCv(user.getCreatedAt().toString()));
@@ -290,7 +293,7 @@ public class UserBean {
             companyRS.setCompanyName(company.getCompanyName());
             companyRS.setContactPerson(company.getContactPerson());
             companyRS.setContactPosition(company.getContactPosition());
-            companyRS.setBussinessTypeId(company.getBussinessTypeId());
+            companyRS.setBusinessTypeId(company.getBussinessTypeId());
             companyRS.setDescription(company.getDescription());
 
             String status = companyStatus(company.getStatus());
@@ -309,7 +312,8 @@ public class UserBean {
             }
             companyRS.setLicenses(licenses);
 
-            companyRS.setProfileImg(company.getProfileImg());
+            String profile = (company.getProfileImg() == null) ? "default.png" : company.getProfileImg();
+            companyRS.setProfileImg(environment.getProperty("spring.awsImageUrl.companyProfile") + "origin/" + profile);
 
             companyContacts(company, companyRS);
 
@@ -380,7 +384,7 @@ public class UserBean {
                     companyRS.setPostalOrZipCode(contact.getValue());
                     break;
                 case "w" :
-                    companyRS.setWebiste(contact.getValue());
+                    companyRS.setWebsite(contact.getValue());
                     break;
                 case "c" :
                     companyRS.setCity(contact.getValue());
@@ -644,7 +648,7 @@ public class UserBean {
         String playerId = request.getHeader("X-PlayerId");
 
         if (playerId == "" || playerId == null) {
-            throw new UnauthorizedException("sth_w_w", "");
+            throw new UnauthorizedException("sth_w_w", null);
         }
 
         UserPlayerEntity player = userPlayerRP.findByStuserIdAndPlayerId(skyuserId, playerId);
@@ -687,31 +691,52 @@ public class UserBean {
 
     }
 
-//    public void storeToken(UserEntity user, String token) {
-//
-//        String playerId = request.getHeader("X-PlayerId");
-//
-//        UserTokenApiEntity userToken = userTokenApiRP.findByDeviceId(playerId);
-//
-//        if (userToken == null) {
-//            userToken = new UserTokenApiEntity();
-//        }
-//
-//        List<UserTokenApiEntity> userTokens = new ArrayList<>();
-//        userTokens.add(userToken);
-//
-//        userToken.setToken(token);
-//        userToken.setDeviceId(playerId);
-//
-//        for (UserTokenApiEntity tokenUser: userTokens) {
-//            tokenUser.setUserEntity(user);
-//        }
-//
-//        user.setUserTokenEntities(userTokens);
-//
-//        userRepository.save(user);
-//
-//    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Get username
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param username
+     * @Param code
+     */
+    public String getUsername(String username, String code) {
+
+        String fullUsername = "";
+
+        if (NumberUtils.isNumber(username)) {
+            fullUsername = code + "" + username.replaceFirst("^0+(?!$)", "");
+            if (code == null) {
+                fullUsername = username.replaceFirst("^0+(?!$)", "");
+            }
+        } else {
+            fullUsername = username;
+        }
+
+        return fullUsername;
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Get user details
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param user
+     * @Param username
+     * @Param password
+     */
+    public UserDetailsTokenRS userDetailByLogin(UserEntity user, String username, String password) {
+
+        UserDetailsTokenRS userDetailsTokenRS = new UserDetailsTokenRS();
+        String credentials = environment.getProperty("spring.oauth2.client-id") + ":" + environment.getProperty("spring.oauth2.client-secret");
+        String encCredentials = "Basic " + new String(Base64.encodeBase64(credentials.getBytes()));
+        TokenTF data = getCredential(username, password, encCredentials, user.getCode(), null);
+        BeanUtils.copyProperties(userFields(user, data.getAccess_token()), userDetailsTokenRS);
+
+        return userDetailsTokenRS;
+
+    }
 
 
 }

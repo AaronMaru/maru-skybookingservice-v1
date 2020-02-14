@@ -101,12 +101,12 @@ public class UserDetailsTF {
         this.changedPassword = changedPassword;
     }
 
-    public int getSkyowner() {
+    public int getIsSkyowner() {
         return isSkyowner;
     }
 
-    public void setSkyowner(int skyowner) {
-        isSkyowner = skyowner;
+    public void setIsSkyowner(int isSkyowner) {
+        this.isSkyowner = isSkyowner;
     }
 
     public String getGender() {
@@ -117,13 +117,6 @@ public class UserDetailsTF {
         this.gender = gender;
     }
 
-//    public int getStatus() {
-//        return status;
-//    }
-//
-//    public void setStatus(int status) {
-//        this.status = status;
-//    }
 
     public String getAddress() {
         return address;

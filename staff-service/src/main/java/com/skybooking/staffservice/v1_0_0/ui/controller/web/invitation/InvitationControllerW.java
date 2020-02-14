@@ -1,6 +1,7 @@
 package com.skybooking.staffservice.v1_0_0.ui.controller.web.invitation;
 
 import com.skybooking.staffservice.v1_0_0.service.interfaces.invitation.InvitationSV;
+import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.InvitationExpireRQ;
 import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.InviteStaffNoAccRQ;
 import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.SkyuserIdStaffRQ;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.ResRS;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.HashMap;
 import java.util.List;
 
 @RestController
@@ -110,5 +112,18 @@ public class InvitationControllerW {
         return localization.resAPI(HttpStatus.OK,"sent_succ", "");
     }
 
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Check if user that invite was expire
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param invitationExpireRQ
+     * @Return ResponseEntity
+     */
+    @PostMapping("/invitation/expire")
+    public ResRS checkExpire(@RequestBody InvitationExpireRQ invitationExpireRQ) {
+        HashMap<String, Boolean> isExpire = invitationSV.checkExpired(invitationExpireRQ);
+        return localization.resAPI(HttpStatus.OK,"res_succ", isExpire);
+    }
 
 }

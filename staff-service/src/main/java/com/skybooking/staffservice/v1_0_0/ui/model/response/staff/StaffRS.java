@@ -11,6 +11,7 @@ public class StaffRS {
     private String photoSmall;
     private String userCode;
     private String joinStatus;
+    private String position;
 
     private StaffTotalBookingRS flightBooking;
 
@@ -93,4 +94,13 @@ public class StaffRS {
     public void setJoinStatus(String joinStatus) {
         this.joinStatus = joinStatus;
     }
+
+    public String getPosition() {
+        return position;
+    }
+
+    public void setPosition(String position) {
+        this.position = position;
+    }
+
 }

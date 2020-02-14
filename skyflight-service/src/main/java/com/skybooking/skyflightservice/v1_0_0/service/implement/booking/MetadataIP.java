@@ -18,7 +18,30 @@ public class MetadataIP implements MetadataSV {
 
 
     @Override
-    public BookingMetadataTA getMetadata() {
+    public BookingMetadataTA getSkyownerMetadata() {
+
+        var header = headerBean.getHeaders();
+        var bookingMetadata = this.getMetadata();
+        bookingMetadata.setCompanyId(header.getCompanyId());
+
+        return bookingMetadata;
+
+    }
+
+
+
+    @Override
+    public BookingMetadataTA getSkyuserMetadata() {
+
+        var bookingMetadata = this.getMetadata();
+        bookingMetadata.setUserType("skyuser");
+
+        return bookingMetadata;
+    }
+
+
+
+    private BookingMetadataTA getMetadata() {
 
         var header = headerBean.getHeaders();
         var bookingMetadata = new BookingMetadataTA();
@@ -27,7 +50,6 @@ public class MetadataIP implements MetadataSV {
         bookingMetadata.setUserType(userType);
         bookingMetadata.setUserId(jwtUtils.getClaim("userId", Integer.class));
         bookingMetadata.setStakeholderId(jwtUtils.getClaim("stakeholderId", Integer.class));
-        bookingMetadata.setCompanyId(header.getCompanyId());
         bookingMetadata.setCurrencyCode(header.getCurrencyCode());
 
         return bookingMetadata;

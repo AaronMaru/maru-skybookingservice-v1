@@ -108,17 +108,21 @@ public class ShoppingAction {
      */
     public JsonNode revalidate(RevalidateRQ request) {
 
-        return client.mutate()
-                .exchangeStrategies(ExchangeStrategies.builder().codecs(clientCodecConfigurer -> {
-                    clientCodecConfigurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024);
-                }).build())
-                .build()
-                .post()
-                .uri(appConfig.getDISTRIBUTED_URI() + "/flight/" + appConfig.getDISTRIBUTED_VERSION() + "/shopping/revalidate")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(JsonNode.class).block();
+        try {
+            return client.mutate()
+                    .exchangeStrategies(ExchangeStrategies.builder().codecs(clientCodecConfigurer -> {
+                        clientCodecConfigurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024);
+                    }).build())
+                    .build()
+                    .post()
+                    .uri(appConfig.getDISTRIBUTED_URI() + "/flight/" + appConfig.getDISTRIBUTED_VERSION() + "/shopping/revalidate")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
+                    .bodyValue(request)
+                    .retrieve()
+                    .bodyToMono(JsonNode.class).block();
+        } catch (Exception e) {
+            throw e;
+        }
     }
 
 }

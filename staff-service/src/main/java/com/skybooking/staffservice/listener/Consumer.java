@@ -1,5 +1,6 @@
 package com.skybooking.staffservice.listener;
 
+import com.skybooking.staffservice.v1_0_0.util.email.EmailBean;
 import com.skybooking.staffservice.v1_0_0.util.general.ApiBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,19 +24,17 @@ public class Consumer {
 
     private Logger logger = LoggerFactory.getLogger(Consumer.class);
 
-
     @Autowired
-    private ApiBean apiBean;
-
+    private EmailBean emailBean;
 
     @JmsListener(destination = EMAIL)
     public void email(Map<String, Object> mailTemplateData) {
-        apiBean.email(mailTemplateData);
+        emailBean.email(mailTemplateData);
     }
 
     @JmsListener(destination = SMS)
     public void sms(Map<String, Object> mailTemplateData) {
-        apiBean.sms(mailTemplateData);
+        emailBean.sms(mailTemplateData);
     }
 
 }

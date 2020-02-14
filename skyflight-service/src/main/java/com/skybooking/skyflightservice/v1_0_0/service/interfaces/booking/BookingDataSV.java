@@ -44,7 +44,6 @@ public interface BookingDataSV {
     BookingEntity insertBooking(BookingRequestTA requestTA, BookingMetadataTA metadataTA, JsonNode pnrRS);
 
 
-
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * insert booking origin destination information
@@ -54,7 +53,6 @@ public interface BookingDataSV {
      * @param bookingId
      */
     void insertBookingOriginDestination(BookingRequestTA requestTA, Integer bookingId);
-
 
 
     /**
@@ -69,8 +67,6 @@ public interface BookingDataSV {
     void insertBookingStopAirport(Integer bookingOdId, List<HiddenStop> hiddenStops, int dateAdjustment);
 
 
-
-
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * insert booking special service information
@@ -80,7 +76,6 @@ public interface BookingDataSV {
      * @param pnrRS
      */
     void insertBookingSpecialService(Integer bookingId, JsonNode pnrRS);
-
 
 
     /**
@@ -117,4 +112,16 @@ public interface BookingDataSV {
      * @param request
      */
     void insertBookingAirTicket(Integer bookingId, List<TravelItineraryTA> travelItineraryTAS, BookingCreateRQ request);
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Update Ticket information
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param ticket
+     * @param bookingEntity
+     */
+    void updateTicket(JsonNode ticket, BookingEntity bookingEntity);
+
 }

@@ -1,6 +1,7 @@
 package com.skybooking.skyflightservice.v1_0_0.util.booking;
 
 import com.skybooking.skyflightservice.constant.passenger.PassengerCode;
+import com.skybooking.skyflightservice.v1_0_0.io.entity.booking.BookingEntity;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.MarkupNQ;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.MarkupTO;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.DetailSV;
@@ -8,11 +9,14 @@ import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.QueryS
 import com.skybooking.skyflightservice.v1_0_0.service.model.booking.BookingMetadataTA;
 import com.skybooking.skyflightservice.v1_0_0.service.model.booking.BookingRequestTA;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.booking.BookingPassengerRQ;
+import com.skybooking.skyflightservice.v1_0_0.ui.model.request.payment.PaymentMandatoryRQ;
 import com.skybooking.skyflightservice.v1_0_0.util.calculator.NumberFormatter;
+import com.skybooking.skyflightservice.v1_0_0.util.classes.booking.PriceInfo;
 import com.skybooking.skyflightservice.v1_0_0.util.passenger.PassengerUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 
@@ -342,6 +346,37 @@ public class BookingUtility {
 
         return metadataTA;
 
+    }
+
+
+    public PriceInfo getPriceInfo(BookingEntity booking, PaymentMandatoryRQ paymentMandatoryRQ) {
+
+        PriceInfo priceInfo = new PriceInfo();
+        BigDecimal grossAmount = NumberFormatter.trimAmount(booking.getTotalAmount().add(booking.getMarkupAmount()).add(booking.getMarkupPayAmount()));
+        BigDecimal discountPaymentMethodPercentage = paymentMandatoryRQ.getPercentage();
+        BigDecimal discountPaymentMethodAmount = NumberFormatter.trimAmount(grossAmount.multiply(discountPaymentMethodPercentage.divide(BigDecimal.valueOf(100))));
+        BigDecimal finalAmount = grossAmount.subtract(discountPaymentMethodAmount);
+        BigDecimal paymentMethodFeePercentage = paymentMandatoryRQ.getPercentageBase();
+        BigDecimal paymentMethodFeeAmount = NumberFormatter.trimAmount(finalAmount.multiply(paymentMethodFeePercentage));
+
+        priceInfo.setGrossAmount(grossAmount);
+        priceInfo.setMarkupPaymentMethodPercentage(booking.getMarkupPayPercentage());
+        priceInfo.setMarkupPaymentMethodAmount(booking.getMarkupPayAmount());
+        priceInfo.setDiscountPaymentMethodPercentage(discountPaymentMethodPercentage);
+        priceInfo.setDiscountPaymentMethodAmount(discountPaymentMethodAmount);
+
+        /**
+         * update payment method fee for back office
+         */
+        priceInfo.setPaymentMethodFeePercentage(paymentMethodFeePercentage);
+        priceInfo.setPaymentMethodFeeAmount(paymentMethodFeeAmount);
+
+        /**
+         * final amount: discount already
+         */
+        priceInfo.setFinalAmount(finalAmount);
+
+        return priceInfo;
     }
 
 }

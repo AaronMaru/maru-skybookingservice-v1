@@ -1,0 +1,25 @@
+SELECT
+    dpmd.type AS type,
+    dpmd.code AS code,
+    dpmd.method AS method,
+    dpmd.percentage AS percentage,
+    dpmd.percentage_base AS percentageBase,
+    dpmd.payment_id AS paymentId
+FROM
+    dis_payment_method_details AS dpmd
+WHERE
+    dpmd.status = 1
+AND
+	 dpmd.dis_payment_method_id = (
+
+	SELECT
+	    dpm.id AS id
+	FROM
+	    dis_payment_methods AS dpm
+	WHERE
+	    dpm.start_date < UTC_TIMESTAMP()
+	ORDER BY
+	    dpm.start_date DESC
+	LIMIT 1
+
+)

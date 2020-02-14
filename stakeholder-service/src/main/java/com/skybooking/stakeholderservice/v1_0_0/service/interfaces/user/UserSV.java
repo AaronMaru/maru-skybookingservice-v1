@@ -21,11 +21,11 @@ public interface UserSV {
     UserDetailsRS updateProfile(ProfileRQ profileRQ, MultipartFile multipartFile) throws ParseException;
     void deactiveAccount(DeactiveAccountRQ accountRQ);
     UserDetailsTokenRS resetPassword(ResetPasswordRQ passwordRQ, HttpHeaders httpHeaders);
-    int sendCodeResetPassword(SendVerifyRQ sendVerifyRQ);
     void updateContact(UpdateContactRQ contactRQ);
     int sendCodeUpdateContact(UpdateContactRQ contactRQ);
     void applySkyowner(CompanyRQ companyRQ);
     List<InvitationRS> getInvitations();
     void options(OptionStaffRQ optionStaffRQ);
+    UserDetailsTokenRS resetPasswordMobile(ResetPasswordMobileRQ resetPasswordMobileRQ);
 
 }

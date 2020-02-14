@@ -60,6 +60,21 @@ public class VerifyControllerW {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
+     * Send code to reset password
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param verifyRequest
+     * @Return ResRS
+     */
+    @PostMapping("/send-forgot-password")
+    public ResRS sendCodeResetPassword(@RequestBody SendVerifyRQ sendVerifyRQ) {
+        verifySV.sendCodeResetPassword(sendVerifyRQ);
+        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"vf_rdy_sent", "");
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
      * Verify user to active account
      * -----------------------------------------------------------------------------------------------------------------
      *

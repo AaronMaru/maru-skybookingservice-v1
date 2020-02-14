@@ -29,9 +29,17 @@ spring:
       auth: true
       starttls.enable: true
       ssl.trust: smtp.gmail.
-      
+
+  awsImage:
+    url: s3.amazonaws.com
+    region: us-east-1
+    bucket: skybooking
+    key: AKIAJEC5JZZKMU7GNCFQ
+    secret: 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
+    visibility: public
   awsImageUrl:
     mailTemplate: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/mail/images/
+
 
 native-query:
   package-scan: com.skybooking.staffservice

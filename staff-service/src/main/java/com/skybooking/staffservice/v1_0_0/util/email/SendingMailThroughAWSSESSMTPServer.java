@@ -63,6 +63,10 @@ public class SendingMailThroughAWSSESSMTPServer {
                 html= this.replaceCode(html, "{{FULL_NAME}}", mailTemplateData.get("fullName").toString());
             }
 
+            if (mailTemplateData.containsKey("dataEncrypt")) {
+                html= this.replaceCode(html, "{{CODE_ENCRYPY}}", mailTemplateData.get("dataEncrypt").toString());
+            }
+
             helper.setTo(mailProperty.get("TO"));
             helper.setText(html, true);
             helper.setSubject(mailProperty.get("SUBJECT"));

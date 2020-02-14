@@ -1,6 +1,7 @@
 package com.skybooking.staffservice.v1_0_0.util.general;
 
 import com.skybooking.staffservice.exception.httpstatus.BadRequestException;
+import com.skybooking.staffservice.exception.httpstatus.ConflictException;
 import com.skybooking.staffservice.v1_0_0.io.enitity.company.StakeholderUserHasCompanyEntity;
 import com.skybooking.staffservice.v1_0_0.io.enitity.user.StakeholderUserInvitationEntity;
 import com.skybooking.staffservice.v1_0_0.io.repository.company.CompanyHasUserRP;
@@ -48,7 +49,7 @@ public class GeneralBean {
      * @Param invFrom
      * @Param invTo
      */
-    public void addInvitation(Long skyuserId, Long companyId, String invTo, String acc) {
+    public StakeholderUserInvitationEntity addInvitation(Long skyuserId, Long companyId, String invTo, String acc) {
 
         StakeholderUserInvitationEntity exits = invitationRP.findByInviteStakeholderUserIdAndStakeholderCompanyId(skyuserId, companyId);
 
@@ -57,7 +58,7 @@ public class GeneralBean {
         }
 
         if (exits != null) {
-            throw new BadRequestException("The user already invited", "");
+            throw new ConflictException("The user already invited", null);
         }
 
         StakeholderUserInvitationEntity invitation = new StakeholderUserInvitationEntity();
@@ -68,6 +69,7 @@ public class GeneralBean {
 
         invitationRP.save(invitation);
 
+        return invitation;
     }
 
 

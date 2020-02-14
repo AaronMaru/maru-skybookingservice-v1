@@ -34,12 +34,6 @@ public class UserControllerM {
     private UserSV userSV;
 
     @Autowired
-    private DefaultTokenServices tokenServices;
-
-    @Autowired
-    private TokenStore tokenStore;
-
-    @Autowired
     UserRepository userRepository;
 
     @Autowired
@@ -92,7 +86,7 @@ public class UserControllerM {
     @PatchMapping("/change-password")
     public ResRS changPassword(@Valid @RequestBody ChangePasswordRQ passwordRQ) {
         userSV.changePassword(passwordRQ);
-        return localization.resAPI(HttpStatus.OK, "ch_pwd_succ", "");
+        return localization.resAPI(HttpStatus.OK, "ch_pwd_succ", null);
     }
 
 
@@ -105,24 +99,9 @@ public class UserControllerM {
      * @Return ResponseEntity
      */
     @PatchMapping("/auth/forgot-password")
-    public ResRS resetPassword(@Valid @RequestBody ResetPasswordRQ passwordRQ, @RequestHeader HttpHeaders httpHeaders) {
-        UserDetailsTokenRS userDetail = userSV.resetPassword(passwordRQ, httpHeaders);
+    public ResRS resetPassword(@Valid @RequestBody ResetPasswordMobileRQ resetPasswordMobileRQ) {
+        UserDetailsTokenRS userDetail = userSV.resetPasswordMobile(resetPasswordMobileRQ);
         return localization.resAPI(HttpStatus.OK, "reset_pwd_succ", userDetail);
-    }
-
-
-    /**
-     * -----------------------------------------------------------------------------------------------------------------
-     * Send code to reset password
-     * -----------------------------------------------------------------------------------------------------------------
-     *
-     * @Param verifyRequest
-     * @Return ResponseEntity
-     */
-    @PostMapping("/auth/send-forgot-password")
-    public ResRS sendCodeResetPassword(@RequestBody SendVerifyRQ sendVerifyRQ) {
-        userSV.sendCodeResetPassword(sendVerifyRQ);
-        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"vf_rdy_sent", "");
     }
 
 
@@ -137,7 +116,7 @@ public class UserControllerM {
     @PatchMapping("/update-contact")
     public ResRS updateContact(@Valid @RequestBody UpdateContactRQ contactRQ) {
         userSV.updateContact(contactRQ);
-        return localization.resAPI(HttpStatus.OK, "update_succ", "");
+        return localization.resAPI(HttpStatus.OK, "update_succ", null);
     }
 
 
@@ -152,25 +131,8 @@ public class UserControllerM {
     @PostMapping("/send-update-contact")
     public ResRS sendCodeUpdateContact(@RequestBody UpdateContactRQ contactRQ) {
         userSV.sendCodeUpdateContact(contactRQ);
-        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"vf_rdy_sent", "");
+        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"vf_rdy_sent", null);
     }
-
-
-//    /**
-//     * -----------------------------------------------------------------------------------------------------------------
-//     * Logout
-//     * -----------------------------------------------------------------------------------------------------------------
-//     *
-//     * @No_return
-//     */
-//    @DeleteMapping("/logout")
-//    public ResponseEntity revokeToken() {
-//        final OAuth2Authentication auth = (OAuth2Authentication) SecurityContextHolder
-//                .getContext().getAuthentication();
-//        final String token = tokenStore.getAccessToken(auth).getValue();
-//        tokenServices.revokeToken(token);
-//        return new ResponseEntity<>(localization.resAPI("Logout sucessful", ""), HttpStatus.OK);
-//    }
 
 
     /**
@@ -184,7 +146,7 @@ public class UserControllerM {
     @PatchMapping("/deactive-account")
     public ResRS deactiveAccount(@Valid @RequestBody DeactiveAccountRQ accountRQ) {
         userSV.deactiveAccount(accountRQ);
-        return localization.resAPI(HttpStatus.OK, "succ_deact", "");
+        return localization.resAPI(HttpStatus.OK, "succ_deact", null);
     }
 
 
@@ -205,7 +167,7 @@ public class UserControllerM {
 
         userSV.applySkyowner(companyRQ);
 
-        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"apl_skyowner_succ", "");
+        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"apl_skyowner_succ", null);
 
     }
 

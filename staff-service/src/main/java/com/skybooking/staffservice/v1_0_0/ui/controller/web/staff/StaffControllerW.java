@@ -59,7 +59,7 @@ public class StaffControllerW {
     @PatchMapping("/deactive-staff")
     public ResRS staffDeactive(@RequestBody DeactiveStaffRQ deactiveRQ) {
         staffSV.deactiveStaff(deactiveRQ);
-        return localization.resAPI(HttpStatus.OK,"acc_deact", "");
+        return localization.resAPI(HttpStatus.OK,"status_update", "");
     }
 
 

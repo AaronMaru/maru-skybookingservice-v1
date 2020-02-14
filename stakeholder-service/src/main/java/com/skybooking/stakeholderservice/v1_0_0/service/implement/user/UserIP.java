@@ -83,6 +83,9 @@ public class UserIP implements UserSV {
     @Autowired
     private EmailBean emailBean;
 
+    @Autowired
+    private VerifyUserRP verifyRP;
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Get User Details
@@ -223,48 +226,54 @@ public class UserIP implements UserSV {
 
         emailBean.sendEmailSMS("success-reset-password", mailData);
 
-        UserDetailsTokenRS userDetailsTokenRS = new UserDetailsTokenRS();
-        String credentials = environment.getProperty("spring.oauth2.client-id") + ":" + environment.getProperty("spring.oauth2.client-secret");
-        String encCredentials = "Basic " + new String(Base64.encodeBase64(credentials.getBytes()));
-        TokenTF data = userBean.getCredential(passwordRQ.getUsername(), passwordRQ.getNewPassword(), encCredentials, user.getCode(), null);
-        BeanUtils.copyProperties(userBean.userFields(user, data.getAccess_token()), userDetailsTokenRS);
+        UserDetailsTokenRS userDetailsTokenRS = userBean.userDetailByLogin(user, passwordRQ.getUsername(), passwordRQ.getNewPassword());
 
         return userDetailsTokenRS;
 
     }
 
 
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * Send code to reset password
+     * Reset password (For mobile)
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @Param verifyRequest
+     * @Param passwordRQ
      */
-    public int sendCodeResetPassword(SendVerifyRQ verifyRQ) {
+    public UserDetailsTokenRS resetPasswordMobile(ResetPasswordMobileRQ resetPasswordMobileRQ) {
 
-        UserEntity user = userRepository.findByEmailOrPhone(verifyRQ.getUsername(), verifyRQ.getCode());
+        String receiver = "";
 
-        if (user == null || user.getProviderId() != null) {
-            throw new UnauthorizedException("Unauthorized", "");
+        if (NumberUtils.isNumber(resetPasswordMobileRQ.getUsername())) {
+            receiver = resetPasswordMobileRQ.getCode() + "" + resetPasswordMobileRQ.getUsername().replaceFirst("^0+(?!$)", "");
+        } else {
+            receiver = resetPasswordMobileRQ.getUsername();
         }
 
-        StakeHolderUserEntity stakeHolderUser = user.getStakeHolderUser();
-        String fullName = stakeHolderUser.getFirstName() + " " + stakeHolderUser.getLastName();
-        String receiver = NumberUtils.isNumber(verifyRQ.getUsername())
-                ? verifyRQ.getCode() + verifyRQ.getUsername().replaceFirst("^0+(?!$)", "")
-                : verifyRQ.getUsername();
+        var verify = verifyRP.findByUsernameAndVerifiedAndStatus(receiver, 1, Integer.parseInt(environment.getProperty("spring.verifyStatus.verifyUserAppReset")));
+        if (verify == null) {
+            throw new BadRequestException("sth_w_w", null);
+        }
 
-        generalBean.expireRequest(user,
-                Integer.parseInt(environment.getProperty("spring.verifyStatus.forgotPassword")));
-        int code = apiBean.createVerifyCode(user,
-                Integer.parseInt(environment.getProperty("spring.verifyStatus.forgotPassword")), null);
-        userRepository.save(user);
+        UserEntity user = userRepository.findByEmailOrPhone(resetPasswordMobileRQ.getUsername(), resetPasswordMobileRQ.getCode());
+        if (user == null) {
+            throw new UnauthorizedException("Unauthorized", null);
+        }
 
-        Map<String, Object> mailData = emailBean.mailData(receiver, fullName, code, "reset_your_password");
-        emailBean.sendEmailSMS("send-login", mailData);
+        user.setPassword(pwdEncoder.encode(resetPasswordMobileRQ.getNewPassword()));
+        verify.setVerified(2);
 
-        return code;
+        try {
+            verifyRP.save(verify);
+            userRepository.save(user);
+        } catch (Exception e) {
+            throw e;
+        }
+
+        UserDetailsTokenRS userDetailsTokenRS = userBean.userDetailByLogin(user, resetPasswordMobileRQ.getUsername(), resetPasswordMobileRQ.getNewPassword());
+
+        return userDetailsTokenRS;
 
     }
 

@@ -44,7 +44,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
         List<FieldError> fieldErrors = result.getFieldErrors();
         String validation = "";
 
-        body.put("data", "");
+        body.put("data", null);
         for (FieldError fieldError: fieldErrors) {
             validation = localization.multiLanguageRes(fieldError.getDefaultMessage());
 
