@@ -53,6 +53,9 @@ public class UserDetailsTF {
 
     private String typeSky = "";
 
+    private Long currencyId;
+    private String curencyCode;
+
     public String getFirstName() {
         return firstName;
     }
@@ -220,6 +223,22 @@ public class UserDetailsTF {
 
     public void setTypeSky(String typeSky) {
         this.typeSky = typeSky;
+    }
+
+    public Long getCurrencyId() {
+        return currencyId;
+    }
+
+    public void setCurrencyId(Long currencyId) {
+        this.currencyId = currencyId;
+    }
+
+    public String getCurencyCode() {
+        return curencyCode;
+    }
+
+    public void setCurencyCode(String curencyCode) {
+        this.curencyCode = curencyCode;
     }
 
 }

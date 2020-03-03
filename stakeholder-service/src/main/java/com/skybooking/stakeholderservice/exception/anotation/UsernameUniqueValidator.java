@@ -51,7 +51,7 @@ public class UsernameUniqueValidator implements ConstraintValidator<UsernameUniq
 
             Boolean n = Boolean.parseBoolean(userRepository.existsByEmailOrPhone(username.replaceFirst("^0+(?!$)", ""), code, lastSeg.equals("company") ? userBean.getUserPrincipalVld().getId() : null));
             Boolean b = Boolean.parseBoolean(contactRP.existsContact(NumberUtils.isNumber(username) ? code + "-" + username.replaceFirst("^0+(?!$)", "") : username, lastSeg.equals("company") ? userBean.getUserPrincipalVld().getStakeHolderUser().getStakeholderCompanies().stream().findFirst().get().getId() : null));
-            
+
             if (n || b) {
                 valid = false;
             }

@@ -262,7 +262,7 @@
             <#list data.bookingOd as item>
                 <ul>
                     <li>
-                        <small>${item.fSegs.depDateTime?datetime("yyyy-MM-dd HH:mm:ss")?string["d MMM | hh:mm"]}</small>
+                        <small>${item.fSegs.depDateTime?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["d MMM | hh:mm"]}</small>
                         <h2>${item.fSegs.depLocation}</h2>
                         <span>${item.fSegs.depCity}, ${item.fSegs.depCountry}</span>
                     </li>
@@ -271,7 +271,7 @@
                         <small>${(item.stop != 0) ? then('Stop ${item.stop}', 'Non Stop')}</small>
                     </li>
                     <li>
-                        <small>${item.fSegs.arrDateTime?datetime("yyyy-MM-dd HH:mm:ss")?string["d MMM | hh:mm"]}</small>
+                        <small>${item.fSegs.arrDateTime?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["d MMM | hh:mm"]}</small>
                         <h2>${item.fSegs.arrLocation}</h2>
                         <span>${item.fSegs.arrCity}, ${item.fSegs.arrCountry}</span>
                     </li>
@@ -295,12 +295,12 @@
             <#list data.bookingOd as item>
                 <div class="time-airport">
                     <span>${item.fSegs.flightNumber}</span>
-                    <span>${item.fSegs.depDateTime?datetime("yyyy-MM-dd HH:mm:ss")?string["hh:mm EEE, dd MMM YYYY"]}</span>
+                    <span>${item.fSegs.depDateTime?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["hh:mm EEE, dd MMM YYYY"]}</span>
                     <span>${item.fSegs.depLocationName} </span>
                 </div>
                 <div class="time-airport">
                     <span>&nbsp;</span>
-                    <span>${item.fSegs.arrDateTime?datetime("yyyy-MM-dd HH:mm:ss")?string["hh:mm EEE, dd MMM YYYY"]}</span>
+                    <span>${item.fSegs.arrDateTime?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["hh:mm EEE, dd MMM YYYY"]}</span>
                     <span>${item.fSegs.arrLocationName}</span>
                 </div>
             </#list>

@@ -90,7 +90,7 @@ public class RegisterIP implements RegisterSV {
         StakeholderUserInvitationEntity userInv = userInvRP.findFirstByInviteTo(username);
 
         if (userInv != null) {
-            skyownerBean.addStaff(userInv.getStakeholderCompanyId(), user.getStakeHolderUser().getId());
+            skyownerBean.addStaff(userInv.getStakeholderCompanyId(), user.getStakeHolderUser().getId(), userInv.getSkyuserRole());
         }
         if (plateform == "web") {
             userBean.storeTokenRedis(user, password);
@@ -168,6 +168,7 @@ public class RegisterIP implements RegisterSV {
         skyuser.setFirstName(registerRQ.getFirstName());
         skyuser.setLastName(registerRQ.getLastName());
         skyuser.setSlug(apiBean.createSlug("profiles"));
+        skyuser.setCurrencyId((long) 103);
 
         skyuser.setUserCode(userCode);
 

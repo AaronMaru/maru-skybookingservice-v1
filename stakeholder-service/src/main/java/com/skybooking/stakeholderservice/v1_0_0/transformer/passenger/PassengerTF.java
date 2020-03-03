@@ -3,13 +3,17 @@ package com.skybooking.stakeholderservice.v1_0_0.transformer.passenger;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.passenger.PassengerEntity;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.passenger.PassengerRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.passenger.PassengerRS;
+import com.skybooking.stakeholderservice.v1_0_0.util.skyuser.UserBean;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class PassengerTF {
 
+    @Autowired
+    private UserBean userBean;
 
     /**
      * -----------------------------------------------------------------------------------------------------------------

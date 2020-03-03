@@ -237,7 +237,7 @@
                 <#list data.bookingOd as item>
                     <tr>
                         <td>${item.fSegs.flightNumber}</td>
-                        <td>${item.fSegs.depDateTime?datetime("yyyy-MM-dd HH:mm:ss")?string["EEE, dd MMM YYYY"]}</td>
+                        <td>${item.fSegs.depDateTime?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["EEE, dd MMM YYYY"]}</td>
                         <td>${item.fSegs.depCity} --- ${item.fSegs.arrCity}</td>
                     </tr>
                 </#list>

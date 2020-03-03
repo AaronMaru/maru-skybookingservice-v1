@@ -1,5 +1,4 @@
-package com.skybooking.stakeholderservice.v1_0_0.util.general;
-
+package com.skybooking.stakeholderservice.v1_0_0.util.datetime;
 
 import org.apache.commons.validator.routines.DateValidator;
 

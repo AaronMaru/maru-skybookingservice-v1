@@ -56,7 +56,7 @@ public class CustomJWTEnhancer implements TokenEnhancer {
 
         }
 
-            additionalInfo.put("userType", user.getStakeHolderUser().getIsSkyowner() == 0 ? "skyuser" : "skyowner");
+                additionalInfo.put("userType", user.getStakeHolderUser().getIsSkyowner() == 0 ? "skyuser" : "skyowner");
 
         ((DefaultOAuth2AccessToken) accessToken).setAdditionalInformation(additionalInfo);
         return accessToken;

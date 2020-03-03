@@ -17,6 +17,7 @@ public class CompanyRS {
     private String website = "";
     private String postalOrZipCode = "";
     private Long businessTypeId;
+    private String businessTypeName;
     private Long countryId;
     private String status;
     private String description = "";
@@ -153,4 +154,11 @@ public class CompanyRS {
         this.email = email;
     }
 
+    public String getBusinessTypeName() {
+        return businessTypeName;
+    }
+
+    public void setBusinessTypeName(String businessTypeName) {
+        this.businessTypeName = businessTypeName;
+    }
 }

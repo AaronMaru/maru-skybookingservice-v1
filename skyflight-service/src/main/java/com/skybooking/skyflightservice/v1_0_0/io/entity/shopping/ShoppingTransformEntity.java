@@ -14,6 +14,7 @@ public class ShoppingTransformEntity implements Serializable {
     private List<Airline> airlines = new ArrayList<>();
     private List<Aircraft> aircrafts = new ArrayList<>();
     private List<Location> locations = new ArrayList<>();
+    private List<LayoverAirport> layoverAirports = new ArrayList<>();
     private List<PriceDetail> prices = new ArrayList<>();
     private List<BaggageDetail> baggages = new ArrayList<>();
     private List<Segment> segments = new ArrayList<>();

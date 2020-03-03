@@ -21,6 +21,7 @@ public class ActiveMQConfig {
 
     public static final String EMAIL = "email";
     public static final String SMS = "sms";
+    public static final String QUEUE = "queue";
 
     @Bean
     public MessageConverter messageConverter() {

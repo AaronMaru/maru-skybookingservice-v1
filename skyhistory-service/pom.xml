@@ -123,9 +123,7 @@
         <dependency>
             <groupId>com.skybooking.api</groupId>
             <artifactId>spring-native-query</artifactId>
-            <version>1.0.0</version>
-            <scope>system</scope>
-            <systemPath>${basedir}/lib/spring-native-query-1.0.1.jar</systemPath>
+            <version>1.0.1</version>
         </dependency>
 
         <dependency>

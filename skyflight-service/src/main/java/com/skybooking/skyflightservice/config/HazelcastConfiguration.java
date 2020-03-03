@@ -19,6 +19,8 @@ public class HazelcastConfiguration {
         clientUserCodeDeploymentConfig.setEnabled(true);
         config.setUserCodeDeploymentConfig(clientUserCodeDeploymentConfig);
 
+        config.getNetworkConfig().addAddress("hazelcast-server:5701");
+
         config.getGroupConfig().setName("dev");
 
         return config;

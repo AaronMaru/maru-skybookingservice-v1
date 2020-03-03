@@ -9,7 +9,12 @@ import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.AirlineNQ;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.FlightLocationNQ;
 import com.skybooking.skyflightservice.v1_0_0.service.implement.shopping.transform.TransformSabre;
 import com.skybooking.skyflightservice.v1_0_0.service.implement.shopping.transform.TransformSabreMerger;
+import com.skybooking.skyflightservice.v1_0_0.service.interfaces.bookmark.BookmarkSV;
+import com.skybooking.skyflightservice.v1_0_0.service.interfaces.currency.CurrencySV;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.TransformSV;
+import com.skybooking.skyflightservice.v1_0_0.service.model.currency.ExchangeCurrencyTA;
+import com.skybooking.skyflightservice.v1_0_0.service.model.security.UserAuthenticationMetaTA;
+import com.skybooking.skyflightservice.v1_0_0.ui.model.request.shopping.FlightShoppingRQ;
 import com.skybooking.skyflightservice.v1_0_0.util.calculator.NumberFormatter;
 import org.eclipse.collections.impl.list.mutable.FastList;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,9 +23,11 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 public class TransformIP implements TransformSV {
@@ -42,6 +49,12 @@ public class TransformIP implements TransformSV {
     @Autowired
     private AppConfig appConfig;
 
+    @Autowired
+    private BookmarkSV bookmarkSV;
+
+    @Autowired
+    private CurrencySV currencySV;
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -58,7 +71,14 @@ public class TransformIP implements TransformSV {
         var requestId = shoppingResponse.getId();
         var tripType = shoppingResponse.getQuery().getQuery().getTripType();
 
-        var transform = new TransformSabreMerger(getTransformSabres(shoppingResponse.getResponses())).processingTransformer();
+        var directions = shoppingResponse.getQuery()
+            .getQuery()
+            .getLegs()
+            .stream()
+            .map(flightLeg -> flightLeg.getOrigin().concat("-").concat(flightLeg.getDestination()))
+            .collect(Collectors.joining("~"));
+
+        var transform = new TransformSabreMerger(getTransformSabres(shoppingResponse.getResponses()), directions).processingTransformer();
         transform.setRequestId(requestId);
         transform.setTrip(tripType);
 
@@ -142,16 +162,18 @@ public class TransformIP implements TransformSV {
      *
      * @param source
      * @param locale
+     * @param currency
      * @return ShoppingTransformEntity
      */
     @Override
-    public ShoppingTransformEntity getShoppingTransformDetail(ShoppingTransformEntity source, long locale) {
+    public ShoppingTransformEntity getShoppingTransformDetail(ShoppingTransformEntity source, long locale, String currency) {
 
         if (source == null) return null;
 
         var airlines = source.getAirlines();
         var aircrafts = source.getAircrafts();
         var locations = source.getLocations();
+        var layoverAirports = source.getLayoverAirports();
 
         for (Airline airline : airlines) {
 
@@ -163,12 +185,14 @@ public class TransformIP implements TransformSV {
                 airline.setOperatingBy(airlineTO.getAirline());
                 airline.setUrl90(appConfig.getAIRLINE_LOGO_PATH() + "/90/" + airlineTO.getLogo());
                 airline.setUrl45(appConfig.getAIRLINE_LOGO_PATH() + "/45/" + airlineTO.getLogo());
+                airline.setCurrency(currency);
 
             }
 
         }
 
         for (Aircraft aircraft : aircrafts) {
+
             var aircraftTO = aircraftNQ.getAircraftInformation(aircraft.getCode(), locale);
 
             if (aircraftTO != null) {
@@ -191,9 +215,26 @@ public class TransformIP implements TransformSV {
 
         }
 
+        for (LayoverAirport layoverAirport : layoverAirports) {
+
+            var layoverAirportTO = flightLocationNQ.getFlightLocationInformation(layoverAirport.getCode(), locale);
+
+            if (layoverAirportTO != null) {
+
+                layoverAirport.setAirport(layoverAirportTO.getAirport());
+                layoverAirport.setCity(layoverAirportTO.getCity());
+                layoverAirport.setLatitude(layoverAirportTO.getLatitude().doubleValue());
+                layoverAirport.setLongitude(layoverAirportTO.getLongitude().doubleValue());
+                layoverAirport.setCurrency(currency);
+
+            }
+
+        }
+
         source.setAirlines(airlines);
         source.setAircrafts(aircrafts);
         source.setLocations(locations);
+        source.setLayoverAirports(layoverAirports);
 
         return source;
     }
@@ -222,29 +263,56 @@ public class TransformIP implements TransformSV {
         formatter.setGroupingUsed(false);
         formatter.setRoundingMode(RoundingMode.HALF_UP);
 
+        var baseCurrency = "USD";
+        var fromRate = this.currencySV.getExchangeRateByCode(baseCurrency);
+        var toRate = this.currencySV.getExchangeRateByCode(currency);
+
         for (PriceDetail price : prices) {
 
-            var total = 0.0;
-            var average = 0.0;
+            BigDecimal total = BigDecimal.ZERO;
+            BigDecimal baseCurrencyTotal = BigDecimal.ZERO;
+
+            BigDecimal average = BigDecimal.ZERO;
+            BigDecimal baseCurrencyTotalAvg = BigDecimal.ZERO;
+
             var passengers = 0;
+
+            price.setCurrency(currency);
+            price.setBaseCurrency(baseCurrency);
 
             for (Price detail : price.getDetails()) {
 
-                var baseFareMarkup = formatter.format(detail.getBaseFare().doubleValue() + (detail.getBaseFare().doubleValue() * markup));
-                var taxMarkup = formatter.format(detail.getTax().doubleValue() + (detail.getTax().doubleValue() * markup));
+                var baseFareMarkup = new BigDecimal(formatter.format(detail.getBaseFare().doubleValue() + (detail.getBaseFare().doubleValue() * markup)));
+                var taxMarkup = new BigDecimal(formatter.format(detail.getTax().doubleValue() + (detail.getTax().doubleValue() * markup)));
 
-                detail.setBaseFare(new BigDecimal(baseFareMarkup));
-                detail.setTax(new BigDecimal(taxMarkup));
+                BigDecimal summary = BigDecimal.ZERO;
+                summary = summary.add(baseFareMarkup).add(taxMarkup).multiply(BigDecimal.valueOf(detail.getQuantity()));
 
-                total = (detail.getTax().add(detail.getBaseFare()).doubleValue() * detail.getQuantity()) + total;
+                BigDecimal baseCurrencySummary = BigDecimal.ZERO;
+                baseCurrencySummary = baseCurrencySummary.add(baseFareMarkup).add(taxMarkup).multiply(BigDecimal.valueOf(detail.getQuantity()));
+
+                total = total.add(summary);
+                baseCurrencyTotal = baseCurrencyTotal.add(baseCurrencySummary);
+
+                detail.setBaseCurrency(baseCurrency);
+                detail.setBaseCurrencyTax(NumberFormatter.trimAmount(taxMarkup));
+                detail.setBaseCurrencyBaseFare(NumberFormatter.trimAmount(baseFareMarkup));
+
+                detail.setCurrency(currency);
+                detail.setBaseFare(NumberFormatter.trimAmount(currencySV.getExchangeRateConverter(new ExchangeCurrencyTA(baseCurrency, fromRate, currency, toRate, baseFareMarkup.doubleValue()))));
+                detail.setTax(NumberFormatter.trimAmount(currencySV.getExchangeRateConverter(new ExchangeCurrencyTA(baseCurrency, fromRate, currency, toRate, taxMarkup.doubleValue()))));
 
                 passengers += detail.getQuantity();
             }
 
-            average = total / passengers;
+            average = total.divide(BigDecimal.valueOf(passengers), RoundingMode.HALF_UP);
+            baseCurrencyTotalAvg = baseCurrencyTotal.divide(BigDecimal.valueOf(passengers), RoundingMode.HALF_UP);
 
-            price.setTotal(NumberFormatter.amount(total));
-            price.setTotalAvg(NumberFormatter.amount(average));
+            price.setBaseCurrencyTotal(NumberFormatter.trimAmount(baseCurrencyTotal));
+            price.setBaseCurrencyTotalAvg(NumberFormatter.trimAmount(baseCurrencyTotalAvg));
+
+            price.setTotal(NumberFormatter.trimAmount(currencySV.getExchangeRateConverter(new ExchangeCurrencyTA(baseCurrency, fromRate, currency, toRate, total.doubleValue()))));
+            price.setTotalAvg(NumberFormatter.trimAmount(currencySV.getExchangeRateConverter(new ExchangeCurrencyTA(baseCurrency, fromRate, currency, toRate, average.doubleValue()))));
 
         }
 
@@ -277,6 +345,8 @@ public class TransformIP implements TransformSV {
         // apply lowest price to airline
         List<Airline> airlines = source.getAirlines();
 
+        List<LayoverAirport> layoverAirports = source.getLayoverAirports();
+
         // apply sorting and filter lowest price
         List<Itinerary> cheapest = source.getCheapest();
 
@@ -296,7 +366,7 @@ public class TransformIP implements TransformSV {
                             var legDetail = source.getLegs().stream().filter(leg -> leg.getId().equalsIgnoreCase(legId)).findFirst().get();
                             var priceDetail = source.getPrices().stream().filter(price -> price.getId().equalsIgnoreCase(legDetail.getPrice())).findFirst().get();
 
-                            return priceDetail.getTotal();
+                            return priceDetail.getTotal().doubleValue();
                         }).mapToDouble(Double::doubleValue).sum();
 
                     lowestPrice = Double.parseDouble(formatter.format(lowestPrice));
@@ -304,17 +374,51 @@ public class TransformIP implements TransformSV {
                     for (Airline airline : airlines) {
                         if (airline.getCode().equalsIgnoreCase(airlineCode)) {
 
-                            if (airline.getPrice() == 0) {
-                                airline.setPrice(lowestPrice);
+                            if (airline.getPrice().doubleValue() == 0) {
+                                airline.setPrice(NumberFormatter.trimAmount(lowestPrice));
                             }
 
-                            if (airline.getPrice() > lowestPrice) {
-                                airline.setPrice(lowestPrice);
+                            if (airline.getPrice().doubleValue() > lowestPrice) {
+                                airline.setPrice(NumberFormatter.trimAmount(lowestPrice));
                             }
 
                             break;
                         }
                     }
+
+                    for (Airline airline : airlines) {
+
+                        if (airline.getPrice().doubleValue() != 0) {
+                            itinerary.getLegGroups().forEach(legGroup -> {
+
+                                if (legGroup.getAirline().equals(airline.getCode())) {
+
+                                    legGroup.getLegsDesc().forEach(legDescription -> {
+                                        var legDetail = source.getLegs().stream().filter(leg -> leg.getId().equalsIgnoreCase(legDescription.getLeg())).findFirst().get();
+                                        legDetail.getSegments().forEach(segmentDetail -> {
+                                            if (segmentDetail.getLayoverAirport() != null) {
+                                                layoverAirports.forEach(layoverAirport -> {
+                                                    if (layoverAirport.getCode().equals(segmentDetail.getLayoverAirport())) {
+                                                        if (layoverAirport.getPrice().doubleValue() == 0) {
+                                                            layoverAirport.setPrice(NumberFormatter.trimAmount(airline.getPrice()));
+                                                        }
+
+                                                        if (layoverAirport.getPrice().doubleValue() > airline.getPrice().doubleValue()) {
+                                                            layoverAirport.setPrice(NumberFormatter.trimAmount(airline.getPrice()));
+                                                        }
+                                                    }
+                                                });
+                                            }
+                                        });
+                                    });
+
+                                }
+
+                            });
+                        }
+
+                    }
+
                 }
             });
 
@@ -324,6 +428,63 @@ public class TransformIP implements TransformSV {
         return source;
     }
 
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get shopping data detail with favorite filter
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param flightShoppingRQ
+     * @param source
+     * @param userAuthenticationMetaTA
+     * @return
+     */
+    @Override
+    public ShoppingTransformEntity getShoppingTransformDetailWithFavorite(FlightShoppingRQ flightShoppingRQ, ShoppingTransformEntity source, UserAuthenticationMetaTA userAuthenticationMetaTA) {
+
+        if (source == null) return null;
+
+        if (!userAuthenticationMetaTA.isAuthenticated()) return source;
+
+        var bookmarks = bookmarkSV.get(flightShoppingRQ, userAuthenticationMetaTA);
+
+        bookmarks
+            .forEach(bookmarkAirline -> {
+                if (bookmarkAirline.isDirect()) {
+                    source
+                        .getDirect()
+                        .stream()
+                        .filter(itinerary -> itinerary.getId().split("@")[2].equalsIgnoreCase(bookmarkAirline.getAirline()))
+                        .findFirst()
+                        .ifPresent(itinerary -> itinerary.setFavorite(true));
+                } else {
+                    source
+                        .getCheapest()
+                        .stream()
+                        .filter(itinerary -> itinerary.getId().split("@")[2].equalsIgnoreCase(bookmarkAirline.getAirline()))
+                        .findFirst()
+                        .ifPresent(itinerary -> itinerary.setFavorite(true));
+                }
+
+            });
+
+        var directs = source
+            .getDirect()
+            .stream()
+            .sorted(Comparator.comparing(itinerary -> !itinerary.isFavorite()))
+            .collect(Collectors.toList());
+
+        var cheaps = source
+            .getCheapest()
+            .stream()
+            .sorted(Comparator.comparing(itinerary -> !itinerary.isFavorite()))
+            .collect(Collectors.toList());
+
+        source.setDirect(directs);
+        source.setCheapest(cheaps);
+
+        return source;
+    }
 
     /**
      * -----------------------------------------------------------------------------------------------------------------

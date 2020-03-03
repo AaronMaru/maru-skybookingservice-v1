@@ -10,18 +10,17 @@ public class BookingOdSegTO {
     private Integer flightNumber;
     private String equipType;
     private String airCraftName;
-    private Object depDateTime;
+    private Date depDateTime;
     private String depLocation;
     private String depLocationName;
     private String depCity;
     private String depCountry;
-    private Object arrDateTime;
+    private Date arrDateTime;
     private String arrLocation;
     private String arrLocationName;
     private String arrCity;
     private String arrCountry;
     private Integer stop;
-
 
     public Integer getId() {
         return id;
@@ -71,11 +70,11 @@ public class BookingOdSegTO {
         this.airCraftName = airCraftName;
     }
 
-    public Object getDepDateTime() {
+    public Date getDepDateTime() {
         return depDateTime;
     }
 
-    public void setDepDateTime(Object depDateTime) {
+    public void setDepDateTime(Date depDateTime) {
         this.depDateTime = depDateTime;
     }
 
@@ -111,12 +110,8 @@ public class BookingOdSegTO {
         this.depCountry = depCountry;
     }
 
-    public Object getArrDateTime() {
+    public Date getArrDateTime() {
         return arrDateTime;
-    }
-
-    public void setArrDateTime(Object arrDateTime) {
-        this.arrDateTime = arrDateTime;
     }
 
     public void setArrDateTime(Date arrDateTime) {

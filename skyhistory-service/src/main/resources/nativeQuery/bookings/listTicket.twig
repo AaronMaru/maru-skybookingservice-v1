@@ -1,5 +1,5 @@
 SELECT
-	bat.ticket_number AS ticketNumber,
+	CASE WHEN bat.ticket_number IS NOT NULL THEN bat.ticket_number ELSE '' END AS ticketNumber,
 	bat.first_name AS firstName,
 	bat.last_name AS lastName,
 	bat.amount,

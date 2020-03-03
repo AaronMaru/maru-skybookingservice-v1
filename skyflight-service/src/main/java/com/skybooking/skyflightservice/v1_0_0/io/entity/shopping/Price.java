@@ -10,8 +10,11 @@ public class Price implements Serializable {
 
     private String type;
     private BigDecimal tax;
+    private BigDecimal baseCurrencyTax;
     private BigDecimal baseFare;
+    private BigDecimal baseCurrencyBaseFare;
     private String currency;
+    private String baseCurrency;
     private int quantity;
 
 }

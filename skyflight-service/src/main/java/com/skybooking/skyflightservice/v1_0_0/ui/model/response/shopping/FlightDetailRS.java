@@ -1,23 +1,19 @@
 package com.skybooking.skyflightservice.v1_0_0.ui.model.response.shopping;
 
-import com.skybooking.skyflightservice.v1_0_0.ui.model.response.BaseRS;
-import org.springframework.http.HttpStatus;
+import lombok.Data;
 
-public class FlightDetailRS extends BaseRS {
+import java.util.ArrayList;
+import java.util.List;
 
-    public FlightDetailRS(HttpStatus httpStatus) {
-        super(httpStatus);
-    }
+@Data
+public class FlightDetailRS {
 
-    public FlightDetailRS(HttpStatus httpStatus, Object data) {
-        super(httpStatus, data);
-    }
+    private List<AirlineRS> airlines = new ArrayList<>();
+    private List<AircraftRS> aircrafts = new ArrayList<>();
+    private List<LocationRS> locations = new ArrayList<>();
+    private List<PriceDetailRS> prices = new ArrayList<>();
+    private List<BaggageDetailRS> baggages = new ArrayList<>();
+    private List<SegmentRS> segments = new ArrayList<>();
+    private List<LegRS> legs = new ArrayList<>();
 
-    public FlightDetailRS(HttpStatus httpStatus, String message, Object data) {
-        super(httpStatus, message, data);
-    }
-
-    public FlightDetailRS(HttpStatus httpStatus, String message) {
-        super(httpStatus, message);
-    }
 }

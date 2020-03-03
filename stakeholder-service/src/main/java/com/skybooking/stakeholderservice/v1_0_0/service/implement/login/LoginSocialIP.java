@@ -91,51 +91,6 @@ public class LoginSocialIP implements LoginSocialSV {
     }
 
 
-//    /**
-//     * -----------------------------------------------------------------------------------------------------------------
-//     * Skyuser
-//     * -----------------------------------------------------------------------------------------------------------------
-//     *
-//     * @Param skyownerRQ;
-//     * @Return code
-//     */
-//    public UserDetailsTokenRS loginSocialSkyowner(HttpHeaders httpHeaders, LoginSocialSkyownerRQ skyownerSocialRQ) {
-//
-//        LoginSocialRQ loginSocialRQ = new LoginSocialRQ();
-//        SkyownerRegisterRQ skyownerRegisterRQ = new SkyownerRegisterRQ();
-//
-//        BeanUtils.copyProperties(skyownerSocialRQ, loginSocialRQ);
-//        BeanUtils.copyProperties(skyownerSocialRQ, skyownerRegisterRQ);
-//
-//        String credential = userBean.oauth2Credential(httpHeaders);
-//
-//        UserEntity user = userRepository.findByEmailOrProviderId(skyownerSocialRQ.getUsername(), skyownerSocialRQ.getProvider());
-//
-//        String password = "defaultPassword";
-//
-//        if (user == null) {
-//            user = addSkyuser(loginSocialRQ);
-//            skyownerBean.addStakeHolderCompany(skyownerRegisterRQ, user, userRepository);
-//            logger.activities(ActivityLoggingBean.Action.REGISTER, user);
-//        }
-//
-//        if (user.getProvider() == null) {
-//            throw new BadRequestException("fail_reg", "");
-//        }
-//
-//        userBean.registerPlayer(user.getStakeHolderUser().getId());
-//
-//        TokenTF data = userBean.getCredential(user.getEmail(), password, credential, null, skyownerSocialRQ.getProvider());
-//
-//        UserDetailsTokenRS userDetailsTokenRS = new UserDetailsTokenRS();
-//        BeanUtils.copyProperties(userBean.userFields(user, data.getAccess_token()), userDetailsTokenRS);
-//
-//        return userDetailsTokenRS;
-//
-//    }
-
-
-
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Implement register skyuser
@@ -191,6 +146,7 @@ public class LoginSocialIP implements LoginSocialSV {
         stkUser.setLastName(loginSocialRQ.getLastName());
         stkUser.setSlug(apiBean.createSlug("profiles"));
         stkUser.setStatus(1);
+        stkUser.setCurrencyId((long) 103);
 
         userEntity.setStakeHolderUser(stkUser);
         stkUser.setUserEntity(userEntity);

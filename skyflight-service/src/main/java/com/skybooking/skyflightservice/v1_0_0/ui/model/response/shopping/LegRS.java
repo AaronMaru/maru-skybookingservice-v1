@@ -22,5 +22,8 @@ public class LegRS implements Serializable {
     private List<LegSegmentDetailRS> segments = new ArrayList<>();
     private String price;
     private String baggage;
+    private int stops;
+    private int seats;
+    private int adjustmentDates;
 
 }

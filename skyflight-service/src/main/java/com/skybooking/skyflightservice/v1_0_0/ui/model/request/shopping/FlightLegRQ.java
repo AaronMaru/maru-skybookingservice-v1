@@ -14,16 +14,15 @@ import java.util.Date;
 @Setter
 public class FlightLegRQ {
 
-    @NotBlank(message = "The bargainfinder origin is required.")
+    @NotBlank(message = "The bargain finder origin is required.")
     private String origin;
 
-    @NotBlank(message = "The bargainfinder destination is required.")
+    @NotBlank(message = "The bargain finder destination is required.")
     private String destination;
 
     @NotNull(message = "The departure date is required.")
-//    @FutureOrPresent(message = "The departure date must be in present or future.")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
-    @Temporal(TemporalType.DATE)
+    @Temporal(TemporalType.TIMESTAMP)
     private Date date;
 
 }

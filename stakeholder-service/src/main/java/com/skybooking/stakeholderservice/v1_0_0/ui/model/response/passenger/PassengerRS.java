@@ -3,7 +3,6 @@ package com.skybooking.stakeholderservice.v1_0_0.ui.model.response.passenger;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
-
 @Data
 public class PassengerRS {
 
@@ -22,5 +21,7 @@ public class PassengerRS {
     private String expireDate;
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private int idType;
+
+    private String passType;
 
 }

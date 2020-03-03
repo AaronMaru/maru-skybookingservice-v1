@@ -35,17 +35,17 @@ public class TicketingAction {
     public JsonNode issued(IssueTicketRQ body) {
 
         return client
-                .mutate()
-                .exchangeStrategies(ExchangeStrategies.builder().codecs(clientCodecConfigurer -> {
-                    clientCodecConfigurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024);
-                }).build())
-                .build()
-                .post()
-                .uri(appConfig.getDISTRIBUTED_URI() + "/flight/" + appConfig.getDISTRIBUTED_VERSION() + "/booking/issue-ticket")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
-                .bodyValue(body)
-                .retrieve()
-                .bodyToMono(JsonNode.class).block();
+            .mutate()
+            .exchangeStrategies(ExchangeStrategies.builder().codecs(clientCodecConfigurer -> {
+                clientCodecConfigurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024);
+            }).build())
+            .build()
+            .post()
+            .uri(appConfig.getDISTRIBUTED_URI() + "/flight/" + appConfig.getDISTRIBUTED_VERSION() + "/booking/issue-ticket")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
+            .bodyValue(body)
+            .retrieve()
+            .bodyToMono(JsonNode.class).block();
 
     }
 

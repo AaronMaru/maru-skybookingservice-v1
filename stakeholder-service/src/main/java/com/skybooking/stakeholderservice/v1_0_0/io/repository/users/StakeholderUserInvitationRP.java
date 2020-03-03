@@ -25,7 +25,7 @@ public interface StakeholderUserInvitationRP extends JpaRepository<StakeholderUs
     /**
      * Find by skyuser id
      */
-    List<StakeholderUserInvitationEntity> findByInviteStakeholderUserId(Long skyuserId);
+    List<StakeholderUserInvitationEntity> findByInviteStakeholderUserIdAndStatus(Long skyuserId, Integer status);
 
 
     /**

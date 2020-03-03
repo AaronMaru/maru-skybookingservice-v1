@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
+
 @RestController
 @RequestMapping(value = "/mv1.0.0")
 public class BookingControllerM {
@@ -30,37 +32,11 @@ public class BookingControllerM {
      *
      * @Return ResponseEntity
      */
-    @GetMapping("/bookings-company")
-    public ResRS bookingsCompany() {
-        return localization.resAPI(HttpStatus.OK,"res_succ", bookingSV.getBooking("companyConstant"));
+    @GetMapping("/bookings")
+    public ResRS bookings(HttpServletRequest request) {
+        return localization.resAPI(HttpStatus.OK,"res_succ", bookingSV.getBooking(request));
     }
 
-
-    /**
-     * -----------------------------------------------------------------------------------------------------------------
-     * Get bookings skyuser
-     * -----------------------------------------------------------------------------------------------------------------
-     *
-     * @Return ResponseEntity
-     */
-    @GetMapping("/bookings-skyuser")
-    @PreAuthorize("#oauth2.hasScope('read')")
-    public ResRS bookingsSkyuser() {
-        return localization.resAPI(HttpStatus.OK,"res_succ", bookingSV.getBooking("skyuser"));
-    }
-
-
-    /**
-     * -----------------------------------------------------------------------------------------------------------------
-     * Get bookings staff
-     * -----------------------------------------------------------------------------------------------------------------
-     *
-     * @Return ResponseEntity
-     */
-    @GetMapping("/bookings-staff")
-    public ResRS bookingsStaff() {
-        return localization.resAPI(HttpStatus.OK,"res_succ", bookingSV.getBooking("staff"));
-    }
 
 
     /**

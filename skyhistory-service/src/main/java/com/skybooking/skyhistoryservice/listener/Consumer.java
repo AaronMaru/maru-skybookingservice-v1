@@ -6,10 +6,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.stereotype.Component;
+
 import java.util.Map;
 
-import static com.skybooking.skyhistoryservice.config.ActiveMQConfig.EMAIL;
-import static com.skybooking.skyhistoryservice.config.ActiveMQConfig.SMS;
+import static com.skybooking.skyhistoryservice.config.ActiveMQConfig.*;
 
 /**
  * Created by : maru
@@ -33,6 +33,11 @@ public class Consumer {
     @JmsListener(destination = SMS)
     public void sms(Map<String, Object> mailTemplateData) {
         emailBean.sms(mailTemplateData);
+    }
+
+    @JmsListener(destination = QUEUE)
+    public void queue(Map<String, Object> mailTemplateData) {
+        emailBean.receiptAndItinerary(mailTemplateData);
     }
 
 }

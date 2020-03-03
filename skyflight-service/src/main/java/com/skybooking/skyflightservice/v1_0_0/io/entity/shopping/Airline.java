@@ -4,6 +4,7 @@ import lombok.Data;
 import org.springframework.data.annotation.Id;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 @Data
 public class Airline implements Serializable {
@@ -14,5 +15,6 @@ public class Airline implements Serializable {
     private String operatingBy;
     private String url45;
     private String url90;
-    private double price;
+    private String currency;
+    private BigDecimal price = BigDecimal.ZERO;
 }

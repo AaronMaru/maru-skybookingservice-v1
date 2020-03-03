@@ -14,10 +14,9 @@ import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.StakeholderU
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserRepository;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.verify.VerifyUserRP;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.user.UserSV;
-import com.skybooking.stakeholderservice.v1_0_0.transformer.TokenTF;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company.CompanyRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user.*;
-import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.verify.SendVerifyRQ;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.CompanyRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.InvitationRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
@@ -27,7 +26,6 @@ import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.skyowner.SkyownerBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.skyuser.UserBean;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.springframework.beans.BeanUtils;
@@ -397,7 +395,7 @@ public class UserIP implements UserSV {
      *
      * @Param companyRQ
      */
-    public void applySkyowner(CompanyRQ companyRQ) {
+    public CompanyRS applySkyowner(CompanyRQ companyRQ) {
 
         skyownerBean.licenseValid(companyRQ.getBusinessTypeId(), companyRQ.getLicenses());
 
@@ -416,7 +414,9 @@ public class UserIP implements UserSV {
         SkyownerRegisterRQ skyownerRQ = new SkyownerRegisterRQ();
         BeanUtils.copyProperties(companyRQ, skyownerRQ);
 
-        skyownerBean.addStakeHolderCompany(skyownerRQ, user, userRepository);
+        List<CompanyRS> companyRS = skyownerBean.addStakeHolderCompany(skyownerRQ, user, userRepository);
+
+        return companyRS.get(0);
 
     }
 
@@ -430,7 +430,7 @@ public class UserIP implements UserSV {
 
         UserEntity user = userBean.getUserPrincipal();
 
-        List<StakeholderUserInvitationEntity> invitations = invitationsRP.findByInviteStakeholderUserId(user.getStakeHolderUser().getId());
+        List<StakeholderUserInvitationEntity> invitations = invitationsRP.findByInviteStakeholderUserIdAndStatus(user.getStakeHolderUser().getId(), 0);
 
         List<InvitationRS> invitationRSES = new ArrayList<>();
 
@@ -481,8 +481,9 @@ public class UserIP implements UserSV {
         invitationsRP.save(invitation);
 
         if (invitation.getStatus() == 1) {
-            skyownerBean.addStaff(invitation.getStakeholderCompanyId(), user.getStakeHolderUser().getId());
+            skyownerBean.addStaff(invitation.getStakeholderCompanyId(), user.getStakeHolderUser().getId(), invitation.getSkyuserRole());
         }
+
 
     }
 

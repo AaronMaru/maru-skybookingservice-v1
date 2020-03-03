@@ -22,6 +22,7 @@ public class TransformSabreMerger {
     private MutableMap<String, Airline> airlines = UnifiedMap.newMap();
     private MutableMap<String, Aircraft> aircrafts = UnifiedMap.newMap();
     private MutableMap<String, Location> locations = UnifiedMap.newMap();
+    private MutableMap<String, LayoverAirport> layoverAirports = UnifiedMap.newMap();
     private MutableMap<String, PriceDetail> prices = UnifiedMap.newMap();
     private MutableMap<String, BaggageDetail> baggages = UnifiedMap.newMap();
     private MutableMap<String, Segment> segments = UnifiedMap.newMap();
@@ -30,9 +31,11 @@ public class TransformSabreMerger {
     private MutableMap<Optional<Integer>, MutableBagMultimap<Optional<String>, Leg>> cheaps = UnifiedMap.newMap();
 
     private FastList<TransformSabre> transformSabres;
+    private String directions;
 
-    public TransformSabreMerger(FastList<TransformSabre> transformSabres) {
+    public TransformSabreMerger(FastList<TransformSabre> transformSabres, String directions) {
         this.transformSabres = transformSabres;
+        this.directions = directions;
         this.start();
     }
 
@@ -63,6 +66,7 @@ public class TransformSabreMerger {
                 airlines.putAll(transformSabre.getAirlines());
                 aircrafts.putAll(transformSabre.getAircrafts());
                 locations.putAll(transformSabre.getLocations());
+                layoverAirports.putAll(transformSabre.getLayoverAirports());
                 prices.putAll(transformSabre.getPrices());
                 baggages.putAll(transformSabre.getBaggages());
                 segments.putAll(transformSabre.getSegments());
@@ -136,7 +140,7 @@ public class TransformSabreMerger {
                         var prePrice = prices.get(legs.get(previous.getLeg()).getPrice());
                         var nexPrice = prices.get(legs.get(next.getLeg()).getPrice());
 
-                        return Double.compare(prePrice.getTotal(), nexPrice.getTotal());
+                        return Double.compare(prePrice.getTotal().doubleValue(), nexPrice.getTotal().doubleValue());
                     })
                     .collect(Collectors.toList());
 
@@ -162,6 +166,7 @@ public class TransformSabreMerger {
 
             directFlight.add(itinerary);
         });
+
 
         setItineraryIdAndDefaultLeg(directFlight, "1");
 
@@ -214,7 +219,7 @@ public class TransformSabreMerger {
 
                             var selectedLegs = airlineLegs
                                 .get(airline)
-                                .toSortedList(Comparators.byDoubleFunction(leg -> prices.get(leg.getPrice()).getTotal()))
+                                .toSortedList(Comparators.byDoubleFunction(leg -> prices.get(leg.getPrice()).getTotal().doubleValue()))
                                 .stream()
                                 .map(leg -> {
 
@@ -225,7 +230,10 @@ public class TransformSabreMerger {
                                 })
                                 .collect(Collectors.toList());
 
+                            var countLeg = selectedLegs.stream().count();
+
                             itinerary.getLowest().add(selectedLegs.stream().findFirst().map(LegDescription::getLeg).get());
+                            itinerary.getHighest().add(selectedLegs.stream().skip(countLeg - 1).findFirst().map(LegDescription::getLeg).get());
 
                             selectedLegs = selectedLegs
                                 .stream()
@@ -306,7 +314,7 @@ public class TransformSabreMerger {
 
                         var selectedLegs = airlineLegs
                             .get(selectedAirline)
-                            .toSortedList(Comparators.byDoubleFunction(leg -> prices.get(leg.getPrice()).getTotal()))
+                            .toSortedList(Comparators.byDoubleFunction(leg -> prices.get(leg.getPrice()).getTotal().doubleValue()))
                             .stream()
                             .map(leg -> {
 
@@ -317,8 +325,11 @@ public class TransformSabreMerger {
                             })
                             .collect(Collectors.toList());
 
+                        var countLeg = selectedLegs.stream().count();
 
                         itinerary.getLowest().add(selectedLegs.stream().findFirst().map(LegDescription::getLeg).get());
+                        itinerary.getHighest().add(selectedLegs.stream().skip(countLeg - 1).findFirst().map(LegDescription::getLeg).get());
+
                         selectedLegs = selectedLegs
                             .stream()
                             .sorted((previous, next) -> {
@@ -361,12 +372,12 @@ public class TransformSabreMerger {
                 var preTotal = (Double) previous
                     .getLowest()
                     .stream()
-                    .map(leg -> prices.get(legs.get(leg).getPrice()).getTotal())
+                    .map(leg -> prices.get(legs.get(leg).getPrice()).getTotal().doubleValue())
                     .mapToDouble(Double::doubleValue).sum();
                 var nextTotal = next
                     .getLowest()
                     .stream()
-                    .map(leg -> prices.get(legs.get(leg).getPrice()).getTotal())
+                    .map(leg -> prices.get(legs.get(leg).getPrice()).getTotal().doubleValue())
                     .mapToDouble(Double::doubleValue).sum();
 
                 return Double.compare(preTotal, nextTotal);
@@ -378,7 +389,8 @@ public class TransformSabreMerger {
      * -----------------------------------------------------------------------------------------------------------------
      * set itinerary id and set default leg
      * -----------------------------------------------------------------------------------------------------------------
-     *  @param itineraries
+     *
+     * @param itineraries
      * @param itineraryType
      */
     private void setItineraryIdAndDefaultLeg(ArrayList<Itinerary> itineraries, String itineraryType) {
@@ -432,7 +444,7 @@ public class TransformSabreMerger {
 
         var classType = legDeparture.getSegments().stream().findFirst().get().getCabin();
 
-        var delimiter = "~";
+        var delimiter = ":";
 
         return itineraryType
             .concat(delimiter)
@@ -442,11 +454,13 @@ public class TransformSabreMerger {
             .concat(delimiter)
             .concat(Objects.requireNonNull(DateUtility.convertZonedDateTimeToDateString(legDeparture.getDepartureTime())))
             .concat(delimiter)
-            .concat(airline)
-            .concat(delimiter)
             .concat(Objects.requireNonNull(DateUtility.convertZonedDateTimeToDateString(legArrival.getArrivalTime())))
             .concat(delimiter)
-            .concat(legArrival.getArrival());
+            .concat(legArrival.getArrival())
+            .concat("@")
+            .concat(this.directions)
+            .concat("@")
+            .concat(airline);
     }
 
 
@@ -528,6 +542,7 @@ public class TransformSabreMerger {
         shopping.setAirlines(airlines.toList());
         shopping.setAircrafts(aircrafts.toList());
         shopping.setLocations(locations.toList());
+        shopping.setLayoverAirports(layoverAirports.toList());
         shopping.setPrices(prices.toList());
         shopping.setBaggages(baggages.toList());
         shopping.setSegments(segments.toList());

@@ -26,8 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.skybooking.skyhistoryservice.config.ActiveMQConfig.EMAIL;
-import static com.skybooking.skyhistoryservice.config.ActiveMQConfig.SMS;
+import static com.skybooking.skyhistoryservice.config.ActiveMQConfig.*;
 
 public class EmailBean {
 
@@ -60,8 +59,7 @@ public class EmailBean {
      * @Param reciever
      * @Param message
      */
-    public Boolean sendEmailSMS(String message, Map<String, Object> mailTemplateData,
-                                Map<String, Object> pdfData) {
+    public Boolean sendEmailSMS(String message, Map<String, Object> mailTemplateData, Map<String, Object> pdfData) {
 
         mailTemplateData.put("pdfData", pdfData);
 
@@ -207,6 +205,64 @@ public class EmailBean {
         labels.forEach(item -> pdfData.put(item.getKey(), item.getValue()));
 
         return pdfData;
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Send email and sms
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param reciever
+     * @Param message
+     */
+    public Boolean sendReceiptAndItinerary(String message, Map<String, Object> mailTemplateData,
+                                           Map<String, Object> pdfData) {
+
+        mailTemplateData.put("pdfData", pdfData);
+
+        boolean validEmail = EmailValidator.getInstance().isValid(mailTemplateData.get("receiver").toString());
+        if (NumberUtils.isNumber(mailTemplateData.get("receiver").toString().replaceAll("[+]", ""))) {
+            mailTemplateData.put("message", "No message");
+            jmsTemplate.convertAndSend(SMS, mailTemplateData);
+            return true;
+        } else if (validEmail) {
+            jmsTemplate.convertAndSend(QUEUE, mailTemplateData);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Email
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param TO
+     * @Param MESSAGE
+     */
+    public void receiptAndItinerary(Map<String, Object> mailTemplateData) {
+
+        Map<String, Object> pdfData = (Map<String, Object>) mailTemplateData.get("pdfData");
+
+        Map<String, String> mailProperty = new HashMap<>();
+        mailProperty.put("SMTP_SERVER_HOST", environment.getProperty("spring.email.host"));
+        mailProperty.put("SMTP_SERVER_PORT", environment.getProperty("spring.email.port"));
+        mailProperty.put("SUBJECT", "Skybooking");
+        mailProperty.put("SMTP_USER_NAME", environment.getProperty("spring.email.username"));
+        mailProperty.put("SMTP_USER_PASSWORD", environment.getProperty("spring.email.password"));
+        mailProperty.put("FROM_USER_EMAIL", environment.getProperty("spring.email.from-address"));
+        mailProperty.put("FROM_USER_FULLNAME", environment.getProperty("spring.email.from-name"));
+        mailProperty.put("TO", mailTemplateData.get("receiver").toString());
+
+        mailTemplateData.put("mailUrl", environment.getProperty("spring.awsImageUrl.mailTemplate"));
+
+        if (pdfData != null) {
+            pdfData.put("mailUrl", environment.getProperty("spring.awsImageUrl.mailTemplate"));
+        }
+
+        SendingMailThroughAWSSESSMTPServer sendingMailThroughAWSSESSMTPServer = new SendingMailThroughAWSSESSMTPServer();
+        sendingMailThroughAWSSESSMTPServer.sendReceiptAndItinerary(configuration, mailProperty, mailTemplateData, pdfData);
+
     }
 
 }

@@ -13,7 +13,7 @@
                 <tbody style="width: 25%;">
                 <#list data.bookingOd as item>
                     <tr style="font-weight:300">
-                        <td>${item.fSegs.depDateTime?datetime("yyyy-MM-dd HH:mm:ss")?string["d MMM | hh:mm"]}</td>
+                        <td>${item.fSegs.depDateTime?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["d MMM | hh:mm"]}</td>
                         <td style="color: black;">${item.fSegs.depCity} (${item.fSegs.depLocation})&nbsp;${item.fSegs.arrCity} (${item.fSegs.arrLocation})</td>
                     </tr>
                 </#list>

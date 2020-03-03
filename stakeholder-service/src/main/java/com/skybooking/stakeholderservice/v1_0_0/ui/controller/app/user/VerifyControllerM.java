@@ -71,7 +71,7 @@ public class VerifyControllerM {
      * @Param sendVerifyRQ
      */
     @PostMapping("/send-verify")
-    public ResRS sendVerify(@RequestBody SendVerifyRQ sendVerifyRQ) {
+    public ResRS sendVerify(@Valid @RequestBody SendVerifyRQ sendVerifyRQ) {
         verifySV.sendVerify(sendVerifyRQ, Integer.parseInt(environment.getProperty("spring.verifyStatus.verifyUserApp")));
         return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"vf_rdy_sent", null);
     }

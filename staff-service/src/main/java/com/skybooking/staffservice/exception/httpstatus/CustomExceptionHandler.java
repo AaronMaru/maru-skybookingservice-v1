@@ -191,6 +191,14 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
 
     }
 
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Gone
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Status 409
+     */
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<CustomErrorResponse> handleConflict(ConflictException ex, WebRequest request) {
 
@@ -201,6 +209,19 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
         errors.setData(ex.getData());
 
         return new ResponseEntity<>(errors, HttpStatus.CONFLICT);
+
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<CustomErrorResponse> handleForbidden(ForbiddenException ex) {
+
+        CustomErrorResponse errors = new CustomErrorResponse();
+        errors.setTimestamp(LocalDateTime.now());
+        errors.setMessage(localization.multiLanguageRes(ex.getMessage()));
+        errors.setStatus(HttpStatus.FORBIDDEN.value());
+        errors.setData(ex.getData());
+
+        return new ResponseEntity<>(errors, HttpStatus.FORBIDDEN);
 
     }
 }

@@ -13,5 +13,7 @@ public class Itinerary implements Serializable {
     private String airline;
     private List<LegGroup> legGroups = new ArrayList<>();
     private List<String> lowest = new ArrayList<>();
+    private List<String> highest = new ArrayList<>();
+    private boolean favorite;
 
 }

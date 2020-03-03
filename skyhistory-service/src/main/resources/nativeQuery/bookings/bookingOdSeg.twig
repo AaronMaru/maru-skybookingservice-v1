@@ -13,7 +13,7 @@ bod_seg.dep_date AS depDateTime,
 (
 	SELECT arr_seg.arr_location_code
 	FROM booking_origin_destinations arr_seg
-	WHERE arr_seg.parent_id = :bodId
+	WHERE arr_seg.parent_id = bod_seg.parent_id
 	ORDER BY arr_seg.id DESC
 	LIMIT 1
 
@@ -24,7 +24,7 @@ arr_ai.arr_country AS arrCountry,
 (
 	SELECT arr_seg.arr_date
 	FROM booking_origin_destinations arr_seg
-	WHERE arr_seg.parent_id = :bodId
+	WHERE arr_seg.parent_id = bod_seg.parent_id
 	ORDER BY arr_seg.id DESC
 	LIMIT 1
 
@@ -46,6 +46,7 @@ FROM booking_origin_destinations bod_seg
 				FROM flight_info_locale fil
 				WHERE fil.locale_id = 1
 				AND fil.flight_id = fi.id
+				LIMIT 1
 			) AS airline_name
 
 		FROM flight_info fi
@@ -66,6 +67,7 @@ FROM booking_origin_destinations bod_seg
 				FROM aircraft_locale ail
 				WHERE ail.locale_id = 1
 				AND ail.aircraft_id = aci.id
+				LIMIT 1
 			) AS aircraft_name
 
 		FROM aircrafts_info aci
@@ -95,6 +97,7 @@ FROM booking_origin_destinations bod_seg
 
 			FROM airport_info_locale ail
 			WHERE ail.locale_id = 1
+
 		) ail ON ail.airport_info_id = dep_ai.id
 		-- The end of departure airport localization
 
@@ -220,7 +223,7 @@ FROM booking_origin_destinations bod_seg
 
 	) arr_ai ON arr_ai.`code` = (SELECT arr_seg.arr_location_code
                                 FROM booking_origin_destinations arr_seg
-                                WHERE arr_seg.parent_id = :bodId
+                                WHERE arr_seg.parent_id = bod_seg.parent_id
                                 ORDER BY arr_seg.id DESC
                                 LIMIT 1
                                 )

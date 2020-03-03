@@ -1,6 +1,7 @@
 package com.skybooking.skyhistoryservice.v1_0_0.ui.controller.web.bookings;
 
 import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.booking.SendBookingSV;
+import com.skybooking.skyhistoryservice.v1_0_0.ui.model.request.SendBookingNoAuthRQ;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.request.SendBookingPDFRQ;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.skyhistoryservice.v1_0_0.util.localization.LocalizationBean;
@@ -51,6 +52,32 @@ public class SendBookingControllerW {
         return localization.resAPI(HttpStatus.OK,"is_skb_info", "");
     }
 
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Send mail receipt itinerary
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Return ResRS
+     */
+    @PostMapping("receipt-itinerary")
+    public ResRS receiptItinerary(@Valid @RequestBody SendBookingNoAuthRQ sendBookingNoAuthRQ) {
+        sendBookingSV.sendBookingInfo(sendBookingNoAuthRQ);
+        return localization.resAPI(HttpStatus.OK,"is_skb_info", "");
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Send mail payment success
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Return ResRS
+     */
+    @PostMapping("payment-success/no-auth")
+    public ResRS paymentNoAuth(@Valid @RequestBody SendBookingNoAuthRQ sendBookingNoAuthRQ) {
+        sendBookingSV.sendPaymentWithoutAuth(sendBookingNoAuthRQ);
+        return localization.resAPI(HttpStatus.OK,"is_skb_info", "");
+    }
 
     /**
      * -----------------------------------------------------------------------------------------------------------------

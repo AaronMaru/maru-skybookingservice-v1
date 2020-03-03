@@ -18,7 +18,7 @@
         <#list data.bookingOd as item>
             <ul style="width:100%;display:inline-block;float:left;padding:0;text-align:center;color: #606060;">
                 <li style="width: 25%; display:inline-block;text-align: center;">
-                    <small>${item.fSegs.depDateTime?datetime("yyyy-MM-dd HH:mm:ss")?string["d MMM | hh:mm"]}</small>
+                    <small>${item.fSegs.depDateTime?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["d MMM | hh:mm"]}</small>
                     <h2 style="margin: 5px 0;color: #707070;font-size: 20px;">${item.fSegs.depLocation}</h2>
                     <span style="color:#707070;font-size: 13px;">${item.fSegs.depCity}, ${item.fSegs.depCountry}</span>
                 </li>
@@ -27,7 +27,7 @@
                     <small style="display:block; font-size: 12px;color: #606060;">${(item.stop != 0) ? then('Stop ${item.stop}' , 'Non Stop')}</small>
                 </li>
                 <li style="width:25%;display:inline-block;text-align:center;color:#606060;">
-                    <small>${item.fSegs.arrDateTime?datetime("yyyy-MM-dd HH:mm:ss")?string["d MMM | hh:mm"]}</small>
+                    <small>${item.fSegs.arrDateTime?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["d MMM | hh:mm"]}</small>
                     <h2 style="margin: 5px 0;color: #707070;font-size: 20px;">${item.fSegs.arrLocation}</h2>
                     <span style="color:#707070;font-size: 13px;">${item.fSegs.arrCity}, ${item.fSegs.arrCountry}</span>
                 </li>

@@ -27,5 +27,8 @@ public class Leg implements Serializable {
     private boolean isDirectFlight;
     private int legIndex;
     private int directionIndex;
+    private int stops;
+    private int seats;
+    private int adjustmentDates;
 
 }

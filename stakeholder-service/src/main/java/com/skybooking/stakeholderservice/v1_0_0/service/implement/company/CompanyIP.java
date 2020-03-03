@@ -94,8 +94,14 @@ public class CompanyIP implements CompanySV {
         }
 
         if (bizType.get().getName().equals("Goverment")) {
-            company.setContactPerson(companyRQ.getContactPerson());
-            company.setContactPosition(companyRQ.getContactPosition());
+
+            if (companyRQ.getContactPerson() != null) {
+                company.setContactPerson(companyRQ.getContactPerson());
+            }
+            if (companyRQ.getContactPosition() != null) {
+                company.setContactPosition(companyRQ.getContactPosition());
+            }
+
         } else {
             company.setContactPerson(null);
             company.setContactPosition(null);
@@ -143,6 +149,7 @@ public class CompanyIP implements CompanySV {
     public List<ContactEntity> updateContacts(StakeholderCompanyEntity company, CompanyUpdateRQ companyRQ) {
 
         List<ContactEntity> contacts = contactRP.getContactCM(company.getId());
+
         for (ContactEntity contact: contacts) {
             switch (contact.getType()) {
                 case "p" :

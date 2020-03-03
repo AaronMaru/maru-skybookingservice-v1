@@ -2,6 +2,7 @@ package com.skybooking.skyflightservice.v1_0_0.service.implement.payment;
 
 import com.skybooking.skyflightservice.constant.BookingConstant;
 import com.skybooking.skyflightservice.constant.PaymentConstant;
+import com.skybooking.skyflightservice.v1_0_0.client.skyhistory.action.SkyhistoryAction;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.booking.BookingPaymentTransactionEntity;
 import com.skybooking.skyflightservice.v1_0_0.io.repository.booking.BookingPaymentTransactionRP;
 import com.skybooking.skyflightservice.v1_0_0.io.repository.booking.BookingRP;
@@ -29,6 +30,8 @@ public class PaymentIP implements PaymentSV {
     @Autowired
     private BookingUtility bookingUtility;
 
+    @Autowired
+    private SkyhistoryAction skyhistoryAction;
 
 
     @Override
@@ -58,7 +61,6 @@ public class PaymentIP implements PaymentSV {
     }
 
 
-
     @Override
     public PaymentMandatoryRS getMandatoryData(String bookingCod) {
 
@@ -78,10 +80,11 @@ public class PaymentIP implements PaymentSV {
         paymentMandatoryRS.setName(booking.getCustName());
         paymentMandatoryRS.setPhoneNumber(booking.getContPhone());
         paymentMandatoryRS.setEmail(booking.getContEmail());
+        paymentMandatoryRS.setSkyuserId(booking.getStakeholderUserId());
+        paymentMandatoryRS.setCompanyId(booking.getStakeholderCompanyId());
 
         return paymentMandatoryRS;
     }
-
 
 
     @Override
@@ -145,6 +148,8 @@ public class PaymentIP implements PaymentSV {
 
         booking.setStatus(PaymentConstant.PAYMENT_SUCCEED);
         bookingRP.save(booking);
+
+//        skyhistoryAction.sendPaymentSucceed(new PaymentSucceedSendingRQ(booking.getBookingCode(), booking.getContEmail()));
 
         return paymentSucceedRS;
     }

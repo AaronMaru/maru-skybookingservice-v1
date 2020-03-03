@@ -19,6 +19,10 @@ spring:
             version: wv1.0.0
             path: /
 
+        skyhistory:
+            uri: http://192.168.2.4:7000/skyhistory/
+            version: wv1.0.0
+
     aws:
         storage:
             logo:

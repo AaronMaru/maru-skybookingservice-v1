@@ -4,8 +4,8 @@ import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserReposito
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.user.UserSV;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company.CompanyRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user.*;
-import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.verify.SendVerifyRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.CompanyRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
@@ -16,14 +16,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
-import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.validation.Valid;
 import java.text.ParseException;
+
 
 @RestController
 @RequestMapping("/wv1.0.0")
@@ -166,9 +164,9 @@ public class UserControllerW {
             return new ResponseEntity<>(generalBean.errors(errors), HttpStatus.BAD_REQUEST);
         }
 
-        userSV.applySkyowner(companyRQ);
+        CompanyRS company = userSV.applySkyowner(companyRQ);
 
-        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"apl_skyowner_succ", "");
+        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"apl_skyowner_succ", company);
 
     }
 

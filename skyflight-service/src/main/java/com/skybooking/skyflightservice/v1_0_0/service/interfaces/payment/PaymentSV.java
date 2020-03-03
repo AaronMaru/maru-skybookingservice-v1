@@ -21,7 +21,6 @@ public interface PaymentSV {
     PaymentMandatoryRS updateDiscountPaymentMethod(PaymentMandatoryRQ paymentMandatoryRQ);
 
 
-
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Get mandatory data from booking

@@ -9,6 +9,7 @@ import java.util.Date;
 @Entity
 @Table(name = "stakeholder_user_invitations")
 public class StakeholderUserInvitationEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -41,6 +42,8 @@ public class StakeholderUserInvitationEntity {
     @Column(name = "stakeholder_company_id")
     private Long stakeholderCompanyId;
 
+    @Column(name = "skyuser_role")
+    private String skyuserRole;
 
     public Integer getId() {
         return this.id;
@@ -112,6 +115,14 @@ public class StakeholderUserInvitationEntity {
 
     public void setStakeholderCompanyId(Long stakeholderCompanyId) {
         this.stakeholderCompanyId = stakeholderCompanyId;
+    }
+
+    public String getSkyuserRole() {
+        return skyuserRole;
+    }
+
+    public void setSkyuserRole(String skyuserRole) {
+        this.skyuserRole = skyuserRole;
     }
 
 }

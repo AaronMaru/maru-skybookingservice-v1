@@ -2,15 +2,20 @@ package com.skybooking.skyhistoryservice.v1_0_0.service.implment.flightSave;
 
 import com.skybooking.skyhistoryservice.exception.httpstatus.BadRequestException;
 import com.skybooking.skyhistoryservice.v1_0_0.io.enitity.flight.FlightSaveEntity;
-import com.skybooking.skyhistoryservice.v1_0_0.io.enitity.flight.FlightSaveODEntity;
-import com.skybooking.skyhistoryservice.v1_0_0.io.repository.flight.FlightSaveODRP;
+import com.skybooking.skyhistoryservice.v1_0_0.io.nativeQuery.saveFlight.SaveFlightNQ;
+import com.skybooking.skyhistoryservice.v1_0_0.io.nativeQuery.saveFlight.SaveFlightODTO;
+import com.skybooking.skyhistoryservice.v1_0_0.io.nativeQuery.saveFlight.SaveFlightTO;
 import com.skybooking.skyhistoryservice.v1_0_0.io.repository.flight.FlightSaveRP;
 import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.flightSave.FlightSaveSV;
-import com.skybooking.skyhistoryservice.v1_0_0.transformer.flightSave.FlightSaveTF;
+import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.flightSave.FlightSaveODRS;
+import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.flightSave.FlightSavePaginationRS;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.flightSave.FlightSaveRS;
-import com.skybooking.skyhistoryservice.v1_0_0.util.flight.FlightSaveODSUtils;
-import com.skybooking.skyhistoryservice.v1_0_0.util.flight.FlightSaveSUtils;
+import com.skybooking.skyhistoryservice.v1_0_0.util.JwtUtils;
+import com.skybooking.skyhistoryservice.v1_0_0.util.datetime.DateTimeBean;
+import com.skybooking.skyhistoryservice.v1_0_0.util.header.HeaderBean;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -25,59 +30,114 @@ public class FlightSaveIP implements FlightSaveSV {
     private FlightSaveRP flightSaveRP;
 
     @Autowired
-    private FlightSaveODRP flightSaveODRP;
+    private SaveFlightNQ saveFlightNQ;
+
+    @Autowired
+    private JwtUtils jwtUtils;
+
+    @Autowired
+    private DateTimeBean dateTimeBean;
+
+    @Autowired
+    private HeaderBean headerBean;
+
+    @Autowired
+    private Environment environment;
 
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * Get flight save by keyword
+     * Get list item
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @param keyword
      * @param page
-     * @param limit
-     * @param by
-     * @param order
-     * @return list
+     * @param size
+     * @return List<FlightSaveRS>
      */
     @Override
-    public List<FlightSaveRS> getItemsByKeyword(String keyword, int page, int limit, String by, String order) {
+    public FlightSavePaginationRS saveFlights(String keyword, int page, int size) {
 
-        long userId = 65;
+        Long skyuserId = jwtUtils.getClaim("stakeholderId", Long.class);
+        Long companyId = jwtUtils.getClaim("companyId", Long.class);
 
-        Page<FlightSaveODEntity> flightSaveODEntities = flightSaveODRP.findAllByUserAndKeyword(userId, keyword, PageRequest.of(0, Integer.MAX_VALUE, FlightSaveODSUtils.sort(by, order)));
+        String stake = headerBean.getCompanyId(companyId);
+        String role = (stake.equals("company")) ? jwtUtils.getClaim("userRole", String.class) : "";
 
-        List<Long> ids = new ArrayList<>();
+        String action = keyword != null ? "search" : "";
 
-        for (FlightSaveODEntity entity : flightSaveODEntities.getContent()) {
-            Long id = entity.getFlightSaveEntity().getId();
-            ids.add(id);
-        }
+        Page<SaveFlightTO> saveFlightTOS = saveFlightNQ.savedFlight(skyuserId, companyId, action, keyword, role, stake, PageRequest.of(page -1, size));
 
-        if (!ids.isEmpty())
-            return FlightSaveTF.getResponseList(flightSaveRP.findAllByUserAndKeywordInIds(userId, keyword, ids, PageRequest.of(page, limit, FlightSaveSUtils.sort(by, order))));
+        List<FlightSaveRS> saveFlies = new ArrayList<>();
+        saveFlightTOS.forEach(dataTO -> {
+            FlightSaveRS saveFly = new FlightSaveRS();
+            BeanUtils.copyProperties(dataTO, saveFly);
 
-        return FlightSaveTF.getResponseList(flightSaveRP.findAllByUserAndKeyword(userId, keyword, PageRequest.of(page, limit, FlightSaveSUtils.sort(by, order))));
+            List<FlightSaveODRS> sflightODs = saveFlightsSegment((long) dataTO.getId());
+            saveFly.setODInfo(sflightODs);
 
+            saveFlies.add(saveFly);
+        });
+
+        FlightSavePaginationRS flightSavePaginationRS = new FlightSavePaginationRS();
+        flightSavePaginationRS.setSize(size);
+        flightSavePaginationRS.setPage(page);
+        flightSavePaginationRS.setTotals(saveFlightTOS.getTotalElements());
+        flightSavePaginationRS.setData(saveFlies);
+
+        return flightSavePaginationRS;
+
+    }
+
+
+    private List<FlightSaveODRS> saveFlightsSegment(Long flightId) {
+        List<SaveFlightODTO> saveFlightODTO = saveFlightNQ.saveFlightSegments(flightId);
+
+        List<FlightSaveODRS> fSaveODs = new ArrayList<>();
+
+        saveFlightODTO.forEach(dataOD -> {
+            FlightSaveODRS fSaveODR = new FlightSaveODRS();
+            BeanUtils.copyProperties(dataOD, fSaveODR);
+
+            fSaveODR.setaDateTime(dateTimeBean.convertDateTime(dataOD.getaDateTime()));
+            fSaveODR.setdDateTime(dateTimeBean.convertDateTime(dataOD.getdDateTime()));
+
+            fSaveODR.setAirlineLogo45(environment.getProperty("spring.awsImageUrl.airLine") + "45/" + dataOD.getAirlineLogo45() + ".png");
+            fSaveODR.setAirlineLogo90(environment.getProperty("spring.awsImageUrl.airLine") + "90/" + dataOD.getAirlineLogo90() + ".png");
+
+            fSaveODs.add(fSaveODR);
+        });
+
+        return fSaveODs;
     }
 
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * delete item by id
+     * Delete item by id
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @param id
+     * @Param id
      */
     @Override
     public void deleteItem(long id) {
 
-        FlightSaveEntity entity = flightSaveRP.findFirstByIdAndUserId(id, 65);
+        Long skyuserId = jwtUtils.getClaim("stakeholderId", Long.class);
+        Long companyId = jwtUtils.getClaim("companyId", Long.class);
+        String stake = headerBean.getCompanyId(companyId);
+
+        FlightSaveEntity entity = flightSaveRP.findFirstByIdAndUserId(id, Integer.parseInt(skyuserId.toString()));
+
+        if (stake.equals("company")) {
+            entity = flightSaveRP.findFirstByIdAndUserIdAndCompanyId(id, Integer.parseInt(skyuserId.toString()), companyId);
+        }
 
         if (entity == null) {
             throw new BadRequestException("not_found", null);
         }
 
         flightSaveRP.delete(entity);
+
     }
+
 }

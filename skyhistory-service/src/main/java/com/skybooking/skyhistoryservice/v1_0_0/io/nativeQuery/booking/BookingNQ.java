@@ -16,8 +16,8 @@ public interface BookingNQ extends NativeQuery {
 
     Page<BookingTO> listBooking(@NativeQueryParam(value = "keyword") String keyword,
                                 @NativeQueryParam(value = "bookStatus") String bookStatus,
-                                @NativeQueryParam(value = "startRange") String startRange,
-                                @NativeQueryParam(value = "endRange") String endRange,
+                                @NativeQueryParam(value = "startRange") Integer startRange,
+                                @NativeQueryParam(value = "endRange") Integer endRange,
                                 @NativeQueryParam(value = "tripType") String tripType,
                                 @NativeQueryParam(value = "className") String className,
                                 @NativeQueryParam(value = "bookDate") String bookDate,
@@ -26,14 +26,17 @@ public interface BookingNQ extends NativeQuery {
                                 @NativeQueryParam(value = "flyingTo") String flyingTo,
                                 @NativeQueryParam(value = "bookByName") String bookByName,
                                 @NativeQueryParam(value = "action") String action,
-                                @NativeQueryParam(value = "stake") String stake,
+                                @NativeQueryParam(value = "role") String role,
                                 @NativeQueryParam(value = "skyuserId") Long skyuserId,
                                 @NativeQueryParam(value = "companyId") Long companyId,
+                                @NativeQueryParam(value = "stake") String stake,
                                 Pageable pageable);
-    List<BookingTO> detailBooking(@NativeQueryParam(value = "action") String action,
+
+    List<BookingTO> detailBooking(@NativeQueryParam(value = "stake") String stake,
                                   @NativeQueryParam(value = "bookingId") Long id,
                                   @NativeQueryParam(value = "skyuserId") Long skyuserId,
-                                  @NativeQueryParam(value = "companyId") Long companyId);
+                                  @NativeQueryParam(value = "companyId") Long companyId,
+                                  @NativeQueryParam(value = "role") String role);
 
     List<BookingOdTO> listBookingOd(@NativeQueryParam(value = "bookingId") Integer bookingId);
     BookingOdSegTO bookingOdSeg(@NativeQueryParam(value = "bodId") Integer bodId);

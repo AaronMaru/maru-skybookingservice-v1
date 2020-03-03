@@ -1,5 +1,6 @@
 package com.skybooking.skyhistoryservice.v1_0_0.util.header;
 
+import com.skybooking.skyhistoryservice.exception.httpstatus.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.persistence.EntityManager;
@@ -38,6 +39,7 @@ public class HeaderBean {
         return locale;
     }
 
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Get localization id by locale name
@@ -45,7 +47,6 @@ public class HeaderBean {
      *
      * @return id of localization
      */
-
     public long getLocalizationId() {
 
         Object result = entityManager
@@ -77,6 +78,22 @@ public class HeaderBean {
         String currency = reqCurrency == null ? "USD" : (reqCurrency.equals("")) ? "USD" : (b ? reqCurrency : "USD");
 
         return currency;
+    }
+
+
+    public String getCompanyId(Long cId) {
+        Long companyId = (request.getHeader("X-CompanyId") != null && !request.getHeader("X-CompanyId").isEmpty())
+                ? Long.valueOf(request.getHeader("X-CompanyId"))
+                : 0;
+        if (companyId == 0) {
+            return "skyuser";
+        }
+
+        if (!companyId.equals(cId)) {
+            throw new BadRequestException("sth_w_w", null);
+        }
+
+        return "company";
     }
 
 

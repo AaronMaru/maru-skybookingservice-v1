@@ -6,19 +6,26 @@ import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.skybooking.stakeholderservice.exception.httpstatus.InternalServerError;
 import com.skybooking.stakeholderservice.exception.httpstatus.UnauthorizedException;
+import com.skybooking.stakeholderservice.v1_0_0.io.enitity.company.BussinessTypeEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.company.StakeholderCompanyDocsEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.company.StakeholderCompanyEntity;
+import com.skybooking.stakeholderservice.v1_0_0.io.enitity.company.StakeholderUserHasCompanyEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.contact.ContactEntity;
+import com.skybooking.stakeholderservice.v1_0_0.io.enitity.locale.LocaleEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.notification.UserPlayerEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.redis.UserTokenEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserEntity;
+import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.currency.CurrencyNQ;
+import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.currency.CurrencyTO;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.user.PermissionTO;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.user.TotalBookingTO;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.user.UserNQ;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.user.UserProfileTO;
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.BussinessTypeRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyHasUserRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.contact.ContactRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.country.LocationRP;
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.locale.LocaleRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.notification.UserPlayerRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.redis.UserTokenRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserRepository;
@@ -26,10 +33,13 @@ import com.skybooking.stakeholderservice.v1_0_0.transformer.TokenTF;
 import com.skybooking.stakeholderservice.v1_0_0.transformer.UserDetailsTF;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.CompanyRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.LicenseRS;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.passenger.PassengerRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.PermissionRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
+import com.skybooking.stakeholderservice.v1_0_0.util.datetime.DateTimeBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
+import com.skybooking.stakeholderservice.v1_0_0.util.passenger.Passenger;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.math.NumberUtils;
 import org.springframework.beans.BeanUtils;
@@ -97,6 +107,18 @@ public class UserBean {
     @Autowired
     private LocationRP locationRP;
 
+    @Autowired
+    private BussinessTypeRP bussinessTypeRP;
+
+    @Autowired
+    private DateTimeBean dateTimeBean;
+
+    @Autowired
+    private LocaleRP localeRP;
+
+    @Autowired
+    private CurrencyNQ currencyNQ;
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -112,11 +134,11 @@ public class UserBean {
         UserEntity user = userRepository.findByUsername(authentication.getName());
 
         if (user == null) {
-            throw new UnauthorizedException("sth_w_w", null);
+            throw new UnauthorizedException("Unauthorized", null);
         }
 
         if (user.getStakeHolderUser().getStatus() != 1) {
-            throw new UnauthorizedException("sth_w_w", null);
+            throw new UnauthorizedException("Unauthorized", null);
         }
 
         return user;
@@ -214,11 +236,22 @@ public class UserBean {
         userDetailDao.setIsSkyowner(user.getStakeHolderUser().getIsSkyowner());
         userDetailDao.setUserCode(user.getStakeHolderUser().getUserCode());
         userDetailDao.setDob(generalBean.strCv(user.getStakeHolderUser().getDateOfBirth()));
-        userDetailDao.setJoined(generalBean.strCv(user.getCreatedAt().toString()));
+        userDetailDao.setJoined(dateTimeBean.convertDateTimeISO(user.getCreatedAt()));
         userDetailDao.setNationality(generalBean.strCv(user.getStakeHolderUser().getNationality()));
+        userDetailDao.setCurrencyId(user.getStakeHolderUser().getCurrencyId());
+
+        LocaleEntity defaultLocale = localeRP.findLocaleByLocale("en");
+        List<CurrencyTO> currencyTOList = currencyNQ.findAllByLocaleId(defaultLocale.getId());
+
+        currencyTOList.forEach(item -> {
+            if ((long) item.getCurrencyId() == user.getStakeHolderUser().getCurrencyId())
+                userDetailDao.setCurencyCode(item.getCode());
+        });
 
         TotalBookingTO totalBooking = userNQ.totalBooking(user.getStakeHolderUser().getId());
         userDetailDao.setTotalBooking(totalBooking.getBookingQty());
+
+        getStaffCompany(user, userDetailDao);
 
         if (user.getStakeHolderUser().getIsSkyowner() == 1) {
             List<CompanyRS> companyRS = companiesDetails(user.getStakeHolderUser().getStakeholderCompanies());
@@ -248,6 +281,31 @@ public class UserBean {
         }
 
         return userDetailDao;
+
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Getting staff company
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param UserDetailsTF
+     * @Param UserEntity
+     * @Return List<PermissionRS>
+     */
+    private void getStaffCompany(UserEntity user, UserDetailsTF userDetailDao) {
+        
+        StakeholderUserHasCompanyEntity findStaff = companyHasUserRP.findByStakeholderUserIdAndStatus(user.getStakeHolderUser().getId(), 2);
+
+        if (findStaff != null) {
+            List<CompanyRS> staffCompaniesRS = new ArrayList<>();
+            CompanyRS staffCompany = new CompanyRS();
+
+            staffCompany.setId(findStaff.getStakeholderCompanyId());
+            staffCompaniesRS.add(staffCompany);
+            userDetailDao.setCompanies(staffCompaniesRS);
+        }
 
     }
 
@@ -290,10 +348,15 @@ public class UserBean {
             CompanyRS companyRS = new CompanyRS();
 
             companyRS.setId(company.getId());
+
             companyRS.setCompanyName(company.getCompanyName());
             companyRS.setContactPerson(company.getContactPerson());
             companyRS.setContactPosition(company.getContactPosition());
             companyRS.setBusinessTypeId(company.getBussinessTypeId());
+
+            BussinessTypeEntity business = bussinessTypeRP.findById(company.getBussinessTypeId()).orElse(null);
+            companyRS.setBusinessTypeName(business.getName());
+
             companyRS.setDescription(company.getDescription());
 
             String status = companyStatus(company.getStatus());
@@ -735,6 +798,26 @@ public class UserBean {
         BeanUtils.copyProperties(userFields(user, data.getAccess_token()), userDetailsTokenRS);
 
         return userDetailsTokenRS;
+
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Set passenger type
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param birthday
+     * @Param passenger
+     * @Return
+     */
+    public void setPasengerType(String birthday, PassengerRS passenger) {
+
+        Passenger clPassenger = new Passenger();
+
+        Date birth = dateTimeBean.convertDateTimes(birthday);
+        String pType = clPassenger.passengerType(birth);
+        passenger.setPassType(pType);
 
     }
 

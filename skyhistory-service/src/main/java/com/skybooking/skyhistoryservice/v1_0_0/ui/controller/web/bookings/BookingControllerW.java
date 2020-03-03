@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
+
 @RestController
 @RequestMapping(value = "/wv1.0.0")
 public class BookingControllerW {
@@ -24,40 +26,14 @@ public class BookingControllerW {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * Get bookings companyConstant
-     * -----------------------------------------------------------------------------------------------------------------
-     *
-     * @Return ResponseEntity
-     */
-    @GetMapping("/bookings-company")
-    public ResRS bookingsCompany() {
-        return localization.resAPI(HttpStatus.OK,"res_succ", bookingSV.getBooking("company"));
-    }
-
-
-    /**
-     * -----------------------------------------------------------------------------------------------------------------
      * Get bookings skyuser
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @return ResponseEntity
      */
-    @GetMapping("/bookings-skyuser")
-    public ResRS bookingsSkyuser() {
-        return localization.resAPI(HttpStatus.OK,"res_succ", bookingSV.getBooking("skyuser"));
-    }
-
-
-    /**
-     * -----------------------------------------------------------------------------------------------------------------
-     * Get bookings staff
-     * -----------------------------------------------------------------------------------------------------------------
-     *
-     * @return ResponseEntity
-     */
-    @GetMapping("/bookings-staff")
-    public ResRS bookingsStaff() {
-        return localization.resAPI(HttpStatus.OK,"res_succ", bookingSV.getBooking("staff"));
+    @GetMapping("/bookings")
+    public ResRS bookings(HttpServletRequest request) {
+        return localization.resAPI(HttpStatus.OK,"res_succ", bookingSV.getBooking(request));
     }
 
 
@@ -69,9 +45,10 @@ public class BookingControllerW {
      * @return ResponseEntity
      */
     @GetMapping("/booking/{id}")
-    public ResRS getBookingDetail(@PathVariable Long id) {
+    public ResRS bookingDetail(@PathVariable Long id) {
         return localization.resAPI(HttpStatus.OK,"res_succ", bookingSV.getBookingDetail(id));
     }
+
 
 
 }

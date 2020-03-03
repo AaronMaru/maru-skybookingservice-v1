@@ -19,4 +19,9 @@ public interface CompanyHasUserRP extends JpaRepository<StakeholderUserHasCompan
      */
     StakeholderUserHasCompanyEntity findByStakeholderUserId(Long skyuserId);
 
+    /**
+     * Find Staff
+     */
+    StakeholderUserHasCompanyEntity findByStakeholderUserIdAndStatus(Long skyuserId, Integer status);
+
 }

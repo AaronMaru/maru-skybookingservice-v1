@@ -11,11 +11,13 @@ public class PaymentMethodRS {
     private String code;
     private String method;
     private BigDecimal percentage;
+    private String imageUrl;
 
-    public PaymentMethodRS(String type, String code, String method, BigDecimal percentage) {
+    public PaymentMethodRS(String type, String code, String method, BigDecimal percentage, String imageUrl) {
         this.type = type;
         this.code = code;
         this.method = method;
         this.percentage = percentage;
+        this.imageUrl = imageUrl;
     }
 }

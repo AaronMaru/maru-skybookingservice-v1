@@ -39,18 +39,18 @@ public class LocationAction {
     public Mono<Object> getQuickSearchAction(String groupByKey) {
 
         return client
-                .mutate()
-                .exchangeStrategies(ExchangeStrategies.builder().codecs(clientCodecConfigurer -> {
-                    clientCodecConfigurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024);
-                }).build())
-                .build()
-                .get()
-                .uri(appConfig.getDISTRIBUTED_URI() + "/utils/" + appConfig.getDISTRIBUTED_VERSION() + "/sb-quick-search-location?groupByKey=" + groupByKey)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
-                .header(CustomHeaderConstant.LOCALIZATION, headerBean.getLocalization())
-                .header(CustomHeaderConstant.CURRENCY, headerBean.getCurrencyCode())
-                .retrieve()
-                .bodyToMono(Object.class);
+            .mutate()
+            .exchangeStrategies(ExchangeStrategies.builder().codecs(clientCodecConfigurer -> {
+                clientCodecConfigurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024);
+            }).build())
+            .build()
+            .get()
+            .uri(appConfig.getDISTRIBUTED_URI() + "/utils/" + appConfig.getDISTRIBUTED_VERSION() + "/sb-quick-search-location?groupByKey=" + groupByKey)
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
+            .header(CustomHeaderConstant.LOCALIZATION, headerBean.getLocalization())
+            .header(CustomHeaderConstant.CURRENCY, headerBean.getCurrencyCode())
+            .retrieve()
+            .bodyToMono(Object.class);
 
     }
 
@@ -66,18 +66,18 @@ public class LocationAction {
     public Mono<Object> getAutoCompleteAction(String keyword, Boolean groupBy) {
 
         return client
-                .mutate()
-                .exchangeStrategies(ExchangeStrategies.builder().codecs(clientCodecConfigurer -> {
-                    clientCodecConfigurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024);
-                }).build())
-                .build()
-                .get()
-                .uri(appConfig.getDISTRIBUTED_URI() + "/utils/" + appConfig.getDISTRIBUTED_VERSION() + "/sb-auto-complete?keyword=" + keyword + "&groupBy=" + groupBy)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
-                .header(CustomHeaderConstant.LOCALIZATION, headerBean.getLocalization())
-                .header(CustomHeaderConstant.CURRENCY, headerBean.getCurrencyCode())
-                .retrieve()
-                .bodyToMono(Object.class);
+            .mutate()
+            .exchangeStrategies(ExchangeStrategies.builder().codecs(clientCodecConfigurer -> {
+                clientCodecConfigurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024);
+            }).build())
+            .build()
+            .get()
+            .uri(appConfig.getDISTRIBUTED_URI() + "/utils/" + appConfig.getDISTRIBUTED_VERSION() + "/sb-auto-complete?keyword=" + keyword + "&groupBy=" + groupBy)
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
+            .header(CustomHeaderConstant.LOCALIZATION, headerBean.getLocalization())
+            .header(CustomHeaderConstant.CURRENCY, headerBean.getCurrencyCode())
+            .retrieve()
+            .bodyToMono(Object.class);
 
     }
 
@@ -91,18 +91,18 @@ public class LocationAction {
     public Mono<Object> getCountryAction() {
 
         return client
-                .mutate()
-                .exchangeStrategies(ExchangeStrategies.builder().codecs(clientCodecConfigurer -> {
-                    clientCodecConfigurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024);
-                }).build())
-                .build()
-                .get()
-                .uri(appConfig.getDISTRIBUTED_URI() + "/utils/" + appConfig.getDISTRIBUTED_VERSION() + "/sb-countries")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
-                .header(CustomHeaderConstant.LOCALIZATION, headerBean.getLocalization())
-                .header(CustomHeaderConstant.CURRENCY, headerBean.getCurrencyCode())
-                .retrieve()
-                .bodyToMono(Object.class);
+            .mutate()
+            .exchangeStrategies(ExchangeStrategies.builder().codecs(clientCodecConfigurer -> {
+                clientCodecConfigurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024);
+            }).build())
+            .build()
+            .get()
+            .uri(appConfig.getDISTRIBUTED_URI() + "/utils/" + appConfig.getDISTRIBUTED_VERSION() + "/sb-countries")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
+            .header(CustomHeaderConstant.LOCALIZATION, headerBean.getLocalization())
+            .header(CustomHeaderConstant.CURRENCY, headerBean.getCurrencyCode())
+            .retrieve()
+            .bodyToMono(Object.class);
 
     }
 
@@ -117,18 +117,18 @@ public class LocationAction {
     public Mono<Object> getCityAction(int countryId) {
 
         return client
-                .mutate()
-                .exchangeStrategies(ExchangeStrategies.builder().codecs(clientCodecConfigurer -> {
-                    clientCodecConfigurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024);
-                }).build())
-                .build()
-                .get()
-                .uri(appConfig.getDISTRIBUTED_URI() + "/utils/" + appConfig.getDISTRIBUTED_VERSION() + "/sb-cities/" + countryId)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
-                .header(CustomHeaderConstant.LOCALIZATION, headerBean.getLocalization())
-                .header(CustomHeaderConstant.CURRENCY, headerBean.getCurrencyCode())
-                .retrieve()
-                .bodyToMono(Object.class);
+            .mutate()
+            .exchangeStrategies(ExchangeStrategies.builder().codecs(clientCodecConfigurer -> {
+                clientCodecConfigurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024);
+            }).build())
+            .build()
+            .get()
+            .uri(appConfig.getDISTRIBUTED_URI() + "/utils/" + appConfig.getDISTRIBUTED_VERSION() + "/sb-cities/" + countryId)
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
+            .header(CustomHeaderConstant.LOCALIZATION, headerBean.getLocalization())
+            .header(CustomHeaderConstant.CURRENCY, headerBean.getCurrencyCode())
+            .retrieve()
+            .bodyToMono(Object.class);
 
     }
 

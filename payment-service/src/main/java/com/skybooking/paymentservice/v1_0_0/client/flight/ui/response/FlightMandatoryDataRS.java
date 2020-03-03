@@ -13,5 +13,7 @@ public class FlightMandatoryDataRS {
     private String name;
     private String email;
     private String phoneNumber;
+    private Integer skyuserId;
+    private Integer companyId;
 
 }

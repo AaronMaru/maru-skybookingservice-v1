@@ -14,6 +14,7 @@ public class FlightShoppingRS implements Serializable {
     private List<AirlineRS> airlines = new ArrayList<>();
     private List<AircraftRS> aircrafts = new ArrayList<>();
     private List<LocationRS> locations = new ArrayList<>();
+    private List<LayoverAirportRS> layoverAirports = new ArrayList<>();
     private List<PriceDetailRS> prices = new ArrayList<>();
     private List<BaggageDetailRS> baggages = new ArrayList<>();
     private List<SegmentRS> segments = new ArrayList<>();

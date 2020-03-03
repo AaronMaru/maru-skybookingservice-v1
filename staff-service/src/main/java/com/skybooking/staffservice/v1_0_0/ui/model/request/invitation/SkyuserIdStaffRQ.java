@@ -5,6 +5,7 @@ import javax.validation.constraints.NotNull;
 
 public class SkyuserIdStaffRQ {
 
+    @NotNull(message = "Please provide a user id")
     private Long userId;
 
     @NotNull(message = "Please provide a role")

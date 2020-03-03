@@ -25,10 +25,10 @@ public class FlightSaveODEntity {
     @Column(name = "airline_name", nullable = false, length = 191)
     private String airlineName;
 
-    @Column(name = "airline_logo45", nullable = false, length = 191)
+    @Column(name = "airline_logo_45", nullable = false, length = 191)
     private String airlineLogo45;
 
-    @Column(name = "airline_logo90", nullable = false, length = 191)
+    @Column(name = "airline_logo_90", nullable = false, length = 191)
     private String airlineLogo90;
 
     @Column(name = "d_date_time", nullable = false)

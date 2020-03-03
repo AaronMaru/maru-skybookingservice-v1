@@ -1,8 +1,8 @@
 package com.skybooking.staffservice.v1_0_0.service.implement.staff;
 
 import com.skybooking.staffservice.exception.httpstatus.BadRequestException;
+import com.skybooking.staffservice.exception.httpstatus.ForbiddenException;
 import com.skybooking.staffservice.exception.httpstatus.NotFoundException;
-import com.skybooking.staffservice.exception.httpstatus.UnauthorizedException;
 import com.skybooking.staffservice.v1_0_0.io.enitity.company.StakeholderUserHasCompanyEntity;
 import com.skybooking.staffservice.v1_0_0.io.nativeQuery.staff.*;
 import com.skybooking.staffservice.v1_0_0.io.repository.company.CompanyHasUserRP;
@@ -45,7 +45,7 @@ public class StaffIP implements StaffSV {
         String userType = jwtUtils.getClaim("userType", String.class);
 
         if (userType.equals("skyuser")) {
-            throw new UnauthorizedException("unauthorized", null);
+            throw new ForbiddenException("unauthorized", null);
         }
 
         String keyword = request.getParameter("keyword") != null ? request.getParameter("keyword") : "";
@@ -109,6 +109,7 @@ public class StaffIP implements StaffSV {
 
         return action;
     }
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------

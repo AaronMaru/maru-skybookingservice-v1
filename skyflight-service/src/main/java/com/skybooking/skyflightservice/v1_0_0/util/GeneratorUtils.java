@@ -21,7 +21,6 @@ public class GeneratorUtils {
     }
 
 
-
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Get Generate unique booking code of flight

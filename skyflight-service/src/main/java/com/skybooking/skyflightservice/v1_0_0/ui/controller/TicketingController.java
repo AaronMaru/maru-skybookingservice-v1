@@ -46,7 +46,7 @@ public class TicketingController {
         /**
          * Update ticket information
          */
-        if(status.equals("Complete")) {
+        if (status.equals("Complete")) {
             bookingDataIP.updateTicket(ticket, dataBooking);
             return new ResponseEntity<>(new TicketRS(status), HttpStatus.OK);
         }

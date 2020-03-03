@@ -12,5 +12,7 @@ public class PaymentMandatoryRS {
     private String name;
     private String email;
     private String phoneNumber;
+    private Integer skyuserId;
+    private Integer companyId;
 
 }

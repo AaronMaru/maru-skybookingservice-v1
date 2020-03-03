@@ -18,7 +18,11 @@ public class NumberFormatter {
     }
 
     public static BigDecimal trimAmount(BigDecimal amount) {
-        return amount.setScale(2, RoundingMode.UP);
+        return amount.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    public static BigDecimal trimAmount(double amount) {
+        return new BigDecimal(amount).setScale(2, RoundingMode.HALF_UP);
     }
 
     public static Double amount(Double n) {

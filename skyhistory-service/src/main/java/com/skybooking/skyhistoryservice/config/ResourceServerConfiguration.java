@@ -15,6 +15,8 @@ public class ResourceServerConfiguration  extends ResourceServerConfigurerAdapte
     @Override
     public void configure(final HttpSecurity http) throws Exception {
         http.authorizeRequests()
+                .antMatchers("/wv1.0.0/payment-success/no-auth", "/wv1.0.0/receipt-itinerary")
+                .permitAll()
                 .antMatchers("/**")
                 .authenticated();
     }

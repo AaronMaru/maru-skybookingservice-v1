@@ -3,7 +3,6 @@ package com.skybooking.skyflightservice.v1_0_0.ui.controller;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.payment.PaymentSV;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.payment.PaymentMandatoryRQ;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.payment.PaymentSucceedRQ;
-import com.skybooking.skyflightservice.v1_0_0.ui.model.response.BaseRS;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.response.payment.PaymentSucceedRS;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
  * ---------------------------------------------------------------------------------------------------------------------
  * INTERNAL PROCESS AND COMMUNICATION BETWEEN PAYMENT SERVICE WITH FLIGHT SERVICE
  * ---------------------------------------------------------------------------------------------------------------------
- *
+ * <p>
  * 1. Update data booking
  * 2. Get data booking
  */
@@ -41,7 +40,6 @@ public class PaymentController {
     }
 
 
-
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Get mandatory data payment
@@ -54,7 +52,6 @@ public class PaymentController {
     public ResponseEntity getPaymentMandatory(@PathVariable String bookingCode) {
         return new ResponseEntity<>(paymentSV.getMandatoryData(bookingCode), HttpStatus.OK);
     }
-
 
 
     /**

@@ -15,7 +15,6 @@ import com.skybooking.stakeholderservice.v1_0_0.io.repository.verify.VerifyUserR
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import java.text.SimpleDateFormat;
 import java.util.*;
 

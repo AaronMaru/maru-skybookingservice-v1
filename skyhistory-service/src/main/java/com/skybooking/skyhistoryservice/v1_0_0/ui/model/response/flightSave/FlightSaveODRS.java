@@ -12,11 +12,11 @@ public class FlightSaveODRS {
     private String airlineLogo45;
     private String airlineLogo90;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date dDateTime;
+//    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private String dDateTime;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date aDateTime;
+//    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private String aDateTime;
 
     private String oLocation;
     private String dLocation;
@@ -64,19 +64,19 @@ public class FlightSaveODRS {
         this.airlineLogo90 = airlineLogo90;
     }
 
-    public Date getdDateTime() {
+    public String getdDateTime() {
         return dDateTime;
     }
 
-    public void setdDateTime(Date dDateTime) {
+    public void setdDateTime(String dDateTime) {
         this.dDateTime = dDateTime;
     }
 
-    public Date getaDateTime() {
+    public String getaDateTime() {
         return aDateTime;
     }
 
-    public void setaDateTime(Date aDateTime) {
+    public void setaDateTime(String aDateTime) {
         this.aDateTime = aDateTime;
     }
 

@@ -1,0 +1,15 @@
+SELECT
+	fsaveOD.elapsed_time AS elapsedTime,
+	fsaveOD.airline_code AS airlineCode,
+	fsaveOD.airline_name AS airlineName,
+	fsaveOD.airline_logo_45 AS airlineLogo45,
+	fsaveOD.airline_logo_90 AS airlineLogo90,
+	fsaveOD.d_date_time AS dDateTime,
+	fsaveOD.a_date_time AS aDateTime,
+	fsaveOD.o_location AS oLocation,
+	fsaveOD.d_location AS dLocation,
+	fsaveOD.o_location_name AS oLocationName,
+	fsaveOD.d_location_name AS dLocationName,
+	fsaveOD.stop
+FROM flight_save_origin_destinations fsaveOD
+WHERE fsaveOD.flight_save_Id = :sFlightId

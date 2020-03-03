@@ -6,6 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.HashMap;
 
 @FieldMatchRequire(first = "businessTypeId", second = "contactPerson", third = "contactPosition", message = "Please provide contact persion and contact position")
+@Code(first = "phone", second = "code", message = "Please provide country code")
 @UsernameUnique(first = "phone", second = "code", message = "Phone number already exists")
 public class CompanyUpdateRQ {
 

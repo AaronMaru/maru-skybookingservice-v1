@@ -48,6 +48,9 @@ public class UserDetailsRS {
 
     private String role = "";
 
+    private Long currencyId;
+    private String curencyCode;
+
     private List<PermissionRS> permission = new ArrayList<>();
 
     public String getFirstName() {
@@ -105,14 +108,6 @@ public class UserDetailsRS {
     public void setGender(String gender) {
         this.gender = gender;
     }
-
-//    public int getStatus() {
-//        return status;
-//    }
-//
-//    public void setStatus(int status) {
-//        this.status = status;
-//    }
 
     public String getAddress() {
         return address;
@@ -208,6 +203,22 @@ public class UserDetailsRS {
 
     public void setTotalBooking(BigInteger totalBooking) {
         this.totalBooking = totalBooking;
+    }
+
+    public Long getCurrencyId() {
+        return currencyId;
+    }
+
+    public void setCurrencyId(Long currencyId) {
+        this.currencyId = currencyId;
+    }
+
+    public String getCurencyCode() {
+        return curencyCode;
+    }
+
+    public void setCurencyCode(String curencyCode) {
+        this.curencyCode = curencyCode;
     }
 
 }

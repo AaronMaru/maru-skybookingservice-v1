@@ -6,20 +6,18 @@ import java.util.List;
 
 public class FlightSaveRS {
 
-    List<FlightSaveODRS> ODInfo = new ArrayList<>();
+    private Integer id;
     private String tripType;
-    private String classCode;
     private String className;
     private Integer adult;
     private Integer child;
     private Integer infant;
     private Integer stopSearch;
     private Integer multipleAirStatus;
-    private String multipleAirLogo90;
     private BigDecimal amount;
     private String currencyCode;
     private Integer decimalPlaces;
-    private Long id;
+    List<FlightSaveODRS> ODInfo = new ArrayList<>();
 
     public String getTripType() {
         return tripType;
@@ -27,14 +25,6 @@ public class FlightSaveRS {
 
     public void setTripType(String tripType) {
         this.tripType = tripType;
-    }
-
-    public String getClassCode() {
-        return classCode;
-    }
-
-    public void setClassCode(String classCode) {
-        this.classCode = classCode;
     }
 
     public String getClassName() {
@@ -85,14 +75,6 @@ public class FlightSaveRS {
         this.multipleAirStatus = multipleAirStatus;
     }
 
-    public String getMultipleAirLogo90() {
-        return multipleAirLogo90;
-    }
-
-    public void setMultipleAirLogo90(String multipleAirLogo90) {
-        this.multipleAirLogo90 = multipleAirLogo90;
-    }
-
     public BigDecimal getAmount() {
         return amount;
     }
@@ -117,11 +99,11 @@ public class FlightSaveRS {
         this.decimalPlaces = decimalPlaces;
     }
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

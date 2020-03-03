@@ -28,4 +28,12 @@ public class AppConfig {
     @Value("${spring.PIPAY.VERIFY_TRANSACTION}")
     private String pipayVerification;
 
+    @Value("${spring.imagePath.payment}")
+    private String imagePathPaymentMethod;
+
+    @Value("${spring.service.stakeholder.url}")
+    private String stakeholder;
+
+    @Value("${spring.service.stakeholder.version}")
+    private String stakeholderVersion;
 }

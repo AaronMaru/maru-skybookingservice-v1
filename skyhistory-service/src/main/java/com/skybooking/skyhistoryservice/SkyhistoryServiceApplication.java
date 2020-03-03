@@ -1,6 +1,7 @@
 package com.skybooking.skyhistoryservice;
 
 import com.skybooking.skyhistoryservice.v1_0_0.util.calculator.CalculatorBean;
+import com.skybooking.skyhistoryservice.v1_0_0.util.datetime.DateTimeBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.email.EmailBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.flight.FlightShoppingBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.general.ApiBean;
@@ -48,10 +49,16 @@ public class SkyhistoryServiceApplication {
     NotificationBean notificationBean() { return new NotificationBean(); }
 
     @Bean
-    ApiBean apiBean() { return new ApiBean(); }
-
-    @Bean
     EmailBean email() {
         return new EmailBean();
     }
+
+    @Bean
+    DateTimeBean dateTimeBean() {
+        return new DateTimeBean();
+    }
+
+    @Bean
+    ApiBean apiBean() { return new ApiBean(); }
+
 }

@@ -41,7 +41,7 @@ public class FlightSaveEntity {
     @Column(name = "multiple_air_status", nullable = false)
     private Integer multipleAirStatus = 0;
 
-    @Column(name = "multiple_air_logo90", nullable = false)
+    @Column(name = "multiple_air_logo_90", nullable = false)
     private String multipleAirLogo90 = "";
 
     @Column(name = "user_id")

@@ -4,7 +4,7 @@ bod.elapsed_time AS elapsedTime,
 bod.arrage_air_segs AS arrageAirSegs,
 bod.group_air_segs AS grAirSegs,
 bod.multiple_air_status AS multipleAirStatus,
-bod.multiple_air_url AS multipleAirUrl90,
+CASE WHEN bod.multiple_air_url IS NOT NULL THEN bod.multiple_air_url ELSE '' END AS multipleAirUrl90,
 bod.`stop`
 
 FROM booking_origin_destinations bod

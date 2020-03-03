@@ -7,6 +7,8 @@ import com.skybooking.skyflightservice.v1_0_0.util.DateUtility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.stream.Stream;
+
 @Service
 public class DetailIP implements DetailSV {
 
@@ -184,6 +186,28 @@ public class DetailIP implements DetailSV {
             .getSegments()
             .stream()
             .filter(segment -> segment.getId().equalsIgnoreCase(segmentId))
+            .findFirst()
+            .orElse(null);
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get itinerary detail information by shopping id and itinerary id
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param shoppingId
+     * @param itineraryId
+     * @return Itinerary
+     */
+    @Override
+    public Itinerary getItineraryDetail(String shoppingId, String itineraryId) {
+        var shopping = this.getShoppingDetail(shoppingId);
+        if (shopping == null) return null;
+
+        return Stream
+            .concat(shopping.getDirect().stream(), shopping.getCheapest().stream())
+            .filter(itinerary -> itinerary.getId().equalsIgnoreCase(itineraryId))
             .findFirst()
             .orElse(null);
     }

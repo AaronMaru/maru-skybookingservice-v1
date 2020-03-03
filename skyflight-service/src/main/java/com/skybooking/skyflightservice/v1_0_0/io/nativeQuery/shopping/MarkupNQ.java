@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 public interface MarkupNQ extends NativeQuery {
 
-    MarkupTO getMarkupPriceAnonymousUser(@NativeQueryParam("cabinClass") String cabin);
+    MarkupTO getMarkupPriceAnonymousUser(@NativeQueryParam("cabinClass") String cabin, @NativeQueryParam("userType") String userType);
 
     MarkupTO getMarkupPriceSkyUser(@NativeQueryParam("userId") Integer userId, @NativeQueryParam("cabinClass") String cabin);
 

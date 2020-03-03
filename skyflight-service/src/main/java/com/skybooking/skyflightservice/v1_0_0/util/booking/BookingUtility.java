@@ -133,8 +133,12 @@ public class BookingUtility {
 
         if (userType.equalsIgnoreCase("skyuser")) {
             markUpTO = markupNQ.getMarkupPriceSkyUser(userId, cabinType.toUpperCase());
-        } else if (userType.equalsIgnoreCase("skyowner")) {
+        } else {
             markUpTO = markupNQ.getMarkupPriceSkyOwnerUser(userId, cabinType.toUpperCase());
+        }
+
+        if (markUpTO == null || markUpTO.getMarkup() == null) {
+            markUpTO = markupNQ.getMarkupPriceAnonymousUser(cabinType.toUpperCase(), "skyuser");
         }
 
         return markUpTO.getMarkup().doubleValue();
@@ -158,7 +162,7 @@ public class BookingUtility {
             var leg = detailSV.getLegDetail(requestId, legId);
             var price = detailSV.getPriceDetail(requestId, leg.getPrice());
 
-            totalAmount += price.getTotal();
+            totalAmount += price.getTotal().doubleValue();
         }
 
         return NumberFormatter.amount(totalAmount);
@@ -330,10 +334,10 @@ public class BookingUtility {
             metadataTA.setArrivalDate(this.getBookingArrivalDateTime(request.getRequest().getRequestId(), request.getRequest().getLegIds()));
 
             // get markup percentage
-            if (metadataTA.getUserType().equalsIgnoreCase("skyowner")) {
-                metadataTA.setMarkupPercentage(this.getMarkupPercentage(metadataTA.getCompanyId(), "skyowner", metadataTA.getClassType()));
+            if (metadataTA.getUser().getUserType().equalsIgnoreCase("skyowner")) {
+                metadataTA.setMarkupPercentage(this.getMarkupPercentage(metadataTA.getUser().getCompanyId(), "skyowner", metadataTA.getClassType()));
             } else {
-                metadataTA.setMarkupPercentage(this.getMarkupPercentage(metadataTA.getStakeholderId(), "skyuser", metadataTA.getClassType()));
+                metadataTA.setMarkupPercentage(this.getMarkupPercentage(metadataTA.getUser().getStakeholderId(), "skyuser", metadataTA.getClassType()));
             }
 
             // set total amount detail

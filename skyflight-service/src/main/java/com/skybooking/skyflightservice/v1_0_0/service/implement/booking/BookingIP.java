@@ -6,9 +6,7 @@ import com.skybooking.skyflightservice.v1_0_0.service.interfaces.booking.Booking
 import com.skybooking.skyflightservice.v1_0_0.service.model.booking.BookingMetadataTA;
 import com.skybooking.skyflightservice.v1_0_0.service.model.booking.BookingRequestTA;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.booking.BookingCreateRQ;
-import com.skybooking.skyflightservice.v1_0_0.ui.model.request.payment.PaymentSucceedRQ;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.response.booking.PNRCreateRS;
-import com.skybooking.skyflightservice.v1_0_0.ui.model.response.payment.PaymentSucceedRS;
 import com.skybooking.skyflightservice.v1_0_0.util.booking.BookingUtility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

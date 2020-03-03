@@ -127,7 +127,7 @@ public class InvitationIP implements InvitationSV {
 
         Long companyId = jwtUtils.getClaim("companyId", Long.class);
 
-        general.addInvitation(skyuser.getStakeHolderUser().getId(), companyId, null, "hasAcc");
+        general.addInvitation(skyuser.getStakeHolderUser().getId(), companyId, inviteStaff.getSkyuserRole(), null, "hasAcc");
 
         notificationBean.sendNotiSkyuser(skyuser.getStakeHolderUser().getId());
 
@@ -154,11 +154,16 @@ public class InvitationIP implements InvitationSV {
             throw new UnauthorizedException("sth_w_w", null);
         }
 
+        List<RoleTO> roleTO = invitationNQ.listOrFindRole("byRole", inviteStaffNoAccRQ.getSkyuserRole());
+        if (roleTO.size() == 0) {
+            throw new BadRequestException("sth_w_w", null);
+        }
+
         checkExistInv(inviteStaffNoAccRQ);
 
         Long companyId = jwtUtils.getClaim("companyId", Long.class);
 
-        StakeholderUserInvitationEntity stakeholderUser = general.addInvitation(null, companyId, inviteStaffNoAccRQ.getUsername(), "noAcc");
+        StakeholderUserInvitationEntity stakeholderUser = general.addInvitation(null, companyId, inviteStaffNoAccRQ.getSkyuserRole(), inviteStaffNoAccRQ.getUsername(), "noAcc");
 
         Map<String, Object> mailData = emailBean.mailData(inviteStaffNoAccRQ.getUsername(), "", 0, "invitation_is_waiting_for_your_confirmation");
         mailData.put("dataEncrypt", this.encryptId(stakeholderUser.getId().toString()));
@@ -284,7 +289,7 @@ public class InvitationIP implements InvitationSV {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * Check expiration link invitaion
+     * Check expiration link invitation one hour
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @Param StakeholderUserInvitationEntity

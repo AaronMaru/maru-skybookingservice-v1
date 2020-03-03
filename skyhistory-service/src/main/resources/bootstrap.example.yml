@@ -39,7 +39,7 @@ spring:
 
   awsImageUrl:
     mailTemplate: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/mail/images/
-
+    airLineUrl: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/airlines/airline_logos/
 
 native-query:
   package-scan: com.skybooking.skyhistoryservice

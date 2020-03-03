@@ -3,6 +3,7 @@ package com.skybooking.stakeholderservice.v1_0_0.service.interfaces.user;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company.CompanyRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user.*;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.verify.SendVerifyRQ;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.CompanyRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.InvitationRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
@@ -23,7 +24,7 @@ public interface UserSV {
     UserDetailsTokenRS resetPassword(ResetPasswordRQ passwordRQ, HttpHeaders httpHeaders);
     void updateContact(UpdateContactRQ contactRQ);
     int sendCodeUpdateContact(UpdateContactRQ contactRQ);
-    void applySkyowner(CompanyRQ companyRQ);
+    CompanyRS applySkyowner(CompanyRQ companyRQ);
     List<InvitationRS> getInvitations();
     void options(OptionStaffRQ optionStaffRQ);
     UserDetailsTokenRS resetPasswordMobile(ResetPasswordMobileRQ resetPasswordMobileRQ);

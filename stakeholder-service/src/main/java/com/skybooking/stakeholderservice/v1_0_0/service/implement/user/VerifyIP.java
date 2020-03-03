@@ -7,6 +7,7 @@ import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.StakeHolderUserE
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.verify.VerifyUserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyHasUserRP;
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.contact.ContactRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.redis.UserTokenRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserRepository;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.verify.VerifyUserRP;
@@ -61,6 +62,9 @@ public class VerifyIP implements VerifySV {
 
     @Autowired
     private CompanyHasUserRP companyHasUserRP;
+
+    @Autowired
+    private ContactRP contactRP;
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -180,7 +184,7 @@ public class VerifyIP implements VerifySV {
         } else {
             UserEntity user = userRepository.findByEmailOrPhone(username, sendVerifyRQ.getCode());
             if (user == null) {
-                throw new BadRequestException("User already exist", null);
+                throw new BadRequestException("sth_w_w", null);
             }
         }
 
@@ -230,6 +234,12 @@ public class VerifyIP implements VerifySV {
 
             throw new BadRequestException("User already exist", null);
 
+        }
+
+        Boolean b = Boolean.parseBoolean(contactRP.existsContact(username, null));
+
+        if (b) {
+            throw new BadRequestException("Contacts already exist", null);
         }
 
     }

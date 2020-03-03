@@ -43,6 +43,9 @@ public class StakeholderUserInvitationEntity {
     @Column(name = "stakeholder_company_id")
     private Long stakeholderCompanyId;
 
+    @Column(name = "skyuser_role")
+    private String skyuserRole;
+
     public Long getId() {
         return id;
     }
@@ -121,6 +124,14 @@ public class StakeholderUserInvitationEntity {
 
     public void setStatus(Integer status) {
         this.status = status;
+    }
+
+    public String getSkyuserRole() {
+        return skyuserRole;
+    }
+
+    public void setSkyuserRole(String skyuserRole) {
+        this.skyuserRole = skyuserRole;
     }
 
 }

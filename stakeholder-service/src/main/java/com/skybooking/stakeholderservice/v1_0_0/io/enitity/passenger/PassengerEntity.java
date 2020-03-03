@@ -51,6 +51,9 @@ public class PassengerEntity {
 
     private int status;
 
+    @Column(name = "stakeholder_company_id")
+    private Long companyId;
+
     @CreationTimestamp
     @Column(name = "created_at")
     @Temporal(TemporalType.TIMESTAMP)

@@ -8,6 +8,7 @@ import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.*;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserRepository;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user.SkyownerRegisterRQ;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.CompanyRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.skyuser.UserBean;
@@ -50,7 +51,7 @@ public class SkyownerBean {
      *
      * @Param skyownerRQ;
      */
-    public void addStakeHolderCompany(SkyownerRegisterRQ skyownerRQ, UserEntity user, UserRepository userRP) {
+    public List<CompanyRS> addStakeHolderCompany(SkyownerRegisterRQ skyownerRQ, UserEntity user, UserRepository userRP) {
 
         List<StakeholderCompanyEntity> companies = new ArrayList<>();
         List<StakeHolderUserEntity> skyuser = new ArrayList<>();
@@ -90,6 +91,13 @@ public class SkyownerBean {
         storeContacts(skyownerRQ, company.getId());
         storeCompanyStatus(company.getId(), user.getId(), 0, "Waiting admin approve");
 
+        List<StakeholderCompanyEntity> bussinees = new ArrayList<>();
+        bussinees.add(company);
+
+        List<CompanyRS> companyRS = userBean.companiesDetails(bussinees);
+
+        return companyRS;
+
     }
 
 
@@ -107,7 +115,7 @@ public class SkyownerBean {
         apiBean.addSimpleContact(id, skyownerRQ.getPostalOrZipCode(), "z", "skyowner");
         apiBean.addSimpleContact(id, skyownerRQ.getEmail(), "e", "skyowner");
         apiBean.addSimpleContact(id, skyownerRQ.getAddress(), "a", "skyowner");
-        apiBean.addSimpleContact(id, "", "c", "skyowner");
+        apiBean.addSimpleContact(id, skyownerRQ.getCity(), "c", "skyowner");
     }
 
 
@@ -204,13 +212,13 @@ public class SkyownerBean {
      * @Param companyId
      * @Param skyuserId
      */
-    public void addStaff(Long companyId, Long skyuserId) {
+    public void addStaff(Long companyId, Long skyuserId, String role) {
 
         StakeholderUserHasCompanyEntity companyHasUser = new StakeholderUserHasCompanyEntity();
         companyHasUser.setStakeholderCompanyId(companyId);
         companyHasUser.setStakeholderUserId(skyuserId);
         companyHasUser.setStatus(2);
-        companyHasUser.setSkyuserRole("editor");
+        companyHasUser.setSkyuserRole(role);
 
         companyHasUserRP.save(companyHasUser);
 

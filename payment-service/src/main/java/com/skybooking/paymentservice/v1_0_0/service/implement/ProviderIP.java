@@ -10,6 +10,8 @@ import com.skybooking.paymentservice.v1_0_0.client.flight.ui.request.FlightTicke
 import com.skybooking.paymentservice.v1_0_0.client.flight.ui.response.FlightMandatoryDataRS;
 import com.skybooking.paymentservice.v1_0_0.client.flight.ui.response.FlightPaymentSucceedRS;
 import com.skybooking.paymentservice.v1_0_0.client.pipay.action.PipayAction;
+import com.skybooking.paymentservice.v1_0_0.client.stakeholder.action.SkyHistoryAction;
+import com.skybooking.paymentservice.v1_0_0.client.stakeholder.ui.request.SendBookingPDFRQ;
 import com.skybooking.paymentservice.v1_0_0.io.nativeQuery.paymentMethod.PaymentMethodTO;
 import com.skybooking.paymentservice.v1_0_0.io.nativeQuery.paymentMethod.PaymentNQ;
 import com.skybooking.paymentservice.v1_0_0.service.interfaces.ProviderSV;
@@ -38,6 +40,9 @@ public class ProviderIP implements ProviderSV {
 
     @Autowired
     private FlightAction flightAction;
+
+    @Autowired
+    private SkyHistoryAction skyHistoryAction;
 
     @Autowired
     private PaymentNQ paymentNQ;
@@ -74,7 +79,6 @@ public class ProviderIP implements ProviderSV {
     }
 
 
-
     @Override
     public List<PaymentMethodRS> getPaymentMethods() {
 
@@ -82,12 +86,19 @@ public class ProviderIP implements ProviderSV {
         List<PaymentMethodTO> paymentMethodTOS = paymentNQ.getListPaymentMethods();
 
         paymentMethodTOS.forEach(item -> {
-            paymentMethodRS.add(new PaymentMethodRS(item.getType(), item.getCode(), item.getMethod(), item.getPercentage()));
+            paymentMethodRS.add(
+                    new PaymentMethodRS(
+                            item.getType(),
+                            item.getCode(),
+                            item.getMethod(),
+                            item.getPercentage(),
+                            appConfig.getImagePathPaymentMethod() + item.getCode() + ".png"
+                    )
+            );
         });
 
         return paymentMethodRS;
     }
-
 
 
     @Override
@@ -123,7 +134,6 @@ public class ProviderIP implements ProviderSV {
         paymentSucceedRQ.setAuthCode(request.containsKey("AuthCode") ? request.get("AuthCode").toString() : "");
         paymentSucceedRQ.setSignature(request.containsKey("Signature") ? request.get("Signature").toString() : "");
         paymentSucceedRQ.setIpay88PaymentId(request.get("PaymentId").toString());
-        // TODO
         paymentSucceedRQ.setPaymentCode("MS");
         paymentSucceedRQ.setCardType("");
         paymentSucceedRQ.setMethod("");
@@ -133,16 +143,23 @@ public class ProviderIP implements ProviderSV {
             return appConfig.getPaymentFailPage() + "?bookingCode=" + bookingCode;
         }
 
+        //hit payment skyHistory
+        SendBookingPDFRQ sendBookingPDFRQ = new SendBookingPDFRQ(bookingCode, mandatoryData.getEmail(),
+                mandatoryData.getSkyuserId(), mandatoryData.getCompanyId());
+        skyHistoryAction.sendPayment(sendBookingPDFRQ);
+
         var ticketRQ = new FlightTicketIssuedRQ();
         ticketRQ.setBookingCode(bookingCode);
         var ticketIssued = flightAction.issuedAirTicket(ticketRQ);
         if (ticketIssued.getStatus().equals("Complete")) {
+            // hit receipt and itineray
+            skyHistoryAction.sendReceiptWithItinerary(sendBookingPDFRQ);
+
             return appConfig.getTicketSucceedPage() + "?bookingCode=" + bookingCode;
         }
 
         return appConfig.getTicketFailPage() + "?bookingCode=" + bookingCode;
     }
-
 
 
     @Override
@@ -192,7 +209,6 @@ public class ProviderIP implements ProviderSV {
 
         return appConfig.getTicketFailPage() + "?bookingCode=" + bookingCode;
     }
-
 
 
     @Override

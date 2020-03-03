@@ -14,6 +14,7 @@ import org.eclipse.collections.impl.list.mutable.FastList;
 import org.eclipse.collections.impl.map.mutable.UnifiedMap;
 
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -27,6 +28,7 @@ public class TransformSabre {
     private MutableMap<String, Airline> airlines = UnifiedMap.newMap();
     private MutableMap<String, Aircraft> aircrafts = UnifiedMap.newMap();
     private MutableMap<String, Location> locations = UnifiedMap.newMap();
+    private MutableMap<String, LayoverAirport> layoverAirports = UnifiedMap.newMap();
     private MutableMap<String, PriceDetail> prices = UnifiedMap.newMap();
     private MutableMap<String, BaggageDetail> baggages = UnifiedMap.newMap();
     private MutableMap<String, Segment> segments = UnifiedMap.newMap();
@@ -75,6 +77,10 @@ public class TransformSabre {
         return segments;
     }
 
+    public MutableMap<String, LayoverAirport> getLayoverAirports() {
+        return layoverAirports;
+    }
+
 
     public MutableMap<String, com.skybooking.skyflightservice.v1_0_0.io.entity.shopping.Leg> getLegs() {
         return legs;
@@ -105,13 +111,9 @@ public class TransformSabre {
     private void processingItineraryGroupComponents() {
 
         FastList.newList(sabreBargainFinderRS.getItineraryResponse().getItineraryGroups())
-            .forEachWithIndex(((itineraryGroupType, index) -> {
-                itineraryGroupType
-                    .getItineraries()
-                    .forEach(itinerary -> {
-                        processingItineraryComponents(itinerary, index);
-                    });
-            }));
+            .forEachWithIndex(((itineraryGroupType, index) -> itineraryGroupType
+                .getItineraries()
+                .forEach(itinerary -> processingItineraryComponents(itinerary, index))));
     }
 
 
@@ -197,6 +199,9 @@ public class TransformSabre {
                             }));
                     });
 
+                // set seat remaining
+                var seats = leg.getSegments().stream().min(Comparator.comparingInt(LegSegmentDetail::getSeatsRemain)).map(LegSegmentDetail::getSeatsRemain).get();
+                leg.setSeats(seats);
 
             });
 
@@ -219,8 +224,8 @@ public class TransformSabre {
             var totalAvg = totalSummary.getSum() / totalQuantitiesPassenger.getSum();
 
             priceDetail.setCurrency("USD");
-            priceDetail.setTotal(NumberFormatter.amount(totalSummary.getSum()));
-            priceDetail.setTotalAvg(NumberFormatter.amount(totalAvg));
+            priceDetail.setTotal(NumberFormatter.trimAmount(new BigDecimal(totalSummary.getSum())));
+            priceDetail.setTotalAvg(NumberFormatter.trimAmount(new BigDecimal(totalAvg)));
 
         });
     }
@@ -368,9 +373,7 @@ public class TransformSabre {
             .getItineraryResponse()
             .getLegs()
             .parallelStream()
-            .forEachOrdered(legComponent -> {
-                this.setLegComponentLeg(legComponent);
-            });
+            .forEachOrdered(this::setLegComponentLeg);
     }
 
 
@@ -390,6 +393,7 @@ public class TransformSabre {
 
         var segmentSize = segmentDetails.size();
         var segmentStop = segmentDetails.summarizeInt(LegSegmentDetail::getStops).getSum();
+        var legStops = Math.addExact(segmentStop, (segmentSize - 1));
 
         var firstSegmentDetail = segmentDetails.getFirst();
         var lastSegmentDetail = segmentDetails.getLast();
@@ -402,7 +406,16 @@ public class TransformSabre {
 
         var duration = DateUtility.getMinuteDurations(departureDateTime, arrivalDateTime);
 
+//        var seats = segmentDetails
+//            .stream()
+//            .min(Comparator.comparingInt(LegSegmentDetail::getSeatsRemain))
+//            .get().getSeatsRemain();
+
+        var adjustmentDates = segmentDetails.summarizeInt(LegSegmentDetail::getDateAdjustment).getSum();
+
         var legId = new StringBuilder()
+            .append("L")
+            .append("-")
             .append(directionIndex)
             .append("-")
             .append(firstSegment.getDeparture())
@@ -431,6 +444,10 @@ public class TransformSabre {
         leg.setAirlines(airlineDetails);
         leg.setMultiAir(multiAir);
         leg.setSegments(segmentDetails);
+
+        leg.setStops(Long.valueOf(legStops).intValue());
+//        leg.setSeats(seats);
+        leg.setAdjustmentDates(Long.valueOf(adjustmentDates).intValue());
 
         if (!multiAir && segmentSize == 1 && segmentStop == 0) {
             leg.setDirectFlight(true);
@@ -483,6 +500,7 @@ public class TransformSabre {
         legSegmentDetails.forEachWithIndex(((legSegmentDetail, idx) -> {
 
             var currentSegment = segments.get(legSegmentDetail.getSegment());
+            var layoverAirport = new LayoverAirport();
 
             if (startIdx == idx) {
                 legSegmentDetail.setLayoverDuration(0);
@@ -496,6 +514,10 @@ public class TransformSabre {
                 var layover = DateUtility.getMinuteDurations(arrivalDateTime, departureDateTime);
 
                 legSegmentDetail.setLayoverDuration(layover);
+                legSegmentDetail.setLayoverAirport(previousSegment.getArrival());
+
+                layoverAirport.setCode(previousSegment.getDeparture());
+                this.layoverAirports.putIfAbsent(previousSegment.getArrival(), layoverAirport);
             }
         }));
 
@@ -568,6 +590,7 @@ public class TransformSabre {
                 this.setScheduleComponentAirline(scheduleComponent);
                 this.setScheduleComponentAircraft(scheduleComponent);
                 this.setScheduleComponentLocation(scheduleComponent);
+                this.setScheduleComponentLayoverAirport(scheduleComponent);
                 this.setScheduleComponentSegment(scheduleComponent);
 
             });
@@ -584,6 +607,8 @@ public class TransformSabre {
     private void setScheduleComponentSegment(ScheduleComponent scheduleComponent) {
 
         var segmentId = new StringBuilder()
+            .append("S")
+            .append("-")
             .append(directionIndex)
             .append("-")
             .append(scheduleComponent.getDeparture().getAirport())
@@ -662,6 +687,15 @@ public class TransformSabre {
             stop.setEquipment(Optional.ofNullable(hiddenStop.getEquipment()).orElse(""));
             stop.setElapsedTime(Optional.ofNullable(hiddenStop.getElapsedTime()).orElse(0));
 
+            var location = new Location();
+            location.setCode(stop.getAirport());
+            location.setAirport(stop.getAirport());
+            location.setCity(stop.getCity());
+            location.setLongitude(0);
+            location.setLatitude(0);
+
+            locations.putIfAbsent(location.getCode(), location);
+
             return stop;
 
         }).collect(Collectors.toList());
@@ -734,6 +768,20 @@ public class TransformSabre {
         aircraft.setName(carrier.getEquipment().getCode());
 
         aircrafts.putIfAbsent(aircraft.getCode(), aircraft);
+
+    }
+
+
+    private void setScheduleComponentLayoverAirport(ScheduleComponent scheduleComponent) {
+
+        var layoverAirport = new LayoverAirport();
+        layoverAirport.setCode(scheduleComponent.getDeparture().getAirport());
+        layoverAirport.setAirport(scheduleComponent.getDeparture().getAirport());
+        layoverAirport.setCity(scheduleComponent.getDeparture().getCity());
+        layoverAirport.setLatitude(0);
+        layoverAirport.setLongitude(0);
+
+        layoverAirports.putIfAbsent(layoverAirport.getCode(), layoverAirport);
 
     }
 

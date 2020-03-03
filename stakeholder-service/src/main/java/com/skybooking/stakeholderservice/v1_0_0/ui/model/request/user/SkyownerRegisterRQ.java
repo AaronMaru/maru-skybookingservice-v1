@@ -41,7 +41,7 @@ public class SkyownerRegisterRQ {
     @NotNull(message = "Please provide a country id")
     @Country
     private Long countryId;
-    private Long cityId;
+    private String city;
 
     public String getCode() {
         return code;
@@ -123,12 +123,12 @@ public class SkyownerRegisterRQ {
         this.countryId = countryId;
     }
 
-    public Long getCityId() {
-        return cityId;
+    public String getCity() {
+        return city;
     }
 
-    public void setCityId(Long cityId) {
-        this.cityId = cityId;
+    public void setCity(String city) {
+        this.city = city;
     }
 
     public String getEmail() {

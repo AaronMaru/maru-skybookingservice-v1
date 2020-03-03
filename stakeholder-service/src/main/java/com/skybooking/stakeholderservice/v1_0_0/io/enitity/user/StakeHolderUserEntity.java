@@ -86,6 +86,9 @@ public class StakeHolderUserEntity {
 
     private String nationality;
 
+    @Column(name = "currency_id")
+    private Long currencyId;
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -259,5 +262,11 @@ public class StakeHolderUserEntity {
         this.notification = notification;
     }
 
+    public Long getCurrencyId() {
+        return currencyId;
+    }
 
+    public void setCurrencyId(Long currencyId) {
+        this.currencyId = currencyId;
+    }
 }

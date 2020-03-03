@@ -10,6 +10,7 @@ public class LegSegmentDetailRS implements Serializable {
     private String segment;
     private long duration;
     private long layoverDuration;
+    private String layoverAirport;
     private int dateAdjustment;
     private int stops;
     private int seatsRemain;

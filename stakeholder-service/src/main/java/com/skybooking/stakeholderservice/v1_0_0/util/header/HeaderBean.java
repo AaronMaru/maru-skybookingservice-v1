@@ -1,5 +1,6 @@
 package com.skybooking.stakeholderservice.v1_0_0.util.header;
 
+import com.skybooking.stakeholderservice.exception.httpstatus.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.persistence.EntityManager;
@@ -82,6 +83,23 @@ public class HeaderBean {
 
         return currency;
 
+    }
+
+
+    public String getCompanyId(Long cId) {
+
+        Long companyId = (request.getHeader("X-CompanyId") != null && !request.getHeader("X-CompanyId").isEmpty())
+                ? Long.valueOf(request.getHeader("X-CompanyId"))
+                : 0;
+        if (companyId == 0) {
+            return "skyuser";
+        }
+
+        if (!companyId.equals(cId)) {
+            throw new BadRequestException("sth_w_w", null);
+        }
+
+        return "company";
     }
 
 

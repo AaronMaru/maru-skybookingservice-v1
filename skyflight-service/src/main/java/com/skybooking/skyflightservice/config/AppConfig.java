@@ -42,4 +42,10 @@ public class AppConfig {
     @Value("${hazelcast.expire}")
     private Integer HAZELCAST_EXPIRED_TIME;
 
+    @Value("${spring.service.skyhistory.uri}")
+    private String SKYHISTORY_URI;
+
+    @Value("${spring.service.skyhistory.version}")
+    private String SKYHISTORY_VERSION;
+
 }

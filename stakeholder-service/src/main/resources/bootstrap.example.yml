@@ -9,5 +9,37 @@ spring:
   awsImageUrl:
     companyProfile: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/company_profiles/
 
+
+  email:
+    host: email-smtp.us-east-1.amazonaws.com
+    username: AKIARX6S32NWTESX6HPL
+    password: BCcrVRjYcQW+EQcGv5c82wniS82SqxGW8SgC8Cls1PSv
+    port: 587
+    driver: smtp
+    encryption: tls
+    from-address: no-reply@skybooking.info
+    from-name: Skybooking
+    properties.mail.smtp:
+      auth: true
+      starttls.enable: true
+      ssl.trust: smtp.gmail.
+
+  awsImage:
+    url: s3.amazonaws.com
+    region: us-east-1
+    bucket: skybooking
+    key: AKIAJEC5JZZKMU7GNCFQ
+    secret: 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
+    visibility: public
+
+
+  activemq:
+    in-memory: false
+    pool.enabled: false
+    broker-url: tcp://192.168.1.126:61616
+
+#active:
+#  broker-url: tcp://localhost:61616
+
 native-query:
   package-scan: com.skybooking.stakeholderservice

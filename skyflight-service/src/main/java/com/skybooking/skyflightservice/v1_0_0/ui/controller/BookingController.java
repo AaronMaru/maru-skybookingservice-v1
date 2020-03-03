@@ -94,19 +94,18 @@ public class BookingController {
         PNRCreateRS pnr = bookingSV.create(request, bookingSV.getSkyownerMetadata());
         if (pnr.getBookingRef().equals("")) {
             return new ResponseEntity<>(
-                    new BookingFailRS(HttpStatus.FAILED_DEPENDENCY,
-                            locale.multiLanguageRes(MessageConstant.BOOKING_FAIL),
-                            pnr),
-                    HttpStatus.FAILED_DEPENDENCY);
+                new BookingFailRS(HttpStatus.FAILED_DEPENDENCY,
+                    locale.multiLanguageRes(MessageConstant.BOOKING_FAIL),
+                    pnr),
+                HttpStatus.FAILED_DEPENDENCY);
         }
 
         return new ResponseEntity<>(
-                new BookingRS(HttpStatus.OK,
-                        locale.multiLanguageRes(MessageConstant.BOOKING_SUCCESS),
-                        pnr),
-                HttpStatus.OK);
+            new BookingRS(HttpStatus.OK,
+                locale.multiLanguageRes(MessageConstant.BOOKING_SUCCESS),
+                pnr),
+            HttpStatus.OK);
     }
-
 
 
     /**
@@ -133,10 +132,10 @@ public class BookingController {
         var revalidate = shoppingSV.revalidate(request);
         if (revalidate.getStatus() != RevalidateConstant.SUCCESS) {
             return new ResponseEntity<>(
-                    new BookingFailRS(HttpStatus.FAILED_DEPENDENCY,
-                            locale.multiLanguageRes(revalidate.getMessage()),
-                            new PNRCreateRS()),
-                    HttpStatus.FAILED_DEPENDENCY);
+                new BookingFailRS(HttpStatus.FAILED_DEPENDENCY,
+                    locale.multiLanguageRes(revalidate.getMessage()),
+                    new PNRCreateRS()),
+                HttpStatus.FAILED_DEPENDENCY);
         }
 
         /**

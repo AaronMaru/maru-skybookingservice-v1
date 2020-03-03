@@ -12,6 +12,6 @@ AND mri.class = :cabinClass
 FROM mockup_rule mr
 
 -- General markup for skyuser or skyowner
-WHERE mr.type = "skyuser"
+WHERE mr.type = :userType
 ORDER BY id DESC
 LIMIT 1
