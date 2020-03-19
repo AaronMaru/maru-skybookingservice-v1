@@ -1,5 +1,6 @@
 package com.skybooking.stakeholderservice.v1_0_0.util;
 
+import com.skybooking.stakeholderservice.v1_0_0.util.auth.UserToken;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.json.JsonParser;
@@ -38,6 +39,30 @@ public class JwtUtils {
             ex.printStackTrace();
             return null;
         }
+    }
+
+    public <T extends Object> T getClaim(String accessToken, String claimKey, Class<T> type) {
+
+        try {
+
+            JsonParser parser = JsonParserFactory.getJsonParser();
+            Map<String, ?> tokenData = parser.parseMap(JwtHelper.decode(accessToken).getClaims());
+
+            return (T) ConvertUtils.convert(tokenData.get(claimKey), type);
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return null;
+        }
+    }
+
+    public UserToken getUserToken() {
+        UserToken userToken = new UserToken();
+        userToken.setUserId(this.getClaim("userId", Long.class));
+        userToken.setCompanyId(this.getClaim("companyId", Long.class));
+        userToken.setStakeholderId(this.getClaim("stakeholderId", Long.class));
+        userToken.setUserRole((this.getClaim("userRole", String.class) != null) ? this.getClaim("userRole", String.class) : "");
+        return userToken;
     }
 
 }

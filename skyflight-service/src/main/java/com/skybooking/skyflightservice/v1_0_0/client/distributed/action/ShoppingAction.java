@@ -8,6 +8,7 @@ import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.response.bar
 import com.skybooking.skyflightservice.v1_0_0.security.token.DSTokenHolder;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.shopping.FlightLegRQ;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.shopping.FlightShoppingRQ;
+import com.skybooking.skyflightservice.v1_0_0.util.datetime.DatetimeFormat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
@@ -39,20 +40,20 @@ public class ShoppingAction {
      * @param body
      * @return SabreBargainFinderRS
      */
-    public Mono<SabreBargainFinderRS> getShopping(FlightShoppingRQ body) {
+    public Mono<SabreBargainFinderRS> getShopping(com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.shopping.FlightShoppingRQ body) {
 
         return client
-                .mutate()
-                .exchangeStrategies(ExchangeStrategies.builder().codecs(clientCodecConfigurer -> {
-                    clientCodecConfigurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024);
-                }).build())
-                .build()
-                .post()
-                .uri(appConfig.getDISTRIBUTED_URI() + "/flight/" + appConfig.getDISTRIBUTED_VERSION() + "/shopping-v3")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
-                .bodyValue(body)
-                .retrieve()
-                .bodyToMono(SabreBargainFinderRS.class);
+            .mutate()
+            .exchangeStrategies(ExchangeStrategies.builder().codecs(clientCodecConfigurer -> {
+                clientCodecConfigurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024);
+            }).build())
+            .build()
+            .post()
+            .uri(appConfig.getDISTRIBUTED_URI() + "/flight/" + appConfig.getDISTRIBUTED_VERSION() + "/shopping-v3")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
+            .bodyValue(body)
+            .retrieve()
+            .bodyToMono(SabreBargainFinderRS.class);
     }
 
 
@@ -70,14 +71,20 @@ public class ShoppingAction {
 
         for (FlightLegRQ leg : body.getLegs()) {
 
-            var request = new FlightShoppingRQ();
+            var request = new com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.shopping.FlightShoppingRQ();
+
+            var requestLeg = new com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.shopping.FlightLegRQ();
+
+            requestLeg.setDestination(leg.getArrival());
+            requestLeg.setOrigin(leg.getDeparture());
+            requestLeg.setDate(leg.getDate().toString());
 
             request.setAdult(body.getAdult());
             request.setChild(body.getChild());
             request.setInfant(body.getInfant());
             request.setClassType(body.getClassType());
             request.setTripType("one");
-            request.getLegs().add(leg);
+            request.getLegs().add(requestLeg);
 
             requests.add(this.getShopping(request));
 

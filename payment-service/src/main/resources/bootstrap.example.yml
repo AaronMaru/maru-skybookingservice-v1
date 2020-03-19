@@ -11,12 +11,5 @@ spring:
       url: http://127.0.0.1:7005
       version: /v1.0.0
 
-  website:
-    payment:
-      fail: http://localhost:5555/payment/fail
-    ticket:
-      succeed: http://localhost:5555/ticket/succeed
-      fail: http://localhost:5555/ticket/fail
-
 native-query:
   package-scan: com.skybooking.paymentservice

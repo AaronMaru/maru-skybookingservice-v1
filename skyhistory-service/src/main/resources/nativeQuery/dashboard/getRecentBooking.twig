@@ -4,15 +4,29 @@ b.booking_code AS bookingCode,
 b.trip_type AS TripType,
 (b.total_amount + b.markup_amount + b.markup_pay_amount) AS totalAmount,
 b.created_at AS createdAt,
-CONCAT(su.first_name, " ", su.last_name) AS contName,
-su.photo AS contPhoto
-FROM bookings AS b INNER JOIN stakeholder_users AS su ON b.stakeholder_user_id = su.id
-WHERE
-(IF
-('skyuser' = :userType,
-b.stakeholder_user_id = :userId AND b.stakeholder_company_id IS NULL,
-IF('admin' = :userRole,
-b.stakeholder_user_id = :userId OR b.stakeholder_company_id = :companyId,
-b.stakeholder_user_id = :userId AND b.stakeholder_company_id = :companyId)))
+b.currency_code AS currencyCode,
+CONCAT(su.first_name, " ", su.last_name) AS skyuserName,
+su.id AS skyuserId,
+(CASE WHEN su.photo IS NULL THEN  'default.png' ELSE su.photo END) AS skyuserPhoto
+
+FROM bookings AS b
+INNER JOIN stakeholder_users AS su
+        ON b.stakeholder_user_id = su.id
+
+-- CHECK USERS
+WHERE CASE WHEN 'skyuser' = :stake
+    THEN
+        (b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id IS NULL)
+    ELSE
+        -- Condition for Skyowner
+        CASE WHEN
+                :userRole = 'admin'
+            THEN
+                b.stakeholder_company_id = :companyId
+            ELSE
+                b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id = :companyId
+            END
+    END
+
 ORDER BY b.created_at DESC
 LIMIT :take

@@ -37,9 +37,9 @@ AND IF(:stake = 'skyuser',
 			-- IF FALSE
 			-- Condition for Skyowner
 			IF(:role = 'admin',
-				  fsave.user_id = :skyuserId OR fsave.company_id = :companyId
+					fsave.company_id = :companyId
 				,
-				   fsave.user_id = :skyuserId AND fsave.company_id = :companyId
+				   	fsave.user_id = :skyuserId AND fsave.company_id = :companyId
 			)
 
 		) -- The end of if

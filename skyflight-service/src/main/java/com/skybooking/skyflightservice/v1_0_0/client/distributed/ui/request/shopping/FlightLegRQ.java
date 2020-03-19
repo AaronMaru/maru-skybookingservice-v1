@@ -2,13 +2,9 @@ package com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.sho
 
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.format.annotation.DateTimeFormat;
 
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import java.util.Date;
 
 @Getter
 @Setter
@@ -21,8 +17,6 @@ public class FlightLegRQ {
     private String destination;
 
     @NotNull(message = "The departure date is required.")
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
-    @Temporal(TemporalType.DATE)
-    private Date date;
+    private String date;
 
 }

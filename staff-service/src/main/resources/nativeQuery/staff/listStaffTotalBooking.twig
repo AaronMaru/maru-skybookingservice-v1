@@ -1,40 +1,62 @@
 SELECT
 
 	COUNT(b.id) AS quantity,
-	SUM( b.total_amount + b.markup_amount + b.markup_pay_amount ) AS amount,
+	IFNULL(SUM( b.total_amount + b.markup_amount + b.markup_pay_amount ), 0) AS amount,
+	b.currency_code AS currencyCode,
 	b.`status`,
-	(CASE
-		WHEN (b.`status` = 11 AND (
+	CASE WHEN (b.`status` = 11 AND (
 
-								SELECT IF(COUNT(dep_date) = 0, FALSE, TRUE)
-								FROM booking_origin_destinations bod
-								WHERE bod.booking_id = b.id
-								AND dep_date >= CURRENT_TIMESTAMP
+				SELECT COUNT(bod.id)
+				FROM booking_origin_destinations bod
+				WHERE bod.booking_id = b.id
 
-							) = TRUE
+				-- Where Date and Convert UTZ date
+				AND DATE(
+                        -- Flight depature datetime and convert to UTC
+                        CONVERT_TZ(bod.dep_date, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
+					) >= DATE(
+                        -- User locale current time zone and convert to UTC
+                        CONVERT_TZ(CURRENT_TIMESTAMP, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
+					)
 
-				) THEN "Upcoming"
+				ORDER BY bod.id DESC
+				LIMIT 1
 
-		WHEN (b.`status` = 11 AND (
+			) > 0
 
-								SELECT IF(COUNT(dep_date) = 0, FALSE, TRUE)
-								FROM booking_origin_destinations bod
-								WHERE bod.booking_id = b.id
-								AND dep_date < CURRENT_TIMESTAMP
+		) THEN :UPCOMING
 
-							) = TRUE
+        WHEN (b.`status` = 11 AND (
 
-				) THEN "Completed"
+                    SELECT COUNT(bod.id)
+                    FROM booking_origin_destinations bod
+                    WHERE bod.booking_id = b.id
 
-		WHEN (b.`status` IN (10, 12, 4, 3)) THEN  "Cancelled"
+                    -- Where Date and Convert TZ date
+                    AND DATE(
+                            -- Flight depature datetime and convert to UTC
+                            CONVERT_TZ(bod.dep_date, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
+                        ) < DATE(
+                            -- User locale current time zone and convert to UTC
+                            CONVERT_TZ(CURRENT_TIMESTAMP, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
+                        )
 
-	END) AS statusKey
+                    ORDER BY bod.id DESC
+                    LIMIT 1
+
+                ) > 0
+
+            ) THEN :COMPLETED
+
+        WHEN (b.`status` = 3) THEN :CANCELLED
+        WHEN (b.`status` IN (1, 10, 12, 4)) THEN  :FAILED
+
+    END AS statusKey
 
 FROM bookings b
 
 WHERE ( b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id = :companyId )
-
-AND b.`status` IN (11, 10, 12, 4)
+AND b.`status` IN (1, 11, 10, 12, 4, 3)
 
 GROUP BY statusKey
 ORDER BY quantity DESC

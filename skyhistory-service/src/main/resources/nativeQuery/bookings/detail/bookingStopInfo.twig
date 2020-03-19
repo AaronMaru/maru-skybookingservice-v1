@@ -1,0 +1,10 @@
+SELECT
+	bSA.elapsed_time AS elapsedTime,
+	bSA.location_code AS locationCode,
+	bSA.dep_date AS departureDate,
+	bSA.arr_date AS arrivalDate,
+	bSA.duration,
+	bSA.equipment
+
+FROM booking_stop_airports AS bSA
+WHERE bSA.booking_od_id = :bodSegId

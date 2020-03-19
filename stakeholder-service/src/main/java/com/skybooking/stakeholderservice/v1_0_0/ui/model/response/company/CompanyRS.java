@@ -19,6 +19,7 @@ public class CompanyRS {
     private Long businessTypeId;
     private String businessTypeName;
     private Long countryId;
+    private String countryName;
     private String status;
     private String description = "";
     private String city = "";
@@ -161,4 +162,13 @@ public class CompanyRS {
     public void setBusinessTypeName(String businessTypeName) {
         this.businessTypeName = businessTypeName;
     }
+
+    public String getCountryName() {
+        return countryName;
+    }
+
+    public void setCountryName(String countryName) {
+        this.countryName = countryName;
+    }
+
 }

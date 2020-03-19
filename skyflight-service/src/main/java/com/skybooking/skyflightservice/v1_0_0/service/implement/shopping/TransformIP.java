@@ -3,10 +3,14 @@ package com.skybooking.skyflightservice.v1_0_0.service.implement.shopping;
 import com.hazelcast.core.HazelcastInstance;
 import com.skybooking.skyflightservice.config.AppConfig;
 import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.response.bargainfinder.SabreBargainFinderRS;
+import com.skybooking.skyflightservice.v1_0_0.io.entity.cabin.CabinEntity;
+import com.skybooking.skyflightservice.v1_0_0.io.entity.meal.MealEntity;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.shopping.*;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.AircraftNQ;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.AirlineNQ;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.FlightLocationNQ;
+import com.skybooking.skyflightservice.v1_0_0.io.repository.cabin.CabinRP;
+import com.skybooking.skyflightservice.v1_0_0.io.repository.meal.MealRP;
 import com.skybooking.skyflightservice.v1_0_0.service.implement.shopping.transform.TransformSabre;
 import com.skybooking.skyflightservice.v1_0_0.service.implement.shopping.transform.TransformSabreMerger;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.bookmark.BookmarkSV;
@@ -54,6 +58,12 @@ public class TransformIP implements TransformSV {
 
     @Autowired
     private CurrencySV currencySV;
+
+    @Autowired
+    private CabinRP cabinRP;
+
+    @Autowired
+    private MealRP mealRP;
 
 
     /**
@@ -174,6 +184,7 @@ public class TransformIP implements TransformSV {
         var aircrafts = source.getAircrafts();
         var locations = source.getLocations();
         var layoverAirports = source.getLayoverAirports();
+        var legs = source.getLegs();
 
         for (Airline airline : airlines) {
 
@@ -231,10 +242,39 @@ public class TransformIP implements TransformSV {
 
         }
 
+        var cabins = cabinRP.findAll();
+        var meals = mealRP.findAll();
+
+        for (Leg leg : legs) {
+
+            for (LegSegmentDetail segment : leg.getSegments()) {
+
+                var cabin = cabins
+                    .stream()
+                    .filter(cabinEntity -> cabinEntity.getCabinCode().equalsIgnoreCase(segment.getCabin()))
+                    .findFirst()
+                    .map(CabinEntity::getCabinName)
+                    .orElse(segment.getCabin());
+
+                var meal = meals
+                    .stream()
+                    .filter(mealEntity -> mealEntity.getMealCode().equalsIgnoreCase(segment.getMeal()))
+                    .findFirst()
+                    .map(MealEntity::getMealName)
+                    .orElse(segment.getMeal());
+
+                segment.setCabinName(cabin);
+                segment.setMealName(meal);
+
+            }
+
+        }
+
         source.setAirlines(airlines);
         source.setAircrafts(aircrafts);
         source.setLocations(locations);
         source.setLayoverAirports(layoverAirports);
+        source.setLegs(legs);
 
         return source;
     }
@@ -366,7 +406,7 @@ public class TransformIP implements TransformSV {
                             var legDetail = source.getLegs().stream().filter(leg -> leg.getId().equalsIgnoreCase(legId)).findFirst().get();
                             var priceDetail = source.getPrices().stream().filter(price -> price.getId().equalsIgnoreCase(legDetail.getPrice())).findFirst().get();
 
-                            return priceDetail.getTotal().doubleValue();
+                            return priceDetail.getTotalAvg().doubleValue();
                         }).mapToDouble(Double::doubleValue).sum();
 
                     lowestPrice = Double.parseDouble(formatter.format(lowestPrice));

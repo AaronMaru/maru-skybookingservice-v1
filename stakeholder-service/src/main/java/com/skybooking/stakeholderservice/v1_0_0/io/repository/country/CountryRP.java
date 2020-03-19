@@ -13,4 +13,6 @@ public interface CountryRP extends JpaRepository<CountryEntity, Long> {
     @Query(value = "SELECT * FROM country_city WHERE type = 'country' ", nativeQuery = true)
     List<CountryEntity> findAllCountry();
 
+    @Query(value = "SELECT * FROM country_city WHERE type = 'country' AND iso = :iso", nativeQuery = true)
+    CountryEntity existsIso(String iso);
 }

@@ -144,7 +144,10 @@ public class TransformSabreMerger {
                     })
                     .collect(Collectors.toList());
 
-                itinerary.getLowest().add(legGroup.getLegsDesc().stream().findFirst().map(LegDescription::getLeg).get());
+                var countLeg = selectedLegs.stream().count();
+
+                itinerary.getLowest().add(selectedLegs.stream().findFirst().map(LegDescription::getLeg).get());
+                itinerary.getHighest().add(selectedLegs.stream().skip(countLeg - 1).findFirst().map(LegDescription::getLeg).get());
 
                 // sort date
                 selectedLegs = legGroup.getLegsDesc()

@@ -1,16 +1,28 @@
-SELECT COUNT(b.id)        AS total,
+SELECT COUNT(b.id) AS total,
 DATE(b.created_at) AS date
 FROM bookings AS b
-WHERE (IF('skyuser' = :userType,
-b.stakeholder_user_id = :userId AND b.stakeholder_company_id IS NULL,
-IF('admin' = :userRole,
-b.stakeholder_user_id = :userId OR b.stakeholder_company_id = :companyId,
-b.stakeholder_user_id = :userId AND b.stakeholder_company_id = :companyId)))
-AND (IF('daily' = :filter, DATE(b.created_at) = CURDATE(), 0)
-OR IF('weekly' = :filter, YEARWEEK(DATE(b.created_at)) = YEARWEEK(CURDATE()), 0)
-OR IF('monthly' = :filter, MONTH(b.created_at) = MONTH(CURDATE()), 0))
 
-AND (b.status = 11)
+-- CHECK USERS
+WHERE b.status = 11
+
+AND CASE WHEN 'skyuser' = :stake
+    THEN
+        (b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id IS NULL)
+    ELSE
+        -- Condition for Skyowner
+        CASE WHEN :userRole = 'admin'
+            THEN
+                b.stakeholder_company_id = :companyId
+            ELSE
+                b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id = :companyId
+            END
+    END
+
+AND CASE WHEN 'daily' = :filter THEN DATE(b.created_at) = CURRENT_TIMESTAMP
+        WHEN 'weekly' = :filter THEN YEARWEEK(DATE(b.created_at)) = YEARWEEK(CURRENT_TIMESTAMP)
+        WHEN 'monthly' = :filter THEN MONTH(b.created_at) = MONTH( CURRENT_TIMESTAMP )
+        ELSE YEAR(b.created_at) = YEAR( CURRENT_TIMESTAMP )
+        END
 
 GROUP BY DATE(b.created_at)
 ORDER BY b.created_at DESC

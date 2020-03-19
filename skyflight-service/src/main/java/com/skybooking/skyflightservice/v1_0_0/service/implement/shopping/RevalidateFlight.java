@@ -16,6 +16,7 @@ import com.skybooking.skyflightservice.v1_0_0.ui.model.request.booking.BookingPa
 import com.skybooking.skyflightservice.v1_0_0.util.DateUtility;
 import com.skybooking.skyflightservice.v1_0_0.util.calculator.NumberFormatter;
 import com.skybooking.skyflightservice.v1_0_0.util.passenger.PassengerUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@Slf4j
 public class RevalidateFlight {
 
     @Autowired
@@ -88,14 +90,21 @@ public class RevalidateFlight {
             request.setInfant(infant);
             request.setOriginDestinations(originDestinations);
 
+            log.info("revalidate request: leg {} body {}",leg , request);
+
             JsonNode airItineraryPriceInfo = shoppingAction.revalidate(request);
-            System.out.println(airItineraryPriceInfo);
+
             if (!this.checkPrice(airItineraryPriceInfo, detailSV.getPriceDetail(requestId, legDetail.getPrice()), adult, child, infant)) {
+                log.error("revalidate response: body {}, price detail {}, adult {}, child {}, infant {}, error {}", airItineraryPriceInfo, detailSV.getPriceDetail(requestId, legDetail.getPrice()), adult, child, infant, MessageConstant.PRICE_CHANGED);
                 return new RevalidateM(RevalidateConstant.PRICE_CHANGED, MessageConstant.PRICE_CHANGED);
             }
+
             if (!this.checkSeats(airItineraryPriceInfo, seats)) {
+                log.error("revalidate response: body {}, seats {}, error {} .",airItineraryPriceInfo, seats, MessageConstant.UNAVAILABLE_SEATS);
                 return new RevalidateM(RevalidateConstant.UNAVAILABLE_SEATS, MessageConstant.UNAVAILABLE_SEATS);
             }
+
+            log.info("revalidate response: {}", airItineraryPriceInfo);
         }
 
         return new RevalidateM(RevalidateConstant.SUCCESS);

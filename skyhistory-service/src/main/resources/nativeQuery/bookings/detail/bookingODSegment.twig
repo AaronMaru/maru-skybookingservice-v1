@@ -1,0 +1,65 @@
+SELECT
+    bod_seg.id,
+    bod_seg.airline_code AS airlineCode,
+    (
+        SELECT fil.business_name
+        FROM flight_info_locale fil
+        WHERE fil.locale_id = :localeId
+        AND fil.flight_id = (
+                    SELECT fi.id
+                    FROM flight_info fi
+                    WHERE fi.airline_code = bod_seg.airline_code
+                )
+        LIMIT 1
+    ) AS airlineName,
+    CASE WHEN bod_seg.airline_code IS NOT NULL THEN
+         CONCAT(:IMAGE_URL,'90/',LOWER(bod_seg.airline_code),'.png' )
+        ELSE ''
+    END  AS airlineLogo,
+    bod_seg.flight_number AS flightNumber,
+    bod_seg.equip_type AS equipType,
+    (
+        SELECT ail.name
+        FROM aircraft_locale ail
+        WHERE ail.locale_id = :localeId
+        AND ail.aircraft_id = (
+                SELECT aci.id
+                FROM aircrafts_info AS aci
+                WHERE aci.aircraft_code = bod_seg.equip_type
+            )
+        LIMIT 1
+    ) AS aircraftName,
+    bod_seg.meal,
+    (SELECT m.meal_name FROM meals AS m WHERE m.meal_code = bod_seg.meal LIMIT 1) AS mealName,
+    bod_seg.stop_qty AS stopQty,
+    bod_seg.layover,
+    IFNULL( SUBSTRING_INDEX(bod_seg.airline_ref, '*', -1), '') AS airlineRef,
+    CASE WHEN bod_seg.operated_by_code IS NOT NULL
+         THEN ( SELECT fil.name
+                FROM flight_info_locale fil
+                WHERE fil.locale_id = :localeId
+                AND fil.flight_id = (SELECT fi.id FROM flight_info fi WHERE fi.airline_code = bod_seg.operated_by_code )
+                LIMIT 1)
+         ELSE ''
+    END AS operatedByAirline,
+
+    bod_seg.adjustment_date AS adjustmentDate,
+
+    bod_seg.dep_location_code AS departureLocationCode,
+    (SELECT cclo.name FROM country_city_locale cclo
+        WHERE cclo.locale_id = :localeId
+        AND cclo.country_city_id = (SELECT air.country_city_id FROM airport_info AS air WHERE air.code = bod_seg.dep_location_code )
+    ) AS departureLocationName,
+    bod_seg.dep_terminal AS departureTerminal,
+    bod_seg.dep_date AS departureDate,
+
+    bod_seg.arr_location_code AS arrivalLocationCode,
+    (SELECT cclo.name FROM country_city_locale cclo
+        WHERE cclo.locale_id = :localeId
+        AND cclo.country_city_id = (SELECT air.country_city_id FROM airport_info AS air WHERE air.code = bod_seg.arr_location_code )
+    ) AS arrivalLocationName,
+    bod_seg.arr_terminal AS arrivalTerminal,
+    bod_seg.arr_date AS arrivalDate
+
+FROM booking_origin_destinations bod_seg
+WHERE bod_seg.parent_id = :bodId

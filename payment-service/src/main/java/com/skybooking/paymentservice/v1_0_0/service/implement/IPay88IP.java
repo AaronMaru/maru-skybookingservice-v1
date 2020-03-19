@@ -26,7 +26,7 @@ public class IPay88IP {
      * @return
      */
     protected UrlPaymentRS getRequestUrl(PaymentRQ paymentRQ) {
-        return payments.getPaymentUrl(paymentRQ, "/ipay88/form");
+        return payments.getPaymentUrl(paymentRQ, "ipay88/form");
     }
 
 

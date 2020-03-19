@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
+
 @RestController
 @RequestMapping("/wv1.0.0")
 public class StaffControllerW {
@@ -29,8 +31,8 @@ public class StaffControllerW {
      * @Return ResponseEntity
      */
     @GetMapping("/list-staff")
-    public ResRS listStaff() {
-        StaffPaginationRS staffs = staffSV.getStaff();
+    public ResRS listStaff(HttpServletRequest request) {
+        StaffPaginationRS staffs = staffSV.getStaff(request);
         return localization.resAPI(HttpStatus.OK,"res_succ", staffs);
     }
 

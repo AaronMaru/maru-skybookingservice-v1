@@ -8,6 +8,7 @@ public class StaffTotalBookingTO {
 
     private BigInteger quantity;
     private BigDecimal amount;
+    private String currencyCode;
     private Byte status;
 
     private String statusKey;
@@ -53,4 +54,11 @@ public class StaffTotalBookingTO {
         this.statusKey = statusKey;
     }
 
+    public String getCurrencyCode() {
+        return currencyCode;
+    }
+
+    public void setCurrencyCode(String currencyCode) {
+        this.currencyCode = currencyCode;
+    }
 }

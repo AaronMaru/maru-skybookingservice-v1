@@ -19,6 +19,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.text.ParseException;
 
@@ -43,6 +45,8 @@ public class UserControllerW {
     @Autowired
     private GeneralBean generalBean;
 
+    @Autowired
+    private HttpServletRequest request;
 
 
     /**
@@ -54,6 +58,7 @@ public class UserControllerW {
      */
     @GetMapping("/profile")
     public ResRS getUser() {
+        System.out.println(request.getHeader("X-CompanyId"));
         UserDetailsRS userDetailsRS = userSV.getUser();
         return localization.resAPI(HttpStatus.OK,"res_succ",userDetailsRS);
     }

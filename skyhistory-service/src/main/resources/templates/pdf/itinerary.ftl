@@ -346,7 +346,7 @@
                 <div class="each-person">
                     <b>[${checked_baggage??? then(checked_baggage, 'NO LABEL YET')}]</b>
                     <#if item.bookingBaggageInfoRS.pieceStatus == 0>
-                        ${item.bookingBaggageInfoRS.bagWeight}${item.bookingBaggageInfoRS.bagUnit}&nbsp;${per_person??? then(per_person, 'NO LABEL YET')}
+<#--                        ${item.bookingBaggageInfoRS.bagWeight}${item.bookingBaggageInfoRS.bagUnit}&nbsp;${per_person??? then(per_person, 'NO LABEL YET')}-->
                     <#else>
                         ${item.bookingBaggageInfoRS.bagPiece} ${each_piece??? then(each_piece, 'NO LABEL YET')}, ${item.bookingBaggageInfoRS.bagWeight}${item.bookingBaggageInfoRS.bagUnit}&nbsp;${each_piece??? then(each_piece, 'NO LABEL YET')}
                     </#if>

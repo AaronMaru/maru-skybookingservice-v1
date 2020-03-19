@@ -11,9 +11,11 @@ public class RecentBookingTO {
     private Integer bookingId;
     private String bookingCode;
     private String TripType;
-    private String contName;
-    private String contPhoto;
+    private Integer skyuserId;
+    private String skyuserName;
+    private String skyuserPhoto;
     private BigDecimal totalAmount;
     private Timestamp createdAt;
+    private String currencyCode;
 
 }

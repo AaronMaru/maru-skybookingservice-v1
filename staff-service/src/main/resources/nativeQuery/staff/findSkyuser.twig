@@ -7,13 +7,12 @@ SELECT
 	su.date_of_birth AS dob,
 	(CASE WHEN su.photo IS NULL THEN  'default.png' ELSE su.photo END) AS photo,
 	su.gender,
-	(
-		SELECT c.`value`
+	IFNULL( ( SELECT c.`value`
 		FROM contacts c
 		WHERE c.contactable_id = su.id
 		AND c.contactable_type = 'skyuser'
 		AND c.type = 'p'
-	) AS contPhone,
+	), '' ) AS contPhone,
 	(
 		SELECT c.`value`
 		FROM contacts c

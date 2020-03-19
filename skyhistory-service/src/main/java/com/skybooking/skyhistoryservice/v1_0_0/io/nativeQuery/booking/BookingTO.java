@@ -14,7 +14,9 @@ public class BookingTO {
     private String payMethod;
     private String pnrCode;
     private String tripType;
-    private String staffName;
+    private Integer skyuserId;
+    private String skyuserName;
+    private String skyuserPhoto;
     private BigDecimal adult = BigDecimal.ZERO;
     private BigDecimal child = BigDecimal.ZERO;
     private BigDecimal infant = BigDecimal.ZERO;

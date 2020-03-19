@@ -51,7 +51,7 @@ public class BookingRequestBody {
             BookingPassengerDRQ passenger = new BookingPassengerDRQ();
             passenger.setFirstName(passengerRQ.getFirstName());
             passenger.setLastName(passengerRQ.getLastName());
-            passenger.setGender(PassengerUtil.gender(passengerRQ.getGender()));
+            passenger.setGender(passengerRQ.getGender());
             passenger.setBirthDate(DatetimeFormat.parse("yyyy-MM-dd", passengerRQ.getBirthDate()));
             passenger.setIdType(passengerRQ.getIdType());
             passenger.setIdNumber(passengerRQ.getIdNumber());

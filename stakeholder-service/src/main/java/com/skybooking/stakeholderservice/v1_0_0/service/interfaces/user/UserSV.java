@@ -29,4 +29,6 @@ public interface UserSV {
     void options(OptionStaffRQ optionStaffRQ);
     UserDetailsTokenRS resetPasswordMobile(ResetPasswordMobileRQ resetPasswordMobileRQ);
 
+    Boolean logout(HttpHeaders httpHeaders);
+
 }

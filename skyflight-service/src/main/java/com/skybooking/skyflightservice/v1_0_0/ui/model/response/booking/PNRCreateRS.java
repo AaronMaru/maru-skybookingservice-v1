@@ -7,10 +7,12 @@ public class PNRCreateRS {
 
     private String bookingCode = "";
     private String bookingRef = "";
+    private Integer bookingId;
 
-    public PNRCreateRS(String bookingCode, String bookingRef) {
+    public PNRCreateRS(String bookingCode, String bookingRef, Integer bookingId) {
         this.bookingCode = bookingCode;
         this.bookingRef = bookingRef;
+        this.bookingId = bookingId;
     }
 
     public PNRCreateRS() {

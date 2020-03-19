@@ -1,0 +1,10 @@
+SELECT
+	suc.skyuser_role AS skyuserRole,
+	( SELECT CONCAT(su.first_name, ' ', su.last_name) AS username
+	FROM stakeholder_users su WHERE su.id = suc.stakeholder_user_id) AS username,
+	IFNULL( (	SELECT su.photo AS profileImg FROM stakeholder_users su WHERE su.id = suc.stakeholder_user_id ) , 'default.png') AS profileImg
+
+FROM stakeholder_user_has_companies suc
+WHERE suc.stakeholder_company_id = :companyId
+ORDER BY suc.created_at DESC
+LIMIT 10

@@ -17,14 +17,13 @@ import com.skybooking.stakeholderservice.v1_0_0.io.enitity.redis.UserTokenEntity
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.currency.CurrencyNQ;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.currency.CurrencyTO;
-import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.user.PermissionTO;
-import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.user.TotalBookingTO;
-import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.user.UserNQ;
-import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.user.UserProfileTO;
+import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.user.*;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.BussinessTypeRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyHasUserRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.contact.ContactRP;
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.country.CountryRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.country.LocationRP;
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.locale.CountryLocaleRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.locale.LocaleRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.notification.UserPlayerRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.redis.UserTokenRP;
@@ -39,6 +38,7 @@ import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetai
 import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.datetime.DateTimeBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
+import com.skybooking.stakeholderservice.v1_0_0.util.header.HeaderBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.passenger.Passenger;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.math.NumberUtils;
@@ -118,6 +118,12 @@ public class UserBean {
 
     @Autowired
     private CurrencyNQ currencyNQ;
+
+    @Autowired
+    private HeaderBean headerBean;
+
+    @Autowired
+    private CountryLocaleRP countryLocaleRP;
 
 
     /**
@@ -232,13 +238,16 @@ public class UserBean {
         userDetailDao.setEmail(generalBean.strCv(user.getEmail()));
         userDetailDao.setPhone(generalBean.strCv(user.getPhone()));
         userDetailDao.setCode(generalBean.strCv(user.getCode()));
-        userDetailDao.setGender(generalBean.strCv(user.getStakeHolderUser().getGender()));
+        userDetailDao.setGender(generalBean.strCv(user.getStakeHolderUser().getGender()).toUpperCase());
         userDetailDao.setIsSkyowner(user.getStakeHolderUser().getIsSkyowner());
         userDetailDao.setUserCode(user.getStakeHolderUser().getUserCode());
         userDetailDao.setDob(generalBean.strCv(user.getStakeHolderUser().getDateOfBirth()));
         userDetailDao.setJoined(dateTimeBean.convertDateTimeISO(user.getCreatedAt()));
-        userDetailDao.setNationality(generalBean.strCv(user.getStakeHolderUser().getNationality()));
         userDetailDao.setCurrencyId(user.getStakeHolderUser().getCurrencyId());
+
+        String nationlity = getNationality(user.getStakeHolderUser().getNationality());
+        userDetailDao.setNationality(nationlity);
+        userDetailDao.setIsoCountry(generalBean.strCv(user.getStakeHolderUser().getNationality()).toUpperCase());
 
         LocaleEntity defaultLocale = localeRP.findLocaleByLocale("en");
         List<CurrencyTO> currencyTOList = currencyNQ.findAllByLocaleId(defaultLocale.getId());
@@ -282,6 +291,19 @@ public class UserBean {
 
         return userDetailDao;
 
+    }
+
+
+    private String getNationality(String iso) {
+        NationalityTO nationalityTO = userNQ.getNationality(iso != null ? iso : "", headerBean.getLocalizationId(request.getHeader("X-localization")));
+
+        String nationlity = "";
+
+        if (nationalityTO != null) {
+            nationlity = nationalityTO.getNationality();
+        }
+
+        return nationlity;
     }
 
 
@@ -360,11 +382,14 @@ public class UserBean {
             companyRS.setDescription(company.getDescription());
 
             String status = companyStatus(company.getStatus());
-            companyRS.setStatus(status);
+            companyRS.setStatus(status.toUpperCase());
 
             var country = locationRP.findByLocationableId(company.getId());
             if (country != null) {
+                var countryLocale = countryLocaleRP.findCountryBylocale(country.getCountryId(), headerBean.getLocalizationId(request.getHeader("X-localization")));
                 companyRS.setCountryId(country.getCountryId());
+                companyRS.setCountryName(countryLocale.getName());
+
             }
 
             List<LicenseRS> licenses = new ArrayList<>();
@@ -812,10 +837,10 @@ public class UserBean {
      * @Return
      */
     public void setPasengerType(String birthday, PassengerRS passenger) {
-
+        DateTimeBean dateTime = new DateTimeBean();
         Passenger clPassenger = new Passenger();
 
-        Date birth = dateTimeBean.convertDateTimes(birthday);
+        Date birth = dateTime.convertDateTimes(birthday);
         String pType = clPassenger.passengerType(birth);
         passenger.setPassType(pType);
 

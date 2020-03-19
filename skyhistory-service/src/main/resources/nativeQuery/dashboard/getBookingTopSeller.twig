@@ -1,33 +1,39 @@
-SELECT suc.stakeholder_user_id         AS userId,
-su.first_name                   AS firstName,
-su.last_name                    AS lastName,
-IFNULL(su.photo, 'default.png') AS userProfile,
-su.user_code                    AS userCode,
-(
-SELECT IFNULL(SUM(b.total_amount + b.markup_amount + b.markup_pay_amount), 0) AS totalAmount
-FROM bookings b
-WHERE b.stakeholder_user_id = suc.stakeholder_user_id
-AND b.`status` = 11
-AND (IF('range' = :filter, (DATE(b.created_at) >= :startDate AND DATE(b.created_at) <= :endDate), 0)
-OR IF('daily' = :filter, DATE(b.created_at) = CURDATE(), 0)
-OR IF('weekly' = :filter, yearweek(DATE(b.created_at)) = yearweek(CURDATE()), 0)
-OR IF('monthly' = :filter, MONTH(b.created_at) = MONTH(CURDATE()), 0)
-OR IF('yearly' = :filter, YEAR(b.created_at) = YEAR(CURDATE()), 0)
-)
-) AS totalAmount,
+SELECT
+    suc.stakeholder_user_id  AS userId,
+    su.first_name AS firstName,
+    su.last_name AS lastName,
+    IFNULL(su.photo, 'default.png') AS userProfile,
+    su.user_code AS userCode,
+    (
+        SELECT IFNULL(SUM(b.total_amount + b.markup_amount + b.markup_pay_amount), 0) AS totalAmount
+        FROM bookings b
+        WHERE b.stakeholder_user_id = suc.stakeholder_user_id
+        AND b.stakeholder_company_id = :companyId
+        AND b.`status` = 11
+        AND CASE WHEN 'range' = :filter THEN DATE(b.created_at) >= :startDate AND DATE(b.created_at) <= :endDate
+                WHEN 'daily' = :filter THEN DATE(b.created_at) = CURRENT_TIMESTAMP
+                WHEN 'weekly' = :filter THEN YEARWEEK(DATE(b.created_at)) = YEARWEEK(CURRENT_TIMESTAMP)
+                WHEN 'monthly' = :filter THEN MONTH(b.created_at) = MONTH( CURRENT_TIMESTAMP )
+                ELSE YEAR(b.created_at) = YEAR( CURRENT_TIMESTAMP )
+                END
 
-(
-SELECT COUNT(b.id) AS totalBooking
-FROM bookings b
-WHERE b.stakeholder_user_id = suc.stakeholder_user_id
-AND b.`status` = 11
-AND (IF('range' = :filter, (DATE(b.created_at) >= :startDate AND DATE(b.created_at) <= :endDate), 0)
-OR IF('daily' = :filter, DATE(b.created_at) = CURDATE(), 0)
-OR IF('weekly' = :filter, yearweek(DATE(b.created_at)) = yearweek(CURDATE()), 0)
-OR IF('monthly' = :filter, MONTH(b.created_at) = MONTH(CURDATE()), 0)
-OR IF('yearly' = :filter, YEAR(b.created_at) = YEAR(CURDATE()), 0)
-)
-) AS totalBooking
+    ) AS totalAmount,
+
+    (
+        SELECT COUNT(b.id) AS totalBooking
+        FROM bookings b
+        WHERE b.stakeholder_user_id = suc.stakeholder_user_id
+        AND b.stakeholder_company_id = :companyId
+        AND b.`status` = 11
+
+        AND CASE WHEN 'range' = :filter THEN DATE(b.created_at) >= :startDate AND DATE(b.created_at) <= :endDate
+                WHEN 'daily' = :filter THEN DATE(b.created_at) = CURRENT_TIMESTAMP
+                WHEN 'weekly' = :filter THEN YEARWEEK(DATE(b.created_at)) = YEARWEEK(CURRENT_TIMESTAMP)
+                WHEN 'monthly' = :filter THEN MONTH(b.created_at) = MONTH( CURRENT_TIMESTAMP )
+                ELSE YEAR(b.created_at) = YEAR( CURRENT_TIMESTAMP )
+                END
+
+    ) AS totalBooking
 
 FROM stakeholder_companies sc
 
@@ -35,21 +41,21 @@ FROM stakeholder_companies sc
 -- Get stakeholder user info
 INNER JOIN
 (
-SELECT suc.stakeholder_company_id,
-suc.stakeholder_user_id,
-suc.skyuser_role
-FROM stakeholder_user_has_companies suc
+    SELECT suc.stakeholder_company_id,
+    suc.stakeholder_user_id,
+    suc.skyuser_role
+    FROM stakeholder_user_has_companies suc
 ) suc ON suc.stakeholder_company_id = sc.id
 
 INNER JOIN
 (
-SELECT su.id,
-su.first_name,
-su.last_name,
-su.photo,
-su.user_code
+    SELECT su.id,
+    su.first_name,
+    su.last_name,
+    su.photo,
+    su.user_code
 
-FROM stakeholder_users su
+    FROM stakeholder_users su
 ) su ON su.id = suc.stakeholder_user_id
 -- The end of stakeholder user info
 

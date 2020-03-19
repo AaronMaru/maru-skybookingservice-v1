@@ -11,6 +11,8 @@ public class PriceRS implements Serializable {
     private String type;
     private BigDecimal tax = BigDecimal.ZERO;
     private BigDecimal baseFare = BigDecimal.ZERO;
+    private BigDecimal commissionAmount = BigDecimal.ZERO;
+    private BigDecimal commissionPercentage = BigDecimal.ZERO;
     private String currency;
     private int quantity;
 

@@ -6,12 +6,14 @@ import com.skybooking.skyflightservice.constant.CompanyConstant;
 import com.skybooking.skyflightservice.constant.TicketConstant;
 import com.skybooking.skyflightservice.constant.passenger.PassengerCode;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.booking.*;
+import com.skybooking.skyflightservice.v1_0_0.io.entity.shopping.Baggage;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.shopping.HiddenStop;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.shopping.LegSegmentDetail;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.FlightLocationNQ;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.MarkupNQ;
 import com.skybooking.skyflightservice.v1_0_0.io.repository.booking.*;
 import com.skybooking.skyflightservice.v1_0_0.io.repository.frontend.FrontendConfigRP;
+import com.skybooking.skyflightservice.v1_0_0.service.interfaces.baggages.BaggageSV;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.booking.BookingDataSV;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.DetailSV;
 import com.skybooking.skyflightservice.v1_0_0.service.model.booking.BookingMetadataTA;
@@ -30,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class BookingDataIP extends MetadataIP implements BookingDataSV {
@@ -44,7 +47,7 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
     private BookingUtility bookingUtility;
 
     @Autowired
-    private BookingRP bookingRP;
+    protected BookingRP bookingRP;
 
     @Autowired
     private BookingSpecialServiceRP bookingSpecialServiceRP;
@@ -70,6 +73,9 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
     @Autowired
     private MarkupNQ markupNQ;
 
+    @Autowired
+    private BaggageSV baggageSV;
+
 
     @Override
     @Transactional(rollbackFor = {Exception.class})
@@ -80,6 +86,8 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
         this.insertBookingSpecialService(booking.getId(), pnrRS);
         List<TravelItineraryTA> travelItineraryTAS = this.insertBookingTravelItinerary(booking.getId(), pnrRS, request);
         this.insertBookingAirTicket(booking.getId(), travelItineraryTAS, request);
+
+        baggageSV.insertBaggage(requestTA, booking.getId());
 
         return booking;
 
@@ -153,6 +161,9 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
 
         var requestId = requestTA.getRequest().getRequestId();
 
+
+        var sequenceIndex = new AtomicInteger();
+
         for (String legId : requestTA.getRequest().getLegIds()) {
 
             var leg = detailSV.getLegDetail(requestId, legId);
@@ -165,6 +176,7 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
             bookingOD.setArrageAirSegs("");
             bookingOD.setElapsedTime(Math.toIntExact(leg.getDuration()));
             bookingOD.setMultipleAirStatus(leg.isMultiAir() ? 1 : 0);
+            bookingOD.setAdjustmentDate(leg.getAdjustmentDates());
 
             // store parent data
             bookingOD = bookingOriginDestinationRP.save(bookingOD);
@@ -212,8 +224,11 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
                 bookingSegmentOD.setDepDate(DateUtility.convertZonedDateTimeToDateTime(DateUtility.plusDays(segmentDetail.getDepartureTime(), segment.getDateAdjustment())));
                 bookingSegmentOD.setArrDate(DateUtility.convertZonedDateTimeToDateTime(DateUtility.plusDays(segmentDetail.getArrivalTime(), segment.getDateAdjustment())));
                 bookingSegmentOD.setLayover(Math.toIntExact(segment.getLayoverDuration()));
+                bookingSegmentOD.setAdjustmentDate(segment.getDateAdjustment());
 
                 totalStop += segment.getStops();
+
+                bookingSegmentOD.setAirlineRef(requestTA.getReservationsCode().get(sequenceIndex.getAndIncrement()));
 
                 // store segment
                 var bookingOd = bookingOriginDestinationRP.save(bookingSegmentOD);
@@ -354,14 +369,14 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
             bookingFareBreakdownEntity.setCabin(fareBreakdown.get("Cabin").textValue());
             bookingFareBreakdownEntity.setBagAllowance(fareBreakdown.get("FreeBaggageAllowance").textValue());
 
-            if (fareBreakdown.get("FareBasis").isObject()) {
-                bookingFareBreakdownEntity.setCode(fareBreakdown.get("FareBasis").get("Code").textValue());
-                bookingFareBreakdownEntity.setAmount(new BigDecimal(fareBreakdown.get("FareBasis").get("FareAmount").textValue()));
-                bookingFareBreakdownEntity.setPassType(fareBreakdown.get("FareBasis").get("FarePassengerType").textValue());
-                bookingFareBreakdownEntity.setFareType(fareBreakdown.get("FareBasis").get("FareType").textValue());
-                bookingFareBreakdownEntity.setFilingCarrier(fareBreakdown.get("FareBasis").get("FilingCarrier").textValue());
-                bookingFareBreakdownEntity.setGlobalInd(fareBreakdown.get("FareBasis").get("GlobalInd").textValue());
-                bookingFareBreakdownEntity.setMarket(fareBreakdown.get("FareBasis").get("Market").textValue());
+            if (fareBreakdown.has("FareBasis")) {
+                bookingFareBreakdownEntity.setCode(fareBreakdown.get("FareBasis").has("code") ? fareBreakdown.get("FareBasis").get("Code").textValue() : null);
+                bookingFareBreakdownEntity.setAmount((fareBreakdown.get("FareBasis").has("FareAmount") ? new BigDecimal(fareBreakdown.get("FareBasis").get("FareAmount").textValue()) : null));
+                bookingFareBreakdownEntity.setPassType(fareBreakdown.get("FareBasis").has("FarePassengerType") ? fareBreakdown.get("FareBasis").get("FarePassengerType").textValue() : null);
+                bookingFareBreakdownEntity.setFareType(fareBreakdown.get("FareBasis").has("FareType") ? fareBreakdown.get("FareBasis").get("FareType").textValue() : null);
+                bookingFareBreakdownEntity.setFilingCarrier(fareBreakdown.get("FareBasis").has("FilingCarrier") ? fareBreakdown.get("FareBasis").get("FilingCarrier").textValue() : null);
+                bookingFareBreakdownEntity.setGlobalInd(fareBreakdown.get("FareBasis").has("GlobalInd") ? fareBreakdown.get("FareBasis").get("GlobalInd").textValue() : null);
+                bookingFareBreakdownEntity.setMarket(fareBreakdown.get("FareBasis").has("Market") ? fareBreakdown.get("FareBasis").get("Market").textValue() : null);
             }
 
             bookingFareBreakdownRP.save(bookingFareBreakdownEntity);

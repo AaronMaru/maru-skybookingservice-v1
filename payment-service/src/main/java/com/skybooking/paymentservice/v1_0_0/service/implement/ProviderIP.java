@@ -2,6 +2,7 @@ package com.skybooking.paymentservice.v1_0_0.service.implement;
 
 import com.skybooking.paymentservice.config.AppConfig;
 import com.skybooking.paymentservice.constant.PaymentCodeConstant;
+import com.skybooking.paymentservice.constant.PaymentStatusConstant;
 import com.skybooking.paymentservice.constant.ProductTypeConstant;
 import com.skybooking.paymentservice.v1_0_0.client.flight.action.FlightAction;
 import com.skybooking.paymentservice.v1_0_0.client.flight.ui.request.FlightMandatoryDataRQ;
@@ -18,6 +19,8 @@ import com.skybooking.paymentservice.v1_0_0.service.interfaces.ProviderSV;
 import com.skybooking.paymentservice.v1_0_0.ui.model.request.PaymentRQ;
 import com.skybooking.paymentservice.v1_0_0.ui.model.response.PaymentMethodRS;
 import com.skybooking.paymentservice.v1_0_0.ui.model.response.UrlPaymentRS;
+import com.skybooking.paymentservice.v1_0_0.util.classse.CardInfo;
+import com.skybooking.paymentservice.v1_0_0.util.generator.CardUtility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -105,25 +108,36 @@ public class ProviderIP implements ProviderSV {
     public String getIpay88Response(Map<String, Object> request) {
 
         var bookingCode = request.get("RefNo").toString();
-        if (request.get("Status").equals(0)) {
-            return appConfig.getPaymentFailPage() + "?bookingCode=" + bookingCode;
+        FlightMandatoryDataRS mandatoryData = flightAction.getMandatoryData(bookingCode);
+        var bookingId = mandatoryData.getBookingId();
+        if (request.get("Status").equals("0")) {
+            return appConfig.getPaymentPage() + "?bookingId=" + bookingId + "&status=" + PaymentStatusConstant.PAYMENT_FAIL;
         }
 
         /**
          * IPay88 verification
          */
-        FlightMandatoryDataRS mandatoryData = flightAction.getMandatoryData(bookingCode);
         if (!iPay88IP.verifyPayment(request, mandatoryData.getAmount())) {
-            return appConfig.getPaymentFailPage() + "?bookingCode=" + bookingCode;
+            return appConfig.getPaymentPage() + "?bookingId=" + bookingId + "&status=" + PaymentStatusConstant.PAYMENT_FAIL;
         }
+
+        /**
+         * TODO: log info verify succeed
+         */
 
         FlightPaymentSucceedRQ paymentSucceedRQ = new FlightPaymentSucceedRQ();
         if (request.containsKey("S_bankname")) {
             paymentSucceedRQ.setBankName(request.get("S_bankname").toString().replace("+", " "));
         }
 
-        paymentSucceedRQ.setCardNumber(request.containsKey("CCNo") ? request.get("CCNo").toString() : "");
-        paymentSucceedRQ.setCardNumber(request.containsKey("CCName") ? request.get("CCName").toString() : "");
+        var card = new CardInfo();
+        if (request.containsKey("CCNo")) {
+            card = CardUtility.getCardInfo(request.get("CCNo").toString());
+        }
+        var paymentType = paymentNQ.getPaymentMethod(paymentNQ.getPaymentCode(bookingCode).getPaymentCode());
+
+        paymentSucceedRQ.setCardNumber(card.getNumber());
+        paymentSucceedRQ.setHolderName(request.containsKey("CCName") ? request.get("CCName").toString() : "");
         paymentSucceedRQ.setIpay88Status(1);
         paymentSucceedRQ.setStatus(1);
         paymentSucceedRQ.setOrderId(request.get("RefNo").toString());
@@ -134,31 +148,43 @@ public class ProviderIP implements ProviderSV {
         paymentSucceedRQ.setAuthCode(request.containsKey("AuthCode") ? request.get("AuthCode").toString() : "");
         paymentSucceedRQ.setSignature(request.containsKey("Signature") ? request.get("Signature").toString() : "");
         paymentSucceedRQ.setIpay88PaymentId(request.get("PaymentId").toString());
-        paymentSucceedRQ.setPaymentCode("MS");
-        paymentSucceedRQ.setCardType("");
-        paymentSucceedRQ.setMethod("");
+        paymentSucceedRQ.setPaymentCode(paymentType.getCode());
+        paymentSucceedRQ.setCardType(card.getType());
+        paymentSucceedRQ.setMethod(paymentType.getMethod());
 
         FlightPaymentSucceedRS flightPaymentSucceedRS = flightAction.updateFlightPaymentSucceed(paymentSucceedRQ);
+
         if (flightPaymentSucceedRS.getStatus() != 1) {
-            return appConfig.getPaymentFailPage() + "?bookingCode=" + bookingCode;
+            /**
+             * TODO: log info verify succeed but store data have some problem
+             */
+            return appConfig.getPaymentPage() + "?bookingId=" + bookingId + "&status=" + PaymentStatusConstant.PAYMENT_FAIL;
         }
 
-        //hit payment skyHistory
+        // hit payment skyHistory
         SendBookingPDFRQ sendBookingPDFRQ = new SendBookingPDFRQ(bookingCode, mandatoryData.getEmail(),
                 mandatoryData.getSkyuserId(), mandatoryData.getCompanyId());
         skyHistoryAction.sendPayment(sendBookingPDFRQ);
 
-        var ticketRQ = new FlightTicketIssuedRQ();
-        ticketRQ.setBookingCode(bookingCode);
-        var ticketIssued = flightAction.issuedAirTicket(ticketRQ);
-        if (ticketIssued.getStatus().equals("Complete")) {
-            // hit receipt and itineray
-            skyHistoryAction.sendReceiptWithItinerary(sendBookingPDFRQ);
+        try {
 
-            return appConfig.getTicketSucceedPage() + "?bookingCode=" + bookingCode;
+            var ticketRQ = new FlightTicketIssuedRQ();
+            ticketRQ.setBookingCode(bookingCode);
+            var ticketIssued = flightAction.issuedAirTicket(ticketRQ);
+            if (ticketIssued.getStatus().equals("Complete")) {
+                // hit receipt and itineray
+                skyHistoryAction.sendReceiptWithItinerary(sendBookingPDFRQ);
+
+                return appConfig.getPaymentPage() + "?bookingId=" + bookingId + "&status=" + PaymentStatusConstant.TICKET_ISSUED;
+            }
+
+        } catch (Exception exception) {
+
+            return appConfig.getPaymentPage() + "?bookingId=" + bookingId + "&status=" + PaymentStatusConstant.TICKET_ISSUED_FAIL;
+
         }
 
-        return appConfig.getTicketFailPage() + "?bookingCode=" + bookingCode;
+        return appConfig.getPaymentPage() + "?bookingId=" + bookingId + "&status=" + PaymentStatusConstant.TICKET_ISSUED_FAIL;
     }
 
 
@@ -170,8 +196,9 @@ public class ProviderIP implements ProviderSV {
          */
         var bookingCode = request.get("orderID").toString();
         FlightMandatoryDataRS mandatoryData = flightAction.getMandatoryData(bookingCode);
+        var bookingId = mandatoryData.getBookingId();
         if (!pipayAction.verify(request, mandatoryData.getAmount())) {
-            return "redirect:" + appConfig.getPaymentFailPage() + "?bookingCode=" + bookingCode;
+            return "redirect:" + appConfig.getPaymentPage() + "?bookingId=" + bookingId + "&status=" + PaymentStatusConstant.PAYMENT_FAIL;
         }
 
         FlightPaymentSucceedRQ paymentSucceedRQ = new FlightPaymentSucceedRQ();
@@ -194,26 +221,37 @@ public class ProviderIP implements ProviderSV {
          */
         var flightPaymentSucceedRS = flightAction.updateFlightPaymentSucceed(paymentSucceedRQ);
         if (flightPaymentSucceedRS.getStatus() != 1) {
-            return "redirect:" + appConfig.getPaymentFailPage() + "?bookingCode=" + bookingCode;
+            return "redirect:" + appConfig.getPaymentPage() + "?bookingId=" + bookingId + "&status=" + PaymentStatusConstant.PAYMENT_FAIL;
         }
 
         /**
          * Issue air ticket
          */
-        var ticketRQ = new FlightTicketIssuedRQ();
-        ticketRQ.setBookingCode(bookingCode);
-        var ticketIssued = flightAction.issuedAirTicket(ticketRQ);
-        if (ticketIssued.getStatus().equals("Complete")) {
-            return "redirect:" + appConfig.getTicketSucceedPage() + "?bookingCode=" + bookingCode;
+        try {
+
+            var ticketRQ = new FlightTicketIssuedRQ();
+            ticketRQ.setBookingCode(bookingCode);
+            var ticketIssued = flightAction.issuedAirTicket(ticketRQ);
+            if (ticketIssued.getStatus().equals("Complete")) {
+                return "redirect:" + appConfig.getPaymentPage() + "?bookingId=" + bookingId + "&status=" + PaymentStatusConstant.TICKET_ISSUED;
+            }
+
+        } catch (Exception exception) {
+
+            return appConfig.getPaymentPage() + "?bookingId=" + bookingId + "&status=" + PaymentStatusConstant.TICKET_ISSUED_FAIL;
+
         }
 
-        return appConfig.getTicketFailPage() + "?bookingCode=" + bookingCode;
+        return appConfig.getPaymentPage() + "?bookingId=" + bookingId + "&status=" + PaymentStatusConstant.TICKET_ISSUED_FAIL;
     }
 
 
     @Override
     public String getPipayFailResponse(Map<String, Object> request) {
-        return appConfig.getPaymentFailPage() + "?bookingCode=" + request.get("orderID").toString();
+
+        FlightMandatoryDataRS mandatoryData = flightAction.getMandatoryData(request.get("orderID").toString());
+        return appConfig.getPaymentPage() + "?bookingId=" + mandatoryData.getBookingId() + "&status=" + PaymentStatusConstant.PAYMENT_FAIL;
+
     }
 
 }

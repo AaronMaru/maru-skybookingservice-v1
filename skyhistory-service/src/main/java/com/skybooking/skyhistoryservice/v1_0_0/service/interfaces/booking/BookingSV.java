@@ -1,7 +1,7 @@
 package com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.booking;
 
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.request.SendBookingNoAuthRQ;
-import com.skybooking.skyhistoryservice.v1_0_0.ui.model.request.SendBookingPDFRQ;
+import com.skybooking.skyhistoryservice.v1_0_0.ui.model.request.booking.FilterRQ;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.booking.BookingDataPaginationRS;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.booking.BookingDetailRS;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.booking.BookingEmailDetailRS;

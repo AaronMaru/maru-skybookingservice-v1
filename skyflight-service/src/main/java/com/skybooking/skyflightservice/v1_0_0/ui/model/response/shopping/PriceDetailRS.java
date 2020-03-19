@@ -13,6 +13,7 @@ public class PriceDetailRS implements Serializable {
     private String id;
     private BigDecimal total;
     private BigDecimal totalAvg;
+    private BigDecimal totalCommissionAmount;
     private String currency;
     private String baseCurrency;
     private BigDecimal baseCurrencyTotal;

@@ -1,15 +1,18 @@
 package com.skybooking.staffservice.v1_0_0.service.implement.staff;
 
+import com.skybooking.staffservice.constant.BookingStatusConstant;
+import com.skybooking.staffservice.constant.StaffStatusConstant;
 import com.skybooking.staffservice.exception.httpstatus.BadRequestException;
-import com.skybooking.staffservice.exception.httpstatus.ForbiddenException;
 import com.skybooking.staffservice.exception.httpstatus.NotFoundException;
 import com.skybooking.staffservice.v1_0_0.io.enitity.company.StakeholderUserHasCompanyEntity;
 import com.skybooking.staffservice.v1_0_0.io.nativeQuery.staff.*;
 import com.skybooking.staffservice.v1_0_0.io.repository.company.CompanyHasUserRP;
 import com.skybooking.staffservice.v1_0_0.service.interfaces.staff.StaffSV;
+import com.skybooking.staffservice.v1_0_0.ui.model.request.FilterRQ;
 import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.DeactiveStaffRQ;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.staff.*;
 import com.skybooking.staffservice.v1_0_0.util.JwtUtils;
+import com.skybooking.staffservice.v1_0_0.util.datetime.DateTimeBean;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -39,44 +42,34 @@ public class StaffIP implements StaffSV {
     @Autowired
     private JwtUtils jwtUtils;
 
-    public StaffPaginationRS getStaff() {
+    @Autowired
+    private DateTimeBean dateTimeBean;
 
-        Long companyId = jwtUtils.getClaim("companyId", Long.class);
-        String userType = jwtUtils.getClaim("userType", String.class);
+    public StaffPaginationRS getStaff(HttpServletRequest request) {
 
-        if (userType.equals("skyuser")) {
-            throw new ForbiddenException("unauthorized", null);
-        }
+        FilterRQ filterRQ = new FilterRQ(request, jwtUtils.getUserToken());
+        filterRQ.setAction( checkSearchOrFilter() );
 
-        String keyword = request.getParameter("keyword") != null ? request.getParameter("keyword") : "";
-        String role = request.getParameter("role") != null ? request.getParameter("role") : "";
-        Integer startPRange = request.getParameter("startPRange") != null
-                ? Integer.valueOf(request.getParameter("startPRange"))
-                : 0;
-        Integer endPRange = request.getParameter("endPRange") != null
-                ? Integer.valueOf(request.getParameter("endPRange"))
-                : 0;
-        String joinDate = request.getParameter("joinDate") != null ? request.getParameter("joinDate") : "";
-        String joinStatus = request.getParameter("joinStatus") != null ? request.getParameter("joinStatus") : "";
-
-        Integer size = (request.getParameter("size") != null && !request.getParameter("size").isEmpty())
-                ? Integer.valueOf(request.getParameter("size"))
-                : 10;
-        Integer page = (request.getParameter("page") != null && !request.getParameter("page").isEmpty())
-                ? Integer.valueOf(request.getParameter("page")) - 1
-                : 0;
-
-        String action = checkSearchOrFilter(keyword, role, startPRange, endPRange, joinDate, joinStatus);
-
-        Page<StaffTO> staffsTO = staffNQ.listStaff(companyId, keyword, role, startPRange, endPRange, joinDate,
-                joinStatus, action, PageRequest.of(page, size));
+        Page<StaffTO> staffsTO = staffNQ.listStaff(
+                filterRQ.getCompanyId(),
+                filterRQ.getKeyword(),
+                filterRQ.getRole(),
+                filterRQ.getStartPRange(),
+                filterRQ.getEndPRange(),
+                filterRQ.getJoinDate(),
+                filterRQ.getJoinStatus(),
+                filterRQ.getAction(),
+                filterRQ.getActive(),
+                filterRQ.getInactive(),
+                filterRQ.getBanned(),
+                PageRequest.of(filterRQ.getPage(), filterRQ.getSize()));
 
         List<StaffRS> staffs = staffs(staffsTO);
 
         StaffPaginationRS staffPaging = new StaffPaginationRS();
 
-        staffPaging.setPage(page);
-        staffPaging.setSize(size);
+        staffPaging.setPage(filterRQ.getPage());
+        staffPaging.setSize(filterRQ.getSize());
         staffPaging.setData(staffs);
         staffPaging.setTotals(staffsTO.getTotalElements());
 
@@ -92,22 +85,35 @@ public class StaffIP implements StaffSV {
      * @return String
      * @Param booking
      */
-    public String checkSearchOrFilter(String keyword, String role, Integer startPRange, Integer endPRange,
-            String joinDate, String status) {
+    public String checkSearchOrFilter() {
 
-        String action = "search";
-        if (request.getParameter("keyword") == null) {
-            action = "filter";
-        }
-        if (request.getQueryString() == null) {
-            action = "other";
-        }
-        if (keyword.equals("") && role.equals("") && startPRange.equals(0) && endPRange.equals(0) && joinDate.equals("")
-                && status.equals("")) {
-            action = "other";
+
+        if (request.getParameter("keyword") != null) {
+            return "SEARCH";
         }
 
-        return action;
+        if (request.getParameter("role") != null) {
+            return "FILTER";
+        }
+
+        if (request.getParameter("startPRange") != null) {
+            return "FILTER";
+        }
+
+        if (request.getParameter("endPRange") != null) {
+            return "FILTER";
+        }
+
+        if (request.getParameter("joinDate") != null) {
+            return "FILTER";
+        }
+
+        if (request.getParameter("joinStatus") != null) {
+            return "FILTER";
+        }
+
+        return "OTHER";
+
     }
 
 
@@ -124,10 +130,19 @@ public class StaffIP implements StaffSV {
 
         List<StaffRS> staffsRS = new ArrayList<>();
 
+        BookingStatusConstant constant = new BookingStatusConstant();
+
         for (StaffTO staffTO : staffsTO) {
             StaffRS staffRS = new StaffRS();
 
-            List<StaffTotalBookingTO> bookingListTO = staffNQ.listStaffTotalBooking(staffTO.getSkyuserId(), companyId);
+            List<StaffTotalBookingTO> bookingListTO = staffNQ.listStaffTotalBooking(
+                    staffTO.getSkyuserId(),
+                    companyId,
+                    constant.COMPLETED,
+                    constant.UPCOMING,
+                    constant.CANCELLED,
+                    constant.FAILED
+                    );
 
             BeanUtils.copyProperties(staffTO, staffRS);
 
@@ -137,20 +152,29 @@ public class StaffIP implements StaffSV {
             bookingStatus.setCompleted(defaults);
             bookingStatus.setCancellation(defaults);
             bookingStatus.setUpcoming(defaults);
+            bookingStatus.setFailed(defaults);
 
             for (StaffTotalBookingTO item : bookingListTO) {
                 switch (item.getStatusKey()) {
-                    case "Completed" :
+                    case "COMPLETED" :
                         AmountRS complete = setAmount(item);
+                        complete.setCurrencyCode(item.getCurrencyCode());
                         bookingStatus.setCompleted(complete);
                         break;
-                    case "Cancelled" :
+                    case "CANCELLED" :
                         AmountRS cancel = setAmount(item);
+                        cancel.setCurrencyCode(item.getCurrencyCode());
                         bookingStatus.setCancellation(cancel);
                         break;
-                    case "Upcoming" :
+                    case "UPCOMING" :
                         AmountRS upcoming = setAmount(item);
+                        upcoming.setCurrencyCode(item.getCurrencyCode());
                         bookingStatus.setUpcoming(upcoming);
+                        break;
+                    case "FAILED" :
+                        AmountRS failed = setAmount(item);
+                        failed.setCurrencyCode(item.getCurrencyCode());
+                        bookingStatus.setFailed(failed);
                         break;
                 }
 
@@ -188,7 +212,15 @@ public class StaffIP implements StaffSV {
 
         Long companyId = jwtUtils.getClaim("companyId", Long.class);
 
-        List<StaffProfileTO> staffTO = staffNQ.findProfileStaff(id, companyId);
+        StaffStatusConstant staffConstant = new StaffStatusConstant();
+
+        List<StaffProfileTO> staffTO = staffNQ.findProfileStaff(
+                                    id,
+                                    companyId,
+                                    staffConstant.ACTIVE,
+                                    staffConstant.INACTIVE,
+                                    staffConstant.BANNED
+                            );
         StaffProfileRS staffRS = new StaffProfileRS();
 
         if (staffTO.stream().findFirst().isEmpty()) {
@@ -204,6 +236,8 @@ public class StaffIP implements StaffSV {
 
         SkyuserTO skyUser = staffNQ.findSkyuser(id);
         BeanUtils.copyProperties(skyUser, staffRS);
+
+        staffRS.setJoinDate(dateTimeBean.convertDateTime(skyUser.getCreatedAt()));
 
         staffRS.setPhotoMedium(environment.getProperty("spring.awsImageUrl.profile.url_larg") + skyUser.getPhoto());
         staffRS.setPhotoSmall(

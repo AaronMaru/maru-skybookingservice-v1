@@ -22,10 +22,10 @@ public class QueryTF {
 
         var legs = new ArrayList<FlightLeg>();
         for (FlightLegRQ leg : request.getLegs()) {
-            legs.add(new FlightLeg(leg.getOrigin(), leg.getDestination(), leg.getDate()));
+            legs.add(new FlightLeg(leg.getDeparture().toUpperCase(), leg.getArrival().toUpperCase(), leg.getDate()));
         }
 
-        return new ShoppingQueryEntity(new FlightShopping(request.getAdult(), request.getChild(), request.getInfant(), request.getTripType(), request.getClassType(), legs));
+        return new ShoppingQueryEntity(new FlightShopping(request.getAdult(), request.getChild(), request.getInfant(), request.getTripType(), request.getClassType().toUpperCase(), legs));
 
     }
 

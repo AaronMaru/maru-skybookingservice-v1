@@ -6,6 +6,8 @@ import org.springframework.stereotype.Component;
 public class MessageConstant {
 
     public static final String BOOKING_SUCCESS = "bk_succ";
+    public static final String CANCEL_SUCCESS = "cancel_succ";
+
 
     public static final String BAD_REQUEST = "bad_req";
     public static final String BOOKING_FAIL = "bk_fail";
@@ -13,5 +15,6 @@ public class MessageConstant {
     public static final String UNAVAILABLE_SEATS = "unavailable_seats";
 
     public static final String INTERNAL_SERVER_ERROR = "sth_w_w";
+    public static final String NOT_FOUND = "not_found";
 
 }

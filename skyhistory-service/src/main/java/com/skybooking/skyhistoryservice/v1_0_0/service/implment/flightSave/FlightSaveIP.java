@@ -15,7 +15,6 @@ import com.skybooking.skyhistoryservice.v1_0_0.util.datetime.DateTimeBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.header.HeaderBean;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -41,8 +40,6 @@ public class FlightSaveIP implements FlightSaveSV {
     @Autowired
     private HeaderBean headerBean;
 
-    @Autowired
-    private Environment environment;
 
 
     /**
@@ -65,7 +62,7 @@ public class FlightSaveIP implements FlightSaveSV {
         String role = (stake.equals("company")) ? jwtUtils.getClaim("userRole", String.class) : "";
 
         String action = keyword != null ? "search" : "";
-
+        System.out.println(role);
         Page<SaveFlightTO> saveFlightTOS = saveFlightNQ.savedFlight(skyuserId, companyId, action, keyword, role, stake, PageRequest.of(page -1, size));
 
         List<FlightSaveRS> saveFlies = new ArrayList<>();
@@ -102,8 +99,8 @@ public class FlightSaveIP implements FlightSaveSV {
             fSaveODR.setaDateTime(dateTimeBean.convertDateTime(dataOD.getaDateTime()));
             fSaveODR.setdDateTime(dateTimeBean.convertDateTime(dataOD.getdDateTime()));
 
-            fSaveODR.setAirlineLogo45(environment.getProperty("spring.awsImageUrl.airLine") + "45/" + dataOD.getAirlineLogo45() + ".png");
-            fSaveODR.setAirlineLogo90(environment.getProperty("spring.awsImageUrl.airLine") + "90/" + dataOD.getAirlineLogo90() + ".png");
+            fSaveODR.setAirlineLogo45(dataOD.getAirlineLogo45());
+            fSaveODR.setAirlineLogo90(dataOD.getAirlineLogo90());
 
             fSaveODs.add(fSaveODR);
         });
@@ -129,7 +126,7 @@ public class FlightSaveIP implements FlightSaveSV {
         FlightSaveEntity entity = flightSaveRP.findFirstByIdAndUserId(id, Integer.parseInt(skyuserId.toString()));
 
         if (stake.equals("company")) {
-            entity = flightSaveRP.findFirstByIdAndUserIdAndCompanyId(id, Integer.parseInt(skyuserId.toString()), companyId);
+            entity = flightSaveRP.findFirstByIdAndUserIdAndCompanyId(id, Integer.parseInt(skyuserId.toString()), companyId.intValue());
         }
 
         if (entity == null) {

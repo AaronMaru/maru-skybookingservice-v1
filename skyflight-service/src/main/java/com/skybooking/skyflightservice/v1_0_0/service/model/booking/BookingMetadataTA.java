@@ -1,5 +1,6 @@
 package com.skybooking.skyflightservice.v1_0_0.service.model.booking;
 
+import com.skybooking.skyflightservice.constant.TripTypeEnum;
 import com.skybooking.skyflightservice.v1_0_0.service.model.security.UserAuthenticationMetaTA;
 import lombok.Data;
 
@@ -10,7 +11,7 @@ public class BookingMetadataTA {
 
     private UserAuthenticationMetaTA user;
 
-    private String tripType;
+    private TripTypeEnum tripType;
     private String classType;
     private String departureDate;
     private String arrivalDate;

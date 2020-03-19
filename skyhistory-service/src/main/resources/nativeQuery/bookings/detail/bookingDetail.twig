@@ -1,0 +1,145 @@
+SELECT
+b.id AS bookingId,
+b.booking_code AS bookingCode,
+( SELECT bpt.transaction_id FROM booking_payment_transactions bpt WHERE bpt.booking_id = b.id LIMIT 1) as transactionCode,
+b.itinerary_ref AS pnrCode,
+CASE
+    WHEN b.trip_type = 'OneWay' THEN :ONEWAY
+    WHEN b.trip_type = 'Return' THEN :ROUND
+    WHEN b.trip_type = 'Other' THEN :MULTICITY
+END AS tripType,
+
+(SELECT IFNULL(SUM(`pass_qty`), 0)
+	FROM booking_travel_itineraries bti
+	WHERE bti.booking_id = b.id
+	AND bti.pass_type = "ADT"
+) AS `adult`,
+(SELECT IFNULL(SUM(`pass_qty`), 0)
+	FROM booking_travel_itineraries bti
+	WHERE bti.booking_id = b.id
+	AND bti.pass_type = "CNN"
+) AS `child`,
+(SELECT IFNULL(SUM(`pass_qty`), 0)
+	FROM booking_travel_itineraries bti
+	WHERE bti.booking_id = b.id
+	AND bti.pass_type = "INF"
+) AS `infant`,
+b.booking_type As bookingType,
+(SELECT IFNULL(SUM(`pass_qty`), 0) FROM booking_travel_itineraries bti WHERE bti.booking_id = b.id) AS `totalPass`,
+
+(SELECT
+    (SELECT cabin_name FROM cabins WHERE cabin_code = bod.cabin_name LIMIT 1)
+	FROM booking_origin_destinations bod
+	WHERE bod.booking_id = b.id
+	AND bod.parent_id IS NOT NULL
+	LIMIT 1
+) AS cabinName,
+(SELECT bod.cabin_name FROM booking_origin_destinations bod WHERE bod.booking_id = b.id AND bod.parent_id IS NOT NULL LIMIT 1) AS cabinCode,
+
+IFNULL(CONCAT(b.itinerary_path, b.itinerary_file), '') AS urlItinerary,
+IFNULL(CONCAT(b.reciept_path, b.reciept_file), '') AS urlReceipt,
+
+( SELECT CASE
+        WHEN su.photo IS NOT NULL THEN
+            CONCAT( :URLIMG_PROFILE, su.photo )
+        ELSE
+            CONCAT( :URLIMG_PROFILE, 'default.png' )
+        END
+    FROM stakeholder_users su
+    WHERE su.id = b.stakeholder_user_id
+    LIMIT 1
+) AS bookingByUserPhoto,
+( SELECT CONCAT(su.last_name,' ', su.first_name) FROM stakeholder_users su WHERE su.id = b.stakeholder_user_id LIMIT 1) AS bookingByUsername,
+
+( b.total_amount + b.markup_amount + b.markup_pay_amount ) AS totalAmount,
+b.commission_amount AS commissionAmount,
+b.markup_amount AS markupAmount,
+b.markup_pay_amount AS markupPayAmount,
+b.dis_pay_met_amount AS discountPayment,
+b.currency_code AS currencyCode,
+
+b.cont_fullname AS contactName,
+b.cont_phone AS contactPhone,
+b.cont_phonecode AS contactPhoneCode,
+b.cont_email AS contactEmail,
+b.created_at AS bookingDate,
+
+IFNULL(bPay.holder_name, '') AS holderName,
+IFNULL(bPay.bank_name, '') AS bankName,
+IFNULL(bPay.method, '') AS cardType,
+bPay.card_number AS cardNumber,
+( SELECT IFNULL(UPPER(payMethod.type), '') FROM dis_payment_method_details payMethod WHERE payMethod.code = bPay.payment_code LIMIT 1) AS paymentType,
+
+CASE WHEN (b.`status` = 11 AND (
+
+				SELECT COUNT(bod.id)
+				FROM booking_origin_destinations bod
+				WHERE bod.booking_id = b.id
+
+				-- Where Date and Convert UTZ date
+				AND DATE(
+                        -- Flight depature datetime and convert to UTC
+                        CONVERT_TZ(bod.dep_date, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
+					) >= DATE(
+                        -- User locale current time zone and convert to UTC
+                        CONVERT_TZ(CURRENT_TIMESTAMP, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
+					)
+
+				ORDER BY bod.id DESC
+				LIMIT 1
+
+			) > 0
+
+		) THEN :UPCOMING
+
+	WHEN (b.`status` = 11 AND (
+
+				SELECT COUNT(bod.id)
+				FROM booking_origin_destinations bod
+				WHERE bod.booking_id = b.id
+
+				-- Where Date and Convert TZ date
+				AND DATE(
+                        -- Flight depature datetime and convert to UTC
+                        CONVERT_TZ(bod.dep_date, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
+					) < DATE(
+                        -- User locale current time zone and convert to UTC
+                        CONVERT_TZ(CURRENT_TIMESTAMP, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
+					)
+
+				ORDER BY bod.id DESC
+				LIMIT 1
+
+			) > 0
+
+		) THEN :COMPLETED
+
+	WHEN (b.`status` IN (3)) THEN :CANCELLED
+	WHEN (b.`status` IN (1, 10, 12, 4)) THEN  :FAILED
+
+END AS statusKey
+
+FROM bookings b
+
+LEFT JOIN (
+    SELECT * FROM booking_payment_transactions bPay
+) bPay ON bPay.booking_id = b.id
+
+-- Condition by Booking status
+WHERE b.status IN (11, 10, 4, 12, 3, 1)
+AND b.id = :bookingId
+
+-- CHECK USERS
+AND CASE WHEN :stake = "skyuser"
+    THEN
+        (b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id IS NULL)
+    ELSE
+        -- Condition for Skyowner
+        CASE WHEN
+                :role = 'ADMIN'
+            THEN
+                b.stakeholder_company_id = :companyId
+            ELSE
+                b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id = :companyId
+            END
+    END

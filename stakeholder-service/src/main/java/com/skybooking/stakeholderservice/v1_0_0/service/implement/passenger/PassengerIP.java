@@ -4,16 +4,20 @@ import com.skybooking.stakeholderservice.exception.httpstatus.BadRequestExceptio
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.passenger.PassengerEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.StakeHolderUserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserEntity;
+import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.passenger.PassengerNQ;
+import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.passenger.PassengerTO;
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.country.CountryRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.passenger.PassengerRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserRepository;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.passenger.PassengerSV;
 import com.skybooking.stakeholderservice.v1_0_0.transformer.passenger.PassengerTF;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.passenger.FilterRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.passenger.PassengerRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.passenger.PassengerPagingRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.passenger.PassengerRS;
+import com.skybooking.stakeholderservice.v1_0_0.util.JwtUtils;
 import com.skybooking.stakeholderservice.v1_0_0.util.activitylog.ActivityLoggingBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.activitylog.ActivityLoggingBean.Action;
-import com.skybooking.stakeholderservice.v1_0_0.util.datetime.DateTimeBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.datetime.DateValidatorUsingDateFormat;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.header.HeaderBean;
@@ -25,9 +29,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class PassengerIP implements PassengerSV {
@@ -51,10 +54,19 @@ public class PassengerIP implements PassengerSV {
     private HttpServletRequest request;
 
     @Autowired
-    private DateTimeBean dateTimeBean;
+    private HeaderBean headerBean;
 
     @Autowired
-    private HeaderBean headerBean;
+    private PassengerNQ passengerNQ;
+
+    @Autowired
+    private JwtUtils jwtUtils;
+
+    @Autowired
+    private CountryRP countryRP;
+
+    @Autowired
+    private HttpServletRequest httpServletRequest;
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -66,48 +78,33 @@ public class PassengerIP implements PassengerSV {
     @Override
     public PassengerPagingRS getItems() {
 
-        UserEntity userEntity = userBean.getUserPrincipal();
-        StakeHolderUserEntity stakeHolder = userEntity.getStakeHolderUser();
+        Long localeId = headerBean.getLocalizationId(request.getHeader("X-localization"));
+        FilterRQ filterRQ = new FilterRQ(httpServletRequest, jwtUtils.getUserToken());
 
-        Integer size = (request.getParameter("size") != null && !request.getParameter("size").isEmpty())
-                ? Integer.valueOf(request.getParameter("size"))
-                : 10;
-        Integer page = (request.getParameter("page") != null && !request.getParameter("page").isEmpty())
-                ? Integer.valueOf(request.getParameter("page")) - 1
-                : 0;
+        String stake = headerBean.getCompanyId(filterRQ.getCompanyId());
 
-        Page<PassengerEntity> passengers = repository.findByStakeHolderUserEntityAndCompanyIdNull(stakeHolder,
-                PageRequest.of(page, size));
-        var company = userEntity.getStakeHolderUser().getStakeholderCompanies();
-
-        String stake = headerBean.getCompanyId(company.size() == 0 ? 0 : company.get(0).getId());
-        if (stake.equals("company")) {
-            passengers = repository.findByStakeHolderUserEntityAndCompanyId(stakeHolder, PageRequest.of(page, size),
-                    company.get(0).getId());
-        }
-
-        List<PassengerRS> PassengerRSS = new ArrayList<>();
-
-        for (PassengerEntity passenger : passengers) {
-
-            PassengerRS passengerRS = new PassengerRS();
-            BeanUtils.copyProperties(passenger, passengerRS);
-
-            userBean.setPasengerType(passengerRS.getBirthDate(), passengerRS);
-
-            PassengerRSS.add(passengerRS);
-        }
+        Integer size = filterRQ.getSize();
+        Integer page = filterRQ.getPage();
 
         if (request.getParameter("passType") != null) {
-            PassengerRSS = PassengerRSS.stream()
-                    .filter(passengerRS -> passengerRS.getPassType().equals(request.getParameter("passType")))
-                    .collect(Collectors.toList());
+            List<String> validatePassType = Arrays.asList("ADT", "CNN", "INF");
+            if (!validatePassType.contains(request.getParameter("passType").toUpperCase())) {
+                throw new BadRequestException("The param value must be one in (ADT,  INF, CNN).", null);
+            }
         }
+
+        String passType = request.getParameter("passType") == null ? ""
+                : request.getParameter("passType").toUpperCase();
+
+        Page<PassengerTO> passengers = passengerNQ.getPassenger(filterRQ.getSkyuserId(), filterRQ.getCompanyId(),
+                filterRQ.getRole(), passType, stake, localeId, PageRequest.of(page, size));
+
+        List<PassengerRS> passengerRSList = PassengerTF.getResponseList(passengers);
 
         PassengerPagingRS passengerPagingRS = new PassengerPagingRS();
         passengerPagingRS.setSize(size);
         passengerPagingRS.setPage(page + 1);
-        passengerPagingRS.setData(PassengerRSS);
+        passengerPagingRS.setData(passengerRSList);
         passengerPagingRS.setTotals(passengers.getTotalElements());
 
         return passengerPagingRS;
@@ -123,49 +120,68 @@ public class PassengerIP implements PassengerSV {
      */
     @Override
     public PassengerRS getItem(Long id) {
+
+        Long localeId = headerBean.getLocalizationId(request.getHeader("X-localization"));
+        FilterRQ filterRQ = new FilterRQ(httpServletRequest, jwtUtils.getUserToken());
+
+        String stake = headerBean.getCompanyId(filterRQ.getCompanyId());
+
         var passengerRS = PassengerTF.getResponse(this.getPassengerById(id));
         userBean.setPasengerType(passengerRS.getBirthDate(), passengerRS);
 
+        PassengerTO passengerTO = passengerNQ.getPassengerById(passengerRS.getId(), filterRQ.getSkyuserId(),
+                filterRQ.getCompanyId(), filterRQ.getRole(), stake, localeId);
+
+        if (passengerTO == null) {
+            throw new BadRequestException("not_found", null);
+        }
+
+        BeanUtils.copyProperties(passengerTO, passengerRS);
         return passengerRS;
     }
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * create a new passenger
+     * Create a new passenger
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @param request
+     * @param passengerRQ
      * @return PassengerRS
      */
     @Override
-    public PassengerRS createItem(PassengerRQ request) {
+    public PassengerRS createItem(PassengerRQ passengerRQ) {
+
+        Long localeId = headerBean.getLocalizationId(request.getHeader("X-localization"));
+        FilterRQ filterRQ = new FilterRQ(httpServletRequest, jwtUtils.getUserToken());
 
         DateValidatorUsingDateFormat cl = new DateValidatorUsingDateFormat();
 
-        if (!cl.valid(request.getBirthDate(), "yyyy-MM-dd") || !cl.valid(request.getExpireDate(), "yyyy-MM-dd")) {
+        if (!cl.valid(passengerRQ.getBirthDate(), "yyyy-MM-dd") || !cl.valid(passengerRQ.getExpireDate(), "yyyy-MM-dd")) {
             throw new BadRequestException("Wrong date format", "");
         }
 
-        if (repository.existsByIdNumberAndIdType(request.getIdNumber(), request.getIdType())) {
+        if (repository.existsByIdNumberAndIdType(passengerRQ.getIdNumber(), passengerRQ.getIdType())) {
             throw new BadRequestException("Passenger already exist", null);
         }
 
+        if (countryRP.existsIso(passengerRQ.getNationality()) == null) {
+            throw new BadRequestException("Nationality not found", null);
+        }
+
         UserEntity userEntity = userBean.getUserPrincipal();
-        var company = userEntity.getStakeHolderUser().getStakeholderCompanies();
 
-        PassengerEntity passenger = PassengerTF.getEntity(request);
+        PassengerEntity passenger = PassengerTF.getEntity(passengerRQ);
 
-        String stake = headerBean.getCompanyId(company.size() == 0 ? 0 : company.get(0).getId());
+        String stake = headerBean.getCompanyId(filterRQ.getCompanyId());
+
         if (stake.equals("company")) {
-            passenger.setCompanyId(company.get(0).getId());
+            passenger.setCompanyId(filterRQ.getCompanyId());
         }
 
         passenger.setStakeHolderUserEntity(userEntity.getStakeHolderUser());
 
         this.logger.activities(Action.CREATE_PASSENGER);
-
-        var passengerRS = PassengerTF.getResponse(repository.save(passenger));
-        userBean.setPasengerType(passengerRS.getBirthDate(), passengerRS);
+        var passengerRS = getPassengerRS(passenger, filterRQ, stake, localeId);
 
         return passengerRS;
 
@@ -177,25 +193,47 @@ public class PassengerIP implements PassengerSV {
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @param id
-     * @param request
+     * @param passengerRQ
      * @return PassengerRS
      */
     @Override
-    public PassengerRS updateItem(Long id, PassengerRQ request) {
+    public PassengerRS updateItem(Long id, PassengerRQ passengerRQ) {
+
+        Long localeId = headerBean.getLocalizationId(request.getHeader("X-localization"));
+        FilterRQ filterRQ = new FilterRQ(httpServletRequest, jwtUtils.getUserToken());
+
+        String stake = headerBean.getCompanyId(filterRQ.getCompanyId());
 
         PassengerEntity passenger = this.getPassengerById(id);
+        if (passengerRQ.getNationality() != null) {
+            if (countryRP.existsIso(passengerRQ.getNationality()) == null) {
+                throw new BadRequestException("Nationality not found", null);
+            }
+        }
 
-        PassengerEntity updatePassenger = PassengerTF.getEntity(request);
+        PassengerEntity updatePassenger = PassengerTF.getEntity(passengerRQ);
         String[] ignoredProperties = this.generalBean.getNullPropertyNames(updatePassenger);
         BeanUtils.copyProperties(updatePassenger, passenger, ignoredProperties);
 
         this.logger.activities(Action.UPDATE_PASSENGER);
 
+        var passengerRS = getPassengerRS(passenger, filterRQ, stake, localeId);
+
+        return passengerRS;
+    }
+
+    private PassengerRS getPassengerRS(PassengerEntity passenger, FilterRQ filterRQ, String stake, long localeId) {
         var passengerRS = PassengerTF.getResponse(repository.save(passenger));
+
+        PassengerTO passengerTO = passengerNQ.getPassengerById(passengerRS.getId(), filterRQ.getSkyuserId(),
+                filterRQ.getCompanyId(), filterRQ.getRole(), stake, localeId);
+
+        BeanUtils.copyProperties(passengerTO, passengerRS);
         userBean.setPasengerType(passengerRS.getBirthDate(), passengerRS);
 
         return passengerRS;
     }
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -218,6 +256,7 @@ public class PassengerIP implements PassengerSV {
 
     }
 
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * This method will find passenger of stakeholder by passenger's id
@@ -228,15 +267,14 @@ public class PassengerIP implements PassengerSV {
      */
     private PassengerEntity getPassengerById(Long id) {
 
-        StakeHolderUserEntity skyUser = userBean.getUserPrincipal().getStakeHolderUser();
-        var company = skyUser.getStakeholderCompanies();
+        FilterRQ filterRQ = new FilterRQ(httpServletRequest, jwtUtils.getUserToken());
 
-        String stake = headerBean.getCompanyId(company.size() == 0 ? 0 : company.get(0).getId());
+        String stake = headerBean.getCompanyId(filterRQ.getCompanyId());
 
-        var data = repository.findPassenger(id, skyUser.getId(), null);
+        var data = repository.findPassenger(id, filterRQ.getSkyuserId(), null);
 
         if (stake.equals("company"))
-            data = repository.findPassenger(id, skyUser.getId(), company.get(0).getId());
+            data = repository.findPassenger(id, filterRQ.getSkyuserId(), filterRQ.getCompanyId());
 
         if (data != null)
             return data;

@@ -15,4 +15,6 @@ public interface PaymentNQ extends NativeQuery {
 
     List<PaymentMethodTO> getListPaymentMethods();
 
+    PaymentCodeTO getPaymentCode(@NativeQueryParam("bookingCode") String bookingCode);
+
 }

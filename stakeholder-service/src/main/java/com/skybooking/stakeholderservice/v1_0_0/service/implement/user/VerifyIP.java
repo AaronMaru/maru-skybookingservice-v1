@@ -122,7 +122,7 @@ public class VerifyIP implements VerifySV {
      */
     public int resendVerify(SendVerifyRQ verifyRQ, Integer status) {
 
-        UserEntity user = userRepository.findByEmailOrPhone(verifyRQ.getUsername(), verifyRQ.getCode());
+        UserEntity user = userRepository.findByEmailOrPhoneAndProviderIdIsNull(verifyRQ.getUsername(), verifyRQ.getCode());
 
         if (user == null) {
             throw new UnauthorizedException("sth_w_w", null);
@@ -182,7 +182,8 @@ public class VerifyIP implements VerifySV {
         if (status == Integer.parseInt(environment.getProperty("spring.verifyStatus.verifyUserApp"))) {
             checkOwnerStaff(sendVerifyRQ);
         } else {
-            UserEntity user = userRepository.findByEmailOrPhone(username, sendVerifyRQ.getCode());
+            UserEntity user = userRepository.findByEmailOrPhoneAndProviderIdIsNull(username, sendVerifyRQ.getCode());
+            System.out.println(11111);
             if (user == null) {
                 throw new BadRequestException("sth_w_w", null);
             }
@@ -211,13 +212,16 @@ public class VerifyIP implements VerifySV {
     public void checkOwnerStaff(SendVerifyRQ sendVerifyRQ) {
 
         String username = "";
+        String usernameContact = "";
         if (NumberUtils.isNumber(sendVerifyRQ.getUsername())) {
             username = sendVerifyRQ.getUsername().replaceFirst("^0+(?!$)", "");
+            usernameContact = sendVerifyRQ.getCode() + "-" + sendVerifyRQ.getUsername().replaceFirst("^0+(?!$)", "");
         } else {
             username = sendVerifyRQ.getUsername();
+            usernameContact = sendVerifyRQ.getUsername();
         }
 
-        UserEntity user = userRepository.findByEmailOrPhone(username, sendVerifyRQ.getCode());
+        UserEntity user = userRepository.findByEmailOrPhoneAndProviderIdIsNull(username, sendVerifyRQ.getCode());
 
         if (user != null) {
             Map<String, Object> data = new LinkedHashMap();
@@ -236,7 +240,7 @@ public class VerifyIP implements VerifySV {
 
         }
 
-        Boolean b = Boolean.parseBoolean(contactRP.existsContact(username, null));
+        Boolean b = Boolean.parseBoolean(contactRP.existsContact(usernameContact, null));
 
         if (b) {
             throw new BadRequestException("Contacts already exist", null);
@@ -254,7 +258,7 @@ public class VerifyIP implements VerifySV {
      */
     public int sendCodeResetPassword(SendVerifyRQ verifyRQ) {
 
-        UserEntity user = userRepository.findByEmailOrPhone(verifyRQ.getUsername(), verifyRQ.getCode());
+        UserEntity user = userRepository.findByEmailOrPhoneAndProviderIdIsNull(verifyRQ.getUsername(), verifyRQ.getCode());
 
         if (user == null || user.getProviderId() != null) {
             throw new UnauthorizedException("Unauthorized", "");

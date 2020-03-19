@@ -1,109 +1,54 @@
 SELECT
 COUNT(b.id) AS amount,
-CASE
-    WHEN (b.`status` = 11 AND (
-
-        SELECT COUNT(bod.id)
-        FROM booking_origin_destinations bod
-        WHERE bod.booking_id = b.id
-
-        -- Where Date and Convert TZ date
-        AND DATE(
-
-            -- Flight depature datetime and convert to UTC
-                CONVERT_TZ(bod.dep_date,
-
-                    CONCAT(
-                        CASE WHEN bod.dep_timezone >= 0 THEN
-                            CONCAT('+', bod.dep_timezone,':00')
-                        ELSE
-                            CONCAT(bod.dep_timezone,':00')
-                        END
-                    )
-
-                , '+00:00')
-
-            -- User locale current time zone and convert to UTC
-            ) >= CONVERT_TZ(CURRENT_TIMESTAMP,
-
-                    CONCAT(
-                        CASE WHEN bod.dep_timezone >= 0 THEN
-                            CONCAT('+', bod.dep_timezone,':00')
-                        ELSE
-                            CONCAT(bod.dep_timezone,':00')
-                        END
-                    )
-
-                , '+00:00')
-
-        ORDER BY bod.id DESC
-        LIMIT 1
-
-        ) > 0
-
-    ) THEN "Upcoming"
-
-    WHEN (b.`status` = 11 AND (
-
-            SELECT COUNT(bod.id)
-            FROM booking_origin_destinations bod
-            WHERE bod.booking_id = b.id
-
-            -- Where Date and Convert TZ date
-            AND DATE(
-
-                -- Flight depature datetime and convert to UTC
-                    CONVERT_TZ(bod.dep_date,
-
-                        CONCAT(
-                            CASE WHEN bod.dep_timezone >= 0 THEN
-                                CONCAT('+', bod.dep_timezone,':00')
-                            ELSE
-                                CONCAT(bod.dep_timezone,':00')
-                            END
+CASE WHEN b.`status` = 11 THEN
+		    CASE WHEN
+                (
+                    SELECT COUNT(bod.id) FROM booking_origin_destinations AS bod
+                    WHERE bod.booking_id = b.id
+                    AND bod.parent_id IS NOT NULL
+                    AND DATE(
+                        -- Flight depature datetime and convert to UTC
+                        CONVERT_TZ(bod.dep_date, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
+                        ) >= DATE(
+                            -- User locale current time zone and convert to UTC
+                            CONVERT_TZ(CURRENT_TIMESTAMP, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
                         )
+                    ORDER BY bod.id DESC
+                    LIMIT 1
+                ) > 0
+            THEN
+                :UPCOMING
+            ELSE
+                :COMPLETED
+            END
+    	WHEN b.`status` = 3 THEN :CANCELLED
+    	WHEN b.`status` IN (1, 10, 12, 4) THEN  :FAILED
 
-                    , '+00:00')
-
-                -- User locale current time zone and convert to UTC
-                ) < CONVERT_TZ(CURRENT_TIMESTAMP,
-
-                        CONCAT(
-                            CASE WHEN bod.dep_timezone >= 0 THEN
-                                CONCAT('+', bod.dep_timezone,':00')
-                            ELSE
-                                CONCAT(bod.dep_timezone,':00')
-                            END
-                        )
-
-                    , '+00:00')
-
-            ORDER BY bod.id DESC
-            LIMIT 1
-
-        ) > 0
-
-    ) THEN "Completed"
-
-    WHEN (b.`status` IN (3)) THEN "Cancelled"
-    WHEN (b.`status` IN (10, 12, 4)) THEN  "Failed"
-
-END AS `status`
+END AS `statusKey`
 
 FROM bookings b
 
-WHERE ( b.`status` IN (11, 10, 12, 4, 3) )
+WHERE b.`status` IN (1, 11, 10, 12, 4, 3)
 
-AND (IF('skyuser' = :userType,
-b.stakeholder_user_id = :userId AND b.stakeholder_company_id IS NULL,
-IF('admin' = :userRole,
-b.stakeholder_user_id = :userId OR b.stakeholder_company_id = :companyId,
-b.stakeholder_user_id = :userId AND b.stakeholder_company_id = :companyId)))
+AND CASE WHEN 'skyuser' = :stake
+    THEN
+        (b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id IS NULL)
+    ELSE
+        -- Condition for Skyowner
+        CASE WHEN
+                :userRole = 'admin'
+            THEN
+                b.stakeholder_company_id = :companyId
+            ELSE
+                b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id = :companyId
+            END
+    END
 
-AND (IF('range' = :filter, DATE(b.created_at) >= :startDate AND DATE(b.created_at) <= :endDate, 0 )
-OR IF('daily' = :filter, DATE(b.created_at) = CURDATE() , 0)
-OR IF('weekly' = :filter, YEARWEEK(DATE(b.created_at)) = YEARWEEK(CURDATE()) , 0 )
-OR IF('monthly' = :filter, MONTH(b.created_at) = MONTH( CURDATE() ) , 0 )
-OR IF('yearly' = :filter, YEAR(b.created_at) = YEAR(CURDATE()), 0 ))
+AND CASE WHEN 'range' = :filter THEN DATE(b.created_at) >= :startDate AND DATE(b.created_at) <= :endDate
+        WHEN 'daily' = :filter THEN DATE(b.created_at) = CURRENT_TIMESTAMP
+        WHEN 'weekly' = :filter THEN YEARWEEK(DATE(b.created_at)) = YEARWEEK(CURRENT_TIMESTAMP)
+        WHEN 'monthly' = :filter THEN MONTH(b.created_at) = MONTH( CURRENT_TIMESTAMP )
+        ELSE YEAR(b.created_at) = YEAR( CURRENT_TIMESTAMP )
+        END
 
-GROUP BY `status`
+GROUP BY `statusKey`

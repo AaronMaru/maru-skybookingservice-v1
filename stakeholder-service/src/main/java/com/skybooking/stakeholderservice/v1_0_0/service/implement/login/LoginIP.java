@@ -2,12 +2,15 @@ package com.skybooking.stakeholderservice.v1_0_0.service.implement.login;
 
 import com.skybooking.stakeholderservice.exception.httpstatus.TemporaryException;
 import com.skybooking.stakeholderservice.exception.httpstatus.UnauthorizedException;
+import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.OauthUserAccessTokenEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserEntity;
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.OauthUserRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserRepository;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.login.LoginSV;
 import com.skybooking.stakeholderservice.v1_0_0.transformer.TokenTF;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.login.LoginRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
+import com.skybooking.stakeholderservice.v1_0_0.util.JwtUtils;
 import com.skybooking.stakeholderservice.v1_0_0.util.skyuser.UserBean;
 import org.apache.commons.lang.math.NumberUtils;
 import org.springframework.beans.BeanUtils;
@@ -28,6 +31,12 @@ public class LoginIP implements LoginSV {
 
     @Autowired
     private BCryptPasswordEncoder pwdEncode;
+
+    @Autowired
+    private OauthUserRP oauthUserRP;
+
+    @Autowired
+    private JwtUtils jwtUtils;
 
 
     /**
@@ -56,7 +65,7 @@ public class LoginIP implements LoginSV {
             throw new UnauthorizedException("Incorrect username or password", null);
         }
 
-        if (! pwdEncode.matches(loginRQ.getPassword(), user.getPassword())) {
+        if (!pwdEncode.matches(loginRQ.getPassword(), user.getPassword())) {
             throw new UnauthorizedException("Incorrect username or password", null);
         }
 
@@ -68,6 +77,13 @@ public class LoginIP implements LoginSV {
 
         UserDetailsTokenRS userDetailsTokenRS = new UserDetailsTokenRS();
         BeanUtils.copyProperties(userBean.userFields(user, data.getAccess_token()), userDetailsTokenRS);
+
+        OauthUserAccessTokenEntity oauthUserAccessTokenEntity = new OauthUserAccessTokenEntity();
+        oauthUserAccessTokenEntity.setJwtId(jwtUtils.getClaim(userDetailsTokenRS.getToken(), "jti", String.class));
+        oauthUserAccessTokenEntity.setUserId(user.getId());
+        oauthUserAccessTokenEntity.setName("Skybooking client");
+        oauthUserAccessTokenEntity.setStatus(1);
+        oauthUserRP.save(oauthUserAccessTokenEntity);
 
         return userDetailsTokenRS;
 

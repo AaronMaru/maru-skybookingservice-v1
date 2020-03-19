@@ -1,0 +1,6 @@
+SELECT bBag.id, IFNULL(bBag.location_code, '') AS segment
+FROM bookings AS b
+LEFT JOIN
+( SELECT * FROM booking_baggages AS bBag
+) bBag ON bBag.booking_id = b.id
+WHERE b.id = :bookingId

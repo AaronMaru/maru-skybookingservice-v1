@@ -5,7 +5,8 @@ select u.id,
        su.first_name AS firstName,
        su.last_name AS lastName,
        su.id AS skyuserId,
-       (CASE WHEN su.photo IS NULL THEN  'default.png' ELSE su.photo END) AS photo
+       IFNULL(su.photo, 'default.png') AS photo
+
 FROM users u
 
     INNER JOIN stakeholder_users su ON (

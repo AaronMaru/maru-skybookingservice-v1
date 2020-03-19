@@ -5,5 +5,6 @@ public class UserConstant {
     public static final String ANONYMOUS = "anonymous";
     public static final String SKYUSER = "skyuser";
     public static final String SKYOWNER = "skyowner";
+    public static final String STAKEHOLDER_ID = "stakeholderId";
 
 }

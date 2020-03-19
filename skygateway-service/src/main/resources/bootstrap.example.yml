@@ -7,6 +7,17 @@ spring:
         config:
             uri: http://192.168.2.4:8888
 
+    datasource:
+        url: jdbc:mysql://192.168.2.4:3306/skybooking?createDatabaseIfNotExist=true&useUnicode=yes&characterEncoding=UTF-8&useLegacyDatetimeCode=false&serverTimezone=UTC
+        username: root
+        password:
+
+    jpa:
+        hibernate:
+            ddl-auto: none
+            show-sql: true
+            naming-strategy: org.hibernate.cfg.ImprovedNamingStrategy
+
 zuul:
     sensitiveHeaders: Cookie,Set-Cookie
     decodeUrl: false

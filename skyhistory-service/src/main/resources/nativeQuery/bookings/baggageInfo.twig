@@ -1,9 +1,5 @@
 SELECT
-	bti.pass_type AS passType,
-	bti.bag_airline AS bagAirline,
-	bti.bag_piece AS bagPiece,
-	bti.bag_weight AS bagWeight,
-	bti.bag_unit AS bagUnit
+	bti.pass_type AS passType
 FROM booking_travel_itineraries bti
 WHERE bti.pass_type = :passType
 AND bti.booking_id = :bookingId

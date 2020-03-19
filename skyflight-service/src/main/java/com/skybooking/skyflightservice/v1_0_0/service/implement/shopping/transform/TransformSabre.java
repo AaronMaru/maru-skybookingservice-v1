@@ -223,7 +223,10 @@ public class TransformSabre {
 
             var totalAvg = totalSummary.getSum() / totalQuantitiesPassenger.getSum();
 
+            var totalCommissionAmount = priceDetail.getDetails().stream().collect(Collectors.summarizingDouble(price -> price.getCommissionAmount().doubleValue()));
+
             priceDetail.setCurrency("USD");
+            priceDetail.setTotalCommissionAmount(NumberFormatter.trimAmount(totalCommissionAmount.getSum()));
             priceDetail.setTotal(NumberFormatter.trimAmount(new BigDecimal(totalSummary.getSum())));
             priceDetail.setTotalAvg(NumberFormatter.trimAmount(new BigDecimal(totalAvg)));
 
@@ -278,6 +281,8 @@ public class TransformSabre {
         price.setBaseFare(passenger.getPassengerTotalFare().getEquivalentAmount());
         price.setTax(passenger.getPassengerTotalFare().getTotalTaxAmount());
         price.setCurrency(passenger.getPassengerTotalFare().getCurrency());
+        price.setCommissionAmount(passenger.getPassengerTotalFare().getCommissionAmount());
+        price.setCommissionPercentage(passenger.getPassengerTotalFare().getCommissionPercentage());
 
         priceDetail.getDetails().add(price);
         prices.put(priceDetail.getId(), priceDetail);
@@ -401,17 +406,13 @@ public class TransformSabre {
         var firstSegment = segments.get(firstSegmentDetail.getSegment());
         var lastSegment = segments.get(lastSegmentDetail.getSegment());
 
-        var departureDateTime = DateUtility.plusDays(firstSegment.getDepartureTime(), firstSegmentDetail.getDateAdjustment());
-        var arrivalDateTime = DateUtility.plusDays(lastSegment.getArrivalTime(), lastSegmentDetail.getDateAdjustment());
+        var departureDateTime = DateUtility.plusDays(firstSegment.getDepartureTime(), Math.addExact(firstSegmentDetail.getDateAdjustment(), firstSegmentDetail.getPreviousDateAdjustment()));
+        var arrivalDateTime = DateUtility.plusDays(lastSegment.getArrivalTime(), Math.addExact(lastSegmentDetail.getDateAdjustment(), lastSegmentDetail.getPreviousDateAdjustment()));
 
         var duration = DateUtility.getMinuteDurations(departureDateTime, arrivalDateTime);
 
-//        var seats = segmentDetails
-//            .stream()
-//            .min(Comparator.comparingInt(LegSegmentDetail::getSeatsRemain))
-//            .get().getSeatsRemain();
-
         var adjustmentDates = segmentDetails.summarizeInt(LegSegmentDetail::getDateAdjustment).getSum();
+        var layoverDuration = segmentDetails.summarizeLong(LegSegmentDetail::getLayoverDuration).getSum();
 
         var legId = new StringBuilder()
             .append("L")
@@ -446,8 +447,8 @@ public class TransformSabre {
         leg.setSegments(segmentDetails);
 
         leg.setStops(Long.valueOf(legStops).intValue());
-//        leg.setSeats(seats);
         leg.setAdjustmentDates(Long.valueOf(adjustmentDates).intValue());
+        leg.setLayoverDuration(layoverDuration);
 
         if (!multiAir && segmentSize == 1 && segmentStop == 0) {
             leg.setDirectFlight(true);
@@ -503,21 +504,36 @@ public class TransformSabre {
             var layoverAirport = new LayoverAirport();
 
             if (startIdx == idx) {
+
+                var duration = DateUtility.getMinuteDurations(DateUtility.plusDays(currentSegment.getDepartureTime(), legSegmentDetail.getDateAdjustment()), DateUtility.plusDays(currentSegment.getArrivalTime(), legSegmentDetail.getDateAdjustment()));
+
                 legSegmentDetail.setLayoverDuration(0);
+                legSegmentDetail.setPreviousDateAdjustment(0);
+                legSegmentDetail.setDuration(duration);
+
             } else {
 
                 var previousDetail = legSegmentDetails.get(idx - 1);
                 var previousSegment = segments.get(previousDetail.getSegment());
 
-                var arrivalDateTime = DateUtility.plusDays(previousSegment.getArrivalTime(), previousDetail.getDateAdjustment());
-                var departureDateTime = DateUtility.plusDays(currentSegment.getDepartureTime(), legSegmentDetail.getDateAdjustment());
+                var previousDateAdjustment = Math.addExact(previousDetail.getDateAdjustment(), previousDetail.getPreviousDateAdjustment());
+                var arrivalDateTime = DateUtility.plusDays(previousSegment.getArrivalTime(), previousDateAdjustment);
+
+                var currentDateAdjustment = Math.addExact(legSegmentDetail.getDateAdjustment(), previousDateAdjustment);
+                var departureDateTime = DateUtility.plusDays(currentSegment.getDepartureTime(), currentDateAdjustment);
+
+                var duration = DateUtility.getMinuteDurations(DateUtility.plusDays(currentSegment.getDepartureTime(), currentDateAdjustment), DateUtility.plusDays(currentSegment.getArrivalTime(), currentDateAdjustment));
                 var layover = DateUtility.getMinuteDurations(arrivalDateTime, departureDateTime);
 
+                legSegmentDetail.setPreviousDateAdjustment(previousDateAdjustment);
+                legSegmentDetail.setDuration(duration);
                 legSegmentDetail.setLayoverDuration(layover);
                 legSegmentDetail.setLayoverAirport(previousSegment.getArrival());
 
                 layoverAirport.setCode(previousSegment.getDeparture());
+
                 this.layoverAirports.putIfAbsent(previousSegment.getArrival(), layoverAirport);
+
             }
         }));
 
@@ -559,14 +575,12 @@ public class TransformSabre {
         var segment = segments.get(segmentCached);
 
         var adjustmentDate = Optional.ofNullable(schedule.getDepartureDateAdjustment()).orElse(0);
-        var duration = DateUtility.getMinuteDurations(DateUtility.plusDays(segment.getDepartureTime(), adjustmentDate), DateUtility.plusDays(segment.getArrivalTime(), adjustmentDate));
         var stop = segment.getStopCount();
 
         var segmentDetail = new LegSegmentDetail();
 
         segmentDetail.setSegment(segmentCached);
         segmentDetail.setDateAdjustment(adjustmentDate);
-        segmentDetail.setDuration(duration);
         segmentDetail.setStops(stop);
 
         return segmentDetail;

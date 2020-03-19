@@ -18,4 +18,6 @@ public @interface Include {
     String contains();
 
     String delimiter();
+
+    boolean caseSensitive() default false;
 }

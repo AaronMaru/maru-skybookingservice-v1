@@ -1,5 +1,6 @@
 package com.skybooking.staffservice;
 
+import com.skybooking.staffservice.v1_0_0.util.datetime.DateTimeBean;
 import com.skybooking.staffservice.v1_0_0.util.email.EmailBean;
 import com.skybooking.staffservice.v1_0_0.util.general.ApiBean;
 import com.skybooking.staffservice.v1_0_0.util.general.GeneralBean;
@@ -43,6 +44,11 @@ public class StaffServiceApplication {
     @Bean
     EmailBean email() {
         return new EmailBean();
+    }
+
+    @Bean
+    DateTimeBean dateTimeBean() {
+        return new DateTimeBean();
     }
 
 }

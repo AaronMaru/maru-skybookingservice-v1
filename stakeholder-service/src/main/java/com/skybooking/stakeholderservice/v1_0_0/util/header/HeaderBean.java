@@ -95,9 +95,9 @@ public class HeaderBean {
             return "skyuser";
         }
 
-        if (!companyId.equals(cId)) {
-            throw new BadRequestException("sth_w_w", null);
-        }
+//        if (!companyId.equals(cId)) {
+//            throw new BadRequestException("sth_w_w", null);
+//        }
 
         return "company";
     }

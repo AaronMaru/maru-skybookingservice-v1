@@ -1,49 +1,58 @@
-SELECT b.id                                 AS bookingId,
-b.booking_code                       AS bookingCode,
+SELECT
+b.id  AS bookingId,
+b.booking_code AS bookingCode,
 su.userName,
 IFNULL(su.profileImg, 'default.png') AS userProfile,
-b.booking_type                       AS bookingType,
+b.booking_type AS bookingType,
 al.description,
-al.created_at                        AS createdAt
+al.created_at AS createdAt
 
 FROM bookings b
 
 INNER JOIN
 (
-SELECT al.subject_id,
-al.description,
-al.created_at
+    SELECT al.subject_id,
+    al.description,
+    al.created_at
 
-FROM activity_log al
-WHERE al.subject_type = 'booking'
-AND al.type = 2
-AND (al.description = 'Booking successfully'
-OR al.description = 'Automation issued air ticket fail')
+    FROM activity_log al
+    WHERE al.subject_type = 'booking'
+    AND al.type = 2
+    AND (al.description = 'Booking successfully'
+    OR al.description = 'Automation issued air ticket fail')
 ) al ON al.subject_id = b.id
 
 INNER JOIN
 (
-SELECT su.id,
-CONCAT(su.first_name, " ", su.last_name) AS userName,
-su.photo                                 AS profileImg
+    SELECT su.id,
+    CONCAT(su.first_name, " ", su.last_name) AS userName,
+    su.photo AS profileImg
 
-FROM stakeholder_users su
+    FROM stakeholder_users su
 ) su ON su.id = b.stakeholder_user_id
 
 WHERE b.`status` IN (11, 10)
 
-AND (IF('skyuser' = :userType,
-b.stakeholder_user_id = :userId AND b.stakeholder_company_id IS NULL,
-IF('admin' = :userRole, b.stakeholder_user_id = :userId OR b.stakeholder_company_id = :companyId,
-b.stakeholder_user_id = :userId AND b.stakeholder_company_id = :companyId))
-)
+-- CHECK USERS
+AND CASE WHEN 'skyuser' = :stake
+    THEN
+        (b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id IS NULL)
+    ELSE
+        -- Condition for Skyowner
+        CASE WHEN :userRole = 'admin'
+            THEN
+                b.stakeholder_company_id = :companyId
+            ELSE
+                b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id = :companyId
+            END
+    END
 
-AND (IF('range' = :filter, (DATE(b.created_at) >= :startDate AND DATE(b.created_at) <= :endDate), 0)
-OR IF('daily' = :filter, DATE(b.created_at) = CURDATE(), 0)
-OR IF('weekly' = :filter, YEARWEEK(DATE(b.created_at)) = YEARWEEK(CURDATE()), 0)
-OR IF('monthly' = :filter, MONTH(b.created_at) = MONTH(CURDATE()), 0)
-OR IF('yearly' = :filter, YEAR(b.created_at) = YEAR(CURDATE()), 0)
-)
+AND CASE WHEN 'range' = :filter THEN DATE(b.created_at) >= :startDate AND DATE(b.created_at) <= :endDate
+        WHEN 'daily' = :filter THEN DATE(b.created_at) = CURRENT_TIMESTAMP
+        WHEN 'weekly' = :filter THEN YEARWEEK(DATE(b.created_at)) = YEARWEEK(CURRENT_TIMESTAMP)
+        WHEN 'monthly' = :filter THEN MONTH(b.created_at) = MONTH( CURRENT_TIMESTAMP )
+        ELSE YEAR(b.created_at) = YEAR( CURRENT_TIMESTAMP )
+        END
 
 ORDER BY createdAt DESC
 LIMIT :take

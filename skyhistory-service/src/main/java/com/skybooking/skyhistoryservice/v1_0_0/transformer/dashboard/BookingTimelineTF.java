@@ -4,6 +4,7 @@ import com.skybooking.skyhistoryservice.v1_0_0.io.nativeQuery.dashboard.BookingT
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.dashboard.BookingTimelineRS;
 import org.springframework.beans.BeanUtils;
 
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,8 +20,12 @@ public class BookingTimelineTF {
      * @return RecentBookingRS
      */
     public static BookingTimelineRS getResponse(BookingTimeLineTO booking) {
+
         var response = new BookingTimelineRS();
-        BeanUtils.copyProperties(booking, response);
+
+        response.setDate(booking.getDate().toLocalDate().atStartOfDay(ZoneId.systemDefault()));
+        response.setTotal(booking.getTotal());
+
         return response;
     }
 

@@ -9,7 +9,7 @@ import javax.validation.constraints.Size;
 
 @FieldMatch(first = "password", second = "confirmPassword", message = "The password fields must match")
 @Code(first = "username", second = "code", message = "Please provide country code")
-@UsernameUnique(first = "username", second = "code", message = "Username already exists")
+@UsernameUnique(first = "username", second = "code", message = "Username already exist")
 public class SkyUserRegisterRQ {
 
     @Phone

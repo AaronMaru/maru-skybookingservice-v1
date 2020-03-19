@@ -15,11 +15,11 @@ public class PassengerRS {
     private String birthDate;
     private String gender;
     private String nationality;
+    private String isoCountry;
     private String idNumber;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private String expireDate;
-    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private int idType;
 
     private String passType;

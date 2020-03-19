@@ -1,0 +1,59 @@
+SELECT
+    b.id AS bookingId,
+    b.booking_code AS bookingCode,
+    b.itinerary_ref AS prnCode,
+    b.trip_type AS tripType,
+    bod.className,
+    ( SELECT SUM(`pass_qty`) FROM booking_travel_itineraries AS bti WHERE bti.booking_id = b.id) AS totalPassenger,
+    ( b.total_amount + b.markup_amount + b.markup_pay_amount ) AS totalAmount,
+    b.dis_pay_met_amount AS paymentDiscount,
+    ( ( b.total_amount + b.markup_amount + b.markup_pay_amount ) - b.dis_pay_met_amount ) AS grandTotal
+
+FROM bookings b
+
+    INNER JOIN
+     (
+         SELECT bod.booking_id,
+             (SELECT c.cabin_name FROM cabins AS c WHERE c.cabin_code = bod.cabin_code) AS className
+
+         FROM booking_origin_destinations bod
+
+         WHERE bod.parent_id IS NOT NULL
+         AND CASE
+            WHEN 'ALL' = :classType THEN  bod.cabin_code IN ('Y', 'F', 'C', 'S', 'P', 'J')
+            WHEN 'ECONOMY' = :classType THEN bod.cabin_code = 'Y'
+            WHEN 'FIRST' = :classType THEN bod.cabin_code = 'F'
+            WHEN 'BUSINESS' = :classType THEN bod.cabin_code = 'C'
+            END
+
+         GROUP BY bod.booking_id
+
+     ) bod ON bod.booking_id = b.id
+
+WHERE CASE WHEN 'skyuser' = :userType
+    THEN
+        (b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id IS NULL)
+    ELSE
+        -- Condition for Skyowner
+        CASE WHEN
+                :userRole = 'ADMIN'
+            THEN
+                b.stakeholder_company_id = :companyId
+            ELSE
+                b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id = :companyId
+            END
+    END
+
+AND b.booking_type = 'flight'
+
+AND ( b.created_at >= :startDate AND b.created_at <= :endDate)
+
+AND CASE
+    WHEN 'ALL' = :tripType THEN b.trip_type IN ('OneWay', 'Return', 'Other')
+    WHEN 'ONEWAY' = :tripType THEN b.trip_type = 'OneWay'
+    WHEN 'ROUND' = :tripType THEN b.trip_type = 'Return'
+    WHEN 'MULTICITY' = :tripType THEN b.trip_type = 'Other'
+    END
+
+
+ORDER BY b.created_at DESC

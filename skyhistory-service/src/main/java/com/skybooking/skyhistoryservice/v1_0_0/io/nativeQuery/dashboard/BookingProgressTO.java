@@ -6,6 +6,6 @@ import java.math.BigInteger;
 
 @Data
 public class BookingProgressTO {
-    private String status;
+    private String statusKey;
     private BigInteger amount;
 }

@@ -1,9 +1,11 @@
 package com.skybooking.skyflightservice.v1_0_0.ui.controller;
 
+import com.skybooking.skyflightservice.v1_0_0.io.repository.booking.BookingRP;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.payment.PaymentSV;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.payment.PaymentMandatoryRQ;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.payment.PaymentSucceedRQ;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.response.payment.PaymentSucceedRS;
+import com.skybooking.skyflightservice.v1_0_0.util.activitylog.ActivityLoggingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +26,12 @@ public class PaymentController {
 
     @Autowired
     private PaymentSV paymentSV;
+
+    @Autowired
+    private ActivityLoggingBean activityLog;
+
+    @Autowired
+    private BookingRP bookingRP;
 
 
     /**
@@ -69,6 +77,10 @@ public class PaymentController {
         if (paymentSucceedRS.getBookingCode().isBlank()) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
+        var booking = bookingRP.getBookingByBookingCode(paymentSucceedRQ.getBookingCode());
+        var user = activityLog.getUser(booking.getStakeholderUserId());
+        activityLog.activities(ActivityLoggingBean.Action.INDEX_TICKETING_PAYMENT, user, booking);
 
         return new ResponseEntity<>(paymentSucceedRS, HttpStatus.OK);
     }

@@ -23,6 +23,7 @@ public class QueryIP implements QuerySV {
     @Autowired
     private HazelcastInstance instance;
 
+
     @Autowired
     private AppConfig appConfig;
 

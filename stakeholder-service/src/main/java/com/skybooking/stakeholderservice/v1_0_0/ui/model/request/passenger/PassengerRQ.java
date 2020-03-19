@@ -6,12 +6,9 @@ import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.interfaces.OnUp
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.util.Date;
 
 @Data
 public class PassengerRQ {
@@ -25,7 +22,7 @@ public class PassengerRQ {
     private String lastName;
 
     @NotBlank(message = "Please provide a gender.", groups = {OnCreate.class})
-    @Include(contains = "male|female", delimiter = "\\|", groups = {OnCreate.class, OnUpdate.class})
+    @Include(contains = "male|female|MALE|FEMALE", delimiter = "\\|", groups = {OnCreate.class, OnUpdate.class})
     private String gender;
 
     @NotNull(message = "Please provide a birth date.", groups = {OnCreate.class})

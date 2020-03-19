@@ -8,21 +8,21 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import java.util.Date;
+import java.time.LocalDate;
 
 @Getter
 @Setter
 public class FlightLegRQ {
 
-    @NotBlank(message = "The bargain finder origin is required.")
-    private String origin;
+    @NotBlank(message = "The departure is required.")
+    private String departure;
 
-    @NotBlank(message = "The bargain finder destination is required.")
-    private String destination;
+    @NotBlank(message = "The arrival is required.")
+    private String arrival;
 
     @NotNull(message = "The departure date is required.")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     @Temporal(TemporalType.TIMESTAMP)
-    private Date date;
+    private LocalDate date;
 
 }

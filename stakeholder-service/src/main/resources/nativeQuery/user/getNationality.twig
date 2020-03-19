@@ -1,0 +1,5 @@
+SELECT ccl.nationality
+		FROM country_city_locale AS ccl
+		WHERE ccl.country_city_id IN (SELECT co.id FROM country_city AS co WHERE co.type = 'country' AND co.iso = :isoCountry)
+		AND ccl.locale_id = :localId
+		LIMIT 1

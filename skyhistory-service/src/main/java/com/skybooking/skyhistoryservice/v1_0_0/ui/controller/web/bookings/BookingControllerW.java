@@ -1,5 +1,6 @@
 package com.skybooking.skyhistoryservice.v1_0_0.ui.controller.web.bookings;
 
+import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.booking.BookingDetailSV;
 import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.booking.BookingSV;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.skyhistoryservice.v1_0_0.util.localization.LocalizationBean;
@@ -19,6 +20,9 @@ public class BookingControllerW {
 
     @Autowired
     private BookingSV bookingSV;
+
+    @Autowired
+    private BookingDetailSV bookingDetailSV;
 
     @Autowired
     private LocalizationBean localization;
@@ -46,9 +50,8 @@ public class BookingControllerW {
      */
     @GetMapping("/booking/{id}")
     public ResRS bookingDetail(@PathVariable Long id) {
-        return localization.resAPI(HttpStatus.OK,"res_succ", bookingSV.getBookingDetail(id));
+        return localization.resAPI(HttpStatus.OK,"res_succ", bookingDetailSV.getBookingDetail(id));
     }
-
 
 
 }

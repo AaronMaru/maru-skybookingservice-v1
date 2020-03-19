@@ -16,14 +16,8 @@ public class AppConfig {
     @Value("${spring.service.flight.version}")
     private String flightVersion;
 
-    @Value("${spring.website.payment.fail}")
-    private String paymentFailPage;
-
-    @Value("${spring.website.ticket.succeed}")
-    private String ticketSucceedPage;
-
-    @Value("${spring.website.ticket.fail}")
-    private String ticketFailPage;
+    @Value("${spring.website.payment}")
+    private String paymentPage;
 
     @Value("${spring.PIPAY.VERIFY_TRANSACTION}")
     private String pipayVerification;

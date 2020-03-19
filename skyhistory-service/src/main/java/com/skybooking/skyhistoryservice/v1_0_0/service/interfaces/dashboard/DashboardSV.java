@@ -1,6 +1,7 @@
 package com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.dashboard;
 
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.dashboard.*;
+import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.report.BookingReportRS;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,16 +26,12 @@ public interface DashboardSV {
      * get dashboard progress summary by company id, user id and filter
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @param companyId
-     * @param userId
-     * @param userType
-     * @param userRole
      * @param filter
      * @param startDate
      * @param endDate
      * @return List
      */
-    List<BookingProgressRS> getBookingProgress(long companyId, long userId, String userType, String userRole, String filter, String startDate, String endDate);
+    List<BookingProgressRS> getBookingProgress(String filter, String startDate, String endDate);
 
 
     /**
@@ -42,14 +39,10 @@ public interface DashboardSV {
      * get dashboard timeline summary report by company, user and filter
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @param companyId
-     * @param userId
-     * @param userType
-     * @param userRole
      * @param filter
      * @return List
      */
-    List<BookingTimelineRS> getBookingTimeline(long companyId, long userId, String userType, String userRole, String filter);
+    List<BookingTimelineRS> getBookingTimeline(String filter);
 
 
     /**
@@ -57,14 +50,13 @@ public interface DashboardSV {
      * get top staff for selling dashboard by comapny id and filter
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @param companyId
      * @param filter    options: range, daily, weekly, monthly, yearly
      * @param startDate required when filter by range and format "yyyy-MM-dd"
      * @param endDate   required when filter by range and format "yyyy-MM-dd"
      * @param take
      * @return List
      */
-    List<BookingTopSellerRS> getBookingTopSeller(long companyId, String filter, String startDate, String endDate, long take);
+    List<BookingTopSellerRS> getBookingTopSeller(String filter, String startDate, String endDate, long take);
 
 
     /**
@@ -72,10 +64,6 @@ public interface DashboardSV {
      * get dashboard activity log by company, user and filter
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @param companyId
-     * @param userId
-     * @param userType
-     * @param userRole
      * @param filter
      * @param startDate
      * @param endDate
@@ -83,7 +71,7 @@ public interface DashboardSV {
      * @param localeId
      * @return List
      */
-    List<BookingActivityRS> getBookingActivity(long companyId, long userId, String userType, String userRole, String filter, String startDate, String endDate, long take, long localeId);
+    List<BookingActivityRS> getBookingActivity(String filter, String startDate, String endDate, long take, long localeId);
 
 
     /**
@@ -91,16 +79,22 @@ public interface DashboardSV {
      * get dashboard report summary
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @param company
-     * @param userId
-     * @param userType
-     * @param userRole
      * @param classType options: allclass, economy, first, business
      * @param tripType  options: alltrip, oneway, return, multicity
      * @param startDate
      * @param endDate
      * @return BookingReportRS
      */
-    BookingReportRS getBookingReport(long company, long userId, String userType, String userRole, String classType, String tripType, String startDate, String endDate);
+    BookingReportRS getBookingReport(String classType, String tripType, String startDate, String endDate);
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Get dashboard overview staff
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Return StaffReportRS
+     */
+    StaffReportRS getStaffReport();
 
 }

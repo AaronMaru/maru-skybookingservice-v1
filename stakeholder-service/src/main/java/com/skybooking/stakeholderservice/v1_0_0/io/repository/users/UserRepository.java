@@ -50,6 +50,13 @@ public interface UserRepository extends JpaRepository<UserEntity, Integer> {
 
 
     /**
+     * Check user by email or phone
+     */
+    @Query(value = "SELECT * FROM users WHERE provider IS NULL AND (email = ?1 OR (phone = ?1 AND code = ?2))", nativeQuery = true)
+    UserEntity findByEmailOrPhoneAndProviderIdIsNull(String username, String code);
+
+
+    /**
      * Check exists user by phone
      */
     @Query(value = "SELECT CASE WHEN COUNT(email) + COUNT(phone) > 0 THEN 'true' ELSE 'false' END FROM users WHERE email = ?1 OR (phone = ?1 AND code = ?2) AND (CASE WHEN ?3 THEN id NOT IN (?3) ELSE id IS NOT NULL END)", nativeQuery = true)

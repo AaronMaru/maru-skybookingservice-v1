@@ -39,6 +39,7 @@ public class CustomJWTEnhancer implements TokenEnhancer {
 
         var userPrinciple = (UserPrinciple) authentication.getPrincipal();
         var user = userRepository.findById(userPrinciple.getId());
+
         var company = companyHasUserRP.findByStakeholderUserId(user.getStakeHolderUser().getId());
 
         additionalInfo.put("userId", user.getId());
@@ -56,7 +57,7 @@ public class CustomJWTEnhancer implements TokenEnhancer {
 
         }
 
-                additionalInfo.put("userType", user.getStakeHolderUser().getIsSkyowner() == 0 ? "skyuser" : "skyowner");
+        additionalInfo.put("userType", user.getStakeHolderUser().getIsSkyowner() == 0 ? "skyuser" : "skyowner");
 
         ((DefaultOAuth2AccessToken) accessToken).setAdditionalInformation(additionalInfo);
         return accessToken;

@@ -1,0 +1,11 @@
+SELECT
+    pi.id AS id,
+    pi.booking_code AS bookingCode,
+    pi.payment_code AS paymentCode
+FROM
+    payment_ipayhths AS pi
+WHERE
+    pi.booking_code = :bookingCode
+ORDER BY
+    pi.id DESC
+LIMIT 1

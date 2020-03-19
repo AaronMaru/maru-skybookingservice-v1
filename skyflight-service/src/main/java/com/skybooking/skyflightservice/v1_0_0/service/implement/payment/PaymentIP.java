@@ -2,7 +2,6 @@ package com.skybooking.skyflightservice.v1_0_0.service.implement.payment;
 
 import com.skybooking.skyflightservice.constant.BookingConstant;
 import com.skybooking.skyflightservice.constant.PaymentConstant;
-import com.skybooking.skyflightservice.v1_0_0.client.skyhistory.action.SkyhistoryAction;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.booking.BookingPaymentTransactionEntity;
 import com.skybooking.skyflightservice.v1_0_0.io.repository.booking.BookingPaymentTransactionRP;
 import com.skybooking.skyflightservice.v1_0_0.io.repository.booking.BookingRP;
@@ -30,14 +29,17 @@ public class PaymentIP implements PaymentSV {
     @Autowired
     private BookingUtility bookingUtility;
 
-    @Autowired
-    private SkyhistoryAction skyhistoryAction;
-
 
     @Override
     public PaymentMandatoryRS updateDiscountPaymentMethod(PaymentMandatoryRQ paymentMandatoryRQ) {
 
-        var booking = bookingRP.getPnrCreated(paymentMandatoryRQ.getBookingCode(), BookingConstant.PNR_CREATED, PaymentConstant.PAYMENT_PROCESSING);
+        var booking = bookingRP.getPnrCreated(
+                paymentMandatoryRQ.getBookingCode(),
+                BookingConstant.PNR_CREATED,
+                PaymentConstant.PAYMENT_SELECTED,
+                PaymentConstant.PAYMENT_CREATED,
+                PaymentConstant.PAYMENT_PROCESSING
+        );
         PriceInfo priceInfo = bookingUtility.getPriceInfo(booking, paymentMandatoryRQ);
 
         /**
@@ -56,16 +58,23 @@ public class PaymentIP implements PaymentSV {
         paymentMandatoryData.setName(bookingUpdated.getCustName());
         paymentMandatoryData.setPhoneNumber(bookingUpdated.getContPhone());
         paymentMandatoryData.setEmail(bookingUpdated.getContEmail());
+        paymentMandatoryData.setBookingId(bookingUpdated.getId());
 
         return paymentMandatoryData;
     }
 
 
     @Override
-    public PaymentMandatoryRS getMandatoryData(String bookingCod) {
+    public PaymentMandatoryRS getMandatoryData(String bookingCode) {
 
         PaymentMandatoryRS paymentMandatoryRS = new PaymentMandatoryRS();
-        var booking = bookingRP.getPnrCreated(bookingCod, BookingConstant.PNR_CREATED, PaymentConstant.PAYMENT_PROCESSING);
+        var booking = bookingRP.getPnrCreated(
+                bookingCode,
+                BookingConstant.PNR_CREATED,
+                PaymentConstant.PAYMENT_SELECTED,
+                PaymentConstant.PAYMENT_CREATED,
+                PaymentConstant.PAYMENT_PROCESSING
+        );
 
         /**
          * Update booking status to On progressing in bookings table
@@ -82,6 +91,7 @@ public class PaymentIP implements PaymentSV {
         paymentMandatoryRS.setEmail(booking.getContEmail());
         paymentMandatoryRS.setSkyuserId(booking.getStakeholderUserId());
         paymentMandatoryRS.setCompanyId(booking.getStakeholderCompanyId());
+        paymentMandatoryRS.setBookingId(booking.getId());
 
         return paymentMandatoryRS;
     }
@@ -148,8 +158,6 @@ public class PaymentIP implements PaymentSV {
 
         booking.setStatus(PaymentConstant.PAYMENT_SUCCEED);
         bookingRP.save(booking);
-
-//        skyhistoryAction.sendPaymentSucceed(new PaymentSucceedSendingRQ(booking.getBookingCode(), booking.getContEmail()));
 
         return paymentSucceedRS;
     }

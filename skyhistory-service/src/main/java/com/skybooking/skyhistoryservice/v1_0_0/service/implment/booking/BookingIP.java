@@ -1,5 +1,6 @@
 package com.skybooking.skyhistoryservice.v1_0_0.service.implment.booking;
 
+import com.skybooking.skyhistoryservice.constant.BookingKeyConstant;
 import com.skybooking.skyhistoryservice.exception.httpstatus.NotFoundException;
 import com.skybooking.skyhistoryservice.v1_0_0.io.nativeQuery.booking.*;
 import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.booking.BookingSV;
@@ -63,29 +64,10 @@ public class BookingIP implements BookingSV {
      */
     public BookingDetailRS getBookingDetail(Long id) {
 
-        Long skyuserId = jwtUtils.getClaim("stakeholderId", Long.class);
-        Long companyId = jwtUtils.getClaim("companyId", Long.class);
-
-        String stake = headerBean.getCompanyId(companyId);
-        String role = (stake.equals("company")) ? jwtUtils.getClaim("userRole", String.class) : "";
-
-        List<BookingTO> bookingTO = bookingNQ.detailBooking(stake, id, skyuserId, companyId, role);
-
+        List<BookingTO> bookingTO = getBookingById(id);
         BookingDetailRS bookingDetailRS = new BookingDetailRS();
-
-        if (bookingTO.size() == 0) {
-            throw new NotFoundException("This url not found", "");
-        }
-
-        BeanUtils.copyProperties(bookingTO.get(0), bookingDetailRS);
-
-        List<BookingOdRS> bookingOdRSList = bookingOD(bookingTO.get(0));
-        List<BookingTicketRS> bookingTicketRSList = getAirTickets(id);
-        List<BookingAirItinPriceRS> bookingAirItinPriceRSList = getAirItinPrice(id);
-
-        bookingDetailRS.setBookingOd(bookingOdRSList);
-        bookingDetailRS.setAirTickets(bookingTicketRSList);
-        bookingDetailRS.setAirItinPrices(bookingAirItinPriceRSList);
+        BookingEmailDetailRS bookingRS = setBookingDetailRS(bookingTO, id);
+        BeanUtils.copyProperties(bookingRS, bookingDetailRS);
 
         return bookingDetailRS;
 
@@ -101,33 +83,33 @@ public class BookingIP implements BookingSV {
      */
     public BookingEmailDetailRS getBookingDetailEmail(Long id) {
 
-        Long skyuserId = jwtUtils.getClaim("stakeholderId", Long.class);
-        Long companyId = jwtUtils.getClaim("companyId", Long.class);
-
-        String stake = headerBean.getCompanyId(companyId);
-        String role = (stake.equals("company")) ? jwtUtils.getClaim("userRole", String.class) : "";
-
-        List<BookingTO> bookingTO = bookingNQ.detailBooking(stake, id, skyuserId,
-                companyId, role);
-
-        BookingEmailDetailRS bookingRS = new BookingEmailDetailRS();
-
-        if (bookingTO.size() == 0) {
-            throw new NotFoundException("No booking data found", null);
-        }
-
-        BeanUtils.copyProperties(bookingTO.get(0), bookingRS);
-
-        List<BookingOdRS> bookingOdRSList = bookingOD(bookingTO.get(0));
-        List<BookingTicketRS> bookingTicketRSList = getAirTickets(id);
-        List<BookingAirItinPriceRS> bookingAirItinPriceRSList = getAirItinPrice(id);
-
-        bookingRS.setBookingOd(bookingOdRSList);
-        bookingRS.setAirTickets(bookingTicketRSList);
-        bookingRS.setAirItinPrices(bookingAirItinPriceRSList);
-
+        List<BookingTO> bookingTO = getBookingById(id);
+        BookingEmailDetailRS bookingRS = setBookingDetailRS(bookingTO, id);
         return bookingRS;
 
+    }
+
+    public List<BookingTO> getBookingById(Long id) {
+        FilterRQ filterRQ = new FilterRQ(request, jwtUtils.getUserToken());
+        Long companyId = filterRQ.getCompanyId();
+        String stake = headerBean.getCompanyId(companyId);
+
+        BookingKeyConstant constant = new BookingKeyConstant();
+        return bookingNQ.detailBooking(
+                stake,
+                id,
+                filterRQ.getSkyuserId(),
+                companyId,
+                filterRQ.getRole(),
+                headerBean.getLocalizationId(),
+                constant.COMPLETED,
+                constant.UPCOMING,
+                constant.CANCELLED,
+                constant.FAILED,
+                constant.ONEWAY,
+                constant.ROUND,
+                constant.MULTICITY
+        );
     }
 
     /**
@@ -144,27 +126,53 @@ public class BookingIP implements BookingSV {
             sendBookingNoAuthRQ.setCompanyId(0);
         }
 
-        List<BookingTO> bookingTO = bookingNQ.detailBooking(
-                (sendBookingNoAuthRQ.getCompanyId() == 0) ? "skyuser" : "company", id,
-                sendBookingNoAuthRQ.getSkyuserId().longValue(), sendBookingNoAuthRQ.getCompanyId().longValue(), "");
+        String stake = sendBookingNoAuthRQ.getCompanyId() == 0 ? "skyuser" : "company";
 
-        BookingEmailDetailRS bookingRS = new BookingEmailDetailRS();
-
-        if (bookingTO.size() == 0) {
-            throw new NotFoundException("This url not found", "");
+        if (sendBookingNoAuthRQ.getCompanyId() == null) {
+            sendBookingNoAuthRQ.setCompanyId(0);
         }
 
-        BeanUtils.copyProperties(bookingTO.get(0), bookingRS);
+        BookingKeyConstant constant = new BookingKeyConstant();
 
-        List<BookingOdRS> bookingOdRSList = bookingOD(bookingTO.get(0));
-        List<BookingTicketRS> bookingTicketRSList = getAirTickets(id);
-        List<BookingAirItinPriceRS> bookingAirItinPriceRSList = getAirItinPrice(id);
+        List<BookingTO> bookingTO = bookingNQ.detailBooking(
+                    stake,
+                    id,
+                    sendBookingNoAuthRQ.getSkyuserId().longValue(),
+                    sendBookingNoAuthRQ.getCompanyId().longValue(),
+                    "",
+                    headerBean.getLocalizationId(),
+                    constant.COMPLETED,
+                    constant.UPCOMING,
+                    constant.CANCELLED,
+                    constant.FAILED,
+                    constant.ONEWAY,
+                    constant.ROUND,
+                    constant.MULTICITY
+                    );
 
-        bookingRS.setBookingOd(bookingOdRSList);
-        bookingRS.setAirTickets(bookingTicketRSList);
-        bookingRS.setAirItinPrices(bookingAirItinPriceRSList);
+        BookingEmailDetailRS bookingRS = setBookingDetailRS(bookingTO, id);
 
         return bookingRS;
+
+    }
+
+    private BookingEmailDetailRS setBookingDetailRS(List<BookingTO> bookingTO, Long id) {
+
+        BookingEmailDetailRS bookingEmailRS = new BookingEmailDetailRS();
+
+        if (bookingTO.size() == 0) {
+            throw new NotFoundException("No booking data found", null);
+        }
+
+        BeanUtils.copyProperties(bookingTO.get(0), bookingEmailRS);
+
+        bookingEmailRS.setSkyuserPhoto(environment.getProperty("spring.awsImageUrl.profile.url_small") + bookingEmailRS.getSkyuserPhoto());
+
+        bookingEmailRS.setBookingOd(bookingOD(bookingTO.get(0)));
+        bookingEmailRS.setAirTickets(getAirTickets(id));
+        bookingEmailRS.setAirItinPrices(getAirItinPrice(id));
+
+        return bookingEmailRS;
 
     }
 
@@ -181,7 +189,10 @@ public class BookingIP implements BookingSV {
         FilterRQ filterRQ = new FilterRQ(request, jwtUtils.getUserToken());
         filterRQ.setAction(checkSearchOrFilter());
 
+        System.out.println(filterRQ);
+
         BookingDataPaginationRS bookingData = new BookingDataPaginationRS();
+
         List<BookingRS> bookingRSList = bookings(filterRQ);
 
         bookingData.setSize(filterRQ.getSize());
@@ -221,6 +232,13 @@ public class BookingIP implements BookingSV {
                 filterRQ.getRole(),
                 filterRQ.getSkyuserId(),
                 filterRQ.getCompanyId(),
+                filterRQ.getCompleted(),
+                filterRQ.getUpcoming(),
+                filterRQ.getCancelled(),
+                filterRQ.getFailed(),
+                filterRQ.getOneway(),
+                filterRQ.getRound(),
+                filterRQ.getMulticity(),
                 headerBean.getCompanyId(filterRQ.getCompanyId()),
                 PageRequest.of(filterRQ.getPage(), filterRQ.getSize() ) );
 
@@ -233,6 +251,9 @@ public class BookingIP implements BookingSV {
             List<BookingOdRS> bookingOdRSList = bookingOD(booking);
 
             BeanUtils.copyProperties(booking, bookingRS);
+            bookingRS.setBookDate(dateTimeBean.convertDateTime(booking.getBookDate()));
+
+            bookingRS.setSkyuserPhoto(environment.getProperty("spring.awsImageUrl.profile.url_small") + booking.getSkyuserPhoto());
 
             bookingRS.setBookingOd(bookingOdRSList);
 
@@ -256,56 +277,51 @@ public class BookingIP implements BookingSV {
      */
     public String checkSearchOrFilter() {
 
-
-        if (request.getParameter("keyword") != null) {
-            return "search";
+        if (request.getParameter("keyword") != null && request.getParameter("keyword") != "" ) {
+            return "SEARCH";
         }
 
-        if (request.getParameter("bookStatus") != null) {
-            return "filter";
+        if (request.getParameter("bookStatus") != null || request.getParameter("keyword") == "" ) {
+            return "FILTER";
         }
 
-        if (request.getParameter("startRange") != null) {
-            return "filter";
+        if (request.getParameter("startRange") != null || request.getParameter("keyword") == "" ) {
+            return "FILTER";
         }
 
-        if (request.getParameter("endRange") != null) {
-            return "filter";
+        if (request.getParameter("endRange") != null || request.getParameter("keyword") == "" ) {
+            return "FILTER";
         }
 
-        if (request.getParameter("tripType") != null) {
-            return "filter";
+        if (request.getParameter("tripType") != null || request.getParameter("keyword") == "" ) {
+            return "FILTER";
         }
 
-        if (request.getParameter("className") != null) {
-            return "filter";
+        if (request.getParameter("className") != null || request.getParameter("keyword") == "" ) {
+            return "FILTER";
         }
 
-        if (request.getParameter("bookDate") != null) {
-            return "filter";
+        if (request.getParameter("bookDate") != null || request.getParameter("keyword") == "" ) {
+            return "FILTER";
         }
 
-        if (request.getParameter("paymentType") != null) {
-            return "filter";
+        if (request.getParameter("paymentType") != null || request.getParameter("keyword") == "" ) {
+            return "FILTER";
         }
 
-        if (request.getParameter("flyingFrom") != null) {
-            return "filter";
+        if (request.getParameter("flyingFrom") != null || request.getParameter("keyword") == "" ) {
+            return "FILTER";
         }
 
-        if (request.getParameter("flyingTo") != null) {
-            return "filter";
+        if (request.getParameter("flyingTo") != null || request.getParameter("keyword") == "" ) {
+            return "FILTER";
         }
 
-        if (request.getParameter("bookByName") != null) {
-            return "filter";
+        if (request.getParameter("bookByName") != null || request.getParameter("keyword") == "" ) {
+            return "FILTER";
         }
 
-        if (request.getParameter("keyword") != null) {
-            return "filter";
-        }
-
-        return "other";
+        return "OTHER";
 
     }
 
@@ -326,7 +342,7 @@ public class BookingIP implements BookingSV {
         for (BookingOdTO bookingOdTO : bookingOdTOList) {
             BookingOdRS bookingOdRS = new BookingOdRS();
             BeanUtils.copyProperties(bookingOdTO, bookingOdRS);
-            BookingOdSegTO bookingOdSegTO = bookingNQ.bookingOdSeg(bookingOdTO.getId());
+            BookingOdSegTO bookingOdSegTO = bookingNQ.bookingOdSeg(bookingOdTO.getId(), headerBean.getLocalizationId());
             BookingOdSegRS bookingOdSegRS = new BookingOdSegRS();
 
             BeanUtils.copyProperties(bookingOdSegTO, bookingOdSegRS);
@@ -337,11 +353,12 @@ public class BookingIP implements BookingSV {
                 Date departDateTime = formatter.parse(bookingOdSegTO.getDepDateTime().toString());
                 String statusOdSeg = (setBookingStatus(booking.getStatus()) != null)
                         ? setBookingStatus(booking.getStatus())
-                        : ((departDateTime.compareTo(now) > 0) ? "Upcoming" : "Completed");
+                        : ((departDateTime.compareTo(now) > 0) ? BookingKeyConstant.UPCOMING : BookingKeyConstant.COMPLETED);
                 bookingOdSegRS.setStatus(statusOdSeg);
             } catch (ParseException e) {
                 e.printStackTrace();
             }
+
             HashMap<String, String> logo = flightBean.getAirlineInfoLogo(bookingOdSegTO.getAirlineCode());
             bookingOdSegRS.setAirlineLogo45(logo.get("logo45"));
             bookingOdSegRS.setAirlineLogo90(logo.get("logo90"));
@@ -429,12 +446,13 @@ public class BookingIP implements BookingSV {
         int cancel = NumberUtils.toInt(environment.getProperty("spring.booking-status.payment.cancel"));
         int failOne = NumberUtils.toInt(environment.getProperty("spring.booking-status.ticket.fail"));
         int failTwo = NumberUtils.toInt(environment.getProperty("spring.booking-status.pnr.fail"));
+        int failThree = NumberUtils.toInt(environment.getProperty("spring.booking-status.payment.processing"));
 
         if (status == cancel) {
-            bookingStatus = "Cancelled";
+            bookingStatus = BookingKeyConstant.CANCELLED;
         }
-        if (status == failOne || status == failTwo) {
-            bookingStatus = "Failed";
+        if (status == failOne || status == failTwo || status == failThree) {
+            bookingStatus = BookingKeyConstant.FAILED;
         }
 
         return bookingStatus;

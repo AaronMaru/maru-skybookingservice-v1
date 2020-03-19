@@ -61,8 +61,8 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
                 .authorizedGrantTypes("password", "authorization_code", "refresh_token", "implicit")
                 .scopes("read", "write")
                 .resourceIds("oauth2-resource", "skybooking-resource")
-                .accessTokenValiditySeconds(60 * 60 * 24)
-                .refreshTokenValiditySeconds(60 * 60 * 48);
+                .accessTokenValiditySeconds(60 * 60 * 24 * 7)
+                .refreshTokenValiditySeconds(60 * 60 * 48 * 7);
     }
 
     @Override

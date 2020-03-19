@@ -13,6 +13,7 @@ public class AmountRS {
 
     private BigInteger quantity = BigInteger.valueOf(0);
     private BigDecimal amount = BigDecimal.valueOf(0.0);
+    private String currencyCode = "";
 
     public BigInteger getQuantity() {
         return quantity;
@@ -28,5 +29,13 @@ public class AmountRS {
 
     public void setAmount(BigDecimal amount) {
         this.amount = amount;
+    }
+
+    public String getCurrencyCode() {
+        return currencyCode;
+    }
+
+    public void setCurrencyCode(String currencyCode) {
+        this.currencyCode = currencyCode;
     }
 }

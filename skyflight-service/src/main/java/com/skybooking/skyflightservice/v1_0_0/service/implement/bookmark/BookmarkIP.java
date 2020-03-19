@@ -95,7 +95,7 @@ public class BookmarkIP implements BookmarkSV {
 
                 if (authenticationMetaTA.getCompanyId() != null) {
 
-                    if (flightSavesEntity.getTripType().equalsIgnoreCase(query.getTripType()) && flightSavesEntity.getClassCode().equalsIgnoreCase(query.getClassType()) && flightSavesEntity.getCompanyId().equals(authenticationMetaTA.getCompanyId())) {
+                    if (flightSavesEntity.getTripType().equalsIgnoreCase(query.getTripType().toString()) && flightSavesEntity.getClassCode().equalsIgnoreCase(query.getClassType()) && flightSavesEntity.getCompanyId().equals(authenticationMetaTA.getCompanyId())) {
 
                         if (isBookmarkFlightDirectionAndType) {
                             return operatedAirline.equalsIgnoreCase(bookmarkedAirline);
@@ -105,7 +105,7 @@ public class BookmarkIP implements BookmarkSV {
                 } else {
 
                     if (flightSavesEntity.getCompanyId().equals(0)) {
-                        if (flightSavesEntity.getTripType().equalsIgnoreCase(query.getTripType()) && flightSavesEntity.getClassCode().equalsIgnoreCase(query.getClassType())) {
+                        if (flightSavesEntity.getTripType().equalsIgnoreCase(query.getTripType().toString()) && flightSavesEntity.getClassCode().equalsIgnoreCase(query.getClassType())) {
                             if (isBookmarkFlightDirectionAndType) {
                                 return operatedAirline.equalsIgnoreCase(bookmarkedAirline);
                             }
@@ -192,7 +192,7 @@ public class BookmarkIP implements BookmarkSV {
 
             var flightSavedEntity = new FlightSavesEntity();
 
-            flightSavedEntity.setTripType(query.getTripType());
+            flightSavedEntity.setTripType(query.getTripType().toString());
             flightSavedEntity.setClassCode(query.getClassType().toUpperCase());
             flightSavedEntity.setClassName(query.getClassType().toUpperCase());
             flightSavedEntity.setAdult(query.getAdult());
@@ -333,9 +333,9 @@ public class BookmarkIP implements BookmarkSV {
         return bookmark -> {
 
             if (companyId != null) {
-                if (bookmark.getTripType().equalsIgnoreCase(shoppingRQ.getTripType()) && bookmark.getClassCode().equalsIgnoreCase(shoppingRQ.getClassType()) && bookmark.getCompanyId().equals(companyId)) {
+                if (bookmark.getTripType().equalsIgnoreCase(shoppingRQ.getTripType().toString()) && bookmark.getClassCode().equalsIgnoreCase(shoppingRQ.getClassType()) && bookmark.getCompanyId().equals(companyId)) {
 
-                    var directions = shoppingRQ.getLegs().stream().map(flightLegRQ -> flightLegRQ.getOrigin().concat("-").concat(flightLegRQ.getDestination())).collect(Collectors.joining("~"));
+                    var directions = shoppingRQ.getLegs().stream().map(flightLegRQ -> flightLegRQ.getDeparture().concat("-").concat(flightLegRQ.getArrival())).collect(Collectors.joining("~"));
                     var tagDirection = bookmark.getTagId().split("@")[1];
 
                     return directions.equalsIgnoreCase(tagDirection);
@@ -344,9 +344,9 @@ public class BookmarkIP implements BookmarkSV {
             } else {
 
                 if (bookmark.getCompanyId().equals(0)) {
-                    if (bookmark.getTripType().equalsIgnoreCase(shoppingRQ.getTripType()) && bookmark.getClassCode().equalsIgnoreCase(shoppingRQ.getClassType())) {
+                    if (bookmark.getTripType().equalsIgnoreCase(shoppingRQ.getTripType().toString()) && bookmark.getClassCode().equalsIgnoreCase(shoppingRQ.getClassType())) {
 
-                        var directions = shoppingRQ.getLegs().stream().map(flightLegRQ -> flightLegRQ.getOrigin().concat("-").concat(flightLegRQ.getDestination())).collect(Collectors.joining("~"));
+                        var directions = shoppingRQ.getLegs().stream().map(flightLegRQ -> flightLegRQ.getDeparture().concat("-").concat(flightLegRQ.getArrival())).collect(Collectors.joining("~"));
                         var tagDirection = bookmark.getTagId().split("@")[1];
 
                         return directions.equalsIgnoreCase(tagDirection);

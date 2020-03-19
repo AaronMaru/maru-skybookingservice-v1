@@ -1,0 +1,41 @@
+SELECT
+	bopas.id,
+	bopas.last_name AS lastName,
+	bopas.first_name AS firstName,
+	bopas.birthday AS birthDate,
+	UPPER(bopas.gender) AS gender,
+	(
+		SELECT colo.nationality
+		FROM country_city_locale AS colo
+		WHERE colo.country_city_id IN (SELECT co.id FROM country_city AS co WHERE co.type = 'country' AND co.iso = bopas.nationality)
+		AND colo.locale_id = :localeId
+		LIMIT 1
+	) AS nationality,
+	UPPER (bopas.nationality) AS isoCountry,
+	bopas.id_number AS idNumber,
+	bopas.expire_date AS expireDate,
+	bopas.id_type AS idType
+FROM
+	booking_passengers bopas -- CHECK USERS
+
+WHERE
+CASE WHEN :stake = "skyuser" THEN
+    ( bopas.stakeholder_user_id = :skyuserId AND bopas.stakeholder_company_id IS NULL )
+ELSE -- Condition for Skyowner
+    CASE WHEN :role = 'admin' THEN
+        bopas.stakeholder_company_id = :companyId
+    ELSE bopas.stakeholder_user_id = :skyuserId
+        AND bopas.stakeholder_company_id = :companyId
+    END
+END
+AND CASE WHEN :passType = 'ADT' THEN
+        ABS( DATEDIFF( bopas.birthday, CURRENT_TIMESTAMP ) / 365.25 ) >= 12
+    WHEN :passType = 'CNN' THEN
+        ABS( DATEDIFF( bopas.birthday, CURRENT_TIMESTAMP ) / 365.25 ) >= 2
+    AND ABS( DATEDIFF( bopas.birthday, CURRENT_TIMESTAMP ) / 365.25 ) < 12
+    WHEN :passType = 'INF' THEN
+        ABS( DATEDIFF( bopas.birthday, CURRENT_TIMESTAMP ) / 365.25 ) < 2
+    ELSE
+        bopas.status = 0
+END
+ORDER BY created_at DESC

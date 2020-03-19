@@ -1,0 +1,28 @@
+SELECT
+	UPPER(bti.pass_type) AS passType,
+	bti.pass_qty AS passQty,
+	(
+	    (
+	        b.mPayPercent * ( ( b.mPercent * bti.base_fare) + bti.base_fare )
+	    ) + (
+	        ( b.mPercent * bti.base_fare) + bti.base_fare
+	    )
+	) AS baseFare,
+	(
+	    (
+	         b.mPayPercent * (( b.mPercent * bti.total_tax) + bti.total_tax )
+	    ) + (
+	        ( b.mPercent * bti.total_tax) + bti.total_tax
+	    )
+	) AS totalTax,
+
+	(( b.mPercent * bti.total_amount) + bti.total_amount ) AS totalAmount,
+	bti.currency_code AS currencyCode,
+	bti.non_refundable_ind AS nonRefund
+
+FROM booking_travel_itineraries bti
+INNER JOIN
+(
+	SELECT b.id, b.markup_percentage AS mPercent, b.markup_pay_percentage AS mPayPercent FROM bookings b
+) b ON b.id = bti.booking_id
+WHERE bti.booking_id = :bookingId

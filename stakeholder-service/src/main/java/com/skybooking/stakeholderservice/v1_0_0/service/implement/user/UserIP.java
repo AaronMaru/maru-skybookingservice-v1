@@ -10,6 +10,8 @@ import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.verify.VerifyUserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyHasUserRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyRP;
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.country.CountryRP;
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.OauthUserRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.StakeholderUserInvitationRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserRepository;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.verify.VerifyUserRP;
@@ -20,6 +22,7 @@ import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.Compan
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.InvitationRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
+import com.skybooking.stakeholderservice.v1_0_0.util.JwtUtils;
 import com.skybooking.stakeholderservice.v1_0_0.util.activitylog.ActivityLoggingBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.email.EmailBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
@@ -84,6 +87,16 @@ public class UserIP implements UserSV {
     @Autowired
     private VerifyUserRP verifyRP;
 
+    @Autowired
+    private OauthUserRP oauthUserRP;
+
+    @Autowired
+    private JwtUtils jwtUtils;
+
+    @Autowired
+    private CountryRP countryRP;
+
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Get User Details
@@ -125,6 +138,9 @@ public class UserIP implements UserSV {
             stkHolder.setLastName(profileRQ.getLastName());
         }
         if (profileRQ.getNationality() != null) {
+            if (countryRP.existsIso(profileRQ.getNationality()) == null) {
+                throw new BadRequestException("Nationality not found", null);
+            }
             stkHolder.setNationality(profileRQ.getNationality());
         }
 
@@ -485,6 +501,30 @@ public class UserIP implements UserSV {
         }
 
 
+    }
+
+    @Override
+    public Boolean logout(HttpHeaders httpHeaders) {
+
+        var authorization = httpHeaders.getFirst("Authorization");
+
+        if (authorization != null && authorization.contains("Bearer")) {
+
+            var accessToken = authorization.substring("Bearer".length()+1);
+            var jti = jwtUtils.getClaim(accessToken,"jti", String.class);
+            var oauthUser = oauthUserRP.getFirst(jti, 1);
+
+            if (oauthUser == null) {
+                return false;
+            }
+
+            oauthUser.setStatus(0);
+            oauthUserRP.save(oauthUser);
+
+            return true;
+        }
+
+        return false;
     }
 
 

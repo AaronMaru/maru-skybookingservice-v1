@@ -22,7 +22,7 @@ public class PipayIP {
      * @return
      */
     protected UrlPaymentRS getRequestUrl(PaymentRQ paymentRQ) {
-        return payments.getPaymentUrl(paymentRQ, "/pipay/form");
+        return payments.getPaymentUrl(paymentRQ, "pipay/form");
     }
 
 }

@@ -1,5 +1,6 @@
 package com.skybooking.skyflightservice.v1_0_0.io.entity.shopping;
 
+import com.skybooking.skyflightservice.constant.TripTypeEnum;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -10,7 +11,7 @@ import java.util.List;
 public class ShoppingTransformEntity implements Serializable {
 
     private String requestId;
-    private String trip;
+    private TripTypeEnum trip;
     private List<Airline> airlines = new ArrayList<>();
     private List<Aircraft> aircrafts = new ArrayList<>();
     private List<Location> locations = new ArrayList<>();

@@ -90,4 +90,6 @@ public class StakeholderUserHasCompanyEntity {
     public void setSkyuserRole(String skyuserRole) {
         this.skyuserRole = skyuserRole;
     }
+
+
 }

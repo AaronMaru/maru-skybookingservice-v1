@@ -1,5 +1,6 @@
 package com.skybooking.skyflightservice.v1_0_0.validator;
 
+import com.skybooking.skyflightservice.constant.TripTypeEnum;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.shopping.FlightLegRQ;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.shopping.FlightShoppingRQ;
 
@@ -22,9 +23,9 @@ public class FlightShoppingValidator implements ConstraintValidator<FlightShoppi
 
         var trip = flightShoppingRQ.getTripType();
 
-        if (trip.equalsIgnoreCase("one")) {
+        if (trip.equals(TripTypeEnum.ONEWAY)) {
             valid = this.oneTripValidate(flightShoppingRQ);
-        } else if (trip.equalsIgnoreCase("round")) {
+        } else if (trip.equals(TripTypeEnum.ROUND)) {
             valid = this.roundTripValidate(flightShoppingRQ);
         } else {
             valid = this.multiTripValidate(flightShoppingRQ);
@@ -94,7 +95,7 @@ public class FlightShoppingValidator implements ConstraintValidator<FlightShoppi
      */
     private boolean oneTripValidate(FlightShoppingRQ flightShopping) {
 
-        var message = "The one trip flight information is incorrect.";
+        var message = "The one way flight information is incorrect.";
 
         var legs = flightShopping.getLegs();
         var size = legs.size();
@@ -143,12 +144,12 @@ public class FlightShoppingValidator implements ConstraintValidator<FlightShoppi
             return false;
         }
 
-        if (!first.getOrigin().equalsIgnoreCase(second.getDestination())) {
+        if (!first.getDeparture().equalsIgnoreCase(second.getArrival())) {
             this.message = message;
             return false;
         }
 
-        if (!first.getDestination().equalsIgnoreCase(second.getOrigin())) {
+        if (!first.getArrival().equalsIgnoreCase(second.getDeparture())) {
             this.message = message;
             return false;
         }
@@ -172,7 +173,7 @@ public class FlightShoppingValidator implements ConstraintValidator<FlightShoppi
      */
     private boolean multiTripValidate(FlightShoppingRQ flightShopping) {
 
-        var message = "The multiple trip flight information is incorrect.";
+        var message = "The multi city flight information is incorrect.";
 
         var legs = flightShopping.getLegs();
         var size = legs.size();
@@ -215,11 +216,11 @@ public class FlightShoppingValidator implements ConstraintValidator<FlightShoppi
      */
     private boolean flightPairValidate(FlightLegRQ body) {
 
-        if (body.getOrigin() == null || body.getDestination() == null || body.getDate() == null) {
+        if (body.getDeparture() == null || body.getArrival() == null || body.getDate() == null) {
             return false;
         }
 
-        return body.getOrigin().equalsIgnoreCase(body.getDestination());
+        return body.getDeparture().equalsIgnoreCase(body.getArrival());
     }
 
 

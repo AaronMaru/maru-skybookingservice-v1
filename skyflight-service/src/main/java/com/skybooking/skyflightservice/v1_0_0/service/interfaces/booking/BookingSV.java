@@ -28,6 +28,6 @@ public interface BookingSV extends BookingDataSV, MetadataSV {
      * @param pnr
      * @return Boolean
      */
-    Boolean cancel(String pnr);
+    void cancel(Integer pnr);
 
 }

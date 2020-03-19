@@ -134,8 +134,14 @@ public class BookingOriginDestinationEntity {
     @Column(name = "layover")
     private Integer layover;
 
+    @Column(name = "adjustment_date")
+    private Integer adjustmentDate = 0;
+
     @Column(name = "parent_id")
     private Integer parentId;
+
+    @Column(name = "airline_ref")
+    private String airlineRef;
 
     @CreationTimestamp
     @Column(name = "created_at")

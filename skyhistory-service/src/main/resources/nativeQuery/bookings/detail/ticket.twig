@@ -1,0 +1,12 @@
+SELECT
+	IFNULL(bTicket.ticket_number, '') AS ticketNumber,
+	bTicket.first_name AS firstName,
+	bTicket.last_name AS lastName,
+	CASE WHEN bTicket.pass_type = 'Adult' THEN "ADT"
+	    WHEN bTicket.pass_type = 'Child' THEN "CNN"
+	    WHEN bTicket.pass_type = 'Infant' THEN "INF"
+	END AS passType
+
+FROM bookings AS b
+LEFT JOIN ( SELECT * FROM booking_airtickets AS bTicket ) bTicket ON bTicket.booking_id = b.id
+WHERE b.id = :bookingId

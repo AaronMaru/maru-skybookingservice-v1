@@ -2,30 +2,39 @@ SELECT
 b.id AS bookingId,
 b.booking_code AS bookingCode,
 b.itinerary_ref AS pnrCode,
-b.trip_type AS tripType,
+CASE
+WHEN b.trip_type = 'OneWay' THEN :ONEWAY
+WHEN b.trip_type = 'Return' THEN :ROUND
+WHEN b.trip_type = 'Other' THEN :MULTICITY
+END AS tripType,
 b.cont_email AS contEmail,
 b.cont_phone AS contPhone,
 b.cont_phonecode AS contPhoneCode,
-(SELECT CONCAT(su.last_name,' ', su.first_name) AS staffName
+b.stakeholder_user_id AS skyuserId,
+(SELECT CONCAT(su.last_name,' ', su.first_name) AS skyuserName
 	FROM stakeholder_users su
 	WHERE su.id = b.stakeholder_user_id
-) AS staffName,
-(SELECT CASE WHEN SUM(`pass_qty`) IS NOT NULL THEN SUM(`pass_qty`) ELSE 0 END
+) AS skyuserName,
+(SELECT IFNULL(su.photo, 'default.png')
+	FROM stakeholder_users su
+	WHERE su.id = b.stakeholder_user_id
+) AS skyuserPhoto,
+(SELECT IFNULL(SUM(`pass_qty`), 0)
 	FROM booking_travel_itineraries bti
 	WHERE bti.booking_id = b.id
 	AND bti.pass_type = "ADT"
 ) AS `adult`,
-(SELECT CASE WHEN SUM(`pass_qty`) IS NOT NULL THEN SUM(`pass_qty`) ELSE 0 END
+(SELECT IFNULL(SUM(`pass_qty`), 0)
 	FROM booking_travel_itineraries bti
 	WHERE bti.booking_id = b.id
 	AND bti.pass_type = "CNN"
 ) AS `child`,
-(SELECT CASE WHEN SUM(`pass_qty`) IS NOT NULL THEN SUM(`pass_qty`) ELSE 0 END
+(SELECT IFNULL(SUM(`pass_qty`), 0)
 	FROM booking_travel_itineraries bti
 	WHERE bti.booking_id = b.id
 	AND bti.pass_type = "INF"
 ) AS `infant`,
-(SELECT CASE WHEN SUM(`pass_qty`) IS NOT NULL THEN SUM(`pass_qty`) ELSE 0 END
+(SELECT IFNULL(SUM(`pass_qty`), 0)
 	FROM booking_travel_itineraries bti
 	WHERE bti.booking_id = b.id
 ) AS `totalPass`,
@@ -50,9 +59,7 @@ b.currency_code AS currencyCode,
 b.cont_fullname AS contName,
 b.created_at AS bookDate,
 b.`status`,
-CASE
-
-	WHEN (b.`status` = 11 AND (
+CASE WHEN (b.`status` = 11 AND (
 
 				SELECT COUNT(bod.id)
 				FROM booking_origin_destinations bod
@@ -60,19 +67,19 @@ CASE
 
 				-- Where Date and Convert UTZ date
 				AND DATE(
-
-					-- Flight depature datetime and convert to UTC
-					CONVERT_TZ(bod.dep_date, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
-
-					-- User locale current time zone and convert to UTC
-					) >= CONVERT_TZ(CURRENT_TIMESTAMP, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
+                        -- Flight depature datetime and convert to UTC
+                        CONVERT_TZ(bod.dep_date, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
+					) >= DATE(
+                        -- User locale current time zone and convert to UTC
+                        CONVERT_TZ(CURRENT_TIMESTAMP, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
+					)
 
 				ORDER BY bod.id DESC
 				LIMIT 1
 
 			) > 0
 
-		) THEN "upcoming"
+		) THEN :UPCOMING
 
 	WHEN (b.`status` = 11 AND (
 
@@ -82,22 +89,22 @@ CASE
 
 				-- Where Date and Convert TZ date
 				AND DATE(
-
-					-- Flight depature datetime and convert to UTC
-					CONVERT_TZ(bod.dep_date, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
-
-					-- User locale current time zone and convert to UTC
-					) < CONVERT_TZ(CURRENT_TIMESTAMP, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ) , '+00:00')
+                        -- Flight depature datetime and convert to UTC
+                        CONVERT_TZ(bod.dep_date, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
+					) < DATE(
+                        -- User locale current time zone and convert to UTC
+                        CONVERT_TZ(CURRENT_TIMESTAMP, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
+					)
 
 				ORDER BY bod.id DESC
 				LIMIT 1
 
 			) > 0
 
-		) THEN "complete"
+		) THEN :COMPLETED
 
-	WHEN (b.`status` IN (3)) THEN "cancel"
-	WHEN (b.`status` IN (10, 12, 4)) THEN  "fail"
+	WHEN (b.`status` IN (3)) THEN :CANCELLED
+	WHEN (b.`status` IN (1, 10, 12, 4)) THEN  :FAILED
 
 END AS statusKey
 
@@ -105,7 +112,7 @@ FROM bookings b
 
 
 -- Condition by Booking status
-WHERE b.status IN (11, 10, 4, 12, 3)
+WHERE b.status IN (1, 11, 10, 4, 12, 3)
 
 -- CHECK USERS
 AND CASE WHEN :stake = "skyuser"
@@ -113,9 +120,9 @@ AND CASE WHEN :stake = "skyuser"
     ELSE
         -- Condition for Skyowner
         CASE WHEN
-                :role = 'admin'
+                :role = 'ADMIN'
             THEN
-                b.stakeholder_user_id = :skyuserId OR b.stakeholder_company_id = :companyId
+                b.stakeholder_company_id = :companyId
             ELSE
                 b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id = :companyId
             END
@@ -124,7 +131,7 @@ AND CASE WHEN :stake = "skyuser"
 
 -- FILTER BOOKING
 AND CASE WHEN
-        :action = 'filter'
+        :action = 'FILTER'
     THEN
 
         -- Param: startRange and endRange
@@ -133,42 +140,42 @@ AND CASE WHEN
         -- By trip type
         -- Param: tripType
         AND CASE WHEN
-                :tripType != 'all'
+                :tripType != 'ALL'
             THEN
                 b.trip_type = :tripType
             ELSE
-                b.status IN (11, 10, 4, 12, 3)
+                b.status IN (1, 11, 10, 4, 12, 3)
             END
 
         -- By stakeholder name
         -- Param: bookByName
         AND CASE WHEN
-                :bookByName != 'all'
+                :bookByName != 'ALL'
             THEN
                 (SELECT COUNT(su.id) FROM stakeholder_users su WHERE su.id = b.stakeholder_user_id AND CONCAT(su.last_name,' ', su.first_name) LIKE '%' :bookByName '%') > 0
             ELSE
-                b.status IN (11, 10, 4, 12, 3)
+                b.status IN (1, 11, 10, 4, 12, 3)
             END
 
 
         -- By Flying From and To
         -- Param: flyingFrom, flyingTo
         AND CASE WHEN
-                b.trip_type = 'Return'
+                b.trip_type = 'RETURN'
             THEN
 
                 -- Condition with return
                 ( SELECT COUNT(fbod.id) FROM booking_origin_destinations fbod
                     WHERE fbod.booking_id = b.id
                     AND fbod.parent_id IS NOT NULL
-                    AND CASE WHEN :flyingFrom != 'all' THEN fbod.dep_location_code = :flyingFrom ELSE b.status IN (11, 10, 4, 12, 3) END
+                    AND CASE WHEN :flyingFrom != 'ALL' THEN fbod.dep_location_code = :flyingFrom ELSE b.status IN (1, 11, 10, 4, 12, 3) END
                     ORDER BY fbod.id ASC
                     LIMIT 1
                 ) > 0  AND ( SELECT COUNT(fbod.id)
                     FROM booking_origin_destinations fbod
                     WHERE fbod.booking_id = b.id
                     AND fbod.parent_id IS NOT NULL
-                    AND CASE WHEN :flyingTo != 'all' THEN fbod.dep_location_code = :flyingTo ELSE b.status IN (11, 10, 4, 12, 3) END
+                    AND CASE WHEN :flyingTo != 'ALL' THEN fbod.dep_location_code = :flyingTo ELSE b.status IN (1, 11, 10, 4, 12, 3) END
                     ORDER BY fbod.id DESC
                     LIMIT 1
                 ) > 0
@@ -180,14 +187,14 @@ AND CASE WHEN
                     FROM booking_origin_destinations fbod
                     WHERE fbod.booking_id = b.id
                     AND fbod.parent_id IS NOT NULL
-                    AND CASE WHEN :flyingFrom != 'all' THEN fbod.dep_location_code = :flyingFrom ELSE b.status IN (11, 10, 4, 12, 3) END
+                    AND CASE WHEN :flyingFrom != 'ALL' THEN fbod.dep_location_code = :flyingFrom ELSE b.status IN (1, 11, 10, 4, 12, 3) END
                     ORDER BY fbod.id ASC
                     LIMIT 1
                 ) > 0  AND ( SELECT COUNT(fbod.id)
                     FROM booking_origin_destinations fbod
                     WHERE fbod.booking_id = b.id
                     AND fbod.parent_id IS NOT NULL
-                    AND  CASE WHEN :flyingTo != 'all' THEN fbod.arr_location_code = :flyingTo ELSE b.status IN (11, 10, 4, 12, 3) END
+                    AND  CASE WHEN :flyingTo != 'ALL' THEN fbod.arr_location_code = :flyingTo ELSE b.status IN (1, 11, 10, 4, 12, 3) END
                     ORDER BY fbod.id DESC
                     LIMIT 1
                 ) > 0
@@ -197,95 +204,97 @@ AND CASE WHEN
         -- By Class Name
         -- Param: className
         AND CASE WHEN
-                :className != 'all'
+                :className != 'ALL'
             THEN ( SELECT COUNT(fbod.id)
                     FROM booking_origin_destinations fbod
                     WHERE fbod.booking_id = b.id
                     AND fbod.parent_id IS NOT NULL
-                    AND CASE WHEN :className = 'economy' THEN fbod.cabin_code = 'Y' WHEN :className = 'first' THEN fbod.cabin_code = 'F' ELSE fbod.cabin_code = 'C' END
+                    AND CASE WHEN :className = 'ECONOMY' THEN fbod.cabin_code = 'Y' WHEN :className = 'FIRST' THEN fbod.cabin_code = 'F' ELSE fbod.cabin_code = 'C' END
                 ) > 0
             ELSE
-                 b.status IN (11, 10, 4, 12, 3)
+                 b.status IN (1, 11, 10, 4, 12, 3)
             END -- The end of Class Name
 
         -- By date
         -- Param: bookDate
         AND CASE WHEN
-                :bookDate != 'all'
+                :bookDate != 'ALL'
             THEN
                 Date(b.created_at) = :bookDate
             ELSE
-                b.status IN (11, 10, 4, 12, 3)
+                b.status IN (1, 11, 10, 4, 12, 3)
             END -- The end of date
 
         -- By Payment Type
         -- Param: paymentType
         AND CASE WHEN
-                :paymentType != 'all'
+                :paymentType != 'ALL'
             THEN
                 ( SELECT COUNT(bpt.id)
                 FROM booking_payment_transactions bpt
                 WHERE bpt.method = :paymentType
                 ) > 0
             ELSE
-                b.status IN (11, 10, 4, 12, 3)
+                b.status IN (1, 11, 10, 4, 12, 3)
             END -- The end of Payment Type
 
         -- By booking status
         -- Param: bookStatus
         AND CASE WHEN
-                :bookStatus != 'all'
+                :bookStatus != 'ALL'
             THEN
 
                 -- Case of COMPLETE AND UPCOMING
-                CASE WHEN ( :bookStatus = 'complete' OR :bookStatus = 'upcoming' ) THEN
-
-                    CASE WHEN -- Case COMPLETE
-                        :bookStatus = 'complete'
-                        THEN (
+                CASE WHEN ( b.status = 11 AND :bookStatus = :COMPLETED ) THEN
+                        (
                             SELECT COUNT(bod.id) FROM booking_origin_destinations bod
                             WHERE bod.booking_id = b.id
                             -- Where Date and Convert TZ date
-                            AND -- Flight depature datetime and convert to UTC
-                                DATE(CONVERT_TZ(bod.dep_date, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
-
-                                -- User locale current time zone and convert to UTC
-                                ) < CONVERT_TZ(CURRENT_TIMESTAMP, CONCAT(CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ) , '+00:00')
+                            AND DATE(
+                                    -- Flight depature datetime and convert to UTC
+                                    CONVERT_TZ(bod.dep_date, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
+                                ) < DATE(
+                                    -- User locale current time zone and convert to UTC
+                                    CONVERT_TZ(CURRENT_TIMESTAMP, CONCAT(CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ) , '+00:00')
+                                )
                             ORDER BY bod.id DESC
                             LIMIT 1 ) > 0
-
-                     ELSE -- Case UPCOMING
-                        ( SELECT COUNT(bod.id)
+                    WHEN ( b.status = 11 AND :bookStatus = :UPCOMING ) THEN
+                            ( SELECT COUNT(bod.id)
                             FROM booking_origin_destinations bod
                             WHERE bod.booking_id = b.id
 
                             -- Where Date and Convert TZ date
                             AND DATE(
-                                    -- Flight depature datetime and convert to UTC
-                                    CONVERT_TZ(bod.dep_date, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
-                                    -- User locale current time zone and convert to UTC
-                                    ) >= CONVERT_TZ(CURRENT_TIMESTAMP, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END  ), '+00:00')
+                                        -- Flight depature datetime and convert to UTC
+                                        CONVERT_TZ(bod.dep_date, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
+
+                                    ) >= DATE(
+                                        -- User locale current time zone and convert to UTC
+                                        CONVERT_TZ(CURRENT_TIMESTAMP, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END  ), '+00:00')
+                                    )
 
                             ORDER BY bod.id DESC
                             LIMIT 1) > 0
-                     END
 
+                    WHEN :bookStatus = :CANCELLED THEN
+                        b.`status` = 3
 
-                ELSE -- Case CANCEL
-                    b.`status` = 3
-                END
+                    WHEN :bookStatus = :FAILED THEN
+                        b.`status` IN (4, 10)
+                    END
 
             ELSE
-                 b.status IN (11, 10, 4, 12, 3)
+                 b.status IN (1, 11, 10, 4, 12, 3)
             END -- The end of booking status
 
     ELSE
-        b.status IN (11, 10, 4, 12, 3)
+        b.status IN (1, 11, 10, 4, 12, 3)
     END -- The end of filter
 
 -- SEARCH BOOKING
 AND CASE WHEN
-        :action = 'search'
+        :action = 'SEARCH'
     THEN
 
         -- By trip type
@@ -308,11 +317,10 @@ AND CASE WHEN
             FROM booking_origin_destinations fbod
             WHERE fbod.booking_id = b.id
             AND fbod.parent_id IS NOT NULL
-            AND (
-                IF( :keyword = 'economy', fbod.cabin_code = 'Y' , 0)
-                OR IF( :keyword = 'first', fbod.cabin_code = 'F' , 0)
-                OR IF( :keyword = 'business', fbod.cabin_code = 'C' , 0 )
-            )
+            AND CASE WHEN :keyword = 'ECONOMY' THEN  fbod.cabin_code = 'Y'
+                     WHEN :keyword = 'FIRST' THEN  fbod.cabin_code = 'F'
+                     WHEN :keyword = 'BUSINESS' THEN  fbod.cabin_code = 'C'
+                     END
         ) > 0
 
         -- By stakeholder name
@@ -323,11 +331,7 @@ AND CASE WHEN
         ) > 0
 
 		-- By booking status
-		OR IF( :keyword = 'complete' OR :keyword = 'upcoming' ,
-
-                -- If TRUE condition between COMPLETE and UPCOMING
-                IF( :keyword = 'complete',
-
+		OR CASE WHEN (b.status = 11 AND :keyword = :COMPLETED)  THEN
                     -- Condition for complete
                     (   SELECT COUNT(bod.id)
                         FROM booking_origin_destinations bod
@@ -335,48 +339,45 @@ AND CASE WHEN
 
                         -- Where Date and Convert TZ date
                         AND DATE(
-
-                                -- Flight depature datetime and convert to UTC
-                                CONVERT_TZ(bod.dep_date, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ) , '+00:00')
-
-                                -- User locale current time zone and convert to UTC
-                                ) < CONVERT_TZ(CURRENT_TIMESTAMP, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END) , '+00:00')
+                                    -- Flight depature datetime and convert to UTC
+                                    CONVERT_TZ(bod.dep_date, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ) , '+00:00')
+                                ) < DATE(
+                                    -- User locale current time zone and convert to UTC
+                                    CONVERT_TZ(CURRENT_TIMESTAMP, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END) , '+00:00')
+                                )
 
                         ORDER BY bod.id DESC
                         LIMIT 1
 
                     ) > 0
-
-                    ,
-
-                    -- Condition for upcoming
+                WHEN (b.status = 11 AND :keyword = :UPCOMING) THEN
                     (   SELECT COUNT(bod.id)
                         FROM booking_origin_destinations bod
                         WHERE bod.booking_id = b.id
 
                         -- Where Date and Convert TZ date
                         AND DATE(
+                                    -- Flight depature datetime and convert to UTC
+                                    CONVERT_TZ(bod.dep_date, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
 
-                                -- Flight depature datetime and convert to UTC
-                                CONVERT_TZ(bod.dep_date, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
-
-                                -- User locale current time zone and convert to UTC
-                                ) >= CONVERT_TZ(CURRENT_TIMESTAMP, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
+                                ) >= DATE(
+                                    -- User locale current time zone and convert to UTC
+                                    CONVERT_TZ(CURRENT_TIMESTAMP, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
+                                )
 
                         ORDER BY bod.id DESC
                         LIMIT 1
 
                     ) > 0
 
-                )
-
-            ,
-                -- Booking status Cancelation and Fail
-                IF( :keyword = 'cancel',  b.`status` = 3 , b.`status` IN (10, 12, 4) )
-		    )
+                WHEN  :keyword = :CANCELLED THEN
+                    b.`status` = 3
+                WHEN  :keyword = :FAILED THEN
+                    b.`status` IN (4, 10)
+		        END
 
     ELSE
-        b.status IN (11, 10, 4, 12, 3)
+        b.status IN (1, 11, 10, 4, 12, 3)
     END
 
 GROUP BY pnrCode

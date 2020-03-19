@@ -1,5 +1,6 @@
 package com.skybooking.staffservice.v1_0_0.util;
 
+import com.skybooking.staffservice.v1_0_0.util.auth.UserToken;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.json.JsonParser;
@@ -39,4 +40,14 @@ public class JwtUtils {
             return null;
         }
     }
+
+    public UserToken getUserToken() {
+        UserToken userToken = new UserToken();
+        userToken.setUserId(this.getClaim("userId", Long.class));
+        userToken.setCompanyId(this.getClaim("companyId", Long.class));
+        userToken.setStakeholderId(this.getClaim("stakeholderId", Long.class));
+        userToken.setUserRole((this.getClaim("userRole", String.class) != null) ? this.getClaim("userRole", String.class) : "");
+        return userToken;
+    }
+
 }

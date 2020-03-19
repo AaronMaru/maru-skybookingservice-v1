@@ -14,6 +14,7 @@ public class PriceDetail implements Serializable {
     private String currency;
     private BigDecimal total;
     private BigDecimal totalAvg;
+    private BigDecimal totalCommissionAmount;
     private String baseCurrency;
     private BigDecimal baseCurrencyTotal;
     private BigDecimal baseCurrencyTotalAvg;

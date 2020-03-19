@@ -1,0 +1,15 @@
+SELECT
+	CASE WHEN bAll.pass_type = 'Adult' THEN 'ADT'
+		  WHEN bAll.pass_type = 'Child' THEN 'CNN'
+		  WHEN bAll.pass_type = 'Infant' THEN 'INF'
+		END AS passType,
+	bAll.is_piece AS isPiece,
+	bAll.pieces AS piece,
+	CASE 	WHEN (bAll.is_piece = 1 AND bAll.pass_type = 'Adult' ) THEN 20
+			WHEN (bAll.is_piece = 1 AND bAll.pass_type = 'Child' ) THEN 20
+			WHEN (bAll.is_piece = 1 AND bAll.pass_type = 'Infant' ) THEN 10
+			ELSE bAll.weight
+		  	END AS weight,
+	CASE WHEN bAll.weight = 0 THEN 'kg' ELSE bAll.unit END AS unit
+FROM booking_baggage_allowances AS bAll
+WHERE bAll.baggage_id = :baggageId

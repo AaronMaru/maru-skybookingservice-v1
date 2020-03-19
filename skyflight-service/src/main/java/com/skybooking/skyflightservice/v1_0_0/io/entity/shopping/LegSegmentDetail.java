@@ -12,7 +12,8 @@ public class LegSegmentDetail implements Serializable {
     private long duration;
     private long layoverDuration;
     private String layoverAirport;
-    private int dateAdjustment;
+    private int previousDateAdjustment;
+    private int dateAdjustment = 0;
     private String bookingCode;
     private int seatsRemain;
     private String cabin;

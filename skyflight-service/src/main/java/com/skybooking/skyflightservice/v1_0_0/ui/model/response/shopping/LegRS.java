@@ -11,6 +11,7 @@ public class LegRS implements Serializable {
 
     private String id;
     private int duration;
+    private int layoverDuration;
     private String departure;
     private String departureTime;
     private String departureTerminal;

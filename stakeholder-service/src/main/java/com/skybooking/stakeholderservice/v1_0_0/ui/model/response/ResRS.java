@@ -3,13 +3,22 @@ package com.skybooking.stakeholderservice.v1_0_0.ui.model.response;
 public class ResRS {
 
     private int status;
-    private String message;
+    private String message = "";
     private Object data;
 
     public ResRS(int status, String message, Object data) {
         this.status = status;
         this.message = message;
         this.data = data;
+    }
+
+    public ResRS(int status) {
+        this.status = status;
+    }
+
+    public ResRS(int status, String message) {
+        this.status = status;
+        this.message = message;
     }
 
     public int getStatus() {

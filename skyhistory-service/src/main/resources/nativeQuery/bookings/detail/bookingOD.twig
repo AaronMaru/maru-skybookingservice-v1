@@ -1,0 +1,11 @@
+SELECT
+bod.id,
+IFNULL(bod.elapsed_time, 0) AS elapsedTime,
+bod.multiple_air_status AS multiAirlineStatus,
+IFNULL(bod.multiple_air_url, '') AS multiAirlineUrl,
+IFNULL(bod.adjustment_date, 0) AS adjustmentDate,
+bod.`stop`
+
+FROM booking_origin_destinations bod
+WHERE bod.parent_id IS NULL
+AND bod.booking_id = :bookingId

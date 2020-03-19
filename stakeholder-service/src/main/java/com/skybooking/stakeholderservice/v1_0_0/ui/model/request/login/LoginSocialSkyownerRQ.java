@@ -16,7 +16,7 @@ public class LoginSocialSkyownerRQ {
     private String providerId;
 
     @NotEmpty(message = "Please provide provider")
-    @Include(contains = "facebook|google", delimiter = "\\|")
+    @Include(contains = "facebook|google|apple", delimiter = "\\|")
     private String provider;
 
     @NotEmpty(message = "Please provide first name")

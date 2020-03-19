@@ -13,6 +13,7 @@ public class Leg implements Serializable {
     @Id
     private String id;
     private long duration;
+    private long layoverDuration;
     private String departure;
     private String departureTime;
     private String departureTerminal;

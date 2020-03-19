@@ -1,0 +1,7 @@
+SELECT cclo.name
+FROM country_city_locale AS cclo
+WHERE cclo.locale_id = 5
+AND cclo.country_city_id = (SELECT ai.country_city_id
+                                FROM airport_info ai
+                                WHERE ai.code = 'SIN'
+                            )

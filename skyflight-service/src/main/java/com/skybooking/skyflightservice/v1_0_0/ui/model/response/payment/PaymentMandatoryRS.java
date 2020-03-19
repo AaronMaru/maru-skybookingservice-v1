@@ -14,5 +14,6 @@ public class PaymentMandatoryRS {
     private String phoneNumber;
     private Integer skyuserId;
     private Integer companyId;
+    private Integer bookingId;
 
 }

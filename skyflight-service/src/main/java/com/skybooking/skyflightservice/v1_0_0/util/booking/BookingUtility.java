@@ -1,5 +1,6 @@
 package com.skybooking.skyflightservice.v1_0_0.util.booking;
 
+import com.skybooking.skyflightservice.constant.TripTypeEnum;
 import com.skybooking.skyflightservice.constant.passenger.PassengerCode;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.booking.BookingEntity;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.MarkupNQ;
@@ -13,12 +14,15 @@ import com.skybooking.skyflightservice.v1_0_0.ui.model.request.payment.PaymentMa
 import com.skybooking.skyflightservice.v1_0_0.util.calculator.NumberFormatter;
 import com.skybooking.skyflightservice.v1_0_0.util.classes.booking.PriceInfo;
 import com.skybooking.skyflightservice.v1_0_0.util.passenger.PassengerUtil;
+import org.bouncycastle.operator.bc.BcAsymmetricKeyUnwrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
+
+import static com.skybooking.skyflightservice.constant.TripTypeEnum.*;
 
 
 @Service
@@ -39,16 +43,16 @@ public class BookingUtility {
      * get trip type for insert into database
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @param type
+     * @param tripTypeEnum
      * @return String
      */
-    public String getTripType(String type) {
+    public String getTripType(TripTypeEnum tripTypeEnum) {
 
-        var tripType = switch (type.toLowerCase()) {
-            case "one" -> "OneWay";
-            case "round" -> "Return";
-            case "multiple" -> "Other";
-            default -> throw new IllegalArgumentException("Invalid trip type: " + type);
+        var tripType = switch (tripTypeEnum) {
+            case ONEWAY -> "OneWay";
+            case ROUND -> "Return";
+            case MULTICITY -> "Other";
+            default -> throw new IllegalArgumentException("Invalid trip type.");
         };
 
         return tripType;
@@ -262,7 +266,7 @@ public class BookingUtility {
      * @param requestId
      * @return String
      */
-    public String getBookingTripType(String requestId) {
+    public TripTypeEnum getBookingTripType(String requestId) {
 
         var query = querySV.flightShoppingById(requestId);
 

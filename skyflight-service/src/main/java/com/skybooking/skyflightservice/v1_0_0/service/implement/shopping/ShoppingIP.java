@@ -2,6 +2,7 @@ package com.skybooking.skyflightservice.v1_0_0.service.implement.shopping;
 
 
 import com.skybooking.skyflightservice.v1_0_0.client.distributed.action.ShoppingAction;
+import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.shopping.FlightLegRQ;
 import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.response.bargainfinder.SabreBargainFinderRS;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.shopping.ShoppingResponseEntity;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.shopping.ShoppingTransformEntity;
@@ -16,6 +17,7 @@ import com.skybooking.skyflightservice.v1_0_0.ui.model.request.booking.BookingCr
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.shopping.FlightDetailRQ;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.shopping.FlightShoppingRQ;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.response.shopping.*;
+import com.skybooking.skyflightservice.v1_0_0.util.datetime.DatetimeFormat;
 import com.skybooking.skyflightservice.v1_0_0.util.header.HeaderBean;
 import com.skybooking.skyflightservice.v1_0_0.util.shopping.ShoppingUtils;
 import org.eclipse.collections.api.map.MutableMap;
@@ -61,7 +63,27 @@ public class ShoppingIP implements ShoppingSV {
      */
     @Override
     public SabreBargainFinderRS shopping(FlightShoppingRQ shoppingRQ) {
-        return shoppingAction.getShopping(shoppingRQ).block();
+
+        var flightShoppingRQ = new com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.shopping.FlightShoppingRQ();
+
+        flightShoppingRQ.setTripType(shoppingRQ.getTripType().toString());
+        flightShoppingRQ.setClassType(shoppingRQ.getClassType());
+        flightShoppingRQ.setAdult(shoppingRQ.getAdult());
+        flightShoppingRQ.setChild(shoppingRQ.getChild());
+        flightShoppingRQ.setInfant(shoppingRQ.getInfant());
+
+        shoppingRQ.getLegs().forEach(flightLegRQ -> {
+
+            var leg = new FlightLegRQ();
+            leg.setOrigin(flightLegRQ.getDeparture());
+            leg.setDestination(flightLegRQ.getArrival());
+            leg.setDate(flightLegRQ.getDate().toString());
+
+            flightShoppingRQ.getLegs().add(leg);
+        });
+
+
+        return shoppingAction.getShopping(flightShoppingRQ).block();
     }
 
 

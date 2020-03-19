@@ -5,10 +5,12 @@ import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.SkyuserIdS
 import com.skybooking.staffservice.v1_0_0.ui.model.response.staff.StaffPaginationRS;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
+
 @Service
 public interface StaffSV {
 
-    StaffPaginationRS getStaff();
+    StaffPaginationRS getStaff(HttpServletRequest request);
 
     void deactiveStaff(DeactiveStaffRQ deactiveStaffRQ);
 

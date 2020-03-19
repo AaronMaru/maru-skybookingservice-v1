@@ -3,7 +3,6 @@ package com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.booking;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.util.Date;
 import java.util.List;
 
 @Data
@@ -13,7 +12,9 @@ public class BookingRS {
     private String bookingCode;
     private String pnrCode;
     private String tripType;
-    private String staffName;
+    private Integer skyuserId;
+    private String skyuserName;
+    private String skyuserPhoto;
     private BigDecimal adult;
     private BigDecimal child;
     private BigDecimal infant;
@@ -22,7 +23,7 @@ public class BookingRS {
     private String cabinCode;
     private BigDecimal totalAmount;
     private BigDecimal disPayment;
-    private Date bookDate;
+    private String bookDate;
     private String currencyCode;
     private String contName;
     private Byte status;
