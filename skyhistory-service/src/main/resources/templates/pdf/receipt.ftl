@@ -204,23 +204,23 @@
                 <ul>
                     <li>
                         <b>${booking_reference??? then(booking_reference, 'NO LABEL YET')}</b>
-                        <span>:&nbsp; ${data.pnrCode}</span>
+                        <span>:&nbsp; ${data.bookingInfo.pnrCode}</span>
                     </li>
                     <li>
                         <b>${transaction_id??? then(transaction_id, 'NO LABEL YET')}</b>
-                        <span>:&nbsp; ${data.transId}</span>
+                        <span>:&nbsp; ${data.bookingInfo.transactionCode}</span>
                     </li>
                     <li>
                         <b>${booking_no??? then(booking_no, 'NO LABEL YET')}</b>
-                        <span>:&nbsp; ${data.bookingCode}</span>
+                        <span>:&nbsp; ${data.bookingInfo.bookingCode}</span>
                     </li>
                     <li>
                         <b>${payment_method??? then(payment_method, 'NO LABEL YET')}</b>
-                        <span>:&nbsp; ${data.payMethod}</span>
+                        <span>:&nbsp; ${data.paymentInfo.cardType}</span>
                     </li>
                     <li>
                         <b>${booking_date??? then(booking_date, 'NO LABEL YET')}</b>
-                        <span>:&nbsp; ${data.bookDate}</span>
+                        <span>:&nbsp; ${data.bookingInfo.bookingDate?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["dd MMM YYYY"]}</span>
                     </li>
                 </ul>
             </div>
@@ -230,15 +230,17 @@
             <table>
                 <tbody>
                 <tr>
-                    <th>${flight_no??? then(flight_no, 'NO LABEL YET')}</th>
+                    <th>${flight_no??? then(flight_no, 'NO LABEL YET')}/${airline_ref??? then(airline_ref, 'NO LABEL YET')}</th>
                     <th>${flight_date??? then(flight_date, 'NO LABEL YET')}</th>
                     <th>${route??? then(route, 'NO LABEL YET')}</th>
                 </tr>
-                <#list data.bookingOd as item>
+                <#list data.itineraryInfo as itemItineraryInfo>
+                        <#assign itinerarySegmentFirst = itemItineraryInfo.itinerarySegment?first/>
+                        <#assign itinerarySegmentLast = itemItineraryInfo.itinerarySegment?last/>
                     <tr>
-                        <td>${item.fSegs.flightNumber}</td>
-                        <td>${item.fSegs.depDateTime?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["EEE, dd MMM YYYY"]}</td>
-                        <td>${item.fSegs.depCity} --- ${item.fSegs.arrCity}</td>
+                        <td>${itinerarySegmentFirst.airlineCode}${itinerarySegmentFirst.flightNumber}${itinerarySegmentFirst.airlineRef??? then(' / ' + itinerarySegmentFirst.airlineRef, '')}</td>
+                        <td>${itinerarySegmentFirst.departureInfo.date?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["EEE, dd MMM YYYY"]}</td>
+                        <td>${itinerarySegmentFirst.departureInfo.city}(${itinerarySegmentFirst.departureInfo.locationCode}) --- ${itinerarySegmentLast.arrivalInfo.city}(${itinerarySegmentLast.arrivalInfo.locationCode})</td>
                     </tr>
                 </#list>
                 </tbody>
@@ -254,12 +256,12 @@
                     <th>${pass_type??? then(pass_type, 'NO LABEL YET')}</th>
                     <th>${class??? then(class, 'NO LABEL YET')}</th>
                 </tr>
-                <#list data.airTickets as item>
+                <#list data.ticketInfo as item>
                     <tr>
                         <td>${item.ticketNumber}</td>
                         <td>${item.lastName} / ${item.firstName}</td>
                         <td>${item.passType}</td>
-                        <td>${data.cabinName}</td>
+                        <td>${data.bookingInfo.cabinName}</td>
                     </tr>
                 </#list>
                 </tbody>
@@ -276,7 +278,7 @@
                     <th style="text-align:right;">${total??? then(total, 'NO LABEL YET')}</th>
                 </tr>
 
-                <#list data.airItinPrices as item>
+                <#list data.priceInfo.priceBreakdown as item>
                     <tr>
                         <#if item.passType == "ADT">
                             <td>ADULT</td>
@@ -285,28 +287,36 @@
                         <#else>
                             <td>INFANT</td>
                         </#if>
-                        <td>USD ${item.baseFare + data.markupAmount}</td>
+                        <td>USD ${item.baseFare}</td>
                         <td>USD ${item.totalTax}</td>
                         <td style="text-align:right;"><b>USD ${item.totalAmount} X ${item.passQty}</b></td>
                     </tr>
                 </#list>
-                <tr>
-                    <td>${discount_payment??? then(discount_payment, 'NO LABEL YET')}</td>
-                    <td></td>
-                    <td></td>
-                    <td style="text-align:right;">${data.disPayment}</td>
-                </tr>
+
                 <tr class="tot-sec">
-                    <td><b>${total??? then(total, 'NO LABEL YET')}</b></td>
+
+                    <td><b>${total_amount??? then(total_amount, 'NO LABEL YET')}</b></td>
                     <td></td>
                     <td></td>
-                    <td style="text-align:right;"><b>${data.totalAmount}</b></td>
+                    <td style="text-align:right;"><b>${data.priceInfo.totalAmount}</b></td>
+                </tr>
+                <tr>
+                    <td>${discount??? then(discount, 'NO LABEL YET')}</td>
+                    <td></td>
+                    <td></td>
+                    <td style="text-align:right;">${data.priceInfo.discountAmount}</td>
+                </tr>
+                <tr>
+                    <td>${paid_amount??? then(paid_amount, 'NO LABEL YET')}</td>
+                    <td></td>
+                    <td></td>
+                    <td style="text-align:right;">${data.priceInfo.paidAmount}</td>
                 </tr>
                 </tbody>
             </table>
         </div>
         <div class="rec-date">
-            <span><b>${e_receipt_issued_date??? then(e_receipt_issued_date, 'NO LABEL YET')} : </b> ${data.bookDate}</span>
+            <span><b>${e_receipt_issued_date??? then(e_receipt_issued_date, 'NO LABEL YET')} : </b> ${data.bookingInfo.bookingDate?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["dd MMM YYYY"]}</span>
             <p>${e_receipt_issued_date_desc??? then(e_receipt_issued_date_desc, 'NO LABEL YET')}</p>
         </div>
         <div class="term-info">

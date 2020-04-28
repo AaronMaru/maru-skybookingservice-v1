@@ -14,6 +14,7 @@ import org.eclipse.collections.impl.list.mutable.FastList;
 import org.eclipse.collections.impl.map.mutable.UnifiedMap;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -166,7 +167,6 @@ public class TransformSabre {
                     .toString();
 
                 priceDetail.setId(priceDetailId);
-                priceDetail.setCurrency("USD");
 
                 baggageDetail.setId(baggageDetailId);
 
@@ -217,18 +217,32 @@ public class TransformSabre {
         prices.forEachKeyValue((priceId, priceDetail) -> {
 
             var totalSummary = FastList.newList(priceDetail.getDetails())
-                .summarizeDouble(price -> NumberFormatter.amount(price.getBaseFare().add(price.getTax()).multiply(BigDecimal.valueOf(price.getQuantity())).doubleValue()));
+                .summarizeDouble(price -> NumberFormatter.amount(price.getBaseFare().add(price.getTax()).multiply(BigDecimal.valueOf(price.getQuantity())).doubleValue())).getSum();
 
-            var totalQuantitiesPassenger = FastList.newList(priceDetail.getDetails()).summarizeInt(Price::getQuantity);
+            var totalQuantitiesPassenger = FastList.newList(priceDetail.getDetails()).summarizeInt(PriceList::getQuantity).getSum();
+            var totalCommissionAmount = NumberFormatter.trimAmount(priceDetail.getDetails().stream().collect(Collectors.summarizingDouble(price -> price.getCommissionAmount().doubleValue())).getSum());
 
-            var totalAvg = totalSummary.getSum() / totalQuantitiesPassenger.getSum();
+//            var totalCommissionAmount = BigDecimal.valueOf(12);
 
-            var totalCommissionAmount = priceDetail.getDetails().stream().collect(Collectors.summarizingDouble(price -> price.getCommissionAmount().doubleValue()));
+            var grandTotal = BigDecimal.valueOf(totalSummary).subtract(totalCommissionAmount);
+            var grandTotalAvg = grandTotal.divide(BigDecimal.valueOf(totalQuantitiesPassenger), RoundingMode.HALF_UP);
+            var totalAverage = BigDecimal.valueOf(totalSummary).divide(BigDecimal.valueOf(totalQuantitiesPassenger), RoundingMode.HALF_DOWN);
 
-            priceDetail.setCurrency("USD");
-            priceDetail.setTotalCommissionAmount(NumberFormatter.trimAmount(totalCommissionAmount.getSum()));
-            priceDetail.setTotal(NumberFormatter.trimAmount(new BigDecimal(totalSummary.getSum())));
-            priceDetail.setTotalAvg(NumberFormatter.trimAmount(new BigDecimal(totalAvg)));
+            var price = new Price();
+            price.setCurrency("USD");
+            price.setTotalCommission(totalCommissionAmount);
+            price.setTotal(BigDecimal.valueOf(totalSummary));
+            price.setGrandTotalAverage(grandTotalAvg);
+            price.setGrandTotal(grandTotal);
+            price.setTotalAverage(totalAverage);
+
+            priceDetail.setTotalCommissionAmount(totalCommissionAmount);
+            priceDetail.setBasePrice(price);
+            priceDetail.setPrice(price);
+
+            if (totalCommissionAmount.doubleValue() > 0) {
+                priceDetail.setCommission(true);
+            }
 
         });
     }
@@ -275,7 +289,8 @@ public class TransformSabre {
      */
     private void setPriceDetail(PriceDetail priceDetail, PassengerInformation passenger) {
 
-        var price = new Price();
+        var price = new PriceList();
+
         price.setType(passenger.getPassengerType());
         price.setQuantity(passenger.getPassengerNumber());
         price.setBaseFare(passenger.getPassengerTotalFare().getEquivalentAmount());
@@ -285,6 +300,7 @@ public class TransformSabre {
         price.setCommissionPercentage(passenger.getPassengerTotalFare().getCommissionPercentage());
 
         priceDetail.getDetails().add(price);
+
         prices.put(priceDetail.getId(), priceDetail);
     }
 

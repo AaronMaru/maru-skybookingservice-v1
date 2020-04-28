@@ -22,4 +22,6 @@ public interface CompanyHasUserRP extends JpaRepository<StakeholderUserHasCompan
      */
     StakeholderUserHasCompanyEntity findByStakeholderCompanyIdAndStakeholderUserId(Long companyId, Long skyuserId);
 
+    @Query(value = "SELECT * FROM stakeholder_user_has_companies WHERE stakeholder_company_id = :companyId AND status = 1", nativeQuery = true)
+    StakeholderUserHasCompanyEntity findOwnerCompany(Long companyId);
 }

@@ -34,7 +34,7 @@ public class CurrencyControllerM {
      */
     @GetMapping(value = "currency")
     public ResRS getCurrencyByLocaleId() {
-        var responses = currencySV.findAllCurrencyByLocaleId(headerBean.getLocalizationId(null));
+        var responses = currencySV.findAllCurrencyByLocaleId(headerBean.getLocalizationId());
         return localization.resAPI(HttpStatus.OK, "res_succ", responses);
     }
 

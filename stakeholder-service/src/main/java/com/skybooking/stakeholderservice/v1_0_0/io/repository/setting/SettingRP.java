@@ -10,13 +10,14 @@ import java.util.List;
 @Repository
 public interface SettingRP extends JpaRepository<FrontendConfigEntity, Long> {
 
-
-
-
     /**
      * Get setting config
      */
     @Query(value = "SELECT * FROM frontend_config WHERE type IN('appstore', 'contact', 'third_party', 'social_link', '" +
             "', 'twitter', 'seo', 'facebook')", nativeQuery = true)
     List<FrontendConfigEntity> findAllByType();
+
+    @Query(value = "SELECT * FROM frontend_config WHERE name = :keyword AND type = 'appstore'", nativeQuery = true)
+    FrontendConfigEntity getDeepLink(String keyword);
+
 }

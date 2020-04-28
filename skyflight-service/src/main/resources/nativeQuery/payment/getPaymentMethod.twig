@@ -1,0 +1,11 @@
+SELECT
+    dpmd.type AS type,
+    dpmd.code AS code,
+    dpmd.method AS method,
+    dpmd.payment_id AS paymentId
+FROM
+    dis_payment_method_details AS dpmd
+WHERE
+    dpmd.status = 1
+AND
+    dpmd.code = :code

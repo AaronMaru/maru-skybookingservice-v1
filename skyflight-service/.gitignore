@@ -28,7 +28,9 @@ target/
 build/
 classes/
 
+!**/util/classes/
+
 ### VS Code ###
 .vscode/
 
-/src/main/resources/bootstrap.yml
+bootstrap.yml

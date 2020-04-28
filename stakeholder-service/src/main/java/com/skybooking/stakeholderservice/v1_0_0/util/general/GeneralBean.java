@@ -147,7 +147,7 @@ public class GeneralBean {
         int diffMin = (int) (diff / (60 * 1000));
 
         if (diffMin > 3) {
-            throw new GoneException("vf_expired", "");
+            throw new GoneException("vf_expired", null);
         }
 
     }
@@ -189,7 +189,7 @@ public class GeneralBean {
             int diffMin = (int) (diff / (60 * 1000));
 
             if ((verify.size() % 5) == 0 && diffMin < 60) {
-                throw new BadRequestException("sent_vf_limit", "");
+                throw new BadRequestException("sent_vf_limit", null);
             }
         }
     }
@@ -232,7 +232,7 @@ public class GeneralBean {
      */
     public void errorMultipart(MultipartFile multipartFile) {
         if (multipartFile != null && multipartFile.getSize() > 6000000) {
-            throw new BadRequestException("Oop the file size to large", "");
+            throw new BadRequestException("Oop the file size to large", null);
         }
     }
 

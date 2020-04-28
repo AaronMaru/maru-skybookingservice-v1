@@ -14,7 +14,9 @@ import java.util.List;
 @Component
 public interface BookingNQ extends NativeQuery {
 
-    Page<BookingTO> listBooking(@NativeQueryParam(value = "keyword") String keyword,
+    Page<BookingTO> listBooking(
+                                @NativeQueryParam(value = "skystaffId") Long skystaffId,
+                                @NativeQueryParam(value = "keyword") String keyword,
                                 @NativeQueryParam(value = "bookStatus") String bookStatus,
                                 @NativeQueryParam(value = "startRange") Integer startRange,
                                 @NativeQueryParam(value = "endRange") Integer endRange,

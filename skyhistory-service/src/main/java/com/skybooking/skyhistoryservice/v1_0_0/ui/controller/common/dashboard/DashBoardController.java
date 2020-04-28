@@ -12,11 +12,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.text.ParseException;
 import java.time.LocalDate;
 
 @RestController
 @RequestMapping(value = "/v1.0.0")
-public class DashBoardController {
+public class DashboardController {
 
     @Autowired
     private DashboardSV dashboardSV;
@@ -62,7 +63,7 @@ public class DashBoardController {
                                              @RequestParam(name = "endDate", defaultValue = "#{T(java.time.LocalDate).now()}", required = false)
                                              @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
 
-        var responses = dashboardSV.getBookingProgress(filter, startDate.toString(), endDate.toString());
+        var responses = dashboardSV.getBookingProgress(filter.toLowerCase(), startDate.toString(), endDate.toString());
 
         return localization.resAPI(HttpStatus.OK,"res_succ", responses);
 
@@ -74,14 +75,13 @@ public class DashBoardController {
      * Get booking timeline summary by company, user and filter
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @param filter options: daily, weekly, monthly
+     * @param filter options: daily, weekly
      * @return ResponseEntity
      */
     @GetMapping(value = "/booking-calendar")
     public ResRS getBookingTimeline(@RequestParam(name = "filter") String filter) {
 
-        var responses = dashboardSV.getBookingTimeline(filter);
-
+        var responses = dashboardSV.getBookingTimeline(filter.toLowerCase());
         return localization.resAPI(HttpStatus.OK,"res_succ", responses);
 
     }
@@ -104,7 +104,7 @@ public class DashBoardController {
                                       @RequestParam(name = "endDate", defaultValue = "#{T(java.time.LocalDate).now()}", required = false)
                                       @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
 
-        var response = dashboardSV.getBookingTopSeller(filter, startDate.toString(), endDate.toString(), 5);
+        var response = dashboardSV.getBookingTopSeller(filter.toLowerCase(), startDate.toString(), endDate.toString(), 5);
 
         return localization.resAPI(HttpStatus.OK,"res_succ", response);
 
@@ -128,37 +128,11 @@ public class DashBoardController {
                                              @RequestParam(name = "endDate", defaultValue = "#{T(java.time.LocalDate).now()}", required = false)
                                              @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
 
-        var responses = dashboardSV.getBookingActivity(filter, startDate.toString(), endDate.toString(), 5, headerBean.getLocalizationId());
+        var responses = dashboardSV.getBookingActivity(filter.toLowerCase(), startDate.toString(), endDate.toString(), 5, headerBean.getLocalizationId());
 
         return localization.resAPI(HttpStatus.OK,"res_succ", responses);
 
     }
-
-    /**
-     * -----------------------------------------------------------------------------------------------------------------
-     * get booking report summary
-     * -----------------------------------------------------------------------------------------------------------------
-     *
-     * @param classType options: allclass, economy, first, business
-     * @param tripType  options: alltrip, oneway, return, multicity
-     * @param startDate
-     * @param endDate
-     * @return ResponseEntity
-     */
-    @GetMapping(value = "/booking-report")
-    public ResRS getBookingReport(@RequestParam(name = "classType", defaultValue = "allclass") String classType,
-                                           @RequestParam(name = "tripType", defaultValue = "alltrip") String tripType,
-                                           @RequestParam(name = "startDate", defaultValue = "#{T(java.time.LocalDate).now()}")
-                                           @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-                                           @RequestParam(name = "endDate", defaultValue = "#{T(java.time.LocalDate).now()}")
-                                           @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
-
-        var response = dashboardSV.getBookingReport(classType, tripType, startDate.toString(), endDate.toString());
-
-        return localization.resAPI(HttpStatus.OK,"res_succ", response);
-
-    }
-
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -167,10 +141,15 @@ public class DashBoardController {
      *
      * @return ResponseEntity
      */
-    @GetMapping(value = "/staffs-report")
-    public ResRS getStaffOverview() {
-        var response = dashboardSV.getStaffReport();
-        return localization.resAPI(HttpStatus.OK,"res_succ", response);
+    @GetMapping(value = "/summary-report")
+    public ResRS getSummaryReport(@RequestParam(name = "filter", defaultValue = "weekly") String filter,
+                                  @RequestParam(name = "startDate", defaultValue = "#{T(java.time.LocalDate).now()}", required = false)
+                                  @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+                                  @RequestParam(name = "endDate", defaultValue = "#{T(java.time.LocalDate).now()}", required = false)
+                                      @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate) {
+
+        return localization.resAPI(HttpStatus.OK,"res_succ", dashboardSV.getSummaryReport(filter.toLowerCase(), startDate.toString(), endDate.toString()));
+
     }
 
 }

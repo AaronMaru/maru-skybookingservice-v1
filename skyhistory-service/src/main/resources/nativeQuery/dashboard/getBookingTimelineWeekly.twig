@@ -1,0 +1,28 @@
+SELECT COUNT(b.id) AS total,
+DATE(b.created_at) AS date
+FROM bookings AS b
+
+-- CHECK USERS
+WHERE b.status IN (11, 12)
+
+AND CASE WHEN 'skyuser' = :stake
+    THEN
+        (b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id IS NULL)
+    ELSE
+        -- Condition for Skyowner
+        CASE WHEN :userRole = 'admin'
+            THEN
+                b.stakeholder_company_id = :companyId
+            ELSE
+                b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id = :companyId
+            END
+    END
+
+AND CASE
+    WHEN :week = 1 THEN ( DATE(b.created_at) >= CONCAT( :dateString,"-01") AND DATE(b.created_at) <= CONCAT( :dateString,"-07")  )
+    WHEN :week = 2 THEN ( DATE(b.created_at) >= CONCAT( :dateString,"-08") AND DATE(b.created_at) <= CONCAT( :dateString,"-14")  )
+    WHEN :week = 3 THEN ( DATE(b.created_at) >= CONCAT( :dateString,"-15") AND DATE(b.created_at) <= CONCAT( :dateString,"-22")  )
+    WHEN :week = 4 THEN DATE(b.created_at) > CONCAT( :dateString,"-22")
+    END
+
+ORDER BY b.created_at ASC

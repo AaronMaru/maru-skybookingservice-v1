@@ -12,13 +12,12 @@ public interface LocaleSV {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * get module language translation by locale's id
+     * Get module language translation by locale's id
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @param id
      * @Return ModuleLanguageRS
      */
-    ModuleLanguageRS findModuleLanguageByLocaleId(long id);
+    ModuleLanguageRS findModuleLanguageByLocaleId();
 
 
     /**

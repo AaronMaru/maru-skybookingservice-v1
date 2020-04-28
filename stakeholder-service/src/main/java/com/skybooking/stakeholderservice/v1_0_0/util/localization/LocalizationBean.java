@@ -25,7 +25,7 @@ public class LocalizationBean {
      */
     public String multiLanguageRes(String key) {
 
-        String locale = headerBean.getLocalization(null);
+        String locale = headerBean.getLocalization();
         TranslationEntity translationByLocale = translationRP.findByKey(key, locale);
 
         if (translationByLocale != null) {

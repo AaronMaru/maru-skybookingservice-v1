@@ -2,7 +2,6 @@ package com.skybooking.stakeholderservice.v1_0_0.io.enitity.user;
 
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.company.StakeholderCompanyEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.contact.ContactEntity;
-import com.skybooking.stakeholderservice.v1_0_0.io.enitity.notification.NotificationEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.passenger.PassengerEntity;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -31,9 +30,6 @@ public class StakeHolderUserEntity {
 
     @OneToMany(mappedBy = "stakeHolderUserEntity", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PassengerEntity> passengerEntities;
-
-    @OneToMany(mappedBy = "stakeHolderUserEntity", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<NotificationEntity> notification;
 
     @Column(name = "first_name")
     private String firstName;
@@ -74,6 +70,9 @@ public class StakeHolderUserEntity {
     @Column(name = "created_from")
     private String createdFrom;
 
+    @Column(name = "device_name")
+    private String deviceName;
+
     @CreationTimestamp
     @Column(name = "created_at")
     @Temporal(TemporalType.TIMESTAMP)
@@ -111,10 +110,6 @@ public class StakeHolderUserEntity {
 
     public void setSlug(String slug) {
         this.slug = slug;
-    }
-
-    public void setDateOfBirth(String dateOfBirth) {
-        this.dateOfBirth = dateOfBirth;
     }
 
     public void setGender(String gender) {
@@ -169,10 +164,6 @@ public class StakeHolderUserEntity {
         return slug;
     }
 
-    public String getDateOfBirth() {
-        return dateOfBirth;
-    }
-
     public String getGender() {
         return gender;
     }
@@ -189,7 +180,7 @@ public class StakeHolderUserEntity {
         if (status != null) {
             return status;
         }
-        status = null;
+        status = 0;
 
         return status;
     }
@@ -249,24 +240,39 @@ public class StakeHolderUserEntity {
     public List<StakeholderCompanyEntity> getStakeholderCompanies() {
         return stakeholderCompanies;
     }
-
     public void setStakeholderCompanies(List<StakeholderCompanyEntity> stakeholderCompanies) {
         this.stakeholderCompanies = stakeholderCompanies;
-    }
-
-    public List<NotificationEntity> getNotification() {
-        return notification;
-    }
-
-    public void setNotification(List<NotificationEntity> notification) {
-        this.notification = notification;
     }
 
     public Long getCurrencyId() {
         return currencyId;
     }
-
     public void setCurrencyId(Long currencyId) {
         this.currencyId = currencyId;
     }
+
+    public String getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public void setDateOfBirth(String dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
+    }
+
+    public String getCreatedFrom() {
+        return createdFrom;
+    }
+
+    public void setCreatedFrom(String createdFrom) {
+        this.createdFrom = createdFrom;
+    }
+
+    public String getDeviceName() {
+        return deviceName;
+    }
+
+    public void setDeviceName(String deviceName) {
+        this.deviceName = deviceName;
+    }
+
 }

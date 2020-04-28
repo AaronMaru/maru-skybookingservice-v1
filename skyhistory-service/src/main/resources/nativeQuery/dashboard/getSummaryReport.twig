@@ -1,0 +1,49 @@
+SELECT IFNULL( (
+            SELECT COUNT(suc.id) FROM stakeholder_user_has_companies suc
+            WHERE suc.stakeholder_company_id = :companyId AND suc.`join_status` = 1
+        )
+        , 0) AS totalStaff,
+	IFNULL( (
+				SELECT COUNT(bo.id) FROM bookings bo
+				WHERE DATE(bo.created_at) = subdate(CURDATE(), 1)
+				AND bo.stakeholder_company_id = b.stakeholder_company_id
+			)
+			, 0 ) AS lastDayBQty,
+
+	IFNULL( (
+				SELECT COUNT(bo.id) AS todayBQty
+				FROM bookings bo
+				WHERE DATE(bo.created_at) = CURDATE()
+				AND bo.stakeholder_company_id = b.stakeholder_company_id
+			)
+			, 0) AS todayBookQty,
+
+	IFNULL( (
+				SELECT SUM( bo.total_amount + bo.markup_amount + bo.markup_pay_amount )
+				FROM bookings bo
+				WHERE DATE(bo.created_at) = subdate(CURDATE(), 1)
+				AND bo.stakeholder_company_id = b.stakeholder_company_id
+			  )
+			, 0) AS lastDayBAmount,
+
+	IFNULL( (
+				SELECT SUM( bo.total_amount + bo.markup_amount + bo.markup_pay_amount )
+				FROM bookings bo
+				WHERE DATE(bo.created_at) = CURDATE()
+				AND bo.stakeholder_company_id = b.stakeholder_company_id
+			 )
+			, 0 ) AS todayBookAmount,
+
+	IFNULL( COUNT(b.id) , 0 ) AS totalBookQty,
+	IFNULL( SUM( b.total_amount + b.markup_amount + b.markup_pay_amount ) , 0) AS totalSpent,
+	b.currency_code AS currencyCode
+
+FROM bookings b
+WHERE b.stakeholder_company_id = :companyId
+AND b.status IN (1, 11, 10, 4, 12, 3)
+AND CASE WHEN 'range' = :filter THEN ( DATE(b.created_at) >= :startDate AND DATE(b.created_at) <= :endDate )
+        WHEN 'daily' = :filter THEN DATE(b.created_at) = CURDATE()
+        WHEN 'weekly' = :filter THEN YEARWEEK(DATE(b.created_at)) = YEARWEEK(CURDATE())
+        WHEN 'monthly' = :filter THEN MONTH(b.created_at) = MONTH( CURDATE() )
+        ELSE YEAR(b.created_at) = YEAR( CURDATE() )
+        END

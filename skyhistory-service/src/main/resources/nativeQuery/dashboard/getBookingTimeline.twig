@@ -3,7 +3,7 @@ DATE(b.created_at) AS date
 FROM bookings AS b
 
 -- CHECK USERS
-WHERE b.status = 11
+WHERE b.status IN (11, 12)
 
 AND CASE WHEN 'skyuser' = :stake
     THEN
@@ -18,11 +18,7 @@ AND CASE WHEN 'skyuser' = :stake
             END
     END
 
-AND CASE WHEN 'daily' = :filter THEN DATE(b.created_at) = CURRENT_TIMESTAMP
-        WHEN 'weekly' = :filter THEN YEARWEEK(DATE(b.created_at)) = YEARWEEK(CURRENT_TIMESTAMP)
-        WHEN 'monthly' = :filter THEN MONTH(b.created_at) = MONTH( CURRENT_TIMESTAMP )
-        ELSE YEAR(b.created_at) = YEAR( CURRENT_TIMESTAMP )
-        END
+AND YEAR(b.created_at) = YEAR( CURDATE() )
 
 GROUP BY DATE(b.created_at)
-ORDER BY b.created_at DESC
+ORDER BY b.created_at ASC

@@ -19,9 +19,8 @@ import org.springframework.jms.support.converter.MessageType;
 @Configuration
 public class ActiveMQConfig {
 
-    public static final String EMAIL = "email";
-    public static final String SMS = "sms";
-    public static final String QUEUE = "queue";
+    public static final String SKY_HISTORY_EMAIL = "sky_history_email";
+    public static final String SKY_HISTORY_SMS = "sky_history_sms";
 
     @Bean
     public MessageConverter messageConverter() {

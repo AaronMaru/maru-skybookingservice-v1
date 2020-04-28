@@ -1,6 +1,10 @@
 SELECT COUNT(b.id) as bookingQty
 FROM bookings b
-WHERE b.stakeholder_user_id = :skyuserId
--- where Booking status
-AND b.status IN (11, 10, 4, 12, 3)
-AND b.stakeholder_company_id IS NULL
+WHERE b.status IN (11, 10, 4, 12, 3, 1)
+
+AND CASE WHEN :stake = "skyuser"
+    THEN
+        (b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id IS NULL)
+    ELSE
+        b.stakeholder_company_id = :companyId
+    END

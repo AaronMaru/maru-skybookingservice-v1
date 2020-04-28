@@ -1,5 +1,6 @@
 package com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company;
 
+import com.skybooking.core.validators.annotations.IsNumericString;
 import com.skybooking.stakeholderservice.exception.anotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -8,6 +9,7 @@ import java.util.HashMap;
 @FieldMatchRequire(first = "businessTypeId", second = "contactPerson", third = "contactPosition", message = "Please provide contact persion and contact position")
 @Code(first = "phone", second = "code", message = "Please provide country code")
 @UsernameUnique(first = "phone", second = "code", message = "Phone number already exists")
+@EmailUnique(first = "email", message = "Email already exists")
 public class CompanyUpdateRQ {
 
     private Long businessTypeId;
@@ -18,7 +20,7 @@ public class CompanyUpdateRQ {
     private String contactPerson;
     private String contactPosition;
 
-    @Phone
+    @IsNumericString
     private String phone;
 
     private String code;
@@ -26,8 +28,10 @@ public class CompanyUpdateRQ {
     @Email
     private String email;
 
-    private HashMap<String, MultipartFile> licenses;
+    private HashMap<Long, MultipartFile> licenses;
     private MultipartFile profile;
+
+    private MultipartFile photoItenary;
 
     private String address;
     private String website;
@@ -126,14 +130,13 @@ public class CompanyUpdateRQ {
         this.city = city;
     }
 
-    public HashMap<String, MultipartFile> getLicenses() {
+    public HashMap<Long, MultipartFile> getLicenses() {
         return licenses;
     }
 
-    public void setLicenses(HashMap<String, MultipartFile> licenses) {
+    public void setLicenses(HashMap<Long, MultipartFile> licenses) {
         this.licenses = licenses;
     }
-
 
     public String getDescription() {
         return description;
@@ -157,6 +160,14 @@ public class CompanyUpdateRQ {
 
     public void setProfile(MultipartFile profile) {
         this.profile = profile;
+    }
+
+    public MultipartFile getPhotoItenary() {
+        return photoItenary;
+    }
+
+    public void setPhotoItenary(MultipartFile photoItenary) {
+        this.photoItenary = photoItenary;
     }
 
 }

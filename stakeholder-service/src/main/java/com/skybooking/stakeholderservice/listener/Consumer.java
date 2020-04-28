@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
-import static com.skybooking.stakeholderservice.config.ActiveMQConfig.EMAIL;
-import static com.skybooking.stakeholderservice.config.ActiveMQConfig.SMS;
+import static com.skybooking.stakeholderservice.config.ActiveMQConfig.STAKE_HOLDER_EMAIL;
+import static com.skybooking.stakeholderservice.config.ActiveMQConfig.STAKE_HOLDER_SMS;
 
 /**
  * Created by : maru
@@ -28,12 +28,12 @@ public class Consumer {
     private EmailBean email;
 
 
-    @JmsListener(destination = EMAIL)
+    @JmsListener(destination = STAKE_HOLDER_EMAIL)
     public void email(Map<String, Object> mailTemplateData) {
         email.email(mailTemplateData);
     }
 
-    @JmsListener(destination = SMS)
+    @JmsListener(destination = STAKE_HOLDER_SMS)
     public void sms(Map<String, Object> mailTemplateData) {
         email.sms(mailTemplateData);
     }

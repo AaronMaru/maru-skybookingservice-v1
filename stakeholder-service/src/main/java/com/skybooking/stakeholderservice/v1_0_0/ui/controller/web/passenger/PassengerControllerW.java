@@ -1,7 +1,8 @@
 package com.skybooking.stakeholderservice.v1_0_0.ui.controller.web.passenger;
 
+import com.skybooking.core.validators.groups.OnCreate;
+import com.skybooking.core.validators.groups.OnUpdate;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.passenger.PassengerSV;
-import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.interfaces.OnCreate;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.passenger.PassengerRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.passenger.PassengerPagingRS;
@@ -13,7 +14,6 @@ import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import java.text.ParseException;
 
 @RestController
@@ -97,7 +97,7 @@ public class PassengerControllerW {
     @PatchMapping(
             path = "/{id}"
     )
-    public Object updateById(@PathVariable Long id, @Valid @RequestBody PassengerRQ body) throws ParseException {
+    public Object updateById(@PathVariable Long id, @Validated({OnUpdate.class}) @RequestBody PassengerRQ body) throws ParseException {
 
         PassengerRS response = this.passengerService.updateItem(id, body);
 

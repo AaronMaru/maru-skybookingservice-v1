@@ -11,6 +11,6 @@ public class PriceBreakDownTO {
     private Double totalTax;
     private Double totalAmount;
     private String currencyCode;
-    private String nonRefund;
+    private Boolean nonRefund;
 
 }

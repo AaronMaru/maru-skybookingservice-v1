@@ -3,29 +3,31 @@ package com.skybooking.skyhistoryservice.v1_0_0.service.implment.booking;
 import com.skybooking.skyhistoryservice.exception.httpstatus.BadRequestException;
 import com.skybooking.skyhistoryservice.v1_0_0.io.enitity.booking.BookingEntity;
 import com.skybooking.skyhistoryservice.v1_0_0.io.enitity.company.StakeholderCompanyEntity;
+import com.skybooking.skyhistoryservice.v1_0_0.io.enitity.user.StakeHolderUserEntity;
 import com.skybooking.skyhistoryservice.v1_0_0.io.repository.booking.BookingRP;
 import com.skybooking.skyhistoryservice.v1_0_0.io.repository.company.CompanyRP;
-import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.booking.BookingSV;
+import com.skybooking.skyhistoryservice.v1_0_0.io.repository.user.StakeHolderUserRP;
+import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.booking.BookingDetailSV;
 import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.booking.SendBookingSV;
+import com.skybooking.skyhistoryservice.v1_0_0.transformer.mail.*;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.request.SendBookingNoAuthRQ;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.request.SendBookingPDFRQ;
-import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.booking.BookingEmailDetailRS;
+import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.booking.PrintRS;
+import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.booking.detail.BookingDetailRS;
 import com.skybooking.skyhistoryservice.v1_0_0.util.JwtUtils;
+import com.skybooking.skyhistoryservice.v1_0_0.util.datetime.DateTimeBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.email.EmailBean;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static com.skybooking.skyhistoryservice.constant.MailStatusConstant.*;
 
 @Service
 public class SendBookingIP implements SendBookingSV {
-
-    @Autowired
-    private BookingSV bookingSV;
 
     @Autowired
     private BookingRP bookingRP;
@@ -42,6 +44,15 @@ public class SendBookingIP implements SendBookingSV {
     @Autowired
     private Environment environment;
 
+    @Autowired
+    private BookingDetailSV bookingDetailSV;
+
+    @Autowired
+    private DateTimeBean dateTimeBean;
+
+    @Autowired
+    private StakeHolderUserRP stakeHolderUserRP;
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Send mail receipt
@@ -55,19 +66,29 @@ public class SendBookingIP implements SendBookingSV {
             throw new BadRequestException("No booking data found", "");
         }
 
-        BookingEmailDetailRS bookingEmailDetailRS = bookingSV.getBookingDetailEmail(booking.getId());
+        String template = YOUR_FLIGHT_TICKET;
+        if (pdfTemplate.equals("receipt")) {
+            template = FORWARD_E_RECEIPT;
+        } else if (pdfTemplate.equals("itinerary")) {
+            template = FORWARD_FLIGHT_TICKET;
+        }
+
+        BookingDetailRS bookingEmailDetailRS = bookingDetailSV.getBookingDetail(booking.getBookingCode(), null);
+
+        BookingDetailTF mailBookingDetail = this.mailBookingDetail(bookingEmailDetailRS);
 
         Map<String, Object> mailData = emailBean.mailData(sendBookingPDFRQ.getEmail(), "Customer", 0,
-                "your_flight_ticket", "booking-info", "api_receipt");
-        mailData.put("data", bookingEmailDetailRS);
+            template, "booking-info", "api_receipt");
+        mailData.put("data", mailBookingDetail);
 
-        Map<String, Object> pdfData = emailBean.dataPdfTemplate(pdfTemplate, Label);
-        pdfData.put("data", bookingEmailDetailRS);
+        Map<String, Object> pdfData = new HashMap<>();
+        pdfData.put("label_" + pdfTemplate, emailBean.dataPdfTemplate(pdfTemplate, Label));
+        pdfData.put("data_" + pdfTemplate, mailBookingDetail);
 
         // apply logo
         pdfData.put("logoPdf", this.embedLogo());
 
-        List<String> sendData = Arrays.asList("receipt", "itinerary");
+        List<String> sendData = Arrays.asList(pdfTemplate);
         pdfData.put("sendData", sendData);
 
         emailBean.sendEmailSMS("send-booking", mailData, pdfData);
@@ -86,19 +107,25 @@ public class SendBookingIP implements SendBookingSV {
             throw new BadRequestException("No booking data found", "");
         }
 
-        BookingEmailDetailRS bookingEmailDetailRS = bookingSV.getBookingDetailEmailWithoutAuth(booking.getId(),
-                sendBookingNoAuthRQ);
+        StakeHolderUserEntity stakeHolderUserEntity = stakeHolderUserRP
+            .findById(sendBookingNoAuthRQ.getSkyuserId().longValue()).orElse(null);
+        String fullName = stakeHolderUserEntity.getFirstName() + " " + stakeHolderUserEntity.getLastName();
 
-        Map<String, Object> mailData = emailBean.mailData(sendBookingNoAuthRQ.getEmail(), "Customer", 0,
-                "your_flight_ticket", "booking-info", "api_receipt");
-        mailData.put("data", bookingEmailDetailRS);
+        BookingDetailRS bookingEmailDetailRS = bookingDetailSV.getBookingDetail(booking.getBookingCode(),
+            sendBookingNoAuthRQ);
+
+        BookingDetailTF mailBookingDetail = this.mailBookingDetail(bookingEmailDetailRS);
+
+        Map<String, Object> mailData = emailBean.mailData(sendBookingNoAuthRQ.getEmail(), fullName, 0,
+            YOUR_FLIGHT_TICKET, "booking-info", "api_receipt");
+        mailData.put("data", mailBookingDetail);
 
         Map<String, Object> pdfData = new HashMap<>();
         pdfData.put("label_receipt", emailBean.dataPdfTemplate("receipt", "api_receipt_pdf"));
-        pdfData.put("data_receipt", bookingEmailDetailRS);
+        pdfData.put("data_receipt", mailBookingDetail);
 
         pdfData.put("label_itinerary", emailBean.dataPdfTemplate("itinerary", "api_itinerary_pdf"));
-        pdfData.put("data_itinerary", bookingEmailDetailRS);
+        pdfData.put("data_itinerary", mailBookingDetail);
 
         // apply logo
         pdfData.put("logoPdf", this.embedLogoNoAuth(sendBookingNoAuthRQ.getCompanyId()));
@@ -106,7 +133,7 @@ public class SendBookingIP implements SendBookingSV {
         List<String> sendData = Arrays.asList("receipt", "itinerary");
         pdfData.put("sendData", sendData);
 
-        emailBean.sendReceiptAndItinerary("send-booking", mailData, pdfData);
+        emailBean.sendEmailSMS("send-booking", mailData, pdfData);
     }
 
     /**
@@ -117,17 +144,18 @@ public class SendBookingIP implements SendBookingSV {
     public void sendPayment(SendBookingPDFRQ sendBookingPDFRQ) {
 
         BookingEntity booking = bookingRP.findByBookingCode(sendBookingPDFRQ.getBookingCode());
-        System.out.println(booking);
         if (booking == null) {
             throw new BadRequestException("No booking data found", "");
         }
 
-        BookingEmailDetailRS bookingEmailDetailRS = bookingSV.getBookingDetailEmail(booking.getId());
+        BookingDetailRS bookingEmailDetailRS = bookingDetailSV.getBookingDetail(booking.getBookingCode(), null);
+
+        BookingDetailTF mailBookingDetail = this.mailBookingDetail(bookingEmailDetailRS);
 
         Map<String, Object> mailData = emailBean.mailData(sendBookingPDFRQ.getEmail(), "Customer", 0,
-                "flight_booking_successful_payment", "payment-success", "api_payment_succ");
+            FLIGHT_BOOKING_SUCCESSFUL, "payment-success", "api_payment_succ");
 
-        mailData.put("data", bookingEmailDetailRS);
+        mailData.put("data", mailBookingDetail);
 
         emailBean.sendEmailSMS("send-payment", mailData, null);
 
@@ -146,13 +174,19 @@ public class SendBookingIP implements SendBookingSV {
             throw new BadRequestException("No booking data found", "");
         }
 
-        BookingEmailDetailRS bookingEmailDetailRS = bookingSV.getBookingDetailEmailWithoutAuth(booking.getId(),
-                sendBookingNoAuthRQ);
+        StakeHolderUserEntity stakeHolderUserEntity = stakeHolderUserRP
+            .findById(sendBookingNoAuthRQ.getSkyuserId().longValue()).orElse(null);
+        String fullName = stakeHolderUserEntity.getFirstName() + " " + stakeHolderUserEntity.getLastName();
 
-        Map<String, Object> mailData = emailBean.mailData(sendBookingNoAuthRQ.getEmail(), "Customer", 0,
-                "flight_booking_successful_payment", "payment-success", "api_payment_succ");
+        BookingDetailRS bookingEmailDetailRS = bookingDetailSV.getBookingDetail(booking.getBookingCode(),
+            sendBookingNoAuthRQ);
 
-        mailData.put("data", bookingEmailDetailRS);
+        BookingDetailTF mailBookingDetail = this.mailBookingDetail(bookingEmailDetailRS);
+
+        Map<String, Object> mailData = emailBean.mailData(sendBookingNoAuthRQ.getEmail(), fullName, 0,
+            FLIGHT_BOOKING_SUCCESSFUL, "payment-success", "api_payment_succ");
+
+        mailData.put("data", mailBookingDetail);
 
         emailBean.sendEmailSMS("send-payment", mailData, null);
 
@@ -160,7 +194,7 @@ public class SendBookingIP implements SendBookingSV {
 
     private String embedLogo() {
         String userType = jwtUtils.getClaim("userType", String.class);
-        String companyLogo = "https://s3.amazonaws.com/skybooking/uploads/mail/images/logo.png";
+        String companyLogo = "https://skybooking.s3.amazonaws.com/uploads/company_profiles/origin/default.png";
         String profileOwner = jwtUtils.getClaim("profile", String.class);
 
         return userType.equals("skyowner") ? profileOwner : companyLogo;
@@ -168,13 +202,93 @@ public class SendBookingIP implements SendBookingSV {
 
     private String embedLogoNoAuth(Integer companyId) {
 
+        companyId = companyId == null ? 0 : companyId;
+
         if (companyId == 0) {
-            return "https://s3.amazonaws.com/skybooking/uploads/mail/images/logo.png";
+            return "https://skybooking.s3.amazonaws.com/uploads/company_profiles/origin/default.png";
         }
 
         StakeholderCompanyEntity stakeholderCompanyEntity = companyRP.findById(companyId.longValue()).orElse(null);
         return stakeholderCompanyEntity.getProfileImg() == null
-                ? environment.getProperty("spring.awsImageUrl.companyProfile") + "/origin/default.png"
-                : stakeholderCompanyEntity.getProfileImg();
+            ? environment.getProperty("spring.awsImageUrl.companyProfile") + "/origin/default.png"
+            : stakeholderCompanyEntity.getProfileImg();
+    }
+
+    @Override
+    public PrintRS
+    printBooking(String bookingCode) {
+        BookingEntity booking = bookingRP.findByBookingCode(bookingCode);
+
+        if (booking == null) {
+            throw new BadRequestException("No booking data found", "");
+        }
+
+        PrintRS printRS = new PrintRS();
+
+        printRS.setUrl(environment.getProperty("spring.awsImageUrl.file.itinerary") + booking.getItineraryPath() + "/" + booking.getItineraryFile());
+
+        return printRS;
+    }
+
+    public BookingDetailTF mailBookingDetail(BookingDetailRS bookingEmailDetailRS) {
+
+        BookingDetailTF bookingDetailTF = new BookingDetailTF();
+        BeanUtils.copyProperties(bookingEmailDetailRS, bookingDetailTF);
+
+        BookingInfoTF bookingInfoTF = new BookingInfoTF();
+        BeanUtils.copyProperties(bookingEmailDetailRS.getBookingInfo(), bookingInfoTF);
+        bookingInfoTF
+            .setBookingDate(dateTimeBean.convertDateTime(bookingEmailDetailRS.getBookingInfo().getBookingDate()));
+
+        List<ItineraryODInfoTF> itineraryODInfoTFList = new ArrayList<>();
+
+        bookingEmailDetailRS.getItineraryInfo().forEach(itemItineraryInfo -> {
+
+            ItineraryODInfoTF itineraryODInfoTF = new ItineraryODInfoTF();
+            List<ItineraryODSegmentTF> itineraryODSegmentTFList = new ArrayList<>();
+
+            itemItineraryInfo.getItinerarySegment().forEach(itemItinerarySegment -> {
+
+                ItineraryODSegmentTF itineraryODSegmentTF = new ItineraryODSegmentTF();
+
+                DepartureTF departureTF = new DepartureTF();
+                BeanUtils.copyProperties(itemItinerarySegment.getDepartureInfo(), departureTF);
+                departureTF.setDate(dateTimeBean.convertDateTime(itemItinerarySegment.getDepartureInfo().getDate()));
+
+                ArrivalTF arrivalTF = new ArrivalTF();
+                BeanUtils.copyProperties(itemItinerarySegment.getArrivalInfo(), arrivalTF);
+                arrivalTF.setDate(dateTimeBean.convertDateTime(itemItinerarySegment.getArrivalInfo().getDate()));
+
+                List<BookingStopInfoTF> bookingStopInfoTFList = new ArrayList<>();
+                itemItinerarySegment.getStopInfo().forEach(itemStopInfo -> {
+
+                    BookingStopInfoTF bookingStopInfoTF = new BookingStopInfoTF();
+                    BeanUtils.copyProperties(itemStopInfo, bookingStopInfoTF);
+                    bookingStopInfoTF
+                        .setElapsedHourMinute(dateTimeBean.convertElapseTime(bookingStopInfoTF.getElapsedTime()));
+
+                    bookingStopInfoTFList.add(bookingStopInfoTF);
+                });
+
+                BeanUtils.copyProperties(itemItinerarySegment, itineraryODSegmentTF);
+                itineraryODSegmentTF.setFlightNumber(itemItinerarySegment.getFlightNumber().toString());
+                itineraryODSegmentTF.setDepartureInfo(departureTF);
+                itineraryODSegmentTF.setArrivalInfo(arrivalTF);
+                itineraryODSegmentTF
+                    .setElapsedHourMinute(dateTimeBean.convertElapseTime(itineraryODSegmentTF.getElapsedTime()));
+                itineraryODSegmentTF.setStopInfo(bookingStopInfoTFList);
+                itineraryODSegmentTFList.add(itineraryODSegmentTF);
+            });
+
+            BeanUtils.copyProperties(itemItineraryInfo, itineraryODInfoTF);
+            itineraryODInfoTF.setItinerarySegment(itineraryODSegmentTFList);
+            itineraryODInfoTF.setElapsedHourMinute(dateTimeBean.convertElapseTime(itemItineraryInfo.getElapsedTime()));
+            itineraryODInfoTFList.add(itineraryODInfoTF);
+        });
+
+        bookingDetailTF.setBookingInfo(bookingInfoTF);
+        bookingDetailTF.setItineraryInfo(itineraryODInfoTFList);
+
+        return bookingDetailTF;
     }
 }

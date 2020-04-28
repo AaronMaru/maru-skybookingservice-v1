@@ -1,38 +1,40 @@
 package com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company;
 
+import com.skybooking.core.validators.annotations.IsEmail;
+import com.skybooking.core.validators.annotations.IsNotEmpty;
+import com.skybooking.core.validators.annotations.IsNumericString;
 import com.skybooking.stakeholderservice.exception.anotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.HashMap;
 
 @FieldMatchRequire(first = "businessTypeId", second = "contactPerson", third = "contactPosition", message = "Please provide contact persion and contact position")
 @UsernameUnique(first = "phone", second = "code", message = "Phone number already exists")
+//@EmailUnique(first = "email", message = "Email already exists")
 public class CompanyRQ {
 
     @BussinessType
     @NotNull(message = "Please provide a business type id")
     private Long businessTypeId;
 
-    @NotEmpty(message = "Please provide a business name")
+    @IsNotEmpty
     @CompanyName
     private String businessName;
 
     private String contactPerson;
     private String contactPosition;
 
-    @Phone
-    @NotEmpty(message = "Please provide a phone number")
+    @IsNotEmpty
+    @IsNumericString
     private String phone;
 
-    @NotEmpty(message = "Please provide a country code")
+    @IsNotEmpty
     private String code;
 
-    @Email
     private String email = "";
 
     @NotNull(message = "Please provide a license")
-    private HashMap<String, MultipartFile> licenses;
+    private HashMap<Long, MultipartFile> licenses;
 
     private String address;
     private String website;
@@ -131,11 +133,11 @@ public class CompanyRQ {
         this.city = city;
     }
 
-    public HashMap<String, MultipartFile> getLicenses() {
+    public HashMap<Long, MultipartFile> getLicenses() {
         return licenses;
     }
 
-    public void setLicenses(HashMap<String, MultipartFile> licenses) {
+    public void setLicenses(HashMap<Long, MultipartFile> licenses) {
         this.licenses = licenses;
     }
 

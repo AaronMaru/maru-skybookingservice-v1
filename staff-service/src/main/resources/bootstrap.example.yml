@@ -25,6 +25,7 @@ spring:
     encryption: tls
     from-address: no-reply@skybooking.info
     from-name: Skybooking
+    code: sky-booking
     properties.mail.smtp:
       auth: true
       starttls.enable: true
@@ -49,3 +50,5 @@ security:
     resource:
       jwt:
         key-value: as466gfsuntaaaak
+link:
+  expire: 60

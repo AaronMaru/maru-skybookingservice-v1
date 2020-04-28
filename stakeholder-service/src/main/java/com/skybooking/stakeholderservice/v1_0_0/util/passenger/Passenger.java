@@ -47,9 +47,9 @@ public class Passenger {
 //    public String getPassengerType(String type) {
 //
 //        var passengerType = switch (type.toUpperCase()) {
-//            case PassengerCode.ADULT -> "Adult";
-//            case PassengerCode.CHILD -> "Child";
-//            case PassengerCode.INFANT -> "Infant";
+//            case PassengerCodeConstant.ADULT -> "Adult";
+//            case PassengerCodeConstant.CHILD -> "Child";
+//            case PassengerCodeConstant.INFANT -> "Infant";
 //            default -> throw new IllegalArgumentException("Invalid passenger type: " + type);
 //        };
 //

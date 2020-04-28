@@ -2,7 +2,6 @@ package com.skybooking.stakeholderservice.v1_0_0.util.general;
 
 public class SmsMessage {
 
-
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Message for sms
@@ -12,7 +11,7 @@ public class SmsMessage {
      * @Param code
      * @Return String
      */
-    public String sendSMS(String cases, int code) {
+    public String sendSMS(String cases, int code, String link) {
 
         switch (cases) {
             case "send-login":
@@ -24,14 +23,13 @@ public class SmsMessage {
             case "login-success":
                 return "Your account login success";
             case "send-download-link":
-                return "Welcome to skybooking download the skybooking!! app and enjoy your travel and book cheap flight ticket click  https://www.skybooking.net";
+                return "Welcome to skybooking download the skybooking!! app and enjoy your travel and book cheap flight ticket click " + link;
             default:
                 return "No message";
 
         }
 
     }
-
 
 
 }

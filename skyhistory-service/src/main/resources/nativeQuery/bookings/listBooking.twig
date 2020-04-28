@@ -52,9 +52,7 @@ b.stakeholder_user_id AS skyuserId,
 	AND bod.parent_id IS NOT NULL
 	LIMIT 1
 ) AS cabinCode,
-
-( b.total_amount + b.markup_amount + b.markup_pay_amount ) AS totalAmount,
-b.dis_pay_met_amount AS disPayment,
+ROUND( ( b.total_amount + b.markup_amount + b.markup_pay_amount ) - ( b.dis_pay_met_amount + b.commission_amount) , 2) AS totalAmount,
 b.currency_code AS currencyCode,
 b.cont_fullname AS contName,
 b.created_at AS bookDate,
@@ -115,19 +113,18 @@ FROM bookings b
 WHERE b.status IN (1, 11, 10, 4, 12, 3)
 
 -- CHECK USERS
-AND CASE WHEN :stake = "skyuser"
-    THEN (b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id IS NULL)
+AND CASE WHEN :stake = "skyuser" THEN (b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id IS NULL)
+
     ELSE
         -- Condition for Skyowner
-        CASE WHEN
-                :role = 'ADMIN'
-            THEN
-                b.stakeholder_company_id = :companyId
+        CASE WHEN ( :role = 'ADMIN' AND :skystaffId = 0 ) THEN b.stakeholder_company_id = :companyId
+
+            WHEN ( :role = 'ADMIN' AND :skystaffId > 0 ) THEN ( b.stakeholder_user_id = :skystaffId AND b.stakeholder_company_id = :companyId )
+
             ELSE
                 b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id = :companyId
             END
     END
-
 
 -- FILTER BOOKING
 AND CASE WHEN
@@ -152,7 +149,7 @@ AND CASE WHEN
         AND CASE WHEN
                 :bookByName != 'ALL'
             THEN
-                (SELECT COUNT(su.id) FROM stakeholder_users su WHERE su.id = b.stakeholder_user_id AND CONCAT(su.last_name,' ', su.first_name) LIKE '%' :bookByName '%') > 0
+                b.cont_fullname LIKE :bookByName '%'
             ELSE
                 b.status IN (1, 11, 10, 4, 12, 3)
             END
@@ -161,7 +158,7 @@ AND CASE WHEN
         -- By Flying From and To
         -- Param: flyingFrom, flyingTo
         AND CASE WHEN
-                b.trip_type = 'RETURN'
+                b.trip_type = 'Return'
             THEN
 
                 -- Condition with return
@@ -182,7 +179,7 @@ AND CASE WHEN
 
             ELSE
 
-                -- Condition with ONEWAY and Multicity
+                -- Condition with ONEWAY and MULTICITY
                 ( SELECT COUNT(fbod.id)
                     FROM booking_origin_destinations fbod
                     WHERE fbod.booking_id = b.id

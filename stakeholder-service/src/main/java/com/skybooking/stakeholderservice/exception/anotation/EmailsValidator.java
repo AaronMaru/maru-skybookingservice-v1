@@ -20,6 +20,7 @@ public class EmailsValidator implements ConstraintValidator<Email, String> {
            return true;
         }
         if (!EmailValidator.getInstance().isValid(value) && !value.isEmpty()) {
+
             b = false;
         }
 

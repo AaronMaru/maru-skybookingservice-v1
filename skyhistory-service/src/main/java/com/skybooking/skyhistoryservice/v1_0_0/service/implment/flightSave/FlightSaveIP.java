@@ -62,8 +62,7 @@ public class FlightSaveIP implements FlightSaveSV {
         String role = (stake.equals("company")) ? jwtUtils.getClaim("userRole", String.class) : "";
 
         String action = keyword != null ? "search" : "";
-        System.out.println(role);
-        Page<SaveFlightTO> saveFlightTOS = saveFlightNQ.savedFlight(skyuserId, companyId, action, keyword, role, stake, PageRequest.of(page -1, size));
+        Page<SaveFlightTO> saveFlightTOS = saveFlightNQ.savedFlight(skyuserId, companyId, action, keyword, role, stake, PageRequest.of(page - 1, size));
 
         List<FlightSaveRS> saveFlies = new ArrayList<>();
         saveFlightTOS.forEach(dataTO -> {

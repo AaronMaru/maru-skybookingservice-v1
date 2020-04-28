@@ -11,6 +11,5 @@ public class PriceBreakdownRS {
     private Double totalTax;
     private Double totalAmount;
     private String currencyCode;
-    private String nonRefund;
 
 }

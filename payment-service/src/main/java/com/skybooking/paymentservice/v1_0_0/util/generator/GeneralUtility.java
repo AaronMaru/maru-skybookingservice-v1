@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
@@ -105,5 +107,8 @@ public class GeneralUtility {
 
     }
 
+    public static BigDecimal trimAmount(BigDecimal amount) {
+        return amount.setScale(2, RoundingMode.HALF_UP);
+    }
 
 }

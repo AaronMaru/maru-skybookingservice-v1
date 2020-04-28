@@ -111,4 +111,5 @@ public class BussinessTypeEntity {
     public void setBussinessDocs(List<BussinessDocEntity> bussinessDocs) {
         this.bussinessDocs = bussinessDocs;
     }
+
 }

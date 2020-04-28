@@ -1,7 +1,7 @@
 package com.skybooking.skyflightservice.v1_0_0.util.activitylog;
 
 
-
+import com.skybooking.skyflightservice.v1_0_0.io.entity.user.StakeHolderUserEntity;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.user.UserEntity;
 import com.skybooking.skyflightservice.v1_0_0.io.repository.users.StakeHolderUserRP;
 import com.skybooking.skyflightservice.v1_0_0.io.repository.users.UserRepository;
@@ -243,8 +243,7 @@ public class ActivityLoggingBean {
 
     public UserEntity getUser(Integer stakeholderUserId) {
 
-        var stakeholderUser = stakeHolderUserRP.getOne(Long.valueOf(stakeholderUserId));
-
+        StakeHolderUserEntity stakeholderUser = stakeHolderUserRP.findById(stakeholderUserId.longValue()).orElse(null);
         return userRP.first(stakeholderUser.getUserEntity().getId());
 
     }

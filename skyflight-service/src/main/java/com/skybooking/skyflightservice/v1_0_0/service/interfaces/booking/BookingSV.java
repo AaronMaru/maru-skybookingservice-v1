@@ -25,9 +25,9 @@ public interface BookingSV extends BookingDataSV, MetadataSV {
      * Cancel Passenger Name Records (Cancel PNR)
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @param pnr
+     * @param bookingCode
      * @return Boolean
      */
-    void cancel(Integer pnr);
+    void cancel(String bookingCode);
 
 }

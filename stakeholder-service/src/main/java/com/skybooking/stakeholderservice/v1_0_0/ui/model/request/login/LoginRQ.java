@@ -2,25 +2,26 @@ package com.skybooking.stakeholderservice.v1_0_0.ui.model.request.login;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import com.skybooking.core.validators.annotations.IsNotEmpty;
+import com.skybooking.core.validators.annotations.IsUsername;
 import com.skybooking.stakeholderservice.exception.anotation.Code;
-import com.skybooking.stakeholderservice.exception.anotation.Email;
-import com.skybooking.stakeholderservice.exception.anotation.Phone;
 
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+
+import static com.skybooking.core.validators.enumerations.UsernameAllowType.EMAIL;
+import static com.skybooking.core.validators.enumerations.UsernameAllowType.PHONE_NUMBER;
 
 @Code(first = "username", second = "code", message = "Please provide country code")
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class LoginRQ {
 
     @NotNull(message = "Please provide a username")
-    @NotEmpty(message = "Please provide a username")
-    @Phone
-    @Email
+    @IsNotEmpty
+    @IsUsername(allows = {PHONE_NUMBER, EMAIL})
     private String username;
 
     @NotNull(message = "Please provide a password")
-    @NotEmpty(message = "Please provide a password")
+    @IsNotEmpty
     private String password;
 
     private String code;

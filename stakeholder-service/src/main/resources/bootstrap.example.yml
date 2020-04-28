@@ -6,9 +6,6 @@ spring:
     config:
       uri: http://192.168.2.4:8888
 
-  awsImageUrl:
-    companyProfile: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/company_profiles/
-
 
   email:
     host: email-smtp.us-east-1.amazonaws.com
@@ -31,7 +28,6 @@ spring:
     key: AKIAJEC5JZZKMU7GNCFQ
     secret: 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
     visibility: public
-
 
   activemq:
     in-memory: false

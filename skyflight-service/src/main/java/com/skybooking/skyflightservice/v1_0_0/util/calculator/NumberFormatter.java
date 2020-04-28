@@ -8,6 +8,7 @@ import java.util.Locale;
 public class NumberFormatter {
 
     private static NumberFormat numberFormat() {
+
         var formatter = NumberFormat.getInstance(new Locale("en"));
         formatter.setMinimumFractionDigits(2);
         formatter.setMaximumFractionDigits(2);

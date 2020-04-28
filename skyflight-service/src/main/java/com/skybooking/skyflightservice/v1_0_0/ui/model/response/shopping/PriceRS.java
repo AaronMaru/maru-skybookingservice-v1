@@ -8,12 +8,10 @@ import java.math.BigDecimal;
 @Data
 public class PriceRS implements Serializable {
 
-    private String type;
-    private BigDecimal tax = BigDecimal.ZERO;
-    private BigDecimal baseFare = BigDecimal.ZERO;
-    private BigDecimal commissionAmount = BigDecimal.ZERO;
-    private BigDecimal commissionPercentage = BigDecimal.ZERO;
-    private String currency;
-    private int quantity;
+    BigDecimal total = BigDecimal.ZERO;
+    BigDecimal totalAverage = BigDecimal.ZERO;
+    BigDecimal grandTotalAverage = BigDecimal.ZERO;
+    BigDecimal grandTotal = BigDecimal.ZERO;
+    String currency;
 
 }

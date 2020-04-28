@@ -12,6 +12,7 @@ import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetai
 import com.skybooking.stakeholderservice.v1_0_0.util.activitylog.ActivityLoggingBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
+import com.skybooking.stakeholderservice.v1_0_0.util.header.HeaderBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.skyuser.UserBean;
 import org.apache.commons.lang.math.NumberUtils;
 import org.springframework.beans.BeanUtils;
@@ -20,6 +21,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.util.HashMap;
 
 
 @Service
@@ -49,6 +51,10 @@ public class LoginSocialIP implements LoginSocialSV {
     @Autowired
     Environment environment;
 
+    @Autowired
+    private HeaderBean headerBean;
+
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -75,8 +81,6 @@ public class LoginSocialIP implements LoginSocialSV {
             throw new BadRequestException("fail_reg", null);
         }
 
-        userBean.registerPlayer(user.getStakeHolderUser().getId());
-
         TokenTF data = userBean.getCredential(user.getEmail(), password, credential, null, loginSocialRQ.getProvider());
 
         UserDetailsTokenRS userDetailsTokenRS = new UserDetailsTokenRS();
@@ -84,7 +88,9 @@ public class LoginSocialIP implements LoginSocialSV {
         BeanUtils.copyProperties(userBean.userFields(user, data.getAccess_token()), userDetailsTokenRS);
         userDetailsTokenRS.setTypeSky(loginSocialRQ.getTypeSky());
 
-        userBean.registerPlayer(user.getStakeHolderUser().getId());
+        userBean.registerPlayer(user);
+
+        userBean.storeUserTokenLastLogin(userDetailsTokenRS.getToken(), user);
 
         return userDetailsTokenRS;
 
@@ -147,6 +153,10 @@ public class LoginSocialIP implements LoginSocialSV {
         stkUser.setSlug(apiBean.createSlug("profiles"));
         stkUser.setStatus(1);
         stkUser.setCurrencyId((long) 103);
+
+        HashMap<String, String> userAgent = headerBean.getUserAgent();
+        stkUser.setCreatedFrom(userAgent.get("from"));
+        stkUser.setDeviceName(userAgent.get("device"));
 
         userEntity.setStakeHolderUser(stkUser);
         stkUser.setUserEntity(userEntity);

@@ -15,6 +15,8 @@ import com.skybooking.stakeholderservice.v1_0_0.io.repository.verify.VerifyUserR
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import javax.servlet.http.HttpServletRequest;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -34,6 +36,9 @@ public class ApiBean {
 
     @Autowired
     private VerifyUserRP verifyUserRP;
+
+    @Autowired
+    private HttpServletRequest requests;
 
 
     /**
@@ -259,6 +264,23 @@ public class ApiBean {
 
         return num;
 
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Getting a platform
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Return int
+     */
+    public String getPlatform() {
+        String url = requests.getRequestURL().toString();
+        String[] splitUrl = url.split("/");
+        if (splitUrl[3].substring(0,2).equals("wv")) {
+            return "web";
+        }
+        return "mobile";
     }
 
 }

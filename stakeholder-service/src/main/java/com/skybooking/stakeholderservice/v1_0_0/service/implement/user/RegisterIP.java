@@ -4,20 +4,18 @@ import com.skybooking.stakeholderservice.exception.httpstatus.BadRequestExceptio
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.StakeHolderUserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.StakeholderUserInvitationEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserEntity;
-import com.skybooking.stakeholderservice.v1_0_0.io.enitity.verify.VerifyUserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.StakeHolderUserRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.StakeholderUserInvitationRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserRepository;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.verify.VerifyUserRP;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.user.RegisterSV;
-import com.skybooking.stakeholderservice.v1_0_0.transformer.TokenTF;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user.SkyUserRegisterRQ;
-import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.verify.VerifyRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.activitylog.ActivityLoggingBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.email.EmailBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
+import com.skybooking.stakeholderservice.v1_0_0.util.header.HeaderBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.skyowner.SkyownerBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.skyuser.UserBean;
 import org.apache.commons.lang.math.NumberUtils;
@@ -27,7 +25,10 @@ import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.Map;
+
+import static com.skybooking.stakeholderservice.constant.MailStatusConstant.ACCOUNT_VERIFICATION_CODE;
 
 @Service
 public class RegisterIP implements RegisterSV {
@@ -68,6 +69,9 @@ public class RegisterIP implements RegisterSV {
     @Autowired
     private VerifyUserRP verifyUserRP;
 
+    @Autowired
+    private HeaderBean headerBean;
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -85,12 +89,14 @@ public class RegisterIP implements RegisterSV {
         String username = userBean.getUsername(skyuserRQ.getUsername(), null);
 
         UserEntity user = addSkyuser(skyuserRQ, plateform);
-//        VerifyUserEntity verify = user.getVerifyUserEntity().stream().findFirst().get();
 
         StakeholderUserInvitationEntity userInv = userInvRP.findFirstByInviteTo(username);
 
         if (userInv != null) {
-            skyownerBean.addStaff(userInv.getStakeholderCompanyId(), user.getStakeHolderUser().getId(), userInv.getSkyuserRole());
+            skyownerBean.addStaff(userInv, user.getStakeHolderUser().getId());
+            userInv.setInviteStakeholderUserId(user.getStakeHolderUser().getId());
+            userInv.setStatus(1);
+            userInvRP.save(userInv);
         }
         if (plateform == "web") {
             userBean.storeTokenRedis(user, password);
@@ -169,11 +175,15 @@ public class RegisterIP implements RegisterSV {
         skyuser.setLastName(registerRQ.getLastName());
         skyuser.setSlug(apiBean.createSlug("profiles"));
         skyuser.setCurrencyId((long) 103);
-
         skyuser.setUserCode(userCode);
+
+        HashMap<String, String> userAgent = headerBean.getUserAgent();
+        skyuser.setCreatedFrom(userAgent.get("from"));
+        skyuser.setDeviceName(userAgent.get("device"));
 
         userEntity.setStakeHolderUser(skyuser);
         skyuser.setUserEntity(userEntity);
+
 
         apiBean.addContact(registerRQ.getUsername(), registerRQ.getCode(), skyuser, null);
 
@@ -206,7 +216,7 @@ public class RegisterIP implements RegisterSV {
      * Send verification code to user
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @Param skyuserRq
+     * @Param skyuserRQ
      * @Param userEntity
      */
     public int sendVerification(SkyUserRegisterRQ skyuserRQ, UserEntity user) {
@@ -214,7 +224,7 @@ public class RegisterIP implements RegisterSV {
         int code = apiBean.createVerifyCode(user, 1, null);
         String fullName = skyuserRQ.getFirstName() + " " + skyuserRQ.getLastName();
 
-        Map<String, Object> mailData = emailBean.mailData(skyuserRQ.getUsername(), fullName, code, "account_verification_code");
+        Map<String, Object> mailData = emailBean.mailData(skyuserRQ.getUsername(), fullName, code, ACCOUNT_VERIFICATION_CODE);
         emailBean.sendEmailSMS("send-login", mailData);
 
         return code;

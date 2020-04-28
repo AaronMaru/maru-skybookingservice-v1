@@ -30,11 +30,17 @@ public class PassengerUtil {
     }
 
     public static String gender(String gender) {
-        var passengerGender = switch (gender) {
-            case "male" -> "M";
-            case "female" -> "F";
-            default -> throw new IllegalArgumentException("Invalid passenger gender: " + gender);
-        };
+        String passengerGender;
+        switch (gender) {
+            case "male":
+                passengerGender = "M";
+                break;
+            case "female":
+                passengerGender = "F";
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid passenger gender: " + gender);
+        }
 
         return passengerGender;
     }

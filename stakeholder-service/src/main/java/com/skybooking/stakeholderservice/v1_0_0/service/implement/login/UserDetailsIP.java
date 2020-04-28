@@ -51,7 +51,7 @@ public class UserDetailsIP implements UserDetailsService {
         }
 
         if (user == null) {
-            throw new UsernameNotFoundException("Invalid Username or password");
+            throw new UsernameNotFoundException("Invalid Username or password", null);
         }
 
         logger.activities(ActivityLoggingBean.Action.LOGIN, user);

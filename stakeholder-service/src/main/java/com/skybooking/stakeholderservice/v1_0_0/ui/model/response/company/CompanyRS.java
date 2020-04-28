@@ -1,5 +1,6 @@
 package com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,6 +24,9 @@ public class CompanyRS {
     private String status;
     private String description = "";
     private String city = "";
+    private BigInteger totalBooking;
+    private String reason = "";
+    private String profileItenary = "";
 
     public Long getId() {
         return id;
@@ -169,6 +173,30 @@ public class CompanyRS {
 
     public void setCountryName(String countryName) {
         this.countryName = countryName;
+    }
+
+    public BigInteger getTotalBooking() {
+        return totalBooking;
+    }
+
+    public void setTotalBooking(BigInteger totalBooking) {
+        this.totalBooking = totalBooking;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
+    public String getProfileItenary() {
+        return profileItenary;
+    }
+
+    public void setProfileItenary(String profileItenary) {
+        this.profileItenary = profileItenary;
     }
 
 }

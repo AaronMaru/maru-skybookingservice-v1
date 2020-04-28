@@ -9,12 +9,12 @@ import java.math.BigInteger;
 public class BookingProgressRS {
     private BigInteger amount;
     private String statusKey;
-    private Float percentage;
+    private Double percentage;
 
     public BookingProgressRS(String status) {
         this.statusKey = status;
         this.amount = BigInteger.valueOf(0);
-        this.percentage = Float.valueOf(0);
+        this.percentage = Double.valueOf(0);
     }
 
 }

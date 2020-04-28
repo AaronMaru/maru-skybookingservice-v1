@@ -7,6 +7,7 @@ import com.skybooking.staffservice.v1_0_0.util.general.GeneralBean;
 import com.skybooking.staffservice.v1_0_0.util.header.HeaderBean;
 import com.skybooking.staffservice.v1_0_0.util.localization.LocalizationBean;
 import com.skybooking.staffservice.v1_0_0.util.notification.NotificationBean;
+import com.skybooking.staffservice.v1_0_0.util.notification.PushNotificationOptions;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -49,6 +50,11 @@ public class StaffServiceApplication {
     @Bean
     DateTimeBean dateTimeBean() {
         return new DateTimeBean();
+    }
+
+    @Bean
+    PushNotificationOptions notificationOptions() {
+        return new PushNotificationOptions();
     }
 
 }

@@ -6,5 +6,6 @@ SELECT
 
 FROM stakeholder_user_has_companies suc
 WHERE suc.stakeholder_company_id = :companyId
+AND suc.`join_status` = 1
 ORDER BY suc.created_at DESC
-LIMIT 10
+LIMIT 8

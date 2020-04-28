@@ -5,13 +5,14 @@ SELECT
 	su.last_name AS lastName,
 	su.user_code AS userCode,
 	su.date_of_birth AS dob,
-	(CASE WHEN su.photo IS NULL THEN  'default.png' ELSE su.photo END) AS photo,
+	IFNULL( CONCAT( :STAFF_PROFILE, su.photo ) , CONCAT( :STAFF_PROFILE, 'default.png')) AS photo,
 	su.gender,
 	IFNULL( ( SELECT c.`value`
 		FROM contacts c
 		WHERE c.contactable_id = su.id
 		AND c.contactable_type = 'skyuser'
 		AND c.type = 'p'
+		LIMIT 1
 	), '' ) AS contPhone,
 	(
 		SELECT c.`value`
@@ -19,6 +20,7 @@ SELECT
 		WHERE c.contactable_id = su.id
 		AND c.contactable_type = 'skyuser'
 		AND c.type = 'a'
+		LIMIT 1
 	) AS contAddress,
 	(
 		SELECT c.`value`
@@ -26,6 +28,7 @@ SELECT
 		WHERE c.contactable_id = su.id
 		AND c.contactable_type = 'skyuser'
 		AND c.type = 'e'
+		LIMIT 1
 	) AS contEmail,
 	su.photo AS profile,
 	su.created_from createdFrom,

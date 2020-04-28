@@ -8,6 +8,7 @@ import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class HeaderBean {
 
@@ -29,9 +30,9 @@ public class HeaderBean {
     public String getLocalization() {
 
         Object result = entityManager
-                .createNativeQuery("SELECT CASE WHEN COUNT(name) > 0 THEN 'true' ELSE 'false' END FROM frontend_locales WHERE locale = :locale AND status = 1")
+            .createNativeQuery("SELECT CASE WHEN COUNT(name) > 0 THEN 'true' ELSE 'false' END FROM frontend_locales WHERE locale = :locale AND status = 1")
             .setParameter("locale", request.getHeader("X-Localization"))
-                .getSingleResult();
+            .getSingleResult();
 
         Boolean b = Boolean.parseBoolean(result.toString());
 
@@ -53,9 +54,9 @@ public class HeaderBean {
     public long getLocalizationId() {
 
         Object result = entityManager
-                .createNativeQuery("SELECT id FROM frontend_locales WHERE locale = :locale AND status = 1")
-                .setParameter("locale", this.getLocalization())
-                .getSingleResult();
+            .createNativeQuery("SELECT id FROM frontend_locales WHERE locale = :locale AND status = 1")
+            .setParameter("locale", this.getLocalization())
+            .getSingleResult();
 
         return Long.valueOf(result.toString());
     }
@@ -71,9 +72,9 @@ public class HeaderBean {
      */
     public String getCurrencyCode() {
         Object result = entityManager
-                .createNativeQuery("SELECT CASE WHEN COUNT(code) > 0 THEN 'true' ELSE 'false' END FROM currency WHERE code = :currency AND status = 1")
+            .createNativeQuery("SELECT CASE WHEN COUNT(code) > 0 THEN 'true' ELSE 'false' END FROM currency WHERE code = :currency AND status = 1")
             .setParameter("currency", request.getHeader("X-Currency-Code"))
-                .getSingleResult();
+            .getSingleResult();
 
         Boolean b = Boolean.parseBoolean(result.toString());
 
@@ -90,9 +91,20 @@ public class HeaderBean {
         header.setOriginatingIp(request.getRemoteAddr());
         header.setCurrencyCode(this.getCurrencyCode());
 
-        if (request.getHeader("X-CompanyId") != null) {
-            header.setCompanyId(Integer.parseInt(request.getHeader("X-CompanyId")));
+
+        String companyId = request.getHeader("X-CompanyId");
+
+        if (companyId != null) {
+
+            String regex = "^[0-9]+$";
+            Pattern pattern = Pattern.compile(regex);
+
+            if (pattern.matcher(companyId).matches()) {
+                header.setCompanyId(Integer.parseInt(companyId));
+            }
+
         }
+
         if (request.getHeader("X-PlayerId") != null) {
             header.setPlayerId(request.getHeader("X-PlayerId"));
         }
@@ -121,5 +133,8 @@ public class HeaderBean {
         return headers;
     }
 
+    public String getPlayerId() {
+        return request.getHeader("X-PlayerId") != null && !request.getHeader("X-PlayerId").isEmpty() ? request.getHeader("X-PlayerId") : "";
+    }
 
 }

@@ -41,7 +41,7 @@ public class CurrencyControllerW {
     @GetMapping(value = "/currency")
     public ResRS getCurrencyByLocaleId() {
 
-        var currencyRSList = currencySV.findAllCurrencyByLocaleId(headerBean.getLocalizationId(null));
+        var currencyRSList = currencySV.findAllCurrencyByLocaleId(headerBean.getLocalizationId());
         var topCurrencyList = currencyRSList.stream().filter(currencyRS -> currencyRS.getIsTop() > 0).collect(Collectors.toList());
 
         Map<String, List<CurrencyRS>> responses = new TreeMap<>();

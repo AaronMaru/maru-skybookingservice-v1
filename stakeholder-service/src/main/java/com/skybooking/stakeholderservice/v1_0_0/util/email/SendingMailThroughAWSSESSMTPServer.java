@@ -65,6 +65,10 @@ public class SendingMailThroughAWSSESSMTPServer {
 
             html = this.replaceCode(html, "{{CODE}}", mailTemplateData.get("code").toString());
 
+            if (mailTemplateData.get("deepLink") != null) {
+                html = this.replaceCode(html, "{{DEEP_LINK}}", mailTemplateData.get("deepLink").toString());
+            }
+
             helper.setTo(mailProperty.get("TO"));
             helper.setText(html, true);
             helper.setSubject(mailProperty.get("SUBJECT"));

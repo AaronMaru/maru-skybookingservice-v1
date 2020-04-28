@@ -7,7 +7,7 @@ FROM stakeholder_user_has_companies suhc
 INNER JOIN
 (
 	SELECT *
-	FROM user_playid up
+	FROM user_player up
 ) up ON up.stuser_id = suhc.stakeholder_user_id
 
 WHERE suhc.stakeholder_user_id = :skyuserId

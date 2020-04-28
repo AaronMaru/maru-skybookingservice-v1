@@ -7,6 +7,7 @@ public class BookingOdSegRS {
 
     private String airlineCode;
     private String airlineName;
+    private String airlineRef;
     private Integer flightNumber;
     private String equipType;
     private String airCraftName;

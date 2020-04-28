@@ -7,7 +7,6 @@ import javax.validation.constraints.NotNull;
 import java.util.HashMap;
 
 @FieldMatchRequire(first = "businessTypeId", second = "contactPerson", third = "contactPosition", message = "Please provide contact persion and contact position")
-@UsernameUnique(first = "phone", second = "code", message = "Phone number already exists")
 public class SkyownerRegisterRQ {
 
     @Phone
@@ -17,7 +16,6 @@ public class SkyownerRegisterRQ {
     @NotEmpty(message = "Please provide a country code")
     private String code;
 
-    @Email
     private String email;
 
     @BussinessType
@@ -32,7 +30,7 @@ public class SkyownerRegisterRQ {
     private String contactPosition;
 
     @NotNull(message = "Please provide a license")
-    private HashMap<String, MultipartFile> licenses;
+    private HashMap<Long, MultipartFile> licenses;
 
     private String website;
     private String postalOrZipCode;
@@ -91,11 +89,11 @@ public class SkyownerRegisterRQ {
         this.contactPosition = contactPosition;
     }
 
-    public HashMap<String, MultipartFile> getLicenses() {
+    public HashMap<Long, MultipartFile> getLicenses() {
         return licenses;
     }
 
-    public void setLicenses(HashMap<String, MultipartFile> licenses) {
+    public void setLicenses(HashMap<Long, MultipartFile> licenses) {
         this.licenses = licenses;
     }
 
@@ -146,4 +144,5 @@ public class SkyownerRegisterRQ {
     public void setAddress(String address) {
         this.address = address;
     }
+
 }

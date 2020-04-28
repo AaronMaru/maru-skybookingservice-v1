@@ -30,12 +30,11 @@ public class BookingDetailTO {
     private BigDecimal totalAmount;
     private BigDecimal markupAmount;
     private BigDecimal markupPayAmount;
-    private BigDecimal commissionAmount;
-    private BigDecimal discountPayment;
+    private BigDecimal discountAmount;
+    private BigDecimal paidAmount;
 
     private String contactName;
     private String contactPhone;
-    private String contactPhoneCode;
     private String contactEmail;
     private String statusKey;
 

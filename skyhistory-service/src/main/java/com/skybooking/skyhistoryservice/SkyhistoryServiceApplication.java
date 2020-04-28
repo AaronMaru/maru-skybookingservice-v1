@@ -3,6 +3,7 @@ package com.skybooking.skyhistoryservice;
 import com.skybooking.skyhistoryservice.v1_0_0.util.calculator.CalculatorBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.datetime.DateTimeBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.email.EmailBean;
+import com.skybooking.skyhistoryservice.v1_0_0.util.email.SendingMailThroughAWSSESSMTPServer;
 import com.skybooking.skyhistoryservice.v1_0_0.util.flight.FlightShoppingBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.general.ApiBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.header.HeaderBean;
@@ -61,4 +62,8 @@ public class SkyhistoryServiceApplication {
     @Bean
     ApiBean apiBean() { return new ApiBean(); }
 
+    @Bean
+    SendingMailThroughAWSSESSMTPServer mail() {
+        return new SendingMailThroughAWSSESSMTPServer();
+    }
 }

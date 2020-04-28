@@ -1,5 +1,6 @@
 SELECT
     bod_seg.id,
+    IFNULL(bod_seg.elapsed_time, 0) AS elapsedTime,
     bod_seg.airline_code AS airlineCode,
     (
         SELECT fil.business_name
@@ -44,22 +45,143 @@ SELECT
     END AS operatedByAirline,
 
     bod_seg.adjustment_date AS adjustmentDate,
-
     bod_seg.dep_location_code AS departureLocationCode,
-    (SELECT cclo.name FROM country_city_locale cclo
-        WHERE cclo.locale_id = :localeId
-        AND cclo.country_city_id = (SELECT air.country_city_id FROM airport_info AS air WHERE air.code = bod_seg.dep_location_code )
-    ) AS departureLocationName,
+    dep_air.departureAirportName,
+    dep_air.departureLatitude,
+    dep_air.departureLongitude,
+    departureInfo.dep_city AS departureCity,
+    departureInfo.dep_country AS departureCountry,
     bod_seg.dep_terminal AS departureTerminal,
     bod_seg.dep_date AS departureDate,
 
     bod_seg.arr_location_code AS arrivalLocationCode,
-    (SELECT cclo.name FROM country_city_locale cclo
-        WHERE cclo.locale_id = :localeId
-        AND cclo.country_city_id = (SELECT air.country_city_id FROM airport_info AS air WHERE air.code = bod_seg.arr_location_code )
-    ) AS arrivalLocationName,
+    arrival_air.arrivalAirportName,
+    arrival_air.arrivalLatitude,
+    arrival_air.arrivalLongitude,
+    arrivalInfo.arr_city AS arrivalCity,
+    arrivalInfo.arr_country AS arrivalCountry,
     bod_seg.arr_terminal AS arrivalTerminal,
-    bod_seg.arr_date AS arrivalDate
+    bod_seg.arr_date AS arrivalDate,
+    CASE WHEN ( ( DATE(
+                    -- Flight depature datetime and convert to UTC
+                    CONVERT_TZ(bod_seg.dep_date, CONCAT( CASE WHEN bod_seg.dep_timezone >= 0 THEN CONCAT('+', bod_seg.dep_timezone,':00') ELSE CONCAT(bod_seg.dep_timezone,':00') END ), '+00:00')
+                ) >= DATE(
+                    -- User locale current time zone and convert to UTC
+                    CONVERT_TZ(CURRENT_TIMESTAMP, CONCAT( CASE WHEN bod_seg.dep_timezone >= 0 THEN CONCAT('+', bod_seg.dep_timezone,':00') ELSE CONCAT(bod_seg.dep_timezone,':00') END ), '+00:00')
+                ) ) > 0
+
+            ) THEN :UPCOMING
+
+        WHEN ( ( DATE(
+                        -- Flight depature datetime and convert to UTC
+                        CONVERT_TZ(bod_seg.dep_date, CONCAT( CASE WHEN bod_seg.dep_timezone >= 0 THEN CONCAT('+', bod_seg.dep_timezone,':00') ELSE CONCAT(bod_seg.dep_timezone,':00') END ), '+00:00')
+                    ) < DATE(
+                        -- User locale current time zone and convert to UTC
+                        CONVERT_TZ(CURRENT_TIMESTAMP, CONCAT( CASE WHEN bod_seg.dep_timezone >= 0 THEN CONCAT('+', bod_seg.dep_timezone,':00') ELSE CONCAT(bod_seg.dep_timezone,':00') END ), '+00:00')
+                    ) ) > 0
+
+            ) THEN :COMPLETED
+
+    END AS status
+
 
 FROM booking_origin_destinations bod_seg
+
+-- DepartureRS city and country
+LEFT JOIN
+(
+    SELECT
+        dep_air.code,
+        dep_air.id,
+        ( SELECT cclo.name
+            FROM airport_info_locale AS cclo
+            WHERE cclo.locale_id = :localeId
+            AND cclo.airport_info_id = dep_air.id
+        ) AS departureAirportName,
+        dep_air.latitude AS departureLatitude,
+        dep_air.longitude AS departureLongitude
+
+    FROM airport_info AS dep_air
+) dep_air ON dep_air.code = bod_seg.dep_location_code
+
+LEFT JOIN
+(
+    SELECT departureInfo.`code`, cc_city.dep_city, cc_city.dep_country
+    FROM airport_info AS departureInfo
+
+    INNER JOIN(
+            SELECT
+            cc_city.id,
+            ( SELECT cc_lcity.`name`
+                FROM country_city_locale cc_lcity
+                WHERE cc_lcity.locale_id = :localeId
+                AND cc_lcity.country_city_id = cc_city.id
+            ) AS dep_city,
+            (
+                SELECT cc_lcountry.`name`
+                FROM country_city_locale AS cc_lcountry
+                WHERE cc_lcountry.locale_id = :localeId
+                AND cc_lcountry.country_city_id = ( SELECT cc_county.id
+                                                    FROM country_city AS cc_county
+                                                    WHERE cc_county.id = cc_city.parent_id
+                                                    AND cc_county.type = 'country'
+                                                    )
+            ) AS dep_country
+
+            FROM country_city AS cc_city
+
+    ) cc_city ON cc_city.id = departureInfo.country_city_id
+
+) departureInfo ON departureInfo.`code` = bod_seg.dep_location_code
+-- The end of departure
+
+
+-- ArrivalRS city and country
+LEFT JOIN
+(
+    SELECT
+        arrival_air.code,
+        arrival_air.id,
+        ( SELECT cclo.name
+            FROM airport_info_locale AS cclo
+            WHERE cclo.locale_id = :localeId
+            AND cclo.airport_info_id = arrival_air.id
+        ) AS arrivalAirportName,
+        arrival_air.latitude AS arrivalLatitude,
+        arrival_air.longitude AS arrivalLongitude
+
+    FROM airport_info AS arrival_air
+
+) arrival_air ON arrival_air.code = bod_seg.arr_location_code
+
+LEFT JOIN
+(   SELECT arrivalInfo.`code`, cc_city.arr_city, cc_city.arr_country
+    FROM airport_info AS arrivalInfo
+
+    INNER JOIN(
+            SELECT
+            cc_city.id,
+            ( SELECT cc_lcity.`name` AS dep_city
+                FROM country_city_locale cc_lcity
+                WHERE cc_lcity.locale_id = :localeId
+                AND cc_lcity.country_city_id = cc_city.id
+            ) AS arr_city,
+            (
+                SELECT cc_lcountry.`name`
+                FROM country_city_locale AS cc_lcountry
+                WHERE cc_lcountry.locale_id = :localeId
+                AND cc_lcountry.country_city_id = ( SELECT cc_county.id
+                                                    FROM country_city AS cc_county
+                                                    WHERE cc_county.id = cc_city.parent_id
+                                                    AND cc_county.type = 'country'
+                                                    )
+            ) AS arr_country
+
+            FROM country_city AS cc_city
+
+    ) cc_city ON cc_city.id = arrivalInfo.country_city_id
+
+) arrivalInfo ON arrivalInfo.`code` = bod_seg.arr_location_code
+-- The end of arrival
+
 WHERE bod_seg.parent_id = :bodId

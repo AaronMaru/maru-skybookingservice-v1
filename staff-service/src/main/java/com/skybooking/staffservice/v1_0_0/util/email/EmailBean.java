@@ -80,6 +80,7 @@ public class EmailBean {
     public void email(Map<String, Object> mailTemplateData) {
 
         Map<String, String> mailProperty = new HashMap<>();
+
         mailProperty.put("SMTP_SERVER_HOST", environment.getProperty("spring.email.host"));
         mailProperty.put("SMTP_SERVER_PORT", environment.getProperty("spring.email.port"));
         mailProperty.put("SUBJECT", "Skybooking");
@@ -87,6 +88,7 @@ public class EmailBean {
         mailProperty.put("SMTP_USER_PASSWORD", environment.getProperty("spring.email.password"));
         mailProperty.put("FROM_USER_EMAIL", environment.getProperty("spring.email.from-address"));
         mailProperty.put("FROM_USER_FULLNAME", environment.getProperty("spring.email.from-name"));
+
         mailProperty.put("TO", (String) mailTemplateData.get("receiver"));
 
         mailTemplateData.put("mailUrl", environment.getProperty("spring.awsImageUrl.mailTemplate"));

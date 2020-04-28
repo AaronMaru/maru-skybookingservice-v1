@@ -64,7 +64,13 @@ public class SendingMailThroughAWSSESSMTPServer {
             }
 
             if (mailTemplateData.containsKey("dataEncrypt")) {
-                html= this.replaceCode(html, "{{CODE_ENCRYPY}}", mailTemplateData.get("dataEncrypt").toString());
+                html= this.replaceCode(html, "{{CODE_ENCRYPT}}", mailTemplateData.get("dataEncrypt").toString());
+            }
+
+            if (mailTemplateData.containsKey("inviterName")) {
+                if (!mailTemplateData.get("inviterName").equals("")) {
+                    html= this.replaceCode(html, "{{INVITER_NAME}}", mailTemplateData.get("inviterName").toString());
+                }
             }
 
             helper.setTo(mailProperty.get("TO"));

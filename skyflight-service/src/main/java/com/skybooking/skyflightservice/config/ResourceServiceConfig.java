@@ -12,8 +12,20 @@ public class ResourceServiceConfig extends ResourceServerConfigurerAdapter {
     @Override
     public void configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeRequests()
-                .antMatchers("/**").permitAll();
-        //.antMatchers("/**").authenticated();
+            .antMatchers(
+                "/v1.0.0/shopping/flight/test-revalidate",
+                "/v1.0.0/shopping/flight/detail",
+                "/v1.0.0/shopping/search/**",
+                "/v1.0.0/sb-**",
+                "/v1.0.0/sb-**/**",
+                "/v1.0.0/payment/**",
+                "/v1.0.0/ticketing/**"
+            ).permitAll()
+            .antMatchers(
+                "/v1.0.0/booking/**",
+                "/v1.0.0/bookmark/**",
+                "/**"
+            ).authenticated();
     }
 
 }

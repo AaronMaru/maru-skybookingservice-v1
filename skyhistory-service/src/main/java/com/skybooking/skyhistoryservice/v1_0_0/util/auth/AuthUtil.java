@@ -45,7 +45,6 @@ public class AuthUtil {
             UserAuth user = new UserAuth(map);
             return user;
         } catch (Exception ex) {
-            System.out.println(ex.getMessage());
             return null;
         }
     }

@@ -1,5 +1,5 @@
 SELECT
-	suc.added_by AS addedBy,
+	IFNULL(su.addedBy, '') AS addedBy,
 	(
 		SELECT COUNT(b.id)
 		FROM bookings b
@@ -8,7 +8,7 @@ SELECT
 		AND b.status IN (1, 11, 10, 12, 4)
 	) AS bookingQty,
 	(
-		SELECT IFNULL(SUM( b.total_amount + b.markup_amount + b.markup_pay_amount ), 0)
+		SELECT IFNULL(SUM( ( b.total_amount + b.markup_amount + b.markup_pay_amount ) - ( b.dis_pay_met_amount + b.commission_amount) ), 0)
 		FROM bookings b
 		WHERE b.stakeholder_user_id = suc.stakeholder_user_id
 		AND b.stakeholder_company_id = suc.stakeholder_company_id
@@ -23,5 +23,10 @@ SELECT
 	suc.created_at AS joinDate
 
 FROM stakeholder_user_has_companies suc
+LEFT JOIN
+( SELECT su.id, CONCAT(su.first_name,' ', su.last_name) AS addedBy
+	FROM stakeholder_users AS su
+) su ON su.id = suc.added_by
+
 WHERE suc.stakeholder_user_id = :skyuserId
 AND suc.stakeholder_company_id = :companyId

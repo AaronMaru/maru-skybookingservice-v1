@@ -1,25 +1,16 @@
 package com.skybooking.staffservice.v1_0_0.io.nativeQuery.staff;
 
+import lombok.Data;
+
+import java.util.Date;
+
+@Data
 public class PendingStaffEmailTO {
 
     private Integer id;
-
-    private String email;
-
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    private String username;
+    private String role;
+    private Date invitedAt;
+    private Boolean isAvailable;
 
 }

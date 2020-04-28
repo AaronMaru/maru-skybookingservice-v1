@@ -1,5 +1,6 @@
 package com.skybooking.stakeholderservice.security;
 
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyDocRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyHasUserRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserRepository;
@@ -30,6 +31,9 @@ public class CustomJWTEnhancer implements TokenEnhancer {
     private CompanyRP companyRP;
 
     @Autowired
+    private CompanyDocRP companyDocRP;
+
+    @Autowired
     private Environment environment;
 
     @Override
@@ -39,12 +43,9 @@ public class CustomJWTEnhancer implements TokenEnhancer {
 
         var userPrinciple = (UserPrinciple) authentication.getPrincipal();
         var user = userRepository.findById(userPrinciple.getId());
-
         var company = companyHasUserRP.findByStakeholderUserId(user.getStakeHolderUser().getId());
-
         additionalInfo.put("userId", user.getId());
         additionalInfo.put("stakeholderId", user.getStakeHolderUser().getId());
-
         if (company != null) {
 
             var companyDetail = companyRP.findById(company.getStakeholderCompanyId());
@@ -53,7 +54,12 @@ public class CustomJWTEnhancer implements TokenEnhancer {
             additionalInfo.put("userRole", company.getSkyuserRole());
 
             String profile = companyDetail.get().getProfileImg() == null ? "default.png" : companyDetail.get().getProfileImg();
-            additionalInfo.put("profile", environment.getProperty("spring.awsImageUrl.companyProfile") + "/origin/" + profile);
+            var profileItenaryEntity = companyDocRP.findByStakeholderCompanyAndType(companyDetail.get(), "itenery");
+
+            String profileItenery = (profileItenaryEntity.size() == 0) ? "default.png" : profileItenaryEntity.get(0).getFileName();
+
+            additionalInfo.put("profile", environment.getProperty("spring.awsImageUrl.companyProfile") + "medium/" + profile);
+            additionalInfo.put("profileItenery", environment.getProperty("spring.awsImageUrl.companyProfile") + "origin/" + profileItenery);
 
         }
 

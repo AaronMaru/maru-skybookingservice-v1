@@ -54,7 +54,7 @@ public class UserEntity {
     private int verified;
 
     @Column(nullable = true, length = 150, name = "user_type")
-    private String userType = "officestaff";
+    private String userType = "skyuser";
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "last_login_at")

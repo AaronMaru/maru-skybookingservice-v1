@@ -1,14 +1,16 @@
 package com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.booking.detail;
 
+import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.booking.detail.destination.ArrivalRS;
+import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.booking.detail.destination.DepartureRS;
 import lombok.Data;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Data
 public class ItineraryODSegmentRS {
 
+    private Integer elapsedTime;
     private String airlineCode;
     private String airlineName;
     private String airlineLogo;
@@ -22,15 +24,10 @@ public class ItineraryODSegmentRS {
     private String airlineRef;
     private String operatedByAirline;
     private Integer adjustmentDate;
+    private String status;
 
-    private String departureLocationCode;
-    private String departureLocationName;
-    private String departureTerminal;
-    private Date departureDate;
+    DepartureRS departureInfo;
+    ArrivalRS arrivalInfo;
 
-    private String arrivalLocationCode;
-    private String arrivalLocationName;
-    private String arrivalTerminal;
-    private Date arrivalDate;
     List<BookingStopInfoRS> stopInfo = new ArrayList<>();
 }

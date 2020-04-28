@@ -33,6 +33,7 @@ spring:
     url: s3.amazonaws.com
     region: us-east-1
     bucket: skybooking
+    pdfUrl: /uploads/development/booking/
     key: AKIAJEC5JZZKMU7GNCFQ
     secret: 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
     visibility: public
@@ -42,6 +43,16 @@ spring:
     profile:
       url_larg: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/profile/
       url_small: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/profile/_thumbnail/
+    file:
+      itinerary: https://skybooking.s3.us-east-1.amazonaws.com/uploads/development/booking/itinerary
+      receipt: https://skybooking.s3.us-east-1.amazonaws.com/uploads/development/booking/receipt
+
+  activemq:
+    in-memory: false
+    pool.enabled: false
+    broker-url: tcp://192.168.1.126:61616
+
+
 
 native-query:
   package-scan: com.skybooking.skyhistoryservice

@@ -1,14 +1,18 @@
 SELECT
-	fn.id,
-	ss.url_key AS urlKey,
+	nohi.id,
+	su.fullname,
+	su.photo,
 	ss.noti_icon AS notiIcon,
-	ss.title,
-	fn.readable,
-	fn.`status`,
-	fn.created_at AS createdAt
-FROM front_notification fn
+	IFNULL(ss.title, '' ) AS title,
+	nohi.booking_id AS bookingId,
+	IFNULL((SELECT b.booking_code FROM bookings b WHERE b.id = nohi.booking_id), '' ) AS bookingCode,
+	IFNULL((SELECT b.trip_type FROM bookings b WHERE b.id = nohi.booking_id), '' ) AS tripType,
+	UPPER(nohi.type) AS notiType,
+	nohi.created_at AS createdAt
 
-INNER JOIN
+FROM user_notification_history nohi
+
+LEFT JOIN
 (
 	SELECT
 		ss.id,
@@ -16,18 +20,31 @@ INNER JOIN
 		(
 			SELECT sslo.title
 			FROM sending_script_locale sslo
-			WHERE IF( NULL IS NULL, sslo.locale_id = :locale , sslo.locale_id = :locale)
+			WHERE IF( :locale IS NULL , sslo.locale_id = 1 ,sslo.locale_id = :locale )
 			AND sslo.send_script_id = ss.id
+			LIMIT 1
 		) AS title,
 		ss.noti_icon
 	FROM sending_script ss
-) ss ON ss.id = fn.send_script_id
 
-WHERE fn.user_id = :skyuserId
-AND IF(:action = 'skyuser',
-				fn.user_type = 'skyuser',
-				fn.user_type = 'staff'
-				AND fn.stcompany_id = :companyId
-			)
+) ss ON ss.id = nohi.send_script_id
 
-ORDER BY fn.created_at DESC
+LEFT JOIN
+(
+    SELECT
+        su.id,
+        CONCAT(su.first_name, ' ', su.last_name) AS fullname,
+        su.photo
+    FROM stakeholder_users su
+) su ON su.id = nohi.stakeholder_user_id
+
+WHERE CASE WHEN :stake = "skyuser" THEN
+        ( nohi.stakeholder_user_id = :skyuserId AND nohi.stakeholder_company_id IS NULL )
+    ELSE
+        -- Condition for Skyowner
+        CASE WHEN ( :role = "admin" ) THEN nohi.stakeholder_company_id = :companyId
+             ELSE ( nohi.stakeholder_user_id = :skyuserId AND nohi.stakeholder_company_id = :companyId )
+             END
+    END
+
+ORDER BY nohi.created_at DESC

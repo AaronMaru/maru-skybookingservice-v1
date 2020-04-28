@@ -32,36 +32,36 @@ public class TicketingController {
     @Autowired
     private BookingRP bookingRP;
 
-    @PostMapping("/issued")
-    public ResponseEntity create(@RequestBody IssueTicketRQ issueTicketRQ) {
+//    @PostMapping("/issued")
+//    public ResponseEntity create(@RequestBody IssueTicketRQ issueTicketRQ) {
 
-        BookingEntity dataBooking = bookingRP.getBookingByBookingCode(issueTicketRQ.getBookingCode());
+//        BookingEntity dataBooking = bookingRP.getBookingByBookingCode(issueTicketRQ.getBookingCode());
+//
+//        issueTicketRQ.setItineraryNo(dataBooking.getItineraryRef());
+//        issueTicketRQ.setPassengerQualifier(dataBooking.getPq());
+//
+//        /**
+//         * Request action for issue ticket
+//         */
+//        var ticket = action.issued(issueTicketRQ);
+//        var status = ticket.get("AirTicketRS").get("ApplicationResults").get("status").textValue();
+//        var user = activityLog.getUser(dataBooking.getStakeholderUserId());
+//
+//        /**
+//         * Update ticket information
+//         */
+//        if (status.equals("Complete")) {
+//            bookingDataIP.updateTicket(ticket, dataBooking);
+//            activityLog.activities(ActivityLoggingBean.Action.INDEX_TICKETING, user, dataBooking);
+//            return new ResponseEntity<>(new TicketRS(status), HttpStatus.OK);
+//        }
+//
+//        dataBooking.setStatus(TicketConstant.TICKET_FAIL);
+//        bookingRP.save(dataBooking);
+//        activityLog.activities(ActivityLoggingBean.Action.INDEX_TICKETING_FAIL, user, dataBooking);
+//
+//        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 
-        issueTicketRQ.setItineraryNo(dataBooking.getItineraryRef());
-        issueTicketRQ.setPassengerQualifier(dataBooking.getPq());
-
-        /**
-         * Request action for issue ticket
-         */
-        var ticket = action.issued(issueTicketRQ);
-        var status = ticket.get("AirTicketRS").get("ApplicationResults").get("status").textValue();
-        var user = activityLog.getUser(dataBooking.getStakeholderUserId());
-
-        /**
-         * Update ticket information
-         */
-        if (status.equals("Complete")) {
-            bookingDataIP.updateTicket(ticket, dataBooking);
-            activityLog.activities(ActivityLoggingBean.Action.INDEX_TICKETING, user, dataBooking);
-            return new ResponseEntity<>(new TicketRS(status), HttpStatus.OK);
-        }
-
-        dataBooking.setStatus(TicketConstant.TICKET_FAIL);
-        bookingRP.save(dataBooking);
-        activityLog.activities(ActivityLoggingBean.Action.INDEX_TICKETING_FAIL, user, dataBooking);
-
-        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-
-    }
+//    }
 
 }

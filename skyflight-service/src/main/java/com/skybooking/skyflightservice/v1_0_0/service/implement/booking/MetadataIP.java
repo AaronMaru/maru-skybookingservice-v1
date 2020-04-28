@@ -47,7 +47,7 @@ public class MetadataIP implements MetadataSV {
         var bookingMetadata = new BookingMetadataTA();
 
         bookingMetadata.setUser(this.getUserAuthenticationMetadata());
-        bookingMetadata.setCurrencyCode(header.getCurrencyCode());
+        bookingMetadata.setCurrencyLocaleCode(header.getCurrencyCode());
 
         return bookingMetadata;
 

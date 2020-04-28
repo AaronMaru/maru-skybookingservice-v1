@@ -19,12 +19,14 @@ public interface BookingRP extends JpaRepository<BookingEntity, Integer> {
     @Query(value = "SELECT * FROM bookings WHERE booking_code = ?", nativeQuery = true)
     BookingEntity getBookingByBookingCode(String bookingCode);
 
-    @Query(value = "SELECT * FROM bookings WHERE stakeholder_user_id = :skyuserId AND id = :bookingId AND status IN ( 0, 5, 6)", nativeQuery = true)
-    BookingEntity getBookingToCancelUser(int bookingId, Integer skyuserId);
+    @Query(value = "SELECT * FROM bookings WHERE stakeholder_user_id = :skyuserId AND booking_code = :bookingCode AND status IN (0, 2, 3, 4, 5, 6)", nativeQuery = true)
+    BookingEntity getBookingToCancelUser(String bookingCode, Integer skyuserId);
 
-    @Query(value = "SELECT * FROM bookings WHERE stakeholder_company_id = :companyId AND id = :bookingId AND status IN ( 0, 5, 6)", nativeQuery = true)
-    BookingEntity getBookingToCancelOwner(int bookingId, Integer companyId);
+    @Query(value = "SELECT * FROM bookings WHERE stakeholder_company_id = :companyId AND booking_code = :bookingCode AND status IN (0, 2, 3, 4, 5, 6)", nativeQuery = true)
+    BookingEntity getBookingToCancelOwner(String bookingCode, Integer companyId);
 
-    @Query(value = "SELECT * FROM bookings WHERE status IN ( 0, 5, 6) AND created_at < DATE_SUB(NOW(), INTERVAL 1 HOUR)", nativeQuery = true)
+    @Query(value = "SELECT * FROM bookings WHERE status IN (0, 2, 3, 4, 5, 6) AND created_at < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 1 HOUR)", nativeQuery = true)
     List<BookingEntity> getBookingToCancelOwnerCron();
+
+    BookingEntity findByBookingCode(String code);
 }

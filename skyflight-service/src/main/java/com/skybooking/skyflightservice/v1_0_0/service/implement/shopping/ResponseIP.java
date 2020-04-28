@@ -29,6 +29,7 @@ public class ResponseIP implements ResponseSV {
      */
     @Override
     public ShoppingResponseEntity flightShoppingCreate(String id, List<SabreBargainFinderRS> responses, ShoppingQueryEntity query) {
+
         var shopping = new ShoppingResponseEntity(id, responses, query);
 
         instance.getMap(RESPONSE_CACHED_NAME).put(shopping.getId(), shopping);

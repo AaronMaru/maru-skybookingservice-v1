@@ -12,7 +12,11 @@ import java.util.List;
 public interface UserNQ extends NativeQuery {
 
     List<PermissionTO> listPermission(@NativeQueryParam(value = "roles") String roles);
-    TotalBookingTO totalBooking(@NativeQueryParam(value = "skyuserId") Long skyuserId);
+
+    TotalBookingTO totalBooking(@NativeQueryParam(value = "skyuserId") Long skyuserId,
+                                @NativeQueryParam(value = "companyId") Long companyId,
+                                @NativeQueryParam(value = "stake") String stake);
+
     NationalityTO getNationality(@NativeQueryParam(value = "isoCountry") String isoCountry,
                                  @NativeQueryParam(value = "localId") Long localId);
 

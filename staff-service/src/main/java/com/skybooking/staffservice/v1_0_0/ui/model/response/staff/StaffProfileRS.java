@@ -21,7 +21,6 @@ public class StaffProfileRS {
     private String joinStatus;
     private String skyuserRole;
     private String joinDate;
-    private String photoMedium;
-    private String photoSmall;
+    private String photo;
 
 }

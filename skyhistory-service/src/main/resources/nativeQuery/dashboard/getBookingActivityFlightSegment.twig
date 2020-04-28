@@ -8,6 +8,12 @@ SELECT
 
 ai.depAirName,
 ai.depCityName,
+(   SELECT dep_seg.dep_date
+    FROM booking_origin_destinations dep_seg
+    WHERE dep_seg.parent_id = bod.id
+    ORDER BY dep_seg.id ASC
+    LIMIT 1
+) AS depDateTime,
 (
     SELECT arr_seg.arr_location_code
     FROM booking_origin_destinations arr_seg

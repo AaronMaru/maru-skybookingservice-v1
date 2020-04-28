@@ -20,21 +20,27 @@ import com.skybooking.skyflightservice.v1_0_0.service.model.booking.BookingMetad
 import com.skybooking.skyflightservice.v1_0_0.service.model.booking.BookingRequestTA;
 import com.skybooking.skyflightservice.v1_0_0.service.model.booking.TravelItineraryTA;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.booking.BookingCreateRQ;
+import com.skybooking.skyflightservice.v1_0_0.ui.model.request.booking.BookingPassengerRQ;
 import com.skybooking.skyflightservice.v1_0_0.util.DateUtility;
 import com.skybooking.skyflightservice.v1_0_0.util.GeneratorUtils;
 import com.skybooking.skyflightservice.v1_0_0.util.booking.BookingUtility;
 import com.skybooking.skyflightservice.v1_0_0.util.calculator.CalculatorUtils;
 import com.skybooking.skyflightservice.v1_0_0.util.passenger.PassengerUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class BookingDataIP extends MetadataIP implements BookingDataSV {
 
     @Autowired
@@ -100,6 +106,7 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
         var booking = new BookingEntity();
         var company = new CompanyConstant();
         var generalMarkupPayment = markupNQ.getGeneralMarkupPayment();
+
         var locationCode = pnrRS.get("CreatePassengerNameRecordRS")
             .get("TravelItineraryRead")
             .get("TravelItinerary")
@@ -113,6 +120,7 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
             .get("PriceQuote")
             .get("PricedItinerary")
             .get("AirItineraryPricingInfo");
+
         var itemMarkup = CalculatorUtils.getBookingMarkup(travelItineraries, new BigDecimal(metadataTA.getMarkupPercentage()), generalMarkupPayment.getMarkup());
 
         booking.setStakeholderUserId(metadataTA.getUser().getStakeholderId());
@@ -132,12 +140,14 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
         booking.setDepDate(DateUtility.convertZonedDateTimeToDateTime(metadataTA.getDepartureDate()));
         booking.setTripType(bookingUtility.getTripType(metadataTA.getTripType()));
         booking.setPq(bookingUtility.getPassengerQuantityCodeNumber(requestTA.getRequest().getPassengers()));
+
         booking.setTotalAmount(BigDecimal.valueOf(metadataTA.getTotalAmount()));
         booking.setCurrencyConvert(metadataTA.getCurrencyLocaleCode());
         booking.setCurrencyCode(metadataTA.getCurrencyCode());
         booking.setCurrencyConRate(metadataTA.getExchangeRate());
         booking.setMarkupAmount(BigDecimal.valueOf(metadataTA.getMarkupAmount()));
         booking.setMarkupPercentage(Double.toString(metadataTA.getMarkupPercentage()));
+
 
         booking.setDisPayMetAmount(BigDecimal.ZERO);
         booking.setDisPayMetPercentage(BigDecimal.ZERO);
@@ -146,10 +156,19 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
         booking.setPayMetFeeAmount(BigDecimal.ZERO);
         booking.setPayMetFeePercentage(BigDecimal.ZERO);
 
+        booking.setCommissionAmount(metadataTA.getTotalCommissionAmount());
+
         booking.setVatPercentage(frontendConfigRP.getVatPercentage().doubleValue());
         booking.setIsCheck(0);
         booking.setStatus(BookingConstant.PNR_CREATED);
         booking.setCreatedBy(metadataTA.getUser().getUserId().toString()); // user's logged in id
+
+        var commissionTotalAmount = booking.getTotalAmount()
+            .add(booking.getMarkupAmount())
+            .add(booking.getMarkupPayAmount())
+            .subtract(booking.getCommissionAmount());
+
+        booking.setCommissionTotalAmount(commissionTotalAmount);
 
         return bookingRP.save(booking);
 
@@ -324,7 +343,10 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
 
             bookingTI.setTotalAmount(new BigDecimal(travelItin.get("ItinTotalFare").get("TotalFare").get("Amount").textValue()));
             bookingTI.setTotalTax(new BigDecimal(travelItin.get("ItinTotalFare").get("Taxes").get("TotalAmount").textValue()));
-            bookingTI.setNonRefundableInd(travelItin.get("ItinTotalFare").get("NonRefundableInd").textValue());
+
+            var nonRefundable = travelItin.get("ItinTotalFare").get("NonRefundableInd").textValue().equals("N");
+
+            bookingTI.setNonRefundableInd(nonRefundable);
             bookingTI.setBaggageInfo(travelItin.get("ItinTotalFare").get("BaggageInfo").get("NonUS_DOT_Disclosure").withArray("Text").textValue());
             bookingTI.setFareCalculation(travelItin.get("FareCalculation").get("Text").textValue());
             bookingTI.setEndorsements(travelItin.get("ItinTotalFare").get("Endorsements").get("Text").textValue());
@@ -387,7 +409,9 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
     @Override
     public void insertBookingAirTicket(Integer bookingId, List<TravelItineraryTA> travelItineraryTAS, BookingCreateRQ request) {
 
-        request.getPassengers().forEach(bookingPassengerRQ -> {
+        var passengers = request.getPassengers().stream().sorted(Comparator.comparing(BookingPassengerRQ::getBirthDate)).collect(Collectors.toList());
+
+        passengers.forEach(bookingPassengerRQ -> {
 
             var bookingAirTicketEntity = new BookingAirTicketEntity();
             var passengerType = PassengerUtil.type(bookingPassengerRQ.getBirthDate());
@@ -417,22 +441,20 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
 
         var tickets = bookingAirTicketRP.getTickets(booking.getId());
         var numberTicket = ticketInfo.get("AirTicketRS").get("Summary");
+        var index = 0;
 
-        numberTicket.forEach(item -> {
+        for (BookingAirTicketEntity ticket : tickets) {
 
-            tickets
-                .stream()
-                .filter(ticket -> ticket.getFirstName().equalsIgnoreCase(item.get("FirstName").textValue()) && ticket.getLastName().equalsIgnoreCase(item.get("LastName").textValue()))
-                .findFirst()
-                .ifPresent(ticket -> {
-                    ticket.setTicketNumber(item.get("DocumentNumber").textValue());
-                    ticket.setStatus(1);
-                    bookingAirTicketRP.save(ticket);
-                });
+            ticket.setTicketNumber(numberTicket.get(index).get("DocumentNumber").textValue());
+            ticket.setStatus(1);
 
-        });
+            bookingAirTicketRP.save(ticket);
+            index++;
+
+        }
 
         booking.setStatus(TicketConstant.TICKET_ISSUED);
+        booking.setLocalIssueDate(new Date());
         bookingRP.save(booking);
     }
 

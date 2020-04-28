@@ -1,11 +1,36 @@
-SELECT
-
-    sui.id,
-    sui.invite_to AS email
+SELECT sui.id,
+    CASE WHEN sui.invite_to IS NOT NULL THEN
+	 				sui.invite_to
+	 		ELSE ( SELECT
+			 				CASE WHEN u.email IS NOT NULL THEN
+			 					u.email
+							 ELSE
+							 	CONCAT(u.code, u.phone)
+							 END
+			 			FROM users u
+						WHERE u.id = (SELECT su.user_id
+											FROM stakeholder_users su
+											WHERE su.id = sui.invite_stakeholder_user_id
+											LIMIT 1
+										)
+						LIMIT 1
+				  )
+			END AS username,
+    sui.skyuser_role AS role,
+    sui.created_at AS invitedAt,
+    sui.status AS isAvailable
 
 FROM stakeholder_user_invitations sui
 
-WHERE stakeholder_company_id = :companyId
-AND invite_stakeholder_user_id IS NULL
+WHERE sui.stakeholder_company_id = :companyId
+AND (
+        sui.`status` = 0
+        OR (SELECT COUNT(suin.id)
+                FROM stakeholder_user_invitations suin
+                WHERE suin.`status` = 1
+                AND suin.invite_stakeholder_user_id = sui.invite_stakeholder_user_id
+            ) > 1
+	)
 
 AND NOT EXISTS (SELECT * FROM users u where u.email = sui.invite_from)
+ORDER BY sui.created_at DESC

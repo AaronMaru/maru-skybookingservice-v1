@@ -1,0 +1,7 @@
+SELECT( SELECT cclo.name
+        FROM country_city_locale AS cclo
+        WHERE cclo.locale_id = :localeId
+        AND cclo.country_city_id = air.country_city_id
+      ) AS city
+FROM airport_info AS air
+WHERE air.code = :locationCode

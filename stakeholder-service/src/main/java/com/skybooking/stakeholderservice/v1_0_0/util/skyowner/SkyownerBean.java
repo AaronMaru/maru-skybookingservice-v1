@@ -1,9 +1,11 @@
 package com.skybooking.stakeholderservice.v1_0_0.util.skyowner;
 
+import com.skybooking.stakeholderservice.constant.BussinessConstant;
 import com.skybooking.stakeholderservice.exception.httpstatus.BadRequestException;
 import com.skybooking.stakeholderservice.exception.httpstatus.UnauthorizedException;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.company.*;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.StakeHolderUserEntity;
+import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.StakeholderUserInvitationEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.*;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserRepository;
@@ -66,7 +68,7 @@ public class SkyownerBean {
         stkCompany.setCompanyCode(companyCode);
 
         Optional<BussinessTypeEntity> bizType = bussinessTypeRP.findById(skyownerRQ.getBusinessTypeId());
-        if (bizType.get().getName().equals("Goverment")) {
+        if (bizType.get().getName().equals(BussinessConstant.GOVERMENT)) {
             stkCompany.setContactPerson(skyownerRQ.getContactPerson());
             stkCompany.setContactPosition(skyownerRQ.getContactPosition());
         }
@@ -81,14 +83,17 @@ public class SkyownerBean {
             stakeholderCompany.setStakeHolderUsers(skyuser);
         }
 
-        storeCompanyDocs(stkCompany, skyownerRQ, "add");
-
-        user = userRP.save(user);
+        try {
+            storeCompanyDocs(stkCompany, skyownerRQ, "add");
+            user = userRP.save(user);
+        } catch (Exception e) {
+            throw e;
+        }
 
         StakeholderCompanyEntity company = user.getStakeHolderUser().getStakeholderCompanies().stream().findFirst().get();
-
         apiBean.storeOrUpdateCountry(skyownerRQ.getCountryId(), "company", company.getId());
         storeContacts(skyownerRQ, company.getId());
+
         storeCompanyStatus(company.getId(), user.getId(), 0, "Waiting admin approve");
 
         List<StakeholderCompanyEntity> bussinees = new ArrayList<>();
@@ -110,12 +115,12 @@ public class SkyownerBean {
      * @Param id
      */
     public void storeContacts(SkyownerRegisterRQ skyownerRQ, Long id) {
-        apiBean.addSimpleContact(id,skyownerRQ.getCode() + "-" + skyownerRQ.getPhone().replaceFirst("^0+(?!$)", ""), "p", "skyowner");
-        apiBean.addSimpleContact(id, skyownerRQ.getWebsite(), "w", "skyowner");
-        apiBean.addSimpleContact(id, skyownerRQ.getPostalOrZipCode(), "z", "skyowner");
-        apiBean.addSimpleContact(id, skyownerRQ.getEmail(), "e", "skyowner");
-        apiBean.addSimpleContact(id, skyownerRQ.getAddress(), "a", "skyowner");
-        apiBean.addSimpleContact(id, skyownerRQ.getCity(), "c", "skyowner");
+        apiBean.addSimpleContact(id,skyownerRQ.getCode() + "-" + skyownerRQ.getPhone().replaceFirst("^0+(?!$)", ""), "p", "company");
+        apiBean.addSimpleContact(id, skyownerRQ.getWebsite(), "w", "company");
+        apiBean.addSimpleContact(id, skyownerRQ.getPostalOrZipCode(), "z", "company");
+        apiBean.addSimpleContact(id, skyownerRQ.getEmail(), "e", "company");
+        apiBean.addSimpleContact(id, skyownerRQ.getAddress(), "a", "company");
+        apiBean.addSimpleContact(id, skyownerRQ.getCity(), "c", "company");
     }
 
 
@@ -135,11 +140,11 @@ public class SkyownerBean {
 
             StakeholderCompanyDocsEntity companyDoc = new StakeholderCompanyDocsEntity();
 
-            BussinessDocEntity bizDoc = bussinessDocRP.findFirstByName(key);
+            BussinessDocEntity bizDoc = bussinessDocRP.findFirstById(key);
             String nameFile = userBean.uploadLicense(file, "/company_license", null);
 
             companyDoc.setFileName(nameFile);
-            companyDoc.setDocName(key);
+            companyDoc.setDocName(bizDoc.getName());
             companyDoc.setIsRequired(bizDoc.getIsRequired());
 
             companyDocs.add(companyDoc);
@@ -196,7 +201,7 @@ public class SkyownerBean {
         Optional<StakeholderCompanyEntity> company = user.getStakeHolderUser().getStakeholderCompanies().stream().filter(p -> p.getId() == id).findFirst();
 
         if (company.isEmpty()) {
-            throw new UnauthorizedException("sth_w_w", "");
+            throw new UnauthorizedException("User doesn't has permission to update ", null);
         }
 
         return company.get();
@@ -212,18 +217,18 @@ public class SkyownerBean {
      * @Param companyId
      * @Param skyuserId
      */
-    public void addStaff(Long companyId, Long skyuserId, String role) {
+    public void addStaff(StakeholderUserInvitationEntity userInv, Long skyuserId) {
 
         StakeholderUserHasCompanyEntity companyHasUser = new StakeholderUserHasCompanyEntity();
-        companyHasUser.setStakeholderCompanyId(companyId);
+        companyHasUser.setStakeholderCompanyId(userInv.getStakeholderCompanyId());
         companyHasUser.setStakeholderUserId(skyuserId);
         companyHasUser.setStatus(2);
-        companyHasUser.setSkyuserRole(role);
+        companyHasUser.setSkyuserRole(userInv.getSkyuserRole());
+        companyHasUser.setAddedBy(userInv.getInviteFrom());
 
         companyHasUserRP.save(companyHasUser);
 
     }
-
 
 
     /**
@@ -234,29 +239,29 @@ public class SkyownerBean {
      * @Param id (id of bussiness type)
      * @Param licenses
      */
-    public void licenseValid(Long id, Map<String, MultipartFile> licenses) {
+    public void licenseValid(Long id, Map<Long, MultipartFile> licenses) {
 
         licenses.forEach((k, v) -> {
             generalBean.errorMultipart(v);
-            BussinessDocEntity existLc = bussinessDocRP.findFirstByName(k);
+            BussinessDocEntity existLc = bussinessDocRP.findFirstById(k);
             if (existLc == null) {
-                throw new BadRequestException("Your license is not correct ", "");
+                throw new BadRequestException("Your license is not correct ", null);
             }
         });
 
         Optional<BussinessTypeEntity> bizType = bussinessTypeRP.findById(id);
 
         if (bizType.isEmpty()) {
-            throw new BadRequestException("sth_w_w", "");
+            throw new BadRequestException("sth_w_w", null);
         }
         if(bizType.get().getBussinessDocs().size() == 0 && licenses != null) {
-            throw new BadRequestException("Please dont provide the license", "");
+            throw new BadRequestException("Please dont provide the license", null);
         }
 
         for(BussinessDocEntity doc : bizType.get().getBussinessDocs()) {
             if (doc.getIsRequired() == 1) {
-                if(licenses.get(doc.getName()) == null) {
-                    throw new BadRequestException("Please provide a " + doc.getName(), "");
+                if(licenses.get(doc.getId()) == null) {
+                    throw new BadRequestException("Please provide the license " + doc.getId(), null);
                 }
             }
         }

@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
@@ -78,25 +79,36 @@ public class BookmarkIP implements BookmarkSV {
 
         var query = querySV.flightShoppingById(bookmarkCreateRQ.getRequest()).getQuery();
 
-        try (Stream<FlightSavesEntity> foundBookmarkFlights = flightSavesRP.findAllByUserId(authenticationMetaTA.getUserId())) {
+        var directions = query
+            .getLegs()
+            .stream()
+            .map(flightLeg -> flightLeg.getOrigin().concat("-").concat(flightLeg.getDestination()))
+            .collect(Collectors.joining("~"));
+
+        var flightDepartureDate = query
+            .getLegs()
+            .stream()
+            .map(flightLeg -> flightLeg.getDate().format(DateTimeFormatter.ofPattern("yyMMdd")))
+            .findFirst()
+            .get();
+
+        try (Stream<FlightSavesEntity> foundBookmarkFlights = flightSavesRP.findAllByUserId(authenticationMetaTA.getStakeholderId())) {
 
             return foundBookmarkFlights.filter(flightSavesEntity -> {
 
-                var directions = query.getLegs().stream().map(flightLeg -> flightLeg.getOrigin().concat("-").concat(flightLeg.getDestination())).collect(Collectors.joining("~"));
                 var tagDirection = flightSavesEntity.getTagId().split("@")[1];
-
+                var departureDate = flightSavesEntity.getTagId().split(":")[3];
                 var operatedAirline = flightSavesEntity.getTagId().split("@")[2];
                 var operatedFlightTypeAirline = flightSavesEntity.getTagId().split(":")[0];
 
                 var bookmarkedAirline = bookmarkCreateRQ.getItinerary().split("@")[2];
                 var flightTypeAirline = bookmarkCreateRQ.getItinerary().split(":")[0];
 
-                boolean isBookmarkFlightDirectionAndType = directions.equalsIgnoreCase(tagDirection) && operatedFlightTypeAirline.equalsIgnoreCase(flightTypeAirline);
+                boolean isBookmarkFlightDirectionAndType = directions.equalsIgnoreCase(tagDirection) && operatedFlightTypeAirline.equalsIgnoreCase(flightTypeAirline) && departureDate.equals(flightDepartureDate);
 
                 if (authenticationMetaTA.getCompanyId() != null) {
 
                     if (flightSavesEntity.getTripType().equalsIgnoreCase(query.getTripType().toString()) && flightSavesEntity.getClassCode().equalsIgnoreCase(query.getClassType()) && flightSavesEntity.getCompanyId().equals(authenticationMetaTA.getCompanyId())) {
-
                         if (isBookmarkFlightDirectionAndType) {
                             return operatedAirline.equalsIgnoreCase(bookmarkedAirline);
                         }
@@ -111,6 +123,7 @@ public class BookmarkIP implements BookmarkSV {
                             }
                         }
                     }
+
                 }
 
                 return false;
@@ -139,6 +152,7 @@ public class BookmarkIP implements BookmarkSV {
             .forEach(bookmarkId -> {
 
                 flightSaveOriginDestinationRP.deleteInBatch(flightSaveOriginDestinationRP.findAllByFlightSaveId(bookmarkId).collect(Collectors.toList()));
+
                 flightSavesRP.deleteById(bookmarkId);
 
             });
@@ -201,7 +215,7 @@ public class BookmarkIP implements BookmarkSV {
 
             flightSavedEntity.setAmount(BigDecimal.valueOf(totalAmount).add(BigDecimal.valueOf(baseFare)));
             flightSavedEntity.setDecimalPlaces(2);
-            flightSavedEntity.setUserId(metadata.getUserId());
+            flightSavedEntity.setUserId(metadata.getStakeholderId());
             flightSavedEntity.setTagId(bookmark.getItinerary());
             flightSavedEntity.setBaseFare(BigDecimal.valueOf(baseFare));
 
@@ -291,11 +305,7 @@ public class BookmarkIP implements BookmarkSV {
     @Transactional
     public List<BookmarkAirline> get(FlightShoppingRQ flightShoppingRQ, UserAuthenticationMetaTA userAuthenticationMetadata) {
 
-        var query = querySV.flightShoppingExist(flightShoppingRQ);
-
-        if (query == null) return Collections.emptyList();
-
-        try (Stream<FlightSavesEntity> foundBookmarkStream = flightSavesRP.findAllByUserId(userAuthenticationMetadata.getUserId())) {
+        try (Stream<FlightSavesEntity> foundBookmarkStream = flightSavesRP.findAllByUserId(userAuthenticationMetadata.getStakeholderId())) {
 
             var airlines = foundBookmarkStream
                 .filter(requestHasBookmarked(flightShoppingRQ, userAuthenticationMetadata.getCompanyId()))
@@ -332,13 +342,22 @@ public class BookmarkIP implements BookmarkSV {
 
         return bookmark -> {
 
+            var flightSchedules = shoppingRQ
+                .getLegs()
+                .stream()
+                .map(leg -> leg.getDate().format(DateTimeFormatter.ofPattern("yyMMdd")))
+                .findFirst()
+                .get();
+
             if (companyId != null) {
+
                 if (bookmark.getTripType().equalsIgnoreCase(shoppingRQ.getTripType().toString()) && bookmark.getClassCode().equalsIgnoreCase(shoppingRQ.getClassType()) && bookmark.getCompanyId().equals(companyId)) {
 
                     var directions = shoppingRQ.getLegs().stream().map(flightLegRQ -> flightLegRQ.getDeparture().concat("-").concat(flightLegRQ.getArrival())).collect(Collectors.joining("~"));
                     var tagDirection = bookmark.getTagId().split("@")[1];
+                    var departureDate = bookmark.getTagId().split(":")[3];
 
-                    return directions.equalsIgnoreCase(tagDirection);
+                    return directions.equalsIgnoreCase(tagDirection) && departureDate.equalsIgnoreCase(flightSchedules);
                 }
 
             } else {
@@ -348,8 +367,10 @@ public class BookmarkIP implements BookmarkSV {
 
                         var directions = shoppingRQ.getLegs().stream().map(flightLegRQ -> flightLegRQ.getDeparture().concat("-").concat(flightLegRQ.getArrival())).collect(Collectors.joining("~"));
                         var tagDirection = bookmark.getTagId().split("@")[1];
+                        var departureDate = bookmark.getTagId().split(":")[3];
 
-                        return directions.equalsIgnoreCase(tagDirection);
+
+                        return directions.equalsIgnoreCase(tagDirection) && departureDate.equalsIgnoreCase(flightSchedules);
                     }
                 }
 

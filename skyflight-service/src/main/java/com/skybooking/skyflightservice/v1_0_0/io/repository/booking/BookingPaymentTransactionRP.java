@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface BookingPaymentTransactionRP extends JpaRepository<BookingPaymentTransactionEntity, Integer> {
 
-    @Query(value = "SELECT transaction_id FROM booking_payment_transactions WHERE status = 1 ORDER BY id DESC LIMIT 1", nativeQuery = true)
+    @Query(value = "SELECT transaction_id FROM booking_payment_transactions ORDER BY id DESC LIMIT 1", nativeQuery = true)
     String getLatestRow();
+
 }

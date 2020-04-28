@@ -29,7 +29,7 @@ public interface ProviderSV {
      *
      * @return
      */
-    List<PaymentMethodRS> getPaymentMethods();
+    List<PaymentMethodRS> getPaymentMethods(String bookingCode);
 
 
     /**

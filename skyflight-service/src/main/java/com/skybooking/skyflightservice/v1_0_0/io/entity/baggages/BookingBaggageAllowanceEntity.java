@@ -36,6 +36,8 @@ public class BookingBaggageAllowanceEntity {
     @Column(name = "weight")
     private int weight;
 
+    @Column(name = "non_refundable")
+    private Boolean nonRefundable;
 
     @Column(name = "unit")
     private String unit;

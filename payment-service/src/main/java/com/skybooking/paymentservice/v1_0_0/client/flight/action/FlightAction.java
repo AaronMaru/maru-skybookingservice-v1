@@ -2,11 +2,11 @@ package com.skybooking.paymentservice.v1_0_0.client.flight.action;
 
 import com.skybooking.paymentservice.config.AppConfig;
 import com.skybooking.paymentservice.v1_0_0.client.flight.ui.request.FlightMandatoryDataRQ;
+import com.skybooking.paymentservice.v1_0_0.client.flight.ui.request.FlightPaymentFailureRQ;
 import com.skybooking.paymentservice.v1_0_0.client.flight.ui.request.FlightPaymentSucceedRQ;
 import com.skybooking.paymentservice.v1_0_0.client.flight.ui.request.FlightTicketIssuedRQ;
 import com.skybooking.paymentservice.v1_0_0.client.flight.ui.response.FlightMandatoryDataRS;
 import com.skybooking.paymentservice.v1_0_0.client.flight.ui.response.FlightPaymentSucceedRS;
-import com.skybooking.paymentservice.v1_0_0.client.flight.ui.response.FlightTicketIssuedRS;
 import com.skybooking.paymentservice.v1_0_0.ui.model.response.airTicket.TicketIssuedRS;
 import com.skybooking.paymentservice.v1_0_0.util.auth.AuthUtility;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -78,17 +78,16 @@ public class FlightAction {
      * @param paymentSucceedRQ
      * @return
      */
-    public FlightPaymentSucceedRS updateFlightPaymentSucceed(FlightPaymentSucceedRQ paymentSucceedRQ) {
+    public void updateFlightPaymentSucceed(FlightPaymentSucceedRQ paymentSucceedRQ) {
 
-        return client.mutate()
-                .build()
+        client
                 .post()
                 .uri(appConfig.getFlightUrl() + appConfig.getFlightVersion() + "/payment/succeed")
                 .header(HttpHeaders.AUTHORIZATION, authUtility.getAuthToken())
                 .bodyValue(paymentSucceedRQ)
                 .retrieve()
-                .bodyToMono(FlightPaymentSucceedRS.class)
-                .block();
+                .bodyToMono(Object.class)
+                .subscribe();
     }
 
 
@@ -112,5 +111,26 @@ public class FlightAction {
                 .retrieve()
                 .bodyToMono(TicketIssuedRS.class)
                 .block();
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Save cancel/fail payment
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param flightPaymentFailureRQ
+     * @return
+     */
+    public void paymentFail(FlightPaymentFailureRQ flightPaymentFailureRQ) {
+
+        client
+                .post()
+                .uri(appConfig.getFlightUrl() + appConfig.getFlightVersion() + "/payment/fail")
+                .header(HttpHeaders.AUTHORIZATION, authUtility.getAuthToken())
+                .bodyValue(flightPaymentFailureRQ)
+                .retrieve()
+                .bodyToMono(Object.class)
+                .subscribe();
+
     }
 }

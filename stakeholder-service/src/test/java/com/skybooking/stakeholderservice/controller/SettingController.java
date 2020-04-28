@@ -36,7 +36,6 @@ public class SettingController {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("message", is("Successfully sending")))
                 .andExpect(jsonPath("data", is(""))).andReturn();
-        System.out.println(mvcResult);
     }
 
     @Test
@@ -50,7 +49,6 @@ public class SettingController {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("message", is("成功发送")))
                 .andExpect(jsonPath("data", is(""))).andReturn();
-        System.out.println(mvcResult);
     }
 
     @Test
@@ -64,7 +62,6 @@ public class SettingController {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("message", is("Invalid email")))
                 .andExpect(jsonPath("data", is(""))).andReturn();
-        System.out.println(mvcResult);
     }
 
     @Test

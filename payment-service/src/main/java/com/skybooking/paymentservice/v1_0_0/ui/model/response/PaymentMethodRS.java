@@ -12,12 +12,14 @@ public class PaymentMethodRS {
     private String method;
     private BigDecimal percentage;
     private String imageUrl;
+    private PriceDetailRS priceDetail;
 
-    public PaymentMethodRS(String type, String code, String method, BigDecimal percentage, String imageUrl) {
+    public PaymentMethodRS(String type, String code, String method, BigDecimal percentage, String imageUrl, PriceDetailRS priceDetail) {
         this.type = type;
         this.code = code;
         this.method = method;
         this.percentage = percentage;
         this.imageUrl = imageUrl;
+        this.priceDetail = priceDetail;
     }
 }

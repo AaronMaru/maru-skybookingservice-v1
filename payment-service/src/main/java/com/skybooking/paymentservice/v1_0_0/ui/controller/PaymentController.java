@@ -15,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -39,7 +40,7 @@ public class PaymentController {
      * @return
      */
     @PostMapping("/request")
-    public ResponseEntity<BaseRS<UrlPaymentRS>> request(@RequestBody PaymentRQ paymentRQ) {
+    public ResponseEntity<BaseRS<UrlPaymentRS>> request(@Valid @RequestBody PaymentRQ paymentRQ) {
 
         var booking = bookingRP.getBooking(paymentRQ.getBookingCode());
         booking.setStatus(BookingStatusConstant.PAYMENT_SELECTED);
@@ -59,9 +60,9 @@ public class PaymentController {
      *
      * @return
      */
-    @GetMapping("/methods")
-    public ResponseEntity<BaseRS<List<PaymentMethodRS>>> getPaymentMethods() {
-        return new ResponseEntity<>(new BaseRS<>(HttpStatus.OK.value(), "", providerSV.getPaymentMethods()), HttpStatus.OK);
+    @GetMapping("/methods/{bookingCode}")
+    public ResponseEntity<BaseRS<List<PaymentMethodRS>>> getPaymentMethods(@PathVariable String bookingCode) {
+        return new ResponseEntity<>(new BaseRS<>(HttpStatus.OK.value(), "", providerSV.getPaymentMethods(bookingCode)), HttpStatus.OK);
     }
 
 

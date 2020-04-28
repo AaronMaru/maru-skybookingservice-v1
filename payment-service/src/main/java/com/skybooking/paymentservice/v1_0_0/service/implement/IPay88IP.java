@@ -1,7 +1,12 @@
 package com.skybooking.paymentservice.v1_0_0.service.implement;
 
+import com.skybooking.paymentservice.v1_0_0.client.flight.action.FlightAction;
+import com.skybooking.paymentservice.v1_0_0.client.flight.ui.request.FlightPaymentFailureRQ;
+import com.skybooking.paymentservice.v1_0_0.io.nativeQuery.paymentMethod.PaymentNQ;
 import com.skybooking.paymentservice.v1_0_0.ui.model.request.PaymentRQ;
 import com.skybooking.paymentservice.v1_0_0.ui.model.response.UrlPaymentRS;
+import com.skybooking.paymentservice.v1_0_0.util.classse.CardInfo;
+import com.skybooking.paymentservice.v1_0_0.util.generator.CardUtility;
 import com.skybooking.paymentservice.v1_0_0.util.integration.Payments;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,6 +20,12 @@ public class IPay88IP {
 
     @Autowired
     private Payments payments;
+
+    @Autowired
+    private PaymentNQ paymentNQ;
+
+    @Autowired
+    private FlightAction flightAction;
 
 
     /**
@@ -64,6 +75,39 @@ public class IPay88IP {
         }
 
         return false;
+    }
+
+    protected void paymentFail(Map<String, Object> request) {
+
+        var bookingCode = request.get("RefNo").toString();
+        var card = new CardInfo();
+        var payment = new FlightPaymentFailureRQ();
+
+        if (request.containsKey("CCNo")) {
+            card = CardUtility.getCardInfo(request.get("CCNo").toString());
+        }
+
+        var paymentType = paymentNQ.getPaymentMethod(paymentNQ.getPaymentCode(bookingCode).getPaymentCode());
+
+        payment.setStatus(0);
+        payment.setBookingCode(bookingCode);
+        payment.setCardNumber(card.getNumber());
+        payment.setHolderName(request.containsKey("CCName") ? request.get("CCName").toString() : "");
+        payment.setOrderId(bookingCode);
+        payment.setAmount(new BigDecimal(request.get("Amount").toString()));
+        payment.setCurrency(request.get("Currency").toString());
+        payment.setTransId(request.containsKey("TransId") ? request.get("TransId").toString() : "");
+        payment.setAuthCode(request.containsKey("AuthCode") ? request.get("AuthCode").toString() : "");
+        payment.setIpay88Status(0);
+        payment.setSignature(request.get("Signature").toString());
+        payment.setIpay88PaymentId(request.get("PaymentId").toString());
+        payment.setBankName(request.containsKey("S_bankname") ? request.get("S_bankname").toString().replace("+", " ") : "");
+        payment.setPaymentCode(paymentType.getCode());
+        payment.setCardType(card.getType());
+        payment.setMethod(paymentType.getMethod());
+
+        flightAction.paymentFail(payment);
+
     }
 
 }

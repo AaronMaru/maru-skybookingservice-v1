@@ -24,7 +24,7 @@ public class PhoneValidator implements ConstraintValidator<Phone, String> {
         }
 
         if (lastSeg.equals("company")) {
-            if (!NumberUtils.isNumber(phone)) {
+            if (!NumberUtils.isNumber(phone) && phone != null) {
                 return false;
             }
         }

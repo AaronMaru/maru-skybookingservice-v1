@@ -1,6 +1,8 @@
 package com.skybooking.paymentservice.v1_0_0.ui.model.request;
 
+import com.skybooking.paymentservice.exception.annotation.BookingCodeValidate;
 import com.skybooking.paymentservice.exception.annotation.Include;
+import com.skybooking.paymentservice.exception.annotation.PaymentCodeValidate;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
@@ -9,9 +11,11 @@ import javax.validation.constraints.NotBlank;
 public class PaymentRQ {
 
     @NotBlank(message = "Booking code is required")
+    @BookingCodeValidate(statuses = {0, 2, 3, 4, 5, 6})
     private String bookingCode;
 
     @NotBlank(message = "Payment code is required")
+    @PaymentCodeValidate
     private String paymentCode;
 
     @NotBlank(message = "Product type is required")

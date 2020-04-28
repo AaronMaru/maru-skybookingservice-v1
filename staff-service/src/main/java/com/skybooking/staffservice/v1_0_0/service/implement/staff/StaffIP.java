@@ -3,16 +3,18 @@ package com.skybooking.staffservice.v1_0_0.service.implement.staff;
 import com.skybooking.staffservice.constant.BookingStatusConstant;
 import com.skybooking.staffservice.constant.StaffStatusConstant;
 import com.skybooking.staffservice.exception.httpstatus.BadRequestException;
+import com.skybooking.staffservice.exception.httpstatus.ForbiddenException;
 import com.skybooking.staffservice.exception.httpstatus.NotFoundException;
 import com.skybooking.staffservice.v1_0_0.io.enitity.company.StakeholderUserHasCompanyEntity;
 import com.skybooking.staffservice.v1_0_0.io.nativeQuery.staff.*;
 import com.skybooking.staffservice.v1_0_0.io.repository.company.CompanyHasUserRP;
 import com.skybooking.staffservice.v1_0_0.service.interfaces.staff.StaffSV;
 import com.skybooking.staffservice.v1_0_0.ui.model.request.FilterRQ;
-import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.DeactiveStaffRQ;
+import com.skybooking.staffservice.v1_0_0.ui.model.request.staff.DeactiveStaffRQ;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.staff.*;
 import com.skybooking.staffservice.v1_0_0.util.JwtUtils;
 import com.skybooking.staffservice.v1_0_0.util.datetime.DateTimeBean;
+import com.skybooking.staffservice.v1_0_0.util.notification.PushNotificationOptions;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -34,7 +36,7 @@ public class StaffIP implements StaffSV {
     private CompanyHasUserRP companyHasUserRP;
 
     @Autowired
-    private StaffSvNQ staffNQ;
+    private StaffNQ staffNQ;
 
     @Autowired
     private Environment environment;
@@ -44,6 +46,9 @@ public class StaffIP implements StaffSV {
 
     @Autowired
     private DateTimeBean dateTimeBean;
+
+    @Autowired
+    private PushNotificationOptions notification;
 
     public StaffPaginationRS getStaff(HttpServletRequest request) {
 
@@ -62,6 +67,9 @@ public class StaffIP implements StaffSV {
                 filterRQ.getActive(),
                 filterRQ.getInactive(),
                 filterRQ.getBanned(),
+                environment.getProperty("spring.awsImageUrl.profile.url_larg"),
+                filterRQ.getSortField(),
+                filterRQ.getOrderBy(),
                 PageRequest.of(filterRQ.getPage(), filterRQ.getSize()));
 
         List<StaffRS> staffs = staffs(staffsTO);
@@ -77,6 +85,7 @@ public class StaffIP implements StaffSV {
 
     }
 
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Determine is search or filter
@@ -87,29 +96,17 @@ public class StaffIP implements StaffSV {
      */
     public String checkSearchOrFilter() {
 
+        if (request.getParameter("role") != null || request.getParameter("startPRange") != null ||
+                request.getParameter("endPRange") != null || request.getParameter("joinDate") != null ||
+                request.getParameter("joinStatus") != null
+        ) {
 
-        if (request.getParameter("keyword") != null) {
+            return "FILTER";
+
+        } else if(request.getParameter("keyword") != null && !request.getParameter("keyword").equals("")) {
+
             return "SEARCH";
-        }
 
-        if (request.getParameter("role") != null) {
-            return "FILTER";
-        }
-
-        if (request.getParameter("startPRange") != null) {
-            return "FILTER";
-        }
-
-        if (request.getParameter("endPRange") != null) {
-            return "FILTER";
-        }
-
-        if (request.getParameter("joinDate") != null) {
-            return "FILTER";
-        }
-
-        if (request.getParameter("joinStatus") != null) {
-            return "FILTER";
         }
 
         return "OTHER";
@@ -181,9 +178,6 @@ public class StaffIP implements StaffSV {
             }
             staffRS.setFlightBooking(bookingStatus);
 
-            staffRS.setPhotoMedium(environment.getProperty("spring.awsImageUrl.profile.url_larg") + staffTO.getPhoto());
-            staffRS.setPhotoSmall(environment.getProperty("spring.awsImageUrl.profile.url_larg") + "_thumbnail/"
-                    + staffTO.getPhoto());
             staffsRS.add(staffRS);
 
         }
@@ -229,23 +223,15 @@ public class StaffIP implements StaffSV {
 
         BeanUtils.copyProperties(staffTO.stream().findFirst().get(), staffRS);
 
-        if (staffTO.stream().findFirst().get().getAddedBy() != null) {
-            SkyuserTO addedBy = staffNQ.findSkyuser((long) staffTO.stream().findFirst().get().getAddedBy());
-            staffRS.setAddedBy(addedBy.getFirstName() + " " + addedBy.getLastName());
-        }
-
-        SkyuserTO skyUser = staffNQ.findSkyuser(id);
+        SkyuserTO skyUser = staffNQ.findSkyuser(id, environment.getProperty("spring.awsImageUrl.profile.url_larg"));
         BeanUtils.copyProperties(skyUser, staffRS);
 
         staffRS.setJoinDate(dateTimeBean.convertDateTime(skyUser.getCreatedAt()));
 
-        staffRS.setPhotoMedium(environment.getProperty("spring.awsImageUrl.profile.url_larg") + skyUser.getPhoto());
-        staffRS.setPhotoSmall(
-                environment.getProperty("spring.awsImageUrl.profile.url_larg") + "_thumbnail/" + skyUser.getPhoto());
-
         return staffRS;
 
     }
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -256,16 +242,28 @@ public class StaffIP implements StaffSV {
      */
     public void deactiveStaff(DeactiveStaffRQ deactiveStaffRQ) {
 
-        Long companyId = jwtUtils.getClaim("companyId", Long.class);
-
-        StakeholderUserHasCompanyEntity staff = companyHasUserRP
-                .findByStakeholderCompanyIdAndStakeholderUserId(companyId, deactiveStaffRQ.getSkyuserId());
-
-        if (staff == null) {
+        FilterRQ filterRQ = new FilterRQ(request, jwtUtils.getUserToken());
+        StakeholderUserHasCompanyEntity staff = companyHasUserRP.findByStakeholderCompanyIdAndStakeholderUserId(filterRQ.getCompanyHeaderId(), deactiveStaffRQ.getSkyuserId());
+        if ( !filterRQ.getUserRole().equals("admin") ) {
+            throw new ForbiddenException("Can not access this api", null);
+        }
+        if ( staff == null ) {
             throw new BadRequestException("sth_w_w", null);
         }
-
-        staff.setJoinStatus(staff.getJoinStatus() == 1 ? 0 : 1);
+        if ( staff.getStatus() == 1 ) {
+            throw new BadRequestException("Can not update skyowner role", null);
+        }
+        if ( filterRQ.getSkyuserId().equals(deactiveStaffRQ.getSkyuserId()) ) {
+            throw new BadRequestException("Can not update yourselft", null);
+        }
+        if ( deactiveStaffRQ.getStatus() != null && !deactiveStaffRQ.getStatus().equals("") ) {
+            staff.setJoinStatus(deactiveStaffRQ.getStatus());
+            String keyNotification = (deactiveStaffRQ.getStatus() == 1) ? "skyowner_enabled_staff" : "skyowner_disabled_staff";
+            notification.sendMessageToUsers(keyNotification, null, null);
+        }
+        if ( deactiveStaffRQ.getRole() != null && !deactiveStaffRQ.getRole().equals("") ) {
+            staff.setSkyuserRole(deactiveStaffRQ.getRole());
+        }
         companyHasUserRP.save(staff);
 
     }

@@ -1,11 +1,11 @@
 package com.skybooking.skyhistoryservice.v1_0_0.ui.controller.app.bookings;
 
+import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.booking.BookingDetailSV;
 import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.booking.BookingSV;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.skyhistoryservice.v1_0_0.util.localization.LocalizationBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,12 +22,16 @@ public class BookingControllerM {
     private BookingSV bookingSV;
 
     @Autowired
+    private BookingDetailSV bookingDetailSV;
+
+    @Autowired
     private LocalizationBean localization;
+
 
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * Get bookings companyConstant
+     * Get bookings company
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @Return ResponseEntity
@@ -38,7 +42,6 @@ public class BookingControllerM {
     }
 
 
-
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Get booking details
@@ -46,10 +49,9 @@ public class BookingControllerM {
      *
      * @Return ResponseEntity
      */
-    @GetMapping("/booking/{id}")
-    public ResRS getBookingDetail(@PathVariable Long id) {
-        return localization.resAPI(HttpStatus.OK,"res_succ", bookingSV.getBookingDetail(id));
+    @GetMapping("/booking/{bookingCode}")
+    public ResRS getBookingDetail(@PathVariable String bookingCode) {
+        return localization.resAPI(HttpStatus.OK,"res_succ", bookingDetailSV.getBookingDetail(bookingCode, null));
     }
-
 
 }

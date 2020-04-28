@@ -16,7 +16,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class BookingRequestBody {
@@ -41,7 +43,10 @@ public class BookingRequestBody {
         var seats = 0;
         List<BookingSegmentDRQ> segments = new ArrayList<>();
         List<BookingPassengerDRQ> passengers = new ArrayList<>();
-        for (BookingPassengerRQ passengerRQ: request.getPassengers()) {
+
+        var requestPassengers = request.getPassengers().stream().sorted(Comparator.comparing(BookingPassengerRQ::getBirthDate)).collect(Collectors.toList());
+
+        for (BookingPassengerRQ passengerRQ: requestPassengers) {
             if (PassengerUtil.type(passengerRQ.getBirthDate()) == PassengerCode.ADULT) {
                 seats++;
             } else if (PassengerUtil.type(passengerRQ.getBirthDate()) == PassengerCode.CHILD) {

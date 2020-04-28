@@ -25,19 +25,14 @@ public class Consumer {
     private EmailBean emailBean;
 
 
-    @JmsListener(destination = EMAIL)
+    @JmsListener(destination = SKY_HISTORY_EMAIL)
     public void email(Map<String, Object> mailTemplateData) {
         emailBean.email(mailTemplateData);
     }
 
-    @JmsListener(destination = SMS)
+    @JmsListener(destination = SKY_HISTORY_SMS)
     public void sms(Map<String, Object> mailTemplateData) {
         emailBean.sms(mailTemplateData);
-    }
-
-    @JmsListener(destination = QUEUE)
-    public void queue(Map<String, Object> mailTemplateData) {
-        emailBean.receiptAndItinerary(mailTemplateData);
     }
 
 }

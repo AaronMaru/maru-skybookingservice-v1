@@ -2,6 +2,7 @@ package com.skybooking.staffservice.v1_0_0.ui.controller.app.invitation;
 
 import com.skybooking.staffservice.v1_0_0.service.interfaces.invitation.InvitationSV;
 import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.InviteStaffNoAccRQ;
+import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.ResendPendingEmailRQ;
 import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.SkyuserIdStaffRQ;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.invitation.PendingEmailStaffRS;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 @RestController
@@ -63,7 +65,7 @@ public class InvitationControllerM {
      * @Return ResponseEntity
      */
     @PostMapping("/invite-skyuser-no-acc")
-    public ResRS invSkyuserNoAcc(@Valid @RequestBody InviteStaffNoAccRQ inviteStaffNoAccRQ) {
+    public ResRS invSkyuserNoAcc(@Valid @RequestBody InviteStaffNoAccRQ inviteStaffNoAccRQ) throws UnsupportedEncodingException {
         invitationSV.inviteSkyUserNotExistsAcc(inviteStaffNoAccRQ);
         return localization.resAPI(HttpStatus.OK,"inv_succ", "");
     }
@@ -107,8 +109,8 @@ public class InvitationControllerM {
      * @Return ResponseEntity
      */
     @PostMapping("/list-pending-email/resend")
-    public ResRS resendPendingEmail(@RequestBody InviteStaffNoAccRQ inviteStaffNoAccRQ) {
-        invitationSV.resendPendingEmail(inviteStaffNoAccRQ);
+    public ResRS resendPendingEmail(@RequestBody ResendPendingEmailRQ resendPendingEmailRQ) throws UnsupportedEncodingException {
+        invitationSV.resendPendingEmail(resendPendingEmailRQ);
         return localization.resAPI(HttpStatus.OK,"sent_succ", "");
     }
 

@@ -11,12 +11,14 @@
                 </tr>
                 </thead>
                 <tbody style="width: 25%;">
-                <#list data.bookingOd as item>
-                    <tr style="font-weight:300">
-                        <td>${item.fSegs.depDateTime?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["d MMM | hh:mm"]}</td>
-                        <td style="color: black;">${item.fSegs.depCity} (${item.fSegs.depLocation})&nbsp;${item.fSegs.arrCity} (${item.fSegs.arrLocation})</td>
-                    </tr>
-                </#list>
+                    <#list data.itineraryInfo as itemItineraryInfo>
+                        <#assign itinerarySegmentFirst = itemItineraryInfo.itinerarySegment?first/>
+                        <#assign itinerarySegmentLast = itemItineraryInfo.itinerarySegment?last/>
+                        <tr style="font-weight:300">
+                            <td>${itinerarySegmentFirst.departureInfo.date?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["d MMM | HH:mm"]}</td>
+                            <td style="color: black;">${itinerarySegmentFirst.departureInfo.city} (${itinerarySegmentFirst.departureInfo.locationCode})&nbsp;${itinerarySegmentLast.arrivalInfo.city} (${itinerarySegmentLast.arrivalInfo.locationCode})</td>
+                        </tr>
+                    </#list>
                 </tbody>
             </table>
         </div>
@@ -33,7 +35,7 @@
                 </tr>
                 </thead>
                 <tbody style="width: 25%;">
-                <#list data.airTickets as item>
+                <#list data.ticketInfo as item>
                     <tr style="font-weight:300">
                         <td>${item.passType}</td>
                         <td style="color: black; text-transform:uppercase;">${item.lastName} / ${item.firstName}</td>
@@ -58,7 +60,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <#list data.airItinPrices as item>
+                <#list data.priceInfo.priceBreakdown as item>
                     <tr style="font-weight: 300;">
                         <#if item.passType == "ADT">
                             <td style="padding-left: 0px;">ADULT</td>
@@ -67,23 +69,12 @@
                         <#else>
                             <td style="padding-left: 0px;">INFANT</td>
                         </#if>
-                        <td>USD ${item.baseFare + data.markupAmount}</td>
+                        <td>USD ${item.baseFare }</td>
                         <td>USD ${item.totalTax}</td>
                         <td style="color: black; text-align: right;">USD ${item.totalAmount} X ${item.passQty}</td>
                     </tr>
                 </#list>
-                <tr>
-                    <td style="padding-left: 0px;">${discount_payment??? then(discount_payment, 'NO LABEL YET')}</td>
-                    <td></td>
-                    <td></td>
-                    <td style="padding-left: 0px;text-align: right;">USD ${data.disPayment}</td>
-                </tr>
-                <tr>
-                    <td style="padding-top: 0px;"></td>
-                </tr>
-                <tr>
-                    <td style="border-top:2px solid #ccc;padding-bottom: 0px;" colspan="5"></td>
-                </tr>
+
 
                 <tr style="color:black;font-weight:600;font-size:17px;">
                     <td style="padding-left:0px;">
@@ -91,7 +82,27 @@
                     </td>
                     <td></td>
                     <td></td>
-                    <td style="text-align:right;">USD ${data.totalAmount}</td>
+                    <td style="text-align:right;">USD ${data.priceInfo.totalAmount}</td>
+                </tr>
+                <tr>
+                    <td style="padding-left: 0px;">${discount_payment??? then(discount_payment, 'NO LABEL YET')}</td>
+                    <td></td>
+                    <td></td>
+                    <td style="padding-left: 0px;text-align: right;">USD ${data.priceInfo.discountAmount}</td>
+                </tr>
+                <tr>
+                    <td style="padding-top: 0px;"></td>
+                </tr>
+                <tr>
+                    <td style="border-top:2px solid #ccc;padding-bottom: 0px;" colspan="5"></td>
+                </tr>
+                <tr style="color:black;font-weight:600;font-size:17px;">
+                    <td style="padding-left:0px;">
+                        ${paid_amount??? then(paid_amount, 'NO LABEL YET')} :
+                    </td>
+                    <td></td>
+                    <td></td>
+                    <td style="text-align:right;">USD ${data.priceInfo.paidAmount}</td>
                 </tr>
                 </tbody>
             </table>

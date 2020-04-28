@@ -11,7 +11,7 @@
             font-family: arial,sans-serif;
         }
         .container {
-            background: #fff;
+            background: #ddd;
         }
         .pull-right {
             float: right;
@@ -20,7 +20,7 @@
             clear: both;
             margin: 5px 0px;
             border-color: #ccc;
-            border-width: 0.4px;
+            /*border-width: 0.4px;*/
         }
         h3 {
             font-size: 20px;
@@ -108,9 +108,6 @@
             color: #707070;
             font-size: 12px;
         }
-        .round-icon {
-            text-align: center !important;
-        }
         .dep-arrive {
             border: 1px solid #ccc;
             border-radius: 5px;
@@ -146,13 +143,13 @@
             clear: both;
         }
         .dep-arrive h4 span:first-child {
-            width: 15%;
+            width: 20%;
         }
         .time-airport span:first-child {
-            width: 15% !important;
+            width: 19% !important;
         }
         .time-airport span {
-            width: 35%;
+            width: 32%;
             display: inline-block;
             color: #606060;
             font-size: 14px;
@@ -160,7 +157,7 @@
             line-height: 25px;
         }
         .time-airport span:last-child {
-            width: 50%;
+            width: 31%;
             float: left;
         }
         .passenger-details table {
@@ -212,6 +209,35 @@
         .passenger-details.line-head h3:after {
             width: 82%;
         }
+        .baggage_infor span:first-child {
+            width: 10% !important;
+            /*padding-left: 15px;*/
+        }
+        .baggage_infor span {
+            width: 100%;
+            display: inline-block;
+            color: #606060;
+            font-size: 14px;
+            float: left;
+            line-height: 25px;
+        }
+        .text-height p {
+            line-height: 5px;
+        }
+
+        .bag_anounce {
+            line-height: 15px;
+            color: #868686;
+        }
+
+        .c-black {
+            color: #1f1c1c !important;
+        }
+
+        .round-icon {
+            text-align: center !important;
+        }
+
         @page {
             margin:25px;
             margin-top:0px;
@@ -238,8 +264,8 @@
 <div class="container">
     <div class="logo-sec">
         <div class="back-logo">
-            <img src="https://s3.amazonaws.com/skybooking/uploads/mail/images/iata.png" class="pull-right">
-            <img src=${logoPdf} alt="No Logo Yet">
+            <img src="https://s3.amazonaws.com/skybooking/uploads/mail/images/iata.png" class="pull-right"/>
+            <img src=${logoPdf} alt="No Logo Yet"/>
         </div>
         <hr>
         <hr>
@@ -247,36 +273,38 @@
         <div class="booking-ref">
             <div class="pull-right">
                 <span>${booking_no??? then(booking_no, 'NO LABEL YET')}.</span>
-                <b>${data.bookingCode}</b>
+                <b>${data.bookingInfo.bookingCode}</b>
             </div>
             <h3>${itinerary??? then(itinerary, 'NO LABEL YET')}</h3>
             <div class="pull-right">
                 <span>${booking_on??? then(booking_on, 'NO LABEL YET')}:</span>
-                <b>${data.bookDate}</b>
+                <b>${data.bookingInfo.bookingDate?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["dd MMM YYYY"]}</b>
             </div>
-            <h4>${booking_reference??? then(booking_reference, 'NO LABEL YET')}: <b> ${data.pnrCode} </b> </h4>
+            <h4>${booking_reference??? then(booking_reference, 'NO LABEL YET')}: <b> ${data.bookingInfo.pnrCode} </b> </h4>
         </div>
 
         <div class="fight-details line-head">
             <h3>${flight_details??? then(flight_details, 'NO LABEL YET')}</h3>
-            <#list data.bookingOd as item>
+            <#list data.itineraryInfo as itemItineraryInfo>
+                <#assign itinerarySegmentFirst = itemItineraryInfo.itinerarySegment?first/>
+                <#assign itinerarySegmentLast = itemItineraryInfo.itinerarySegment?last/>
                 <ul>
                     <li>
-                        <small>${item.fSegs.depDateTime?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["d MMM | hh:mm"]}</small>
-                        <h2>${item.fSegs.depLocation}</h2>
-                        <span>${item.fSegs.depCity}, ${item.fSegs.depCountry}</span>
+                        <small>${itinerarySegmentFirst.departureInfo.date?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["d MMM | HH:mm"]}</small>
+                        <h2>${itinerarySegmentFirst.departureInfo.locationCode}</h2>
+                        <span>${itinerarySegmentFirst.departureInfo.city}, ${itinerarySegmentFirst.departureInfo.country}</span>
                     </li>
                     <li>
                         <img src="https://s3.amazonaws.com/skybooking/uploads/mail/images/flight_itenary.png"><br>
-                        <small>${(item.stop != 0) ? then('Stop ${item.stop}', 'Non Stop')}</small>
+                        <small>${(itemItineraryInfo.stop != 0) ? then('${itemItineraryInfo.stop} Stop ${itemItineraryInfo.elapsedHourMinute}', 'Non Stop')}</small>
                     </li>
                     <li>
-                        <small>${item.fSegs.arrDateTime?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["d MMM | hh:mm"]}</small>
-                        <h2>${item.fSegs.arrLocation}</h2>
-                        <span>${item.fSegs.arrCity}, ${item.fSegs.arrCountry}</span>
+                        <small>${itinerarySegmentLast.arrivalInfo.date?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["d MMM | HH:mm"]}</small>
+                        <h2>${itinerarySegmentLast.arrivalInfo.locationCode}</h2>
+                        <span>${itinerarySegmentLast.arrivalInfo.city}, ${itinerarySegmentLast.arrivalInfo.country}</span>
                     </li>
                 </ul>
-                <#if item?index == 0 && data.tripType == "Return">
+                <#if itemItineraryInfo?index == 0 && data.bookingInfo.tripType == "ROUND">
                     <ul>
                         <li class="round-icon">
                             <img src="https://skybooking.s3.amazonaws.com/uploads/mail/images/round.png">
@@ -287,24 +315,36 @@
         </div>
 
         <div class="dep-arrive">
+            <#list data.itineraryInfo as itemItineraryInfo>
             <h4>
-                <span>${flight_no??? then(flight_no, 'NO LABEL YET')}</span>
+                <span>${flight_no??? then(flight_no, 'NO LABEL YET')}/${airline_ref??? then(airline_ref, 'NO LABEL YET')}</span>
                 <span>${depart_arrive_time??? then(depart_arrive_time, 'NO LABEL YET')}</span>
                 <span>${depart_arrive_Airport??? then(depart_arrive_Airport, 'NO LABEL YET')}</span>
             </h4>
-            <#list data.bookingOd as item>
-                <div class="time-airport">
-                    <span>${item.fSegs.flightNumber}</span>
-                    <span>${item.fSegs.depDateTime?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["hh:mm EEE, dd MMM YYYY"]}</span>
-                    <span>${item.fSegs.depLocationName} </span>
-                </div>
-                <div class="time-airport">
-                    <span>&nbsp;</span>
-                    <span>${item.fSegs.arrDateTime?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["hh:mm EEE, dd MMM YYYY"]}</span>
-                    <span>${item.fSegs.arrLocationName}</span>
-                </div>
-            </#list>
+                <#list itemItineraryInfo.itinerarySegment as itemItinerarySegment>
+                    <#if itemItinerarySegment?index != 0 && itemItineraryInfo.itinerarySegment?size gt 1>
+                        <p>Transfer in ${itemItinerarySegment.departureInfo.city}<#if itemItinerarySegment.departureInfo.terminal != ""> T${itemItinerarySegment.departureInfo.terminal}</#if> ${itemItinerarySegment.elapsedHourMinute}</p>
+                    </#if>
+                    <div class="time-airport">
+                        <span>${itemItinerarySegment.airlineCode}${itemItinerarySegment.flightNumber}${itemItinerarySegment.airlineRef??? then(' / ' + itemItinerarySegment.airlineRef, '')}</span>
+                        <span>${itemItinerarySegment.departureInfo.date?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["HH:mm EEE, dd MMM YYYY"]}</span>
+                        <span>${itemItinerarySegment.departureInfo.airportName}<#if itemItinerarySegment.departureInfo.terminal != ""> T${itemItinerarySegment.departureInfo.terminal}</#if> ${itemItinerarySegment.departureInfo.locationCode} </span>
+                    </div>
 
+                     <#if itemItinerarySegment.stopQty gt 0>
+                         <#list itemItinerarySegment.stopInfo as itemStopInfo>
+                             <p>Stop in ${itemStopInfo.city} ${itemStopInfo.elapsedHourMinute}</p>
+                         </#list>
+                     </#if>
+
+                    <div class="time-airport">
+                        <span>&nbsp;</span>
+                        <span>${itemItinerarySegment.arrivalInfo.date?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["HH:mm EEE, dd MMM YYYY"]}</span>
+                        <span>${itemItinerarySegment.arrivalInfo.airportName}<#if itemItinerarySegment.arrivalInfo.terminal != ""> T${itemItinerarySegment.arrivalInfo.terminal}</#if> ${itemItinerarySegment.arrivalInfo.locationCode}</span>
+                    </div>
+
+                </#list>
+            </#list>
             <br/><br/>
 
         </div>
@@ -320,12 +360,12 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <#list data.airTickets as item>
+                    <#list data.ticketInfo as item>
                         <tr>
                             <td>${item.ticketNumber}</td>
                             <td style="text-transform: uppercase;">${item.lastName} / ${item.firstName}</td>
                             <td style="text-transform: uppercase;">${item.passType}</td>
-                            <td>${data.cabinName}</td>
+                            <td>${data.bookingInfo.cabinName}</td>
                         </tr>
                     </#list>
                 </tbody>
@@ -333,39 +373,42 @@
         </div>
 
         <div class="baggage-info line-head">
-            <strong>${baggage_allowance}</strong>
-            <#list data.airTickets as item>
-                <#if item.bookingBaggageInfoRS.passType == "ADT">
-                    <td>ADULT</td>
-                <#elseif item.bookingBaggageInfoRS.passType == "CNN">
-                    <td>CHILD</td>
-                <#elseif item.bookingBaggageInfoRS.passType == "INF">
-                    <td>INFANT</td>
-                </#if>
-
+            <strong>${baggage_allowance??? then(baggage_allowance, 'NO LABEL YET')}</strong>
+            <#list data.baggageInfo as itemBaggageInfo>
                 <div class="each-person">
-                    <b>[${checked_baggage??? then(checked_baggage, 'NO LABEL YET')}]</b>
-                    <#if item.bookingBaggageInfoRS.pieceStatus == 0>
-<#--                        ${item.bookingBaggageInfoRS.bagWeight}${item.bookingBaggageInfoRS.bagUnit}&nbsp;${per_person??? then(per_person, 'NO LABEL YET')}-->
-                    <#else>
-                        ${item.bookingBaggageInfoRS.bagPiece} ${each_piece??? then(each_piece, 'NO LABEL YET')}, ${item.bookingBaggageInfoRS.bagWeight}${item.bookingBaggageInfoRS.bagUnit}&nbsp;${each_piece??? then(each_piece, 'NO LABEL YET')}
-                    </#if>
-                    ${baggage_more_info??? then(baggage_more_info, 'NO LABEL YET')}
+                    <p><b>${itemBaggageInfo.segment}</b></p>
                 </div>
-
-                <div class="each-person" style="margin-bottom:15px;">
-                    <b> [${carry_on_baggage??? then(carry_on_baggage, 'NO LABEL YET')}] </b>
-                    <#if item.bookingBaggageInfoRS.passType == "INF">
-                        ${carry_on_inf??? then(carry_on_inf, 'NO LABEL YET')}
-                    <#else>
-                        ${carry_on??? then(carry_on, 'NO LABEL YET')}
-                    </#if>
-                    ${baggage_more_info??? then(baggage_more_info, 'NO LABEL YET')}
-                </div>
+                <hr class="c-black">
+                <#list itemBaggageInfo.baggageAllowance as itemBaggageAllowance>
+                    <div class="baggage_infor">
+                        <#if itemBaggageAllowance.type == "ADT">
+                            <span><b>ADULT</b></span>
+                        <#elseif itemBaggageAllowance.type == "CNN">
+                            <span><b>CHILD</b></span>
+                        <#elseif itemBaggageAllowance.type == "INF">
+                            <span><b>INFANT</b></span>
+                        </#if>
+                        <span class="text-height">
+                            <!-- Calculate By weight -->
+                            <#if itemBaggageAllowance.piece == false>
+                                <!-- If have weight -->
+                                <#if itemBaggageAllowance.weights gt 0>
+                                    <p>Checked Baggage: ${itemBaggageAllowance.weights} Kg</p>
+                                <#else>
+                                    <p>Checked Baggage: No package</p>
+                                </#if>
+                                <p> <i style="color: #868686;" >Please contact airline for detailed baggage regulations.</i> </p>
+                            <#else>
+                                <!-- If have piece -->
+                                <p>Checked Baggage: ${itemBaggageAllowance.pieces}  piece(s) per person </p>
+                                <p> <i class="bag_anounce" >Dimensions (length+width+height) per piece cannot exceed 158CM.Each piece cannot exceed 56*36*23CM in size.</i> </p>
+                                <p>${itemBaggageAllowance.weights} ${itemBaggageAllowance.unit} x ${itemBaggageAllowance.pieces} Pieces (${itemBaggageAllowance.weights * itemBaggageAllowance.pieces} ${itemBaggageAllowance.unit}) </p>
+                            </#if>
+                        </span>
+                    </div>
+                    <hr style="border-top: 1px dotted #cecbcb;">
+                </#list>
             </#list>
-
-            <hr/>
-
         </div>
         <div class="impo-info line-head">
             <h3>${important_information??? then(important_information, 'NO LABEL YET')}</h3>

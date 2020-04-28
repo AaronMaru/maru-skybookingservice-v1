@@ -47,9 +47,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
         body.put("data", null);
         for (FieldError fieldError: fieldErrors) {
             validation = localization.multiLanguageRes(fieldError.getDefaultMessage());
-
             vldRegisterWeb(fieldError, result, body);
-//            vldRegisterApp(fieldError, result, body);
         }
         body.put("message", validation);
         return new ResponseEntity<>(body, headers, status);
@@ -60,16 +58,17 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
 
         String url = requests.getRequestURL().toString();
         String[] splitUrl = url.split("/");
-
         if (splitUrl[3].equals("wv1.0.0") && splitUrl[4].equals("auth") && splitUrl[5].equals("register")){
             if (fieldError.getCode().equals("UsernameUnique")) {
                 if (result.getFieldValue("typeSky") != null && result.getFieldValue("typeSky").equals("bussiness")) {
                     UserEntity user = userRepository.findByEmailOrPhone(result.getFieldValue("username").toString(), result.getFieldValue("code").toString());
-                    if (user.getStakeHolderUser().getIsSkyowner() != 1) {
-                        HashMap<String, Object> skyowner = new HashMap<>();
-                        skyowner.put("email", result.getFieldValue("username"));
-                        skyowner.put("typeSky", result.getFieldValue("typeSky"));
-                        body.put("data", skyowner);
+                    if (user != null) {
+                        if (user.getStakeHolderUser().getIsSkyowner() != 1) {
+                            HashMap<String, Object> skyowner = new HashMap<>();
+                            skyowner.put("email", result.getFieldValue("username"));
+                            skyowner.put("typeSky", result.getFieldValue("typeSky"));
+                            body.put("data", skyowner);
+                        }
                     }
                 }
             }

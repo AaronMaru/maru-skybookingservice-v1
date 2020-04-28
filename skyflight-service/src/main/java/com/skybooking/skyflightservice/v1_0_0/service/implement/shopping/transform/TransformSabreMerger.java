@@ -137,10 +137,11 @@ public class TransformSabreMerger {
                 var selectedLegs = legGroup.getLegsDesc()
                     .stream()
                     .sorted((previous, next) -> {
+
                         var prePrice = prices.get(legs.get(previous.getLeg()).getPrice());
                         var nexPrice = prices.get(legs.get(next.getLeg()).getPrice());
 
-                        return Double.compare(prePrice.getTotal().doubleValue(), nexPrice.getTotal().doubleValue());
+                        return Double.compare(prePrice.getBasePrice().getTotal().doubleValue(), nexPrice.getBasePrice().getTotal().doubleValue());
                     })
                     .collect(Collectors.toList());
 
@@ -222,7 +223,7 @@ public class TransformSabreMerger {
 
                             var selectedLegs = airlineLegs
                                 .get(airline)
-                                .toSortedList(Comparators.byDoubleFunction(leg -> prices.get(leg.getPrice()).getTotal().doubleValue()))
+                                .toSortedList(Comparators.byDoubleFunction(leg -> prices.get(leg.getPrice()).getBasePrice().getTotal().doubleValue()))
                                 .stream()
                                 .map(leg -> {
 
@@ -317,7 +318,7 @@ public class TransformSabreMerger {
 
                         var selectedLegs = airlineLegs
                             .get(selectedAirline)
-                            .toSortedList(Comparators.byDoubleFunction(leg -> prices.get(leg.getPrice()).getTotal().doubleValue()))
+                            .toSortedList(Comparators.byDoubleFunction(leg -> prices.get(leg.getPrice()).getBasePrice().getTotal().doubleValue()))
                             .stream()
                             .map(leg -> {
 
@@ -375,12 +376,12 @@ public class TransformSabreMerger {
                 var preTotal = (Double) previous
                     .getLowest()
                     .stream()
-                    .map(leg -> prices.get(legs.get(leg).getPrice()).getTotal().doubleValue())
+                    .map(leg -> prices.get(legs.get(leg).getPrice()).getBasePrice().getTotal().doubleValue())
                     .mapToDouble(Double::doubleValue).sum();
                 var nextTotal = next
                     .getLowest()
                     .stream()
-                    .map(leg -> prices.get(legs.get(leg).getPrice()).getTotal().doubleValue())
+                    .map(leg -> prices.get(legs.get(leg).getPrice()).getBasePrice().getTotal().doubleValue())
                     .mapToDouble(Double::doubleValue).sum();
 
                 return Double.compare(preTotal, nextTotal);

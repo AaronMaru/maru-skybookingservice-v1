@@ -1,0 +1,44 @@
+SELECT ( SELECT ( SELECT (
+                            SELECT cclo.`name`
+                            FROM country_city_locale cclo
+                            WHERE cclo.country_city_id = air.country_city_id
+                            AND cclo.locale_id = :locale
+                        ) AS name
+                        FROM airport_info air
+                        WHERE air.`code` = bod_dep.dep_location_code
+                ) AS dep_location_code
+
+                FROM booking_origin_destinations bod_dep
+                WHERE bod_dep.parent_id = bod.id
+                ORDER BY bod_dep.id ASC
+                LIMIT 1
+
+        ) AS departureCity,
+
+        (SELECT (SELECT (
+                            SELECT cclo.`name`
+                            FROM country_city_locale cclo
+                            WHERE cclo.country_city_id = air.country_city_id
+                            AND cclo.locale_id = :locale
+                        ) AS name
+                    FROM airport_info air
+                    WHERE air.`code` = bod_arr.arr_location_code
+            ) AS arr_location_code
+
+            FROM booking_origin_destinations bod_arr
+            WHERE bod_arr.parent_id = bod.id
+            ORDER BY bod_arr.id DESC
+            LIMIT 1
+
+        ) AS arrivalCity,
+
+        (SELECT bod_dep.dep_date
+                FROM booking_origin_destinations bod_dep
+                WHERE bod_dep.parent_id = bod.id
+                ORDER BY bod_dep.id ASC
+                LIMIT 1
+        ) AS departureDate
+
+FROM booking_origin_destinations bod
+WHERE bod.booking_id = :bookingId
+AND bod.parent_id IS NULL

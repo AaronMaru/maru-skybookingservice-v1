@@ -1,7 +1,7 @@
 package com.skybooking.staffservice.v1_0_0.service.implement.role;
 
 import com.skybooking.staffservice.v1_0_0.io.nativeQuery.staff.RoleTO;
-import com.skybooking.staffservice.v1_0_0.io.nativeQuery.staff.StaffSvNQ;
+import com.skybooking.staffservice.v1_0_0.io.nativeQuery.staff.StaffNQ;
 import com.skybooking.staffservice.v1_0_0.service.interfaces.role.RoleSV;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.role.RoleRS;
 import org.springframework.beans.BeanUtils;
@@ -15,7 +15,7 @@ import java.util.List;
 public class RoleIP implements RoleSV {
 
     @Autowired
-    private StaffSvNQ roleNQ;
+    private StaffNQ roleNQ;
 
 
     /**

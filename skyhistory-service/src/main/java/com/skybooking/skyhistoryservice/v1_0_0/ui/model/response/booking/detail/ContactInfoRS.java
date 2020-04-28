@@ -6,6 +6,5 @@ import lombok.Data;
 public class ContactInfoRS {
     private String contactName;
     private String contactPhone;
-    private String contactPhoneCode;
     private String contactEmail;
 }

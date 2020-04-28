@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface BussinessTypeRP extends JpaRepository<BussinessTypeEntity, Long> {
-    List<BussinessTypeEntity> findAllByStatus(Integer status);
+    List<BussinessTypeEntity> findAllByStatusAndDeletedAtIsNull(Integer status);
 }

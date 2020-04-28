@@ -27,6 +27,7 @@ import com.skybooking.stakeholderservice.v1_0_0.util.activitylog.ActivityLogging
 import com.skybooking.stakeholderservice.v1_0_0.util.email.EmailBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
+import com.skybooking.stakeholderservice.v1_0_0.util.notification.PushNotificationOptions;
 import com.skybooking.stakeholderservice.v1_0_0.util.skyowner.SkyownerBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.skyuser.UserBean;
 import org.apache.commons.lang.math.NumberUtils;
@@ -41,6 +42,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static com.skybooking.stakeholderservice.constant.MailStatusConstant.*;
 
 @Service
 public class UserIP implements UserSV {
@@ -95,6 +98,13 @@ public class UserIP implements UserSV {
 
     @Autowired
     private CountryRP countryRP;
+
+    @Autowired
+    private StakeholderUserInvitationRP stkInvitationRP;
+
+    @Autowired
+    private PushNotificationOptions notification;
+
 
 
     /**
@@ -151,7 +161,6 @@ public class UserIP implements UserSV {
         if (profileRQ.getGender() != null) {
             stkHolder.setGender(profileRQ.getGender());
         }
-
         if (profileRQ.getDateOfBirth() != null) {
             stkHolder.setDateOfBirth(profileRQ.getDateOfBirth());
         }
@@ -186,18 +195,18 @@ public class UserIP implements UserSV {
         UserEntity user = userBean.getUserPrincipal();
 
         if (user.getProviderId() != null) {
-            throw new UnauthorizedException("sth_w_w", "");
+            throw new BadRequestException("sth_w_w", null);
         }
 
         Boolean b = pwdEncoder.matches(passwordRQ.getOldPassword(), user.getPassword());
 
         if (!b) {
-            throw new UnauthorizedException("incrt_pwd", "");
+            throw new BadRequestException("incrt_pwd", null);
         }
         user.setPassword(pwdEncoder.encode(passwordRQ.getNewPassword()));
-
         userRepository.save(user);
 
+        notification.sendMessageToUsers("skyuser_change_new_password", null, null);
         logger.activities(ActivityLoggingBean.Action.CHANGE_PASSWORD, user);
 
     }
@@ -221,7 +230,7 @@ public class UserIP implements UserSV {
         UserEntity user = userRepository.findByEmailOrPhone(passwordRQ.getUsername(), passwordRQ.getCode().replaceAll(" ", ""));
 
         if (user == null) {
-            throw new UnauthorizedException("sth_w_w", "");
+            throw new UnauthorizedException("sth_w_w", null);
         }
 
         StakeHolderUserEntity skyuser = user.getStakeHolderUser();
@@ -236,16 +245,16 @@ public class UserIP implements UserSV {
 
         logger.activities(ActivityLoggingBean.Action.RESET_PASSWORD, user);
 
-        Map<String, Object> mailData = emailBean.mailData(receiver, fullName, 0, "password_reset_successfully");
+        Map<String, Object> mailData = emailBean.mailData(receiver, fullName, 0, PASSWORD_RESET_SUCCESSFULLY);
 
         emailBean.sendEmailSMS("success-reset-password", mailData);
+        notification.sendMessageToUsers("skyuser_forget_and_create_new_password", null, user.getStakeHolderUser().getId());
 
         UserDetailsTokenRS userDetailsTokenRS = userBean.userDetailByLogin(user, passwordRQ.getUsername(), passwordRQ.getNewPassword());
 
         return userDetailsTokenRS;
 
     }
-
 
 
     /**
@@ -321,9 +330,18 @@ public class UserIP implements UserSV {
         }
 
         userRepository.save(user);
+        updateExistsEmailInv(user.getStakeHolderUser().getId(), user.getEmail());
 
         logger.activities(ActivityLoggingBean.Action.UPDATE_CONTACT, user);
 
+    }
+
+    private void updateExistsEmailInv(Long skyuserId, String email) {
+        var invSky = stkInvitationRP.findByInviteStakeholderUserIdAndInviteToIsNotNull(skyuserId);
+        if (invSky != null) {
+            invSky.setInviteTo(email);
+            stkInvitationRP.save(invSky);
+        }
     }
 
 
@@ -339,13 +357,13 @@ public class UserIP implements UserSV {
         UserEntity user = userBean.getUserPrincipal();
 
         if (user.getProviderId() != null) {
-            throw new UnauthorizedException("sth_w_w", "");
+            throw new UnauthorizedException("sth_w_w", null);
         }
 
         Boolean b = pwdEncoder.matches(contactRQ.getPassword(), user.getPassword());
 
         if (!b) {
-            throw new UnauthorizedException("incrt_pwd", "");
+            throw new UnauthorizedException("incrt_pwd", null);
         }
 
         // need to add httpstatus conflex
@@ -360,7 +378,7 @@ public class UserIP implements UserSV {
 
         userRepository.save(user);
 
-        Map<String, Object> mailData = emailBean.mailData(receiver, fullName, code, "account_verification_code");
+        Map<String, Object> mailData = emailBean.mailData(receiver, fullName, code, REQUEST_CHANGE_EMAIL);
         emailBean.sendEmailSMS("send-login", mailData);
 
         return code;
@@ -382,7 +400,7 @@ public class UserIP implements UserSV {
         Boolean b = pwdEncoder.matches(accountRQ.getPassword(), user.getPassword());
 
         if (!b) {
-            throw new ForbiddenException("incrt_pwd", "");
+            throw new ForbiddenException("incrt_pwd", null);
         }
 
         user.getStakeHolderUser().setStatus(0);
@@ -398,7 +416,7 @@ public class UserIP implements UserSV {
 
         logger.activities(ActivityLoggingBean.Action.DEACTIVE_USER, user);
 
-        Map<String, Object> mailData = emailBean.mailData(receiver, fullName, 0, "account_deactivated_successfully");
+        Map<String, Object> mailData = emailBean.mailData(receiver, fullName, 0, ACCOUNT_DEACTIVATED_SUCCESSFULLY);
         emailBean.sendEmailSMS("deactive-account", mailData);
 
     }
@@ -418,14 +436,16 @@ public class UserIP implements UserSV {
         UserEntity user = userBean.getUserPrincipal();
 
         if (user.getStakeHolderUser().getIsSkyowner() == 1) {
-            throw new BadRequestException("ald_apl_skyowner", "");
+            throw new BadRequestException("ald_apl_skyowner", null);
         }
 
         var checkExists = companyHasUserRP.findByStakeholderUserId(user.getStakeHolderUser().getId());
 
         if (checkExists != null) {
-            throw new BadRequestException("sth_w_w", "");
+            throw new BadRequestException("sth_w_w", null);
         }
+
+        notification.sendMessageToUsers("skyowner_welcome_message", null, null);
 
         SkyownerRegisterRQ skyownerRQ = new SkyownerRegisterRQ();
         BeanUtils.copyProperties(companyRQ, skyownerRQ);
@@ -460,8 +480,8 @@ public class UserIP implements UserSV {
                 invitationRS.setId(invitation.getId());
                 String imageName = companys.getProfileImg() != null ? companys.getProfileImg() : "default.png";
 
-                invitationRS.setPhotoMedium(environment.getProperty("spring.awsImageUrl.companyProfile") + "/medium/" + imageName);
-                invitationRS.setPhotoSmall(environment.getProperty("spring.awsImageUrl.companyProfile") + "/_thumbnail/" + imageName);
+                invitationRS.setPhotoMedium(environment.getProperty("spring.awsImageUrl.companyProfile") + "medium/" + imageName);
+                invitationRS.setPhotoSmall(environment.getProperty("spring.awsImageUrl.companyProfile") + "_thumbnail/" + imageName);
                 invitationRSES.add(invitationRS);
             }
 
@@ -486,23 +506,29 @@ public class UserIP implements UserSV {
         StakeholderUserInvitationEntity invitation = invitationsRP.findByIdAndInviteStakeholderUserId(optionStaffRQ.getInvitationId(), user.getStakeHolderUser().getId());
 
         if (invitation == null) {
-            throw new BadRequestException("sth_w_w", "");
+            throw new BadRequestException("sth_w_w", null);
         }
 
         if (invitation.getStatus() != 0) {
-            throw new BadRequestException("sth_w_w", "");
+            throw new BadRequestException("sth_w_w", null);
         }
 
         invitation.setStatus(optionStaffRQ.getStatus());
         invitationsRP.save(invitation);
 
-        if (invitation.getStatus() == 1) {
-            skyownerBean.addStaff(invitation.getStakeholderCompanyId(), user.getStakeHolderUser().getId(), invitation.getSkyuserRole());
-        }
-
+        skyownerBean.addStaff(invitation, user.getStakeHolderUser().getId());
 
     }
 
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Logout
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param httpHeaders
+     * @Return Boolean
+     */
     @Override
     public Boolean logout(HttpHeaders httpHeaders) {
 
@@ -526,6 +552,25 @@ public class UserIP implements UserSV {
 
         return false;
     }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Delete user
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param username
+     */
+//    public void deleteUser(String username, String code) {
+//
+//        var user = userRepository.findByEmailOrPhone(username, code);
+//        if (user == null) {
+//            throw new BadRequestException("The user dose not exists", null);
+//        }
+//
+//        var skyuser = Sta
+//
+//    }
 
 
 }

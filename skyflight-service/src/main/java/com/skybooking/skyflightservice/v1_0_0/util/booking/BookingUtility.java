@@ -7,22 +7,21 @@ import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.MarkupNQ;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.MarkupTO;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.DetailSV;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.QuerySV;
+import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.TransformSV;
 import com.skybooking.skyflightservice.v1_0_0.service.model.booking.BookingMetadataTA;
 import com.skybooking.skyflightservice.v1_0_0.service.model.booking.BookingRequestTA;
+import com.skybooking.skyflightservice.v1_0_0.ui.model.request.booking.BookingCreateRQ;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.booking.BookingPassengerRQ;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.payment.PaymentMandatoryRQ;
 import com.skybooking.skyflightservice.v1_0_0.util.calculator.NumberFormatter;
 import com.skybooking.skyflightservice.v1_0_0.util.classes.booking.PriceInfo;
 import com.skybooking.skyflightservice.v1_0_0.util.passenger.PassengerUtil;
-import org.bouncycastle.operator.bc.BcAsymmetricKeyUnwrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
-
-import static com.skybooking.skyflightservice.constant.TripTypeEnum.*;
 
 
 @Service
@@ -37,6 +36,9 @@ public class BookingUtility {
     @Autowired
     private QuerySV querySV;
 
+    @Autowired
+    private TransformSV transformSV;
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -48,12 +50,21 @@ public class BookingUtility {
      */
     public String getTripType(TripTypeEnum tripTypeEnum) {
 
-        var tripType = switch (tripTypeEnum) {
-            case ONEWAY -> "OneWay";
-            case ROUND -> "Return";
-            case MULTICITY -> "Other";
-            default -> throw new IllegalArgumentException("Invalid trip type.");
-        };
+        String tripType;
+
+        switch (tripTypeEnum) {
+            case ONEWAY:
+                tripType = "OneWay";
+                break;
+            case ROUND:
+                tripType = "Return";
+                break;
+            case MULTICITY:
+                tripType = "Other";
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid trip type.");
+        }
 
         return tripType;
     }
@@ -69,13 +80,20 @@ public class BookingUtility {
      */
     public String getPassengerType(String type) {
 
-        var passengerType = switch (type.toUpperCase()) {
-            case PassengerCode.ADULT -> "Adult";
-            case PassengerCode.CHILD -> "Child";
-            case PassengerCode.INFANT -> "Infant";
-            default -> throw new IllegalArgumentException("Invalid passenger type: " + type);
-        };
-
+        String passengerType;
+        switch (type.toUpperCase()) {
+            case PassengerCode.ADULT:
+                passengerType = "Adult";
+                break;
+            case PassengerCode.CHILD:
+                passengerType = "Child";
+                break;
+            case PassengerCode.INFANT:
+                passengerType = "Infant";
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid passenger type: " + type);
+        }
 
         return passengerType;
 
@@ -154,6 +172,72 @@ public class BookingUtility {
      * get booking total amount
      * -----------------------------------------------------------------------------------------------------------------
      *
+     * @param request
+     * @param legIds
+     * @return double
+     */
+//    public double getBookingTotalAmount(BookingCreateRQ request, String[] legIds) {
+//
+//        BigDecimal totalAmount = BigDecimal.ZERO;
+//
+//        for (String legId : legIds) {
+//
+//            var leg = detailSV.getLegDetail(request.getRequestId(), legId);
+//            var price = detailSV.getPriceDetail(request.getRequestId(), leg.getPrice());
+//
+//            for (BookingPassengerRQ passenger : request.getPassengers()) {
+//
+//               var passengerType = PassengerUtil.type(passenger.getBirthDate());
+//
+//               var passengerPrice = price.getDetails()
+//                   .stream()
+//                   .filter(it -> it.getType().equalsIgnoreCase(passengerType))
+//                   .map(it -> it.getBaseFare().add(it.getTax()).subtract(it.getCommissionAmount()))
+//                   .findFirst();
+//
+//               totalAmount = totalAmount.add(passengerPrice.orElse(BigDecimal.ZERO));
+//
+//            }
+//
+//        }
+//
+//        return NumberFormatter.amount(totalAmount.doubleValue());
+//    }
+
+    public double getBookingTotalAmount(BookingCreateRQ request, String[] legIds) {
+
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        var cachedId = request.getRequestId();
+        for (String legId : legIds) {
+            cachedId = cachedId + legId;
+        }
+
+        var priceCached = transformSV.getShoppingDetail(cachedId);
+        var price = priceCached.getPrices().get(0);
+
+        for (BookingPassengerRQ passenger : request.getPassengers()) {
+
+            var passengerType = PassengerUtil.type(passenger.getBirthDate());
+
+            var passengerPrice = price.getDetails()
+                .stream()
+                .filter(it -> it.getType().equalsIgnoreCase(passengerType))
+                .map(it -> it.getBaseFare().add(it.getTax()).subtract(it.getCommissionAmount()))
+                .findFirst();
+
+            totalAmount = totalAmount.add(passengerPrice.orElse(BigDecimal.ZERO));
+        }
+
+
+        return NumberFormatter.amount(totalAmount.doubleValue());
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get booking total amount
+     * -----------------------------------------------------------------------------------------------------------------
+     *
      * @param requestId
      * @param legIds
      * @return double
@@ -166,7 +250,7 @@ public class BookingUtility {
             var leg = detailSV.getLegDetail(requestId, legId);
             var price = detailSV.getPriceDetail(requestId, leg.getPrice());
 
-            totalAmount += price.getTotal().doubleValue();
+            totalAmount += price.getBasePrice().getTotal().doubleValue();
         }
 
         return NumberFormatter.amount(totalAmount);
@@ -184,6 +268,31 @@ public class BookingUtility {
      */
     public double getBookingTotalMarkupAmount(double totalAmount, double percent) {
         return NumberFormatter.amount(totalAmount * percent);
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get total commission amount
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param requestId
+     * @param legIds
+     * @return BigDecimal
+     */
+    public BigDecimal getBookingTotalCommission(String requestId, String[] legIds) {
+
+        var totalAmount = BigDecimal.ZERO;
+        for (String legId : legIds) {
+
+            var leg = detailSV.getLegDetail(requestId, legId);
+            var price = detailSV.getPriceDetail(requestId, leg.getPrice());
+
+            totalAmount = totalAmount.add(price.getTotalCommissionAmount());
+        }
+
+        return totalAmount;
+
     }
 
 
@@ -345,8 +454,9 @@ public class BookingUtility {
             }
 
             // set total amount detail
-            metadataTA.setTotalAmount(this.getBookingTotalAmount(request.getRequest().getRequestId(), request.getRequest().getLegIds()));
+            metadataTA.setTotalAmount(this.getBookingTotalAmount(request.getRequest(), request.getRequest().getLegIds()));
             metadataTA.setMarkupAmount(this.getBookingTotalMarkupAmount(metadataTA.getTotalAmount(), metadataTA.getMarkupPercentage()));
+            metadataTA.setTotalCommissionAmount(this.getBookingTotalCommission(request.getRequest().getRequestId(), request.getRequest().getLegIds()));
 
         }
 
@@ -361,10 +471,10 @@ public class BookingUtility {
 
         PriceInfo priceInfo = new PriceInfo();
         BigDecimal grossAmount = NumberFormatter.trimAmount(booking.getTotalAmount().add(booking.getMarkupAmount()).add(booking.getMarkupPayAmount()));
-        BigDecimal discountPaymentMethodPercentage = paymentMandatoryRQ.getPercentage();
-        BigDecimal discountPaymentMethodAmount = NumberFormatter.trimAmount(grossAmount.multiply(discountPaymentMethodPercentage.divide(BigDecimal.valueOf(100))));
+        BigDecimal discountPaymentMethodPercentage = paymentMandatoryRQ.getPercentage().divide(BigDecimal.valueOf(100));
+        BigDecimal discountPaymentMethodAmount = NumberFormatter.trimAmount(grossAmount.multiply(discountPaymentMethodPercentage));
         BigDecimal finalAmount = grossAmount.subtract(discountPaymentMethodAmount);
-        BigDecimal paymentMethodFeePercentage = paymentMandatoryRQ.getPercentageBase();
+        BigDecimal paymentMethodFeePercentage = paymentMandatoryRQ.getPercentageBase().divide(BigDecimal.valueOf(100));
         BigDecimal paymentMethodFeeAmount = NumberFormatter.trimAmount(finalAmount.multiply(paymentMethodFeePercentage));
 
         priceInfo.setGrossAmount(grossAmount);

@@ -2,10 +2,15 @@ package com.skybooking.skyhistoryservice.v1_0_0.service.implment.booking;
 
 import com.skybooking.skyhistoryservice.constant.BookingKeyConstant;
 import com.skybooking.skyhistoryservice.exception.httpstatus.NotFoundException;
+import com.skybooking.skyhistoryservice.v1_0_0.io.enitity.company.StakeholderUserHasCompanyEntity;
 import com.skybooking.skyhistoryservice.v1_0_0.io.nativeQuery.booking.detail.*;
+import com.skybooking.skyhistoryservice.v1_0_0.io.repository.company.CompanyHasUserRP;
 import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.booking.BookingDetailSV;
+import com.skybooking.skyhistoryservice.v1_0_0.ui.model.request.SendBookingNoAuthRQ;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.request.booking.FilterRQ;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.booking.detail.*;
+import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.booking.detail.destination.ArrivalRS;
+import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.booking.detail.destination.DepartureRS;
 import com.skybooking.skyhistoryservice.v1_0_0.util.JwtUtils;
 import com.skybooking.skyhistoryservice.v1_0_0.util.header.HeaderBean;
 import org.springframework.beans.BeanUtils;
@@ -15,7 +20,9 @@ import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class BookingDetailIP implements BookingDetailSV {
@@ -35,6 +42,9 @@ public class BookingDetailIP implements BookingDetailSV {
     @Autowired
     private HeaderBean headerBean;
 
+    @Autowired
+    private CompanyHasUserRP companyHasUserRP;
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Getting data bookings detail
@@ -43,20 +53,38 @@ public class BookingDetailIP implements BookingDetailSV {
      * @return a booking
      * @Param id
      */
-    public BookingDetailRS getBookingDetail(Long bookingId) {
+    public BookingDetailRS getBookingDetail(String bookingCode, SendBookingNoAuthRQ sendBookingNoAuthRQ) {
 
-        FilterRQ filterRQ = new FilterRQ(request, jwtUtils.getUserToken());
-        Long companyId = filterRQ.getCompanyHeaderId();
-        String userType = headerBean.getCompanyId(companyId);
+        String userType;
+        String role = "";
+        Long userId;
+        Long companyId = 0l;
+        if (sendBookingNoAuthRQ == null) {
+            FilterRQ filterRQ = new FilterRQ(request, jwtUtils.getUserToken());
+            companyId = filterRQ.getCompanyHeaderId();
+            userType = headerBean.getCompanyId(companyId);
+            userId = filterRQ.getSkyuserId();
+            role = filterRQ.getRole();
+        } else {
+            userType = sendBookingNoAuthRQ.getCompanyId() == null ? "skyuser" : "skyowner";
+            userId = sendBookingNoAuthRQ.getSkyuserId().longValue();
+            if (sendBookingNoAuthRQ.getCompanyId() != null) {
+                companyId = sendBookingNoAuthRQ.getCompanyId().longValue();
+                StakeholderUserHasCompanyEntity stakeholderUserHasCompanyEntity = companyHasUserRP
+                        .findByStakeholderUserIdAndStakeholderCompanyId(userId, companyId);
+                if (stakeholderUserHasCompanyEntity != null) {
+                    role = stakeholderUserHasCompanyEntity.getSkyuserRole();
+                }
+            }
+        }
 
         BookingKeyConstant constant = new BookingKeyConstant();
-
         BookingDetailTO bookingDetailTO = bookingDetailNQ.bookingDetail(
                 userType,
-                bookingId,
-                filterRQ.getSkyuserId(),
+                bookingCode,
+                userId,
                 companyId,
-                filterRQ.getRole(),
+                role,
                 headerBean.getLocalizationId(),
                 constant.COMPLETED,
                 constant.UPCOMING,
@@ -74,19 +102,22 @@ public class BookingDetailIP implements BookingDetailSV {
         /**
          * Get Baggage Information
          */
-        List<BaggageInfoRS> baggageInfoRS = getBaggageInfoRS(bookingId);
+        List<BaggageInfoRS> baggageInfoRS = getBaggageInfoRS(bookingDetailTO.getBookingId());
 
         /**
          * Get Ticket Information
          */
-        List<TicketInfoRS> ticketInfoRS = getTicketInfoRS(bookingId);
-
+        List<TicketInfoRS> ticketInfoRS = getTicketInfoRS(bookingDetailTO.getBookingId());
 
         /**
          * Object booking information
          */
         BookingInfoRS bookingInfoRS = new BookingInfoRS();
         BeanUtils.copyProperties(bookingDetailTO, bookingInfoRS);
+        if (!bookingInfoRS.getUrlItinerary().equals("")) {
+            bookingInfoRS.setUrlItinerary(environment.getProperty("spring.awsImageUrl.file.itinerary")+bookingInfoRS.getUrlItinerary());
+            bookingInfoRS.setUrlReceipt(environment.getProperty("spring.awsImageUrl.file.receipt")+bookingInfoRS.getUrlReceipt());
+        }
 
         /**
          * Object contact information
@@ -111,14 +142,14 @@ public class BookingDetailIP implements BookingDetailSV {
          * Get Base Price Break Down Price
          */
 
-        List<PriceBreakdownRS> priceBreakdownRSS = getPriceBreakdownRS(bookingId);
+        List<PriceBreakdownRS> priceBreakdownRSS = getPriceBreakdownRS(bookingDetailTO.getBookingId());
         priceInfoRS.setPriceBreakdown(priceBreakdownRSS);
 
         /**
          * Get Itinerary Information
          */
-        List<ItineraryODInfoRS> itineraryODInfoRS = getItineraryODInfoRS(bookingId);
-
+        List<ItineraryODInfoRS> itineraryODInfoRS = getItineraryODInfoRS(bookingDetailTO.getBookingId(),
+                bookingDetailTO.getStatusKey());
 
         /**
          * Response booking detail
@@ -145,9 +176,11 @@ public class BookingDetailIP implements BookingDetailSV {
      * @param bookingId
      * @return
      */
-    public List<ItineraryODInfoRS> getItineraryODInfoRS(Long bookingId) {
+    public List<ItineraryODInfoRS> getItineraryODInfoRS(Integer bookingId, String StatusKey) {
+
         List<ItineraryODInfoTO> itineraryODInfoTOS = bookingDetailNQ.bookingOD(bookingId);
         List<ItineraryODInfoRS> itineraryODInfoRS = new ArrayList<>();
+        BookingKeyConstant constant = new BookingKeyConstant();
 
         for (ItineraryODInfoTO itineraryODInfo : itineraryODInfoTOS) {
 
@@ -158,11 +191,9 @@ public class BookingDetailIP implements BookingDetailSV {
              * Get Itinerary Segment Information
              */
 
-            List<ItineraryODSegmentTO> itineraryODSegmentTOS = bookingDetailNQ.bookingODSegment(
-                    itineraryODInfo.getId(),
-                    environment.getProperty("spring.awsImageUrl.airline"),
-                    headerBean.getLocalizationId()
-            );
+            List<ItineraryODSegmentTO> itineraryODSegmentTOS = bookingDetailNQ.bookingODSegment(itineraryODInfo.getId(),
+                    environment.getProperty("spring.awsImageUrl.airline"), headerBean.getLocalizationId(),
+                    constant.COMPLETED, constant.UPCOMING);
             List<ItineraryODSegmentRS> itineraryODSegmentRS = new ArrayList<>();
 
             for (ItineraryODSegmentTO itineraryODSegment : itineraryODSegmentTOS) {
@@ -170,18 +201,36 @@ public class BookingDetailIP implements BookingDetailSV {
                 ItineraryODSegmentRS itineraryODSegmentObj = new ItineraryODSegmentRS();
                 BeanUtils.copyProperties(itineraryODSegment, itineraryODSegmentObj);
 
+                if (!itineraryODSegment.getStatus().equals(StatusKey)) {
+                    itineraryODSegmentObj.setStatus(StatusKey);
+                }
+
+                /**
+                 * Departure Object
+                 */
+                DepartureRS departureRS = getDepartureRS(itineraryODSegment);
+
+                /**
+                 * Arrival Object
+                 */
+                ArrivalRS arrivalRS = getArrivalRS(itineraryODSegment);
+
                 /**
                  * Get Stop information
                  */
-                List<ItineraryStopInfoTO> itineraryStopInfoTO = bookingDetailNQ.bookingStopInfo(itineraryODSegment.getId());
+                List<ItineraryStopInfoTO> itineraryStopInfoTO = bookingDetailNQ
+                        .bookingStopInfo(itineraryODSegment.getId(), headerBean.getLocalizationId());
                 List<BookingStopInfoRS> bookingStopInfoRS = new ArrayList<>();
 
                 for (ItineraryStopInfoTO stopInfoTO : itineraryStopInfoTO) {
                     BookingStopInfoRS bookingStopInfo = new BookingStopInfoRS();
-                    BeanUtils.copyProperties(stopInfoTO , bookingStopInfo);
+                    BeanUtils.copyProperties(stopInfoTO, bookingStopInfo);
+                    bookingStopInfo.setDuration(Integer.valueOf(stopInfoTO.getDuration()));
                     bookingStopInfoRS.add(bookingStopInfo);
                 }
 
+                itineraryODSegmentObj.setDepartureInfo(departureRS);
+                itineraryODSegmentObj.setArrivalInfo(arrivalRS);
                 itineraryODSegmentObj.setStopInfo(bookingStopInfoRS);
                 itineraryODSegmentRS.add(itineraryODSegmentObj);
 
@@ -195,13 +244,55 @@ public class BookingDetailIP implements BookingDetailSV {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
+     * Get departure information
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param itineraryODSegment
+     * @return
+     */
+    public DepartureRS getDepartureRS(ItineraryODSegmentTO itineraryODSegment) {
+        DepartureRS departureRS = new DepartureRS();
+        departureRS.setLocationCode(itineraryODSegment.getDepartureLocationCode());
+        departureRS.setAirportName(itineraryODSegment.getDepartureAirportName());
+        departureRS.setCity(itineraryODSegment.getDepartureCity());
+        departureRS.setCountry(itineraryODSegment.getDepartureCountry());
+        departureRS.setLatitude(itineraryODSegment.getDepartureLatitude());
+        departureRS.setLongitude(itineraryODSegment.getDepartureLongitude());
+        departureRS.setDate(itineraryODSegment.getDepartureDate());
+        departureRS.setTerminal(itineraryODSegment.getDepartureTerminal());
+        return departureRS;
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Get Arrival information
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param itineraryODSegment
+     * @return
+     */
+    public ArrivalRS getArrivalRS(ItineraryODSegmentTO itineraryODSegment) {
+        ArrivalRS arrivalRS = new ArrivalRS();
+        arrivalRS.setLocationCode(itineraryODSegment.getArrivalLocationCode());
+        arrivalRS.setAirportName(itineraryODSegment.getArrivalAirportName());
+        arrivalRS.setCity(itineraryODSegment.getArrivalCity());
+        arrivalRS.setCountry(itineraryODSegment.getArrivalCountry());
+        arrivalRS.setLatitude(itineraryODSegment.getArrivalLatitude());
+        arrivalRS.setLongitude(itineraryODSegment.getArrivalLongitude());
+        arrivalRS.setDate(itineraryODSegment.getArrivalDate());
+        arrivalRS.setTerminal(itineraryODSegment.getArrivalTerminal());
+        return arrivalRS;
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
      * Get Price Breakdown
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @param bookingId
      * @return
      */
-    public List<PriceBreakdownRS> getPriceBreakdownRS(Long bookingId) {
+    public List<PriceBreakdownRS> getPriceBreakdownRS(Integer bookingId) {
         List<PriceBreakDownTO> priceBreakDownTOS = bookingDetailNQ.itineraryPrice(bookingId);
         List<PriceBreakdownRS> priceBreakdownRSS = new ArrayList<>();
         for (PriceBreakDownTO priceBreakDown : priceBreakDownTOS) {
@@ -222,13 +313,24 @@ public class BookingDetailIP implements BookingDetailSV {
      * @param bookingId
      * @return
      */
-    public List<BaggageInfoRS> getBaggageInfoRS(Long bookingId) {
+    public List<BaggageInfoRS> getBaggageInfoRS(Integer bookingId) {
         List<BaggageInfoTO> baggageInfos = bookingDetailNQ.baggage(bookingId);
+
         List<BaggageInfoRS> baggageInfoRS = new ArrayList<>();
+
         for (BaggageInfoTO baggage : baggageInfos) {
 
             BaggageInfoRS baggageInfo = new BaggageInfoRS();
             BeanUtils.copyProperties(baggage, baggageInfo);
+
+            if (!baggage.getSegment().isEmpty()) {
+                var cities = Arrays.stream(baggage.getSegment().split(",")).map(segment -> Arrays
+                        .stream(segment.split("-"))
+                        .map(it -> bookingDetailNQ.baggageLocation(it.trim(), headerBean.getLocalizationId()).getCity())
+                        .collect(Collectors.joining("-"))).collect(Collectors.joining(", "));
+
+                baggageInfo.setSegment(cities);
+            }
 
             /**
              * Get Baggage Allowance
@@ -240,7 +342,12 @@ public class BookingDetailIP implements BookingDetailSV {
 
                 for (BaggageAllowanceTO allowance : baggageAllowanceTOS) {
                     BaggageAllowanceRS baggageAllowance = new BaggageAllowanceRS();
+                    var piece = false;
                     BeanUtils.copyProperties(allowance, baggageAllowance);
+                    if (allowance.getPiece() > 0) {
+                        piece = true;
+                    }
+                    baggageAllowance.setPiece(piece);
                     baggageAllowanceRS.add(baggageAllowance);
                 }
 
@@ -262,7 +369,7 @@ public class BookingDetailIP implements BookingDetailSV {
      * @param bookingId
      * @return
      */
-    public List<TicketInfoRS> getTicketInfoRS(Long bookingId) {
+    public List<TicketInfoRS> getTicketInfoRS(Integer bookingId) {
         List<TicketInfoTO> ticketInfoTOS = bookingDetailNQ.ticket(bookingId);
         List<TicketInfoRS> ticketInfoRS = new ArrayList<>();
 
@@ -271,7 +378,9 @@ public class BookingDetailIP implements BookingDetailSV {
             BeanUtils.copyProperties(ticket, ticketInfo);
             ticketInfoRS.add(ticketInfo);
         }
+
         return ticketInfoRS;
+
     }
 
 }

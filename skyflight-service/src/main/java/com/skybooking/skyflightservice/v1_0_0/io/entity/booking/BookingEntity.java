@@ -132,6 +132,12 @@ public class BookingEntity {
     @Column(name = "pay_met_fee_amount")
     private BigDecimal payMetFeeAmount;
 
+    @Column(name = "commission_amount")
+    private BigDecimal commissionAmount;
+
+    @Column(name = "commission_total_amount")
+    private BigDecimal commissionTotalAmount;
+
     @Column(name = "seen")
     private String seen;
 

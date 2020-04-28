@@ -4,29 +4,32 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.skybooking.stakeholderservice.exception.httpstatus.BadRequestException;
 import com.skybooking.stakeholderservice.exception.httpstatus.InternalServerError;
 import com.skybooking.stakeholderservice.exception.httpstatus.UnauthorizedException;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.company.BussinessTypeEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.company.StakeholderCompanyDocsEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.company.StakeholderCompanyEntity;
-import com.skybooking.stakeholderservice.v1_0_0.io.enitity.company.StakeholderUserHasCompanyEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.contact.ContactEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.locale.LocaleEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.notification.UserPlayerEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.redis.UserTokenEntity;
+import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.OauthUserAccessTokenEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.currency.CurrencyNQ;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.currency.CurrencyTO;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.user.*;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.BussinessTypeRP;
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyDocRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyHasUserRP;
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyStatusRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.contact.ContactRP;
-import com.skybooking.stakeholderservice.v1_0_0.io.repository.country.CountryRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.country.LocationRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.locale.CountryLocaleRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.locale.LocaleRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.notification.UserPlayerRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.redis.UserTokenRP;
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.OauthUserRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserRepository;
 import com.skybooking.stakeholderservice.v1_0_0.transformer.TokenTF;
 import com.skybooking.stakeholderservice.v1_0_0.transformer.UserDetailsTF;
@@ -35,8 +38,9 @@ import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.Licens
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.passenger.PassengerRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.PermissionRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
-import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
+import com.skybooking.stakeholderservice.v1_0_0.util.JwtUtils;
 import com.skybooking.stakeholderservice.v1_0_0.util.datetime.DateTimeBean;
+import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.header.HeaderBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.passenger.Passenger;
@@ -65,8 +69,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 @Component
 public class UserBean {
@@ -99,6 +103,9 @@ public class UserBean {
     private CompanyHasUserRP companyHasUserRP;
 
     @Autowired
+    private CompanyStatusRP companyStatusRP;
+
+    @Autowired
     private UserPlayerRP userPlayerRP;
 
     @Autowired
@@ -123,7 +130,16 @@ public class UserBean {
     private HeaderBean headerBean;
 
     @Autowired
+    private OauthUserRP oauthUserRP;
+
+    @Autowired
     private CountryLocaleRP countryLocaleRP;
+
+    @Autowired
+    private JwtUtils jwtUtils;
+
+    @Autowired
+    private CompanyDocRP companyDocRP;
 
 
     /**
@@ -136,7 +152,6 @@ public class UserBean {
     public UserEntity getUserPrincipal() {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
         UserEntity user = userRepository.findByUsername(authentication.getName());
 
         if (user == null) {
@@ -150,6 +165,7 @@ public class UserBean {
         return user;
 
     }
+
     public UserEntity getUserPrincipalVld() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserEntity user = userRepository.findByUsername(authentication.getName());
@@ -171,7 +187,7 @@ public class UserBean {
      */
     public TokenTF getCredential(String username, String password, String credential, String code, String provider) {
 
-        String baseUrl = String.format("%s://%s:%d/",request.getScheme(),  request.getServerName(), request.getServerPort());
+        String baseUrl = String.format("%s://%s:%d/", request.getScheme(), request.getServerName(), request.getServerPort());
 
         RestTemplate restAPi = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
@@ -257,14 +273,14 @@ public class UserBean {
                 userDetailDao.setCurencyCode(item.getCode());
         });
 
-        TotalBookingTO totalBooking = userNQ.totalBooking(user.getStakeHolderUser().getId());
+        TotalBookingTO totalBooking = userNQ.totalBooking(user.getStakeHolderUser().getId(), (long) 0, "skyuser");
         userDetailDao.setTotalBooking(totalBooking.getBookingQty());
 
-        getStaffCompany(user, userDetailDao);
-
-        if (user.getStakeHolderUser().getIsSkyowner() == 1) {
-            List<CompanyRS> companyRS = companiesDetails(user.getStakeHolderUser().getStakeholderCompanies());
-            userDetailDao.setCompanies(companyRS);
+        if (user.getStakeHolderUser().getStakeholderCompanies() != null) {
+            if (user.getStakeHolderUser().getStakeholderCompanies().size() > 0) {
+                List<CompanyRS> companyRS = companiesDetails(user.getStakeHolderUser().getStakeholderCompanies());
+                userDetailDao.setCompanies(companyRS);
+            }
         }
 
         for (ContactEntity contacts : user.getStakeHolderUser().getContactEntities()) {
@@ -284,9 +300,13 @@ public class UserBean {
         var userHasCompany = companyHasUserRP.findByStakeholderUserId(user.getStakeHolderUser().getId());
 
         if (userHasCompany != null) {
+
+            userDetailDao.setIsSkyowner(userHasCompany.getStatus());
+
             userDetailDao.setRole(userHasCompany.getSkyuserRole());
             List<PermissionRS> permissions = getPermissions(userHasCompany.getSkyuserRole());
             userDetailDao.setPermission(permissions);
+
         }
 
         return userDetailDao;
@@ -295,7 +315,7 @@ public class UserBean {
 
 
     private String getNationality(String iso) {
-        NationalityTO nationalityTO = userNQ.getNationality(iso != null ? iso : "", headerBean.getLocalizationId(request.getHeader("X-localization")));
+        NationalityTO nationalityTO = userNQ.getNationality(iso != null ? iso : "", headerBean.getLocalizationId());
 
         String nationlity = "";
 
@@ -304,31 +324,6 @@ public class UserBean {
         }
 
         return nationlity;
-    }
-
-
-    /**
-     * -----------------------------------------------------------------------------------------------------------------
-     * Getting staff company
-     * -----------------------------------------------------------------------------------------------------------------
-     *
-     * @Param UserDetailsTF
-     * @Param UserEntity
-     * @Return List<PermissionRS>
-     */
-    private void getStaffCompany(UserEntity user, UserDetailsTF userDetailDao) {
-        
-        StakeholderUserHasCompanyEntity findStaff = companyHasUserRP.findByStakeholderUserIdAndStatus(user.getStakeHolderUser().getId(), 2);
-
-        if (findStaff != null) {
-            List<CompanyRS> staffCompaniesRS = new ArrayList<>();
-            CompanyRS staffCompany = new CompanyRS();
-
-            staffCompany.setId(findStaff.getStakeholderCompanyId());
-            staffCompaniesRS.add(staffCompany);
-            userDetailDao.setCompanies(staffCompaniesRS);
-        }
-
     }
 
 
@@ -365,10 +360,9 @@ public class UserBean {
 
         List<CompanyRS> companyRSS = new ArrayList<>();
 
-        for (StakeholderCompanyEntity company: companies) {
+        for (StakeholderCompanyEntity company : companies) {
 
             CompanyRS companyRS = new CompanyRS();
-
             companyRS.setId(company.getId());
 
             companyRS.setCompanyName(company.getCompanyName());
@@ -386,22 +380,37 @@ public class UserBean {
 
             var country = locationRP.findByLocationableId(company.getId());
             if (country != null) {
-                var countryLocale = countryLocaleRP.findCountryBylocale(country.getCountryId(), headerBean.getLocalizationId(request.getHeader("X-localization")));
+                var countryLocale = countryLocaleRP.findCountryBylocale(country.getCountryId(), headerBean.getLocalizationId());
                 companyRS.setCountryId(country.getCountryId());
                 companyRS.setCountryName(countryLocale.getName());
-
             }
 
             List<LicenseRS> licenses = new ArrayList<>();
-            for (StakeholderCompanyDocsEntity doc : company.getStakeholderCompanyDocs()) {
+
+            var companyDocs = companyDocRP.findByStakeholderCompanyAndType(company, "license");
+            for (StakeholderCompanyDocsEntity doc : companyDocs) {
                 LicenseRS license = new LicenseRS();
                 license.setDocUrl(environment.getProperty("spring.awsImageUrl.companyLicense") + doc.getFileName());
                 licenses.add(license);
             }
             companyRS.setLicenses(licenses);
 
+            var profileItenaryEntity = companyDocRP.findByStakeholderCompanyAndType(company, "itenery");
+            String profileItenary = (profileItenaryEntity.size() == 0) ? "default.png" : profileItenaryEntity.get(0).getFileName();
+            companyRS.setProfileItenary(environment.getProperty("spring.awsImageUrl.companyProfile") + "origin/" + profileItenary);
+
             String profile = (company.getProfileImg() == null) ? "default.png" : company.getProfileImg();
-            companyRS.setProfileImg(environment.getProperty("spring.awsImageUrl.companyProfile") + "origin/" + profile);
+            companyRS.setProfileImg(environment.getProperty("spring.awsImageUrl.companyProfile") + "medium/" + profile);
+
+            TotalBookingTO totalBooking = userNQ.totalBooking((long) 0, company.getId(), "company");
+            companyRS.setTotalBooking(totalBooking.getBookingQty());
+
+            var companyStatus = companyStatusRP.findByCompany(company.getId());
+            if (companyStatus != null) {
+                if (companyStatus.getStatus() == 1) {
+                    companyRS.setReason(companyStatus.getComment());
+                }
+            }
 
             companyContacts(company, companyRS);
 
@@ -424,23 +433,23 @@ public class UserBean {
 
         String companyStatus = "";
 
-        switch(status) {
-            case 0 :
+        switch (status) {
+            case 0:
                 companyStatus = "pending";
                 break;
-            case 1 :
+            case 1:
                 companyStatus = "reject";
                 break;
-            case 3 :
+            case 3:
                 companyStatus = "banned";
                 break;
-            case 4 :
+            case 4:
                 companyStatus = "approved";
                 break;
-            case 5 :
+            case 5:
                 companyStatus = "deactive";
                 break;
-            default :
+            default:
                 companyStatus = "other";
         }
 
@@ -462,22 +471,22 @@ public class UserBean {
         List<ContactEntity> contacts = contactRP.getContactCM(company.getId());
         for (ContactEntity contact : contacts) {
             switch (contact.getType()) {
-                case "a" :
+                case "a":
                     companyRS.setAddress(contact.getValue());
                     break;
-                case "p" :
+                case "p":
                     companyRS.setPhone(contact.getValue());
                     break;
-                case "z" :
+                case "z":
                     companyRS.setPostalOrZipCode(contact.getValue());
                     break;
-                case "w" :
+                case "w":
                     companyRS.setWebsite(contact.getValue());
                     break;
-                case "c" :
+                case "c":
                     companyRS.setCity(contact.getValue());
                     break;
-                case "e" :
+                case "e":
                     companyRS.setEmail(contact.getValue());
                     break;
             }
@@ -529,14 +538,15 @@ public class UserBean {
             ImageIO.write(resizedLarg, imageEx, outputLarg);
             ImageIO.write(resizedSmall, imageEx, outputSmall);
 
+            limitFileType(imageEx, new String[]{"PNG", "JPG", "JPEG"});
+
             uploadFileTos3bucket(fileName + "." + imageEx, outputLarg, "/uploads" + largPath);
             uploadFileTos3bucket(fileName + "." + imageEx, outputSmall, "/uploads" + smallPath);
 
             outputLarg.delete();
             outputSmall.delete();
-
         } catch (Exception e) {
-            throw new InternalServerError("Can not specific file", null);
+//            throw new InternalServerError("up_img_type", null);
         }
         return fileName + "." + imageEx;
 
@@ -564,7 +574,9 @@ public class UserBean {
             File file = convertMultiPartToFile(multipartFile);
 
             String fileNames = multipartFile.getOriginalFilename();
+
             imageEx = getExtensionByStringHandling(fileNames);
+            limitFileType(imageEx.get(), new String[]{"PNG", "JPG", "JPEG"});
 
             uploadFileTos3bucket(fileName + "." + imageEx.get(), file, "/uploads" + largPath);
             uploadFileTos3bucket(fileName + "." + imageEx.get(), file, "/uploads" + smallPath);
@@ -572,8 +584,10 @@ public class UserBean {
             file.delete();
 
         } catch (Exception e) {
-            throw new InternalServerError("Can not specific file", null);
+            throw new InternalServerError("up_img_type", null);
         }
+
+
         return fileName + "." + imageEx.get();
 
     }
@@ -603,6 +617,7 @@ public class UserBean {
     public String uploadLicense(MultipartFile multipartFile, String largPath, String originName) {
 
         String fileName = apiBean.generateFileName(null);
+        Optional<String> imageEx = null;
 
         try {
 
@@ -615,13 +630,32 @@ public class UserBean {
                 fileName = originName;
             }
 
+            imageEx = getExtensionByStringHandling(fileNames);
+            limitFileType(imageEx.get(), new String[]{"PNG", "JPG", "JPEG", "PDF", "DOC", "DOCX"});
+
             uploadFileTos3bucket(fileName, file, "/uploads" + largPath);
             file.delete();
+
         } catch (Exception e) {
-            throw new InternalServerError("Can not specific file", null);
+            throw new InternalServerError("up_img_type_cm", null);
         }
 
         return fileName;
+
+    }
+
+    private void limitFileType(String ext, String fileType[]) {
+
+        Boolean b = false;
+
+        for (int i = 0; i < fileType.length; i++) {
+            if (fileType[i].equals(ext.toUpperCase())) {
+                b = true;
+            }
+        }
+        if (!b) {
+            throw new BadRequestException("File type not allow", null);
+        }
 
     }
 
@@ -634,9 +668,8 @@ public class UserBean {
      * @Param s
      * @Param prefix
      */
-    public static String removePrefix(String s, String prefix)
-    {
-        if (s != null && prefix != null && s.startsWith(prefix)){
+    public static String removePrefix(String s, String prefix) {
+        if (s != null && prefix != null && s.startsWith(prefix)) {
             return s.substring(prefix.length());
         }
         return s;
@@ -706,32 +739,7 @@ public class UserBean {
      *
      * @Return UserProfileTO
      */
-    public UserProfileTO getUserProfile() {
-
-        var user = getUserPrincipal();
-        var company = companyHasUserRP.findByStakeholderUserId(user.getStakeHolderUser().getId());
-
-        var profile = new UserProfileTO();
-
-        profile.setCompanyId(company.getStakeholderCompanyId());
-        profile.setStakeHolderId(user.getStakeHolderUser().getId());
-        profile.setUserId(user.getId());
-        profile.setUserRole(company.getSkyuserRole());
-        profile.setUserType(user.getStakeHolderUser().getIsSkyowner() == 1 ? "skyowner" : "skyuser");
-
-        return profile;
-
-    }
-
-
-    /**
-     * -----------------------------------------------------------------------------------------------------------------
-     * Get staff profile
-     * -----------------------------------------------------------------------------------------------------------------
-     *
-     * @Return UserProfileTO
-     */
-    public void registerPlayer(Long skyuserId) {
+    public void registerPlayer(UserEntity user) {
 
         String playerId = request.getHeader("X-PlayerId");
 
@@ -739,12 +747,16 @@ public class UserBean {
             throw new UnauthorizedException("sth_w_w", null);
         }
 
-        UserPlayerEntity player = userPlayerRP.findByStuserIdAndPlayerId(skyuserId, playerId);
+        UserPlayerEntity player = userPlayerRP.findByStakeholderUserIdAndPlayerId(user.getStakeHolderUser().getId(), playerId);
 
         if (player == null) {
             player = new UserPlayerEntity();
             player.setPlayerId(playerId);
-            player.setStuserId(skyuserId);
+            player.setStakeholderUserId(user.getStakeHolderUser().getId());
+
+            if (user.getStakeHolderUser().getIsSkyowner() == 1) {
+                player.setStakeholderCompanyId(user.getStakeHolderUser().getStakeholderCompanies().get(0).getId());
+            }
 
             userPlayerRP.save(player);
         }
@@ -802,6 +814,7 @@ public class UserBean {
         }
 
         return fullUsername;
+
     }
 
 
@@ -827,6 +840,31 @@ public class UserBean {
     }
 
 
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Store Token
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param user
+     * @Param username
+     * @Param password
+     */
+    public void storeUserTokenLastLogin(String token, UserEntity user) {
+
+        OauthUserAccessTokenEntity oauthUserAccessTokenEntity = new OauthUserAccessTokenEntity();
+        oauthUserAccessTokenEntity.setJwtId(jwtUtils.getClaim(token, "jti", String.class));
+        oauthUserAccessTokenEntity.setUserId(user.getId());
+        oauthUserAccessTokenEntity.setName("Skybooking client");
+        oauthUserAccessTokenEntity.setStatus(1);
+        oauthUserRP.save(oauthUserAccessTokenEntity);
+
+        user.setLastLoginAt(new Date());
+        userRepository.save(user);
+
+    }
+
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Set passenger type
@@ -837,6 +875,7 @@ public class UserBean {
      * @Return
      */
     public void setPasengerType(String birthday, PassengerRS passenger) {
+
         DateTimeBean dateTime = new DateTimeBean();
         Passenger clPassenger = new Passenger();
 

@@ -14,7 +14,8 @@ INNER JOIN stakeholder_users AS su
         ON b.stakeholder_user_id = su.id
 
 -- CHECK USERS
-WHERE CASE WHEN 'skyuser' = :stake
+WHERE b.status IN (1, 11, 10, 4, 12, 3)
+AND CASE WHEN 'skyuser' = :stake
     THEN
         (b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id IS NULL)
     ELSE
@@ -28,5 +29,5 @@ WHERE CASE WHEN 'skyuser' = :stake
             END
     END
 
-ORDER BY b.created_at DESC
+ORDER BY b.id DESC
 LIMIT :take

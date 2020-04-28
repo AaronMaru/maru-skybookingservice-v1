@@ -49,18 +49,7 @@ public class ShoppingController {
      */
     @PostMapping("/search")
     public ResponseEntity<SearchRS> search(@Valid @RequestBody FlightShoppingRQ request) {
-        return new ResponseEntity<>(
-                new SearchRS(
-                        HttpStatus.OK,
-                        shoppingSV.shoppingTransformMarkup(
-                                request,
-                                metadataSV.getUserAuthenticationMetadata(),
-                                headerBean.getCurrencyCode(),
-                                headerBean.getLocalizationId()
-                        )
-                ),
-                HttpStatus.OK
-        );
+        return ResponseEntity.status(HttpStatus.OK).body(new SearchRS(HttpStatus.OK, shoppingSV.shoppingTransformMarkup(request, metadataSV.getUserAuthenticationMetadata(), headerBean.getCurrencyCode(), headerBean.getLocalizationId())));
     }
 
 
@@ -74,10 +63,7 @@ public class ShoppingController {
      */
     @GetMapping("/search/{id}")
     public ResponseEntity<SearchRS> searchById(@PathVariable String id) {
-        return new ResponseEntity<>(
-                new SearchRS(HttpStatus.OK, responseSV.flightShoppingById(id)),
-                HttpStatus.OK
-        );
+        return ResponseEntity.status(HttpStatus.OK).body(new SearchRS(HttpStatus.OK, responseSV.flightShoppingById(id)));
     }
 
 
@@ -91,9 +77,13 @@ public class ShoppingController {
      */
     @PostMapping(value = "/flight/detail", produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<BaseRS> getFlightDetail(@Valid @RequestBody FlightDetailRQ flightDetailRQ) {
-        return new ResponseEntity<>(
-                new BaseRS(HttpStatus.OK, shoppingSV.getFlightDetail(flightDetailRQ, metadataSV.getUserAuthenticationMetadata())),
-                HttpStatus.OK
-        );
+
+        var response = shoppingSV.getFlightDetail(flightDetailRQ, metadataSV.getUserAuthenticationMetadata());
+
+        if (response == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new BaseRS(HttpStatus.BAD_REQUEST, "NO COMBINABLE FARES FOR CLASS USED", null));
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(new BaseRS(HttpStatus.OK, response));
     }
 }

@@ -1,4 +1,5 @@
-SELECT bBag.id, IFNULL(bBag.location_code, '') AS segment
+SELECT bBag.id,
+    IFNULL(bBag.location_code, '') AS segment
 FROM bookings AS b
 LEFT JOIN
 ( SELECT * FROM booking_baggages AS bBag

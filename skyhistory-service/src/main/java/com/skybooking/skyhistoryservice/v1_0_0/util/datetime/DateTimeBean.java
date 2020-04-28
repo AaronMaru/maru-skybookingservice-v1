@@ -1,6 +1,9 @@
 package com.skybooking.skyhistoryservice.v1_0_0.util.datetime;
 
 import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.TimeZone;
 
@@ -14,13 +17,27 @@ public class DateTimeBean {
      * @Param date
      */
     public String convertDateTime(Date date) {
-        SimpleDateFormat sdf;
-        sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
-        sdf.setTimeZone(TimeZone.getTimeZone("CET"));
-        String text = sdf.format(date);
 
-        return text;
+        var zonedDateTime = ZonedDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+        return zonedDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")).replace("Z", "+00:00");
 
     }
 
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * convert ElapsedTime to hour and minute
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param minute
+     */
+    public String convertElapseTime(Integer minute) {
+
+        String duration = minute > 60 ? minute/60 + "h" + minute%60 + "m" : minute + "m";
+
+        if(minute%60 == 0 && minute > 60) {
+            duration = minute/60 + "h";
+        }
+
+        return duration;
+    }
 }

@@ -233,6 +233,12 @@
             <artifactId>spring-boot-starter-activemq</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.skybooking.api</groupId>
+            <artifactId>skybooking-core</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
     </dependencies>
 
     <dependencyManagement>

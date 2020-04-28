@@ -1,70 +1,35 @@
 package com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user;
 
+import com.skybooking.core.validators.annotations.IsNotEmpty;
+import com.skybooking.core.validators.annotations.IsUsername;
 import com.skybooking.stakeholderservice.exception.anotation.Code;
 import com.skybooking.stakeholderservice.exception.anotation.FieldMatch;
-
-import javax.validation.constraints.NotEmpty;
+import lombok.Data;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
+import static com.skybooking.core.validators.enumerations.UsernameAllowType.EMAIL;
+import static com.skybooking.core.validators.enumerations.UsernameAllowType.PHONE_NUMBER;
 
 @FieldMatch(first = "newPassword", second = "confirmNewPassword", message = "The password fields must match")
 @Code(first = "username", second = "code", message = "Please provide country code")
+@Data
 public class ResetPasswordRQ {
 
-    @NotEmpty(message = "Please provide username")
+    @IsNotEmpty
+    @IsUsername(allows = {PHONE_NUMBER, EMAIL})
     private String username;
 
     private String code;
 
-    @NotEmpty(message = "Please provide token")
+    @IsNotEmpty
     private String token;
 
-    @NotEmpty(message = "Please provide new password")
+    @IsNotEmpty
     @Size(min = 6, max = 25)
     @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*?[#?!@$%^&*-]).+$", message = "Invalid password")
     private String newPassword;
 
-    @NotEmpty(message = "Please provide confirm new password")
+    @IsNotEmpty
     private String confirmNewPassword;
 
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
-    }
-
-    public String getNewPassword() {
-        return newPassword;
-    }
-
-    public void setNewPassword(String newPassword) {
-        this.newPassword = newPassword;
-    }
-
-    public String getConfirmNewPassword() {
-        return confirmNewPassword;
-    }
-
-    public void setConfirmNewPassword(String confirmNewPassword) {
-        this.confirmNewPassword = confirmNewPassword;
-    }
 }

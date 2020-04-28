@@ -1,7 +1,7 @@
 package com.skybooking.skyflightservice.v1_0_0.service.interfaces.payment;
 
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.payment.PaymentMandatoryRQ;
-import com.skybooking.skyflightservice.v1_0_0.ui.model.request.payment.PaymentSucceedRQ;
+import com.skybooking.skyflightservice.v1_0_0.ui.model.request.payment.PaymentTransactionRQ;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.response.payment.PaymentMandatoryRS;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.response.payment.PaymentSucceedRS;
 import org.springframework.stereotype.Service;
@@ -40,5 +40,8 @@ public interface PaymentSV {
      * @param paymentSucceedRQ
      * @return
      */
-    PaymentSucceedRS updatePaymentSucceed(PaymentSucceedRQ paymentSucceedRQ);
+    void updatePaymentSucceed(PaymentTransactionRQ paymentSucceedRQ);
+
+    void paymentFail(PaymentTransactionRQ paymentTransactionRQ);
+
 }

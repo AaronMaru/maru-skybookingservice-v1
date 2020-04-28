@@ -113,6 +113,33 @@ public class ShoppingAction {
      * @param request
      * @return JsonNode
      */
+    public SabreBargainFinderRS revalidateV2(RevalidateRQ request) {
+
+        try {
+            return client.mutate()
+                .exchangeStrategies(ExchangeStrategies.builder().codecs(clientCodecConfigurer -> {
+                    clientCodecConfigurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024);
+                }).build())
+                .build()
+                .post()
+                .uri(appConfig.getDISTRIBUTED_URI() + "/flight/" + appConfig.getDISTRIBUTED_VERSION() + "/shopping/revalidate-v2")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(SabreBargainFinderRS.class).block();
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Revalidate flight shopping for price and seats available
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param request
+     * @return JsonNode
+     */
     public JsonNode revalidate(RevalidateRQ request) {
 
         try {

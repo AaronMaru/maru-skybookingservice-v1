@@ -23,15 +23,16 @@ public interface ContactRP extends JpaRepository<ContactEntity, Long> {
     /**
      * Get contacts of company
      */
-    @Query(value = "SELECT * FROM contacts WHERE contactable_id  = ?1 AND contactable_type = 'skyowner'", nativeQuery = true)
+    @Query(value = "SELECT * FROM contacts WHERE contactable_id  = ?1 AND contactable_type = 'company'", nativeQuery = true)
     List<ContactEntity> getContactCM(Long stkId);
 
 
-    /**contactable_id
+    /**
+     * contactable_id
      * Check contacts exists
+     *
      */
     @Query(value = "SELECT CASE WHEN COUNT(value) > 0 THEN 'true' ELSE 'false' END FROM contacts WHERE type IN ('p', 'e') AND value = ?1 AND (CASE WHEN ?2 THEN contactable_id NOT IN (?2) ELSE contactable_id IS NOT NULL END)", nativeQuery = true)
     String existsContact(String value, Long id);
-
 
 }

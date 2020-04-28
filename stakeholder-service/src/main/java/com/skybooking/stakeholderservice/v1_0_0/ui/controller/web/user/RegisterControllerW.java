@@ -32,7 +32,7 @@ public class RegisterControllerW {
     @PostMapping("/register")
     public ResRS addSkyuser(@Valid @RequestBody SkyUserRegisterRQ skyuserRQ) {
         registerSV.skyuser(skyuserRQ, "web");
-        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"reg_succ", "");
+        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"reg_succ", null);
     }
 
 

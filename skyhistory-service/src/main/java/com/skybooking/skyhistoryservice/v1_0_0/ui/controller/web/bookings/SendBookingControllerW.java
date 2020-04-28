@@ -4,13 +4,11 @@ import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.booking.SendBo
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.request.SendBookingNoAuthRQ;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.request.SendBookingPDFRQ;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.ResRS;
+import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.booking.PrintRS;
 import com.skybooking.skyhistoryservice.v1_0_0.util.localization.LocalizationBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
@@ -23,8 +21,7 @@ public class SendBookingControllerW {
 
     @Autowired
     private LocalizationBean localization;
-
-
+    
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Send mail receipt
@@ -37,7 +34,6 @@ public class SendBookingControllerW {
         sendBookingSV.sendBookingInfo(sendBookingPDFRQ, "receipt", "api_receipt_pdf");
         return localization.resAPI(HttpStatus.OK,"is_skb_info", "");
     }
-
 
     /**
      * -----------------------------------------------------------------------------------------------------------------

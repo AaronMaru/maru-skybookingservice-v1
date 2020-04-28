@@ -33,6 +33,9 @@ public class AppConfig {
     @Value("${spring.service.stakeholder.version}")
     private String STAKEHOLDER_VERSION;
 
+    @Value("${spring.service.stakeholder.common-version}")
+    private String STAKEHOLDER_COMMON_VERSION;
+
     @Value("${spring.service.stakeholder.path}")
     private String STAKEHOLDER_PATH;
 

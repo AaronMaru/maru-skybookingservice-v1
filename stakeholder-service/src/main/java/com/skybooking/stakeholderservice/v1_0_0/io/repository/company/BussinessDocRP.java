@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface BussinessDocRP extends JpaRepository<BussinessDocEntity, Long> {
-    BussinessDocEntity findFirstByName(String name);
+    BussinessDocEntity findFirstById(Long id);
 }

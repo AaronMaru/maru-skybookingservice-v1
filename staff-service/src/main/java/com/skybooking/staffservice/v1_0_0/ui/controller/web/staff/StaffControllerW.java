@@ -1,7 +1,7 @@
 package com.skybooking.staffservice.v1_0_0.ui.controller.web.staff;
 
 import com.skybooking.staffservice.v1_0_0.service.interfaces.staff.StaffSV;
-import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.DeactiveStaffRQ;
+import com.skybooking.staffservice.v1_0_0.ui.model.request.staff.DeactiveStaffRQ;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.staff.StaffPaginationRS;
 import com.skybooking.staffservice.v1_0_0.util.localization.LocalizationBean;
@@ -58,10 +58,10 @@ public class StaffControllerW {
      *
      * @Return ResponseEntity
      */
-    @PatchMapping("/deactive-staff")
+    @PatchMapping("/staff-option")
     public ResRS staffDeactive(@RequestBody DeactiveStaffRQ deactiveRQ) {
         staffSV.deactiveStaff(deactiveRQ);
-        return localization.resAPI(HttpStatus.OK,"status_update", "");
+        return localization.resAPI(HttpStatus.OK,"status_update", null);
     }
 
 

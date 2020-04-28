@@ -71,15 +71,18 @@ public class BookingController {
          */
         if (!skyownerHeaderSV.check(headers)) {
             return new ResponseEntity<>(
-                    new BadRequestRS(locale.multiLanguageRes(MessageConstant.BAD_REQUEST),
-                            headerBean.getSkyownerHeaderMissing()),
-                    HttpStatus.BAD_REQUEST);
+                new BadRequestRS(locale.multiLanguageRes(MessageConstant.BAD_REQUEST),
+                    headerBean.getSkyownerHeaderMissing()),
+                HttpStatus.BAD_REQUEST);
         }
 
         /**
          * Pre-create passenger
          */
-        passengerSV.create(request.getPassengers());
+        try {
+            passengerSV.create(request.getPassengers());
+        } catch (Exception ex) {
+        }
 
         /**
          * Revalidate flight shopping before create PNR 1. check price 2. check seats
@@ -88,26 +91,26 @@ public class BookingController {
         var revalidate = shoppingSV.revalidate(request);
         if (revalidate.getStatus() != RevalidateConstant.SUCCESS) {
             return new ResponseEntity<>(new BookingFailRS(HttpStatus.FAILED_DEPENDENCY,
-                    locale.multiLanguageRes(revalidate.getMessage()), new PNRCreateRS()),
-                    HttpStatus.FAILED_DEPENDENCY);
+                locale.multiLanguageRes(revalidate.getMessage()), new PNRCreateRS()),
+                HttpStatus.FAILED_DEPENDENCY);
         }
 
         /**
          * Create PNR 1. request create PNR to supplier 2. save PNR info into DB
          */
         PNRCreateRS pnr = bookingSV.create(request, bookingSV.getSkyownerMetadata());
-        if (pnr.getBookingRef().equals("")) {
+        if (pnr.getBookingCode().isEmpty()) {
             return new ResponseEntity<>(
-                    new BookingFailRS(HttpStatus.FAILED_DEPENDENCY,
-                            locale.multiLanguageRes(MessageConstant.BOOKING_FAIL), pnr),
-                    HttpStatus.FAILED_DEPENDENCY);
+                new BookingFailRS(HttpStatus.FAILED_DEPENDENCY,
+                    locale.multiLanguageRes(MessageConstant.BOOKING_FAIL), pnr),
+                HttpStatus.FAILED_DEPENDENCY);
         }
 
         activityLog.activities(ActivityLoggingBean.Action.INDEX_BOOKINNG, activityLog.getUser(),
-                bookingRP.getBookingByBookingCode(pnr.getBookingCode()));
+            bookingRP.getBookingByBookingCode(pnr.getBookingCode()));
 
         return new ResponseEntity<>(new BookingRS(HttpStatus.OK,
-                locale.multiLanguageRes(MessageConstant.BOOKING_SUCCESS), pnr), HttpStatus.OK);
+            locale.multiLanguageRes(MessageConstant.BOOKING_SUCCESS), pnr), HttpStatus.OK);
     }
 
     /**
@@ -124,7 +127,11 @@ public class BookingController {
         /**
          * Pre-create passenger
          */
-        passengerSV.create(request.getPassengers());
+
+        try {
+            passengerSV.create(request.getPassengers());
+        } catch (Exception ex) {
+        }
 
         /**
          * Revalidate flight shopping before create PNR 1. check price 2. check seats
@@ -133,26 +140,26 @@ public class BookingController {
         var revalidate = shoppingSV.revalidate(request);
         if (revalidate.getStatus() != RevalidateConstant.SUCCESS) {
             return new ResponseEntity<>(new BookingFailRS(HttpStatus.FAILED_DEPENDENCY,
-                    locale.multiLanguageRes(revalidate.getMessage()), new PNRCreateRS()),
-                    HttpStatus.FAILED_DEPENDENCY);
+                locale.multiLanguageRes(revalidate.getMessage()), new PNRCreateRS()),
+                HttpStatus.FAILED_DEPENDENCY);
         }
 
         /**
          * Create PNR 1. request create PNR to supplier 2. save PNR info into DB
          */
         PNRCreateRS pnr = bookingSV.create(request, bookingSV.getSkyuserMetadata());
-        if (pnr.getBookingRef().equals("")) {
+        if (pnr.getBookingCode().equals("")) {
             return new ResponseEntity<>(
-                    new BookingFailRS(HttpStatus.FAILED_DEPENDENCY,
-                            locale.multiLanguageRes(MessageConstant.BOOKING_FAIL), pnr),
-                    HttpStatus.FAILED_DEPENDENCY);
+                new BookingFailRS(HttpStatus.FAILED_DEPENDENCY,
+                    locale.multiLanguageRes(MessageConstant.BOOKING_FAIL), pnr),
+                HttpStatus.FAILED_DEPENDENCY);
         }
 
         activityLog.activities(ActivityLoggingBean.Action.INDEX_BOOKINNG, activityLog.getUser(),
-                bookingRP.getBookingByBookingCode(pnr.getBookingCode()));
+            bookingRP.getBookingByBookingCode(pnr.getBookingCode()));
 
         return new ResponseEntity<>(new BookingRS(HttpStatus.OK,
-                locale.multiLanguageRes(MessageConstant.BOOKING_SUCCESS), pnr), HttpStatus.OK);
+            locale.multiLanguageRes(MessageConstant.BOOKING_SUCCESS), pnr), HttpStatus.OK);
     }
 
     /**
@@ -166,10 +173,10 @@ public class BookingController {
     @PostMapping("/skyuser/cancel")
     public ResponseEntity cancel(@Valid @RequestBody BookingCancelRQ bookingCancelRQ) {
 
-        bookingSV.cancel(bookingCancelRQ.getBookingId());
+        bookingSV.cancel(bookingCancelRQ.getBookingCode());
 
         return new ResponseEntity<>(new BookingRS(HttpStatus.OK, locale.multiLanguageRes(CANCEL_SUCCESS), null),
-                HttpStatus.OK);
+            HttpStatus.OK);
     }
 
 
@@ -186,15 +193,15 @@ public class BookingController {
     public ResponseEntity cancel(@RequestHeader HttpHeaders headers, @Valid @RequestBody BookingCancelRQ bookingCancelRQ) {
         if (!skyownerHeaderSV.check(headers)) {
             return new ResponseEntity<>(
-                    new BadRequestRS(locale.multiLanguageRes(MessageConstant.BAD_REQUEST),
-                            headerBean.getSkyownerHeaderMissing()),
-                    HttpStatus.BAD_REQUEST);
+                new BadRequestRS(locale.multiLanguageRes(MessageConstant.BAD_REQUEST),
+                    headerBean.getSkyownerHeaderMissing()),
+                HttpStatus.BAD_REQUEST);
         }
 
-        bookingSV.cancel(bookingCancelRQ.getBookingId());
+        bookingSV.cancel(bookingCancelRQ.getBookingCode());
 
         return new ResponseEntity<>(new BookingRS(HttpStatus.OK, locale.multiLanguageRes(CANCEL_SUCCESS), null),
-                HttpStatus.OK);
+            HttpStatus.OK);
     }
 
 }

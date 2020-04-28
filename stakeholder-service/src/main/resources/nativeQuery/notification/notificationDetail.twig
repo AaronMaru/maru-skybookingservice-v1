@@ -1,33 +1,44 @@
 SELECT
-	fn.id,
-	ss.url_key AS urlKey,
+	unh.id,
+	su.fullname,
+	su.photo,
 	ss.noti_icon AS notiIcon,
-	ss.title,
+	IFNULL(ss.title, '' ) AS title,
 	ss.description,
-	fn.readable,
-	fn.`status`,
-	fn.created_at AS createdAt
-FROM front_notification fn
+	unh.booking_id AS bookingId,
+	IFNULL((SELECT b.trip_type FROM bookings b WHERE b.id = unh.booking_id), '' ) AS tripType,
+	UPPER(unh.type) AS notiType,
+	unh.created_at AS createdAt
+
+FROM user_notification_history unh
 
 INNER JOIN
-(
-	SELECT
-		ss.id,
-		ss.url_key,
-		(
-			SELECT sslo.title
-			FROM sending_script_locale sslo
-			WHERE IF( NULL IS NULL, sslo.locale_id = 1 , sslo.locale_id = :locale)
-			AND sslo.send_script_id = ss.id
-		) AS title,
-		(
-			SELECT sslo.`subject`
-			FROM sending_script_locale sslo
-			WHERE IF( NULL IS NULL, sslo.locale_id = 1 , sslo.locale_id = :locale)
-			AND sslo.send_script_id = ss.id
-		) AS description,
-		ss.noti_icon
+( SELECT
+    ss.id,
+    (
+        SELECT sslo.title
+        FROM sending_script_locale sslo
+        WHERE IF( :locale IS NULL, sslo.locale_id = 1 , sslo.locale_id = :locale)
+        AND sslo.send_script_id = ss.id
+    ) AS title,
+    (
+        SELECT sslo.`subject`
+        FROM sending_script_locale sslo
+        WHERE IF( :locale IS NULL, sslo.locale_id = 1 , sslo.locale_id = :locale)
+        AND sslo.send_script_id = ss.id
+    ) AS description,
+    ss.noti_icon
 	FROM sending_script ss
-) ss ON ss.id = fn.send_script_id
+) ss ON ss.id = unh.send_script_id
 
-WHERE fn.id = :notiId
+LEFT JOIN
+(
+    SELECT
+        su.id,
+        CONCAT(su.first_name, ' ', su.last_name) AS fullname,
+        su.photo
+    FROM stakeholder_users su
+
+) su ON su.id = unh.stakeholder_user_id
+
+WHERE unh.id = :notiId

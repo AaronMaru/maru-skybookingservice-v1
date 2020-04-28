@@ -1,8 +1,10 @@
 package com.skybooking.stakeholderservice.v1_0_0.util.email;
 
+import com.skybooking.stakeholderservice.v1_0_0.io.enitity.setting.FrontendConfigEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.mail.MailScriptLocaleTO;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.mail.MultiLanguageNQ;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.mail.MultiLanguageTO;
+import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.setting.SettingSV;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.SmsMessage;
 import com.skybooking.stakeholderservice.v1_0_0.util.header.HeaderBean;
 import freemarker.template.Configuration;
@@ -22,8 +24,8 @@ import org.springframework.web.client.RestTemplate;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.skybooking.stakeholderservice.config.ActiveMQConfig.EMAIL;
-import static com.skybooking.stakeholderservice.config.ActiveMQConfig.SMS;
+import static com.skybooking.stakeholderservice.config.ActiveMQConfig.STAKE_HOLDER_EMAIL;
+import static com.skybooking.stakeholderservice.config.ActiveMQConfig.STAKE_HOLDER_SMS;
 
 public class EmailBean {
 
@@ -42,6 +44,9 @@ public class EmailBean {
     @Autowired
     private MultiLanguageNQ multiLanguageNQ;
 
+    @Autowired
+    private SettingSV settingSV;
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Send email and sms
@@ -56,11 +61,17 @@ public class EmailBean {
 
         boolean validEmail = EmailValidator.getInstance().isValid(mailTemplateData.get("receiver").toString());
         if (NumberUtils.isNumber(mailTemplateData.get("receiver").toString().replaceAll("[+]", ""))) {
-            mailTemplateData.put("message", sms.sendSMS(message, Integer.parseInt(mailTemplateData.get("code").toString())));
-            jmsTemplate.convertAndSend(SMS, mailTemplateData);
+
+            String link = "";
+            if (message.equals("send-download-link")) {
+                link = mailTemplateData.get("deepLink").toString();
+            }
+
+            mailTemplateData.put("message", sms.sendSMS(message, Integer.parseInt(mailTemplateData.get("code").toString()), link));
+            jmsTemplate.convertAndSend(STAKE_HOLDER_SMS, mailTemplateData);
             return true;
         } else if (validEmail) {
-            jmsTemplate.convertAndSend(EMAIL, mailTemplateData);
+            jmsTemplate.convertAndSend(STAKE_HOLDER_EMAIL, mailTemplateData);
             return true;
         }
         return false;
@@ -79,6 +90,7 @@ public class EmailBean {
     public void email(Map<String, Object> mailTemplateData) {
 
         Map<String, String> mailProperty = new HashMap<>();
+
         mailProperty.put("SMTP_SERVER_HOST", environment.getProperty("spring.email.host"));
         mailProperty.put("SMTP_SERVER_PORT", environment.getProperty("spring.email.port"));
         mailProperty.put("SUBJECT", "Skybooking");
@@ -86,6 +98,7 @@ public class EmailBean {
         mailProperty.put("SMTP_USER_PASSWORD", environment.getProperty("spring.email.password"));
         mailProperty.put("FROM_USER_EMAIL", environment.getProperty("spring.email.from-address"));
         mailProperty.put("FROM_USER_FULLNAME", environment.getProperty("spring.email.from-name"));
+
         mailProperty.put("TO", (String) mailTemplateData.get("receiver"));
 
         mailTemplateData.put("mailUrl", environment.getProperty("spring.awsImageUrl.mailTemplate"));
@@ -152,7 +165,7 @@ public class EmailBean {
 
     public MultiLanguageTO getMailData(String keyword) {
 
-        Long localeID = headerBean.getLocalizationId(null);
+        Long localeID = headerBean.getLocalizationId();
 
         MailScriptLocaleTO exist = multiLanguageNQ.mailScriptLocale(localeID, keyword);
 

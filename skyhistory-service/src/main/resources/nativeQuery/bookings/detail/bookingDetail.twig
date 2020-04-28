@@ -36,8 +36,8 @@ b.booking_type As bookingType,
 ) AS cabinName,
 (SELECT bod.cabin_name FROM booking_origin_destinations bod WHERE bod.booking_id = b.id AND bod.parent_id IS NOT NULL LIMIT 1) AS cabinCode,
 
-IFNULL(CONCAT(b.itinerary_path, b.itinerary_file), '') AS urlItinerary,
-IFNULL(CONCAT(b.reciept_path, b.reciept_file), '') AS urlReceipt,
+IFNULL( CONCAT(b.itinerary_path,'/', b.itinerary_file), '') AS urlItinerary,
+IFNULL( CONCAT(b.reciept_path,'/', b.reciept_file), '') AS urlReceipt,
 
 ( SELECT CASE
         WHEN su.photo IS NOT NULL THEN
@@ -51,16 +51,15 @@ IFNULL(CONCAT(b.reciept_path, b.reciept_file), '') AS urlReceipt,
 ) AS bookingByUserPhoto,
 ( SELECT CONCAT(su.last_name,' ', su.first_name) FROM stakeholder_users su WHERE su.id = b.stakeholder_user_id LIMIT 1) AS bookingByUsername,
 
-( b.total_amount + b.markup_amount + b.markup_pay_amount ) AS totalAmount,
-b.commission_amount AS commissionAmount,
+ROUND( b.total_amount + b.markup_amount + b.markup_pay_amount, 2 ) AS totalAmount,
+ROUND( b.dis_pay_met_amount + b.commission_amount, 2) AS discountAmount,
+ROUND( ( b.total_amount + b.markup_amount + b.markup_pay_amount ) - ( b.dis_pay_met_amount + b.commission_amount) , 2 ) AS paidAmount,
 b.markup_amount AS markupAmount,
 b.markup_pay_amount AS markupPayAmount,
-b.dis_pay_met_amount AS discountPayment,
 b.currency_code AS currencyCode,
 
 b.cont_fullname AS contactName,
-b.cont_phone AS contactPhone,
-b.cont_phonecode AS contactPhoneCode,
+CONCAT(b.cont_phonecode, b.cont_phone) AS contactPhone,
 b.cont_email AS contactEmail,
 b.created_at AS bookingDate,
 
@@ -127,7 +126,7 @@ LEFT JOIN (
 
 -- Condition by Booking status
 WHERE b.status IN (11, 10, 4, 12, 3, 1)
-AND b.id = :bookingId
+AND b.booking_code = :bookingCode
 
 -- CHECK USERS
 AND CASE WHEN :stake = "skyuser"

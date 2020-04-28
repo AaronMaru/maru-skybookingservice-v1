@@ -18,6 +18,7 @@ public class BookingMetadataTA {
 
     private double totalAmount;
     private double markupAmount;
+    private BigDecimal totalCommissionAmount = BigDecimal.ZERO;
     private double markupPercentage;
     private String currencyCode = "USD";
     private String currencyLocaleCode = "USD";

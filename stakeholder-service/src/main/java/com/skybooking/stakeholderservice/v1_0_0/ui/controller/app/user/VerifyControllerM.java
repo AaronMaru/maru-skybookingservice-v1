@@ -100,7 +100,7 @@ public class VerifyControllerM {
      * @Return ResponseEntity
      */
     @PostMapping("/send-forgot-password")
-    public ResRS sendCodeResetPassword(@RequestBody SendVerifyRQ sendVerifyRQ) {
+    public ResRS sendCodeResetPassword(@Valid @RequestBody SendVerifyRQ sendVerifyRQ) {
         verifySV.sendVerify(sendVerifyRQ, Integer.parseInt(environment.getProperty("spring.verifyStatus.verifyUserAppReset")));
         return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"vf_rdy_sent", null);
     }

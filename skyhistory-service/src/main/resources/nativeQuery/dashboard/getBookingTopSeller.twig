@@ -11,10 +11,10 @@ SELECT
         AND b.stakeholder_company_id = :companyId
         AND b.`status` = 11
         AND CASE WHEN 'range' = :filter THEN DATE(b.created_at) >= :startDate AND DATE(b.created_at) <= :endDate
-                WHEN 'daily' = :filter THEN DATE(b.created_at) = CURRENT_TIMESTAMP
-                WHEN 'weekly' = :filter THEN YEARWEEK(DATE(b.created_at)) = YEARWEEK(CURRENT_TIMESTAMP)
-                WHEN 'monthly' = :filter THEN MONTH(b.created_at) = MONTH( CURRENT_TIMESTAMP )
-                ELSE YEAR(b.created_at) = YEAR( CURRENT_TIMESTAMP )
+                WHEN 'daily' = :filter THEN DATE(b.created_at) = CURDATE()
+                WHEN 'weekly' = :filter THEN YEARWEEK(DATE(b.created_at)) = YEARWEEK(CURDATE())
+                WHEN 'monthly' = :filter THEN MONTH(b.created_at) = MONTH( CURDATE() )
+                ELSE YEAR(b.created_at) = YEAR( CURDATE() )
                 END
 
     ) AS totalAmount,
@@ -27,10 +27,10 @@ SELECT
         AND b.`status` = 11
 
         AND CASE WHEN 'range' = :filter THEN DATE(b.created_at) >= :startDate AND DATE(b.created_at) <= :endDate
-                WHEN 'daily' = :filter THEN DATE(b.created_at) = CURRENT_TIMESTAMP
-                WHEN 'weekly' = :filter THEN YEARWEEK(DATE(b.created_at)) = YEARWEEK(CURRENT_TIMESTAMP)
-                WHEN 'monthly' = :filter THEN MONTH(b.created_at) = MONTH( CURRENT_TIMESTAMP )
-                ELSE YEAR(b.created_at) = YEAR( CURRENT_TIMESTAMP )
+                WHEN 'daily' = :filter THEN DATE(b.created_at) = CURDATE()
+                WHEN 'weekly' = :filter THEN YEARWEEK(DATE(b.created_at)) = YEARWEEK(CURDATE())
+                WHEN 'monthly' = :filter THEN MONTH(b.created_at) = MONTH( CURDATE() )
+                ELSE YEAR(b.created_at) = YEAR( CURDATE() )
                 END
 
     ) AS totalBooking

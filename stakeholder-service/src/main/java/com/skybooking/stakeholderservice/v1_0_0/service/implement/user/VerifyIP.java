@@ -20,6 +20,7 @@ import com.skybooking.stakeholderservice.v1_0_0.util.activitylog.ActivityLogging
 import com.skybooking.stakeholderservice.v1_0_0.util.email.EmailBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
+import com.skybooking.stakeholderservice.v1_0_0.util.notification.PushNotificationOptions;
 import com.skybooking.stakeholderservice.v1_0_0.util.skyuser.UserBean;
 import org.apache.commons.lang.math.NumberUtils;
 import org.springframework.beans.BeanUtils;
@@ -29,6 +30,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import static com.skybooking.stakeholderservice.constant.MailStatusConstant.*;
 
 @Service
 public class VerifyIP implements VerifySV {
@@ -64,7 +67,8 @@ public class VerifyIP implements VerifySV {
     private CompanyHasUserRP companyHasUserRP;
 
     @Autowired
-    private ContactRP contactRP;
+    private PushNotificationOptions notification;
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -92,7 +96,7 @@ public class VerifyIP implements VerifySV {
         apiBean.storeUserStatus(verify.getUserEntity(),
                 Integer.parseInt(environment.getProperty("spring.stakeUser.inactive")), "Waiting login");
 
-        String keyScript = status == 1 ? "account_verified_successfully" : "account_reactivated_successfully";
+        String keyScript = status == 1 ? ACCOUNT_VERIFIED_SUCCESSFULLY : ACCOUNT_REACTIVATED_SUCCESSFULLY;
         Map<String, Object> mailData = emailBean.mailData(receiver, fullName, 0, keyScript);
 
         emailBean.sendEmailSMS("verify-success", mailData);
@@ -103,6 +107,7 @@ public class VerifyIP implements VerifySV {
         if (status == 1) {
             UserTokenEntity userToken = userTokenRP.findById(user.getId()).orElse(null);
             BeanUtils.copyProperties(userBean.userFields(user, userToken.getToken()), userDetailsTokenRS);
+            notification.sendMessageToUsers("skyuser_welcome_message", null, user.getStakeHolderUser().getId());
             return userDetailsTokenRS;
         }
 
@@ -129,6 +134,10 @@ public class VerifyIP implements VerifySV {
         }
         StakeHolderUserEntity stakeHolderUser = user.getStakeHolderUser();
 
+        if (stakeHolderUser.getStatus() == Integer.parseInt(environment.getProperty("spring.stkStatus.active"))) {
+            throw new UnauthorizedException("The user already active", null);
+        }
+
         generalBean.expireRequest(user, status);
 
         int code = apiBean.createVerifyCode(user, status, null);
@@ -137,7 +146,7 @@ public class VerifyIP implements VerifySV {
 
         userRepository.save(user);
 
-        String keyScript = status == 1 ? "resend_new_verification_code" : "new_verification_code_reactivating_account";
+        String keyScript = status == 1 ? RESEND_NEW_VERIFICATION_CODE : NEW_VERIFICATION_CODE_REACTIVATING_ACCOUNT;
         Map<String, Object> mailData = emailBean.mailData(receiver, fullName, code, keyScript);
         emailBean.sendEmailSMS("send-login", mailData);
 
@@ -178,25 +187,22 @@ public class VerifyIP implements VerifySV {
     public void sendVerify(SendVerifyRQ sendVerifyRQ, Integer status) {
 
         String username = userBean.getUsername(sendVerifyRQ.getUsername(),null);
-
         if (status == Integer.parseInt(environment.getProperty("spring.verifyStatus.verifyUserApp"))) {
             checkOwnerStaff(sendVerifyRQ);
         } else {
             UserEntity user = userRepository.findByEmailOrPhoneAndProviderIdIsNull(username, sendVerifyRQ.getCode());
-            System.out.println(11111);
             if (user == null) {
-                throw new BadRequestException("sth_w_w", null);
+                throw new BadRequestException(String.format("Sorry! The %s does not exist in the system.", NumberUtils.isNumber(sendVerifyRQ.getUsername()) ? "phone" : "email"), null);
             }
         }
 
         String receiver = userBean.getUsername(sendVerifyRQ.getUsername(), sendVerifyRQ.getCode());
 
-//        No delete
         generalBean.expireRequestMobile(receiver);
 
         int code = apiBean.createVerifyCode(null, status, receiver);
 
-        Map<String, Object> mailData = emailBean.mailData(receiver, "", code, "account_verification_code");
+        Map<String, Object> mailData = emailBean.mailData(receiver, "", code, ACCOUNT_VERIFICATION_CODE);
         emailBean.sendEmailSMS("send-login", mailData);
 
     }
@@ -212,13 +218,14 @@ public class VerifyIP implements VerifySV {
     public void checkOwnerStaff(SendVerifyRQ sendVerifyRQ) {
 
         String username = "";
-        String usernameContact = "";
+        String emailOrPhone = "";
+
         if (NumberUtils.isNumber(sendVerifyRQ.getUsername())) {
             username = sendVerifyRQ.getUsername().replaceFirst("^0+(?!$)", "");
-            usernameContact = sendVerifyRQ.getCode() + "-" + sendVerifyRQ.getUsername().replaceFirst("^0+(?!$)", "");
+            emailOrPhone = "phone";
         } else {
             username = sendVerifyRQ.getUsername();
-            usernameContact = sendVerifyRQ.getUsername();
+            emailOrPhone = "email";
         }
 
         UserEntity user = userRepository.findByEmailOrPhoneAndProviderIdIsNull(username, sendVerifyRQ.getCode());
@@ -227,23 +234,17 @@ public class VerifyIP implements VerifySV {
             Map<String, Object> data = new LinkedHashMap();
             if (user.getStakeHolderUser().getIsSkyowner() == 1) {
                 data.put("type", "skyowner");
-                throw new BadRequestException("User already exist", data);
+                throw new BadRequestException(String.format("Sorry! This %s was signed up as Skyowner already.", emailOrPhone), data);
             }
 
             var checkStaff = companyHasUserRP.findByStakeholderUserId(user.getStakeHolderUser().getId());
             if (checkStaff != null) {
                 data.put("type", "staff");
-                throw new BadRequestException("User already exist", data);
+                throw new BadRequestException(String.format("Sorry! This %s was signed up as Skystaff already.", emailOrPhone), data);
             }
 
-            throw new BadRequestException("User already exist", null);
+            throw new BadRequestException(String.format("Sorry! This %s was signed up as Skyuser already.", emailOrPhone), null);
 
-        }
-
-        Boolean b = Boolean.parseBoolean(contactRP.existsContact(usernameContact, null));
-
-        if (b) {
-            throw new BadRequestException("Contacts already exist", null);
         }
 
     }
@@ -261,7 +262,7 @@ public class VerifyIP implements VerifySV {
         UserEntity user = userRepository.findByEmailOrPhoneAndProviderIdIsNull(verifyRQ.getUsername(), verifyRQ.getCode());
 
         if (user == null || user.getProviderId() != null) {
-            throw new UnauthorizedException("Unauthorized", "");
+            throw new UnauthorizedException("Unauthorized", null);
         }
 
         StakeHolderUserEntity stakeHolderUser = user.getStakeHolderUser();
@@ -276,10 +277,12 @@ public class VerifyIP implements VerifySV {
                 Integer.parseInt(environment.getProperty("spring.verifyStatus.forgotPassword")), null);
         userRepository.save(user);
 
-        Map<String, Object> mailData = emailBean.mailData(receiver, fullName, code, "reset_your_password");
+        Map<String, Object> mailData = emailBean.mailData(receiver, fullName, code, RESET_YOUR_PASSWORD);
         emailBean.sendEmailSMS("send-login", mailData);
 
         return code;
     }
-
 }
+
+
+

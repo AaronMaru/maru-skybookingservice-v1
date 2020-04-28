@@ -80,5 +80,9 @@ public class HeaderBean {
         return currency;
     }
 
+    public String getPlayerId() {
+        return request.getHeader("X-PlayerId") != null && !request.getHeader("X-PlayerId").isEmpty() ? request.getHeader("X-PlayerId") : "";
+    }
+
 
 }

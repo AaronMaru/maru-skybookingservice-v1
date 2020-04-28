@@ -18,6 +18,9 @@ public class NotificationBean {
     @Autowired
     private NotificationNQ notificationNQ;
 
+    @Autowired
+    private PushNotificationOptions notification;
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -26,12 +29,12 @@ public class NotificationBean {
      *
      * @Return List<StakeholderUserPlayerRS>
      */
-    public void sendNotiSkyuser(Long skyuserId) {
-        List<StakeholderUserPlayerRS> userPlayers = userPlayerId(skyuserId);
-        for (StakeholderUserPlayerRS userPlayer : userPlayers) {
-            PushNotificationOptions.sendMessageToUsers(userPlayer.getPlayerId(), "Skyowner invite you to join companyConstant");
-        }
-    }
+//    public void sendNotiSkyuser(Long skyuserId) {
+//        List<StakeholderUserPlayerRS> userPlayers = userPlayerId(skyuserId);
+//        for (StakeholderUserPlayerRS userPlayer : userPlayers) {
+//            notification.sendMessageToUsers(userPlayer.getPlayerId(), "Skyowner invite you to join companyConstant", null);
+//        }
+//    }
 
 
     /**

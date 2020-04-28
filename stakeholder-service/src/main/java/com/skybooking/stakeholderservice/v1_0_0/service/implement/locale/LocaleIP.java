@@ -8,6 +8,7 @@ import com.skybooking.stakeholderservice.v1_0_0.transformer.locale.LocaleTF;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.locale.LocaleRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.locale.ModuleLanguageRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.StringUtil;
+import com.skybooking.stakeholderservice.v1_0_0.util.header.HeaderBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,21 +26,22 @@ public class LocaleIP implements LocaleSV {
     @Autowired
     LocaleRP localeRP;
 
+    @Autowired
+    private HeaderBean headerBean;
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Get module language translate by locale id
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @param id
      * @return response
      */
     @Override
-    public ModuleLanguageRS findModuleLanguageByLocaleId(long id) {
+    public ModuleLanguageRS findModuleLanguageByLocaleId() {
 
-        List<TranslationEntity> translationEntities = translationRP.findAllByLocaleId(id);
+        List<TranslationEntity> translationEntities = translationRP.findAllByLocaleId(headerBean.getLocalizationId());
 
-        // get default locale translate
         if (translationEntities.size() <= 0)
             translationEntities = translationRP.findAllByLocaleId(localeRP.findLocaleByLocale("en").getId());
 

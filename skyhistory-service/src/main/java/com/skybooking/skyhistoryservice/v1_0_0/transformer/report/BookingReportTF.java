@@ -1,9 +1,9 @@
 package com.skybooking.skyhistoryservice.v1_0_0.transformer.report;
 
-import com.skybooking.skyhistoryservice.v1_0_0.io.nativeQuery.report.BookingReportDetailTO;
-import com.skybooking.skyhistoryservice.v1_0_0.io.nativeQuery.report.BookingReportSummaryTO;
-import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.report.BookingReportDetailRS;
-import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.report.BookingReportRS;
+import com.skybooking.skyhistoryservice.v1_0_0.io.nativeQuery.report.ReportChartTO;
+import com.skybooking.skyhistoryservice.v1_0_0.io.nativeQuery.report.ReportSummaryTO;
+import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.report.ReportChartRS;
+import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.report.ReportRS;
 import org.springframework.beans.BeanUtils;
 
 import java.util.ArrayList;
@@ -18,11 +18,11 @@ public class BookingReportTF {
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @param report
-     * @return BookingReportRS
+     * @return OverviewBookingReportRS2
      */
-    public static BookingReportRS getResponse(BookingReportSummaryTO report) {
+    public static ReportRS getResponse(ReportSummaryTO report) {
 
-        var response = new BookingReportRS();
+        var response = new ReportRS();
         BeanUtils.copyProperties(report, response);
 
         return response;
@@ -35,11 +35,11 @@ public class BookingReportTF {
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @param detail
-     * @return BookingReportDetailRS
+     * @return ReportChartRS
      */
-    public static BookingReportDetailRS getDetailResponse(BookingReportDetailTO detail) {
+    public static ReportChartRS getDetailResponse(ReportChartTO detail) {
 
-        var response = new BookingReportDetailRS();
+        var response = new ReportChartRS();
         BeanUtils.copyProperties(detail, response);
 
         return response;
@@ -54,10 +54,10 @@ public class BookingReportTF {
      * @param detailList
      * @return List
      */
-    public static List<BookingReportDetailRS> getDetailResponseList(List<BookingReportDetailTO> detailList) {
+    public static List<ReportChartRS> getDetailResponseList(List<ReportChartTO> detailList) {
 
-        var responses = new ArrayList<BookingReportDetailRS>();
-        for (BookingReportDetailTO detail : detailList) {
+        var responses = new ArrayList<ReportChartRS>();
+        for (ReportChartTO detail : detailList) {
             responses.add(getDetailResponse(detail));
         }
 

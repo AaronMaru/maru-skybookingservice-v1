@@ -20,4 +20,7 @@ public interface NotificationNQ extends NativeQuery {
                                                       @NativeQueryParam(value = "companyId") Long companyId,
                                                       @NativeQueryParam(value = "skyuserId") Long skyuserId);
 
+    ScriptingTO scripting(@NativeQueryParam(value = "locale") Long locale,
+                          @NativeQueryParam(value = "urlKey") String urlKey);
+
 }

@@ -6,6 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface UserPlayerRP extends JpaRepository<UserPlayerEntity, Long> {
 
 
-    UserPlayerEntity findByStuserIdAndPlayerId(Long skyuserId, String playerId);
+    UserPlayerEntity findByStakeholderUserIdAndPlayerId(Long skyuserId, String playerId);
 
 }

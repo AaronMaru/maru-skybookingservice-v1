@@ -5,10 +5,11 @@ import lombok.Data;
 @Data
 public class BaggageAllowanceTO {
 
-    private String passType;
-    private int isPiece;
+    private String type;
     private int piece;
-    private Integer weight;
+    private int pieces;
+    private Integer weights;
     private String unit;
+    private Boolean nonRefundable;
 
 }

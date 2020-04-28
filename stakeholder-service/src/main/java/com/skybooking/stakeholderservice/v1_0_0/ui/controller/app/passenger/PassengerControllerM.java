@@ -1,8 +1,8 @@
 package com.skybooking.stakeholderservice.v1_0_0.ui.controller.app.passenger;
 
+import com.skybooking.core.validators.groups.OnCreate;
+import com.skybooking.core.validators.groups.OnUpdate;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.passenger.PassengerSV;
-import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.interfaces.OnCreate;
-import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.interfaces.OnUpdate;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.passenger.PassengerRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.passenger.PassengerPagingRS;

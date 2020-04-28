@@ -11,12 +11,8 @@ import java.util.List;
 public class PriceDetailRS implements Serializable {
 
     private String id;
-    private BigDecimal total;
-    private BigDecimal totalAvg;
-    private BigDecimal totalCommissionAmount;
-    private String currency;
-    private String baseCurrency;
-    private BigDecimal baseCurrencyTotal;
-    private BigDecimal baseCurrencyTotalAvg;
-    private List<PriceRS> details = new ArrayList<>();
+    private PriceRS price;
+    private PriceRS basePrice;
+    private boolean commission;
+    private List<PriceListRS> details = new ArrayList<>();
 }

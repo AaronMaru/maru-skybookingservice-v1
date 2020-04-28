@@ -69,9 +69,15 @@ public class UserControllerM {
      * @Return ResponseEntity
      */
     @PatchMapping(value = "/profile", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ResRS updateProfile(@Valid ProfileRQ profileRQ, @RequestParam(value = "file", required = false) MultipartFile multipartFile) throws ParseException {
+    public Object updateProfile(@Valid @ModelAttribute("profileRQ") ProfileRQ profileRQ, Errors errors, @RequestParam(value = "file", required = false) MultipartFile multipartFile) throws ParseException {
+
+        if (errors.hasErrors()) {
+            return new ResponseEntity<>(generalBean.errors(errors), HttpStatus.BAD_REQUEST);
+        }
+
         UserDetailsRS userDetailsRS = userSV.updateProfile(profileRQ, multipartFile);
         return localization.resAPI(HttpStatus.OK,"res_succ",userDetailsRS);
+
     }
 
 
@@ -129,7 +135,7 @@ public class UserControllerM {
      * @Return ResponseEntity
      */
     @PostMapping("/send-update-contact")
-    public ResRS sendCodeUpdateContact(@RequestBody UpdateContactRQ contactRQ) {
+    public ResRS sendCodeUpdateContact(@Valid @RequestBody UpdateContactRQ contactRQ) {
         userSV.sendCodeUpdateContact(contactRQ);
         return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"vf_rdy_sent", null);
     }

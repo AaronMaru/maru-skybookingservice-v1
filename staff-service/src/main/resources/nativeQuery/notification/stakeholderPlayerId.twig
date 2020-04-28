@@ -1,6 +1,7 @@
 SELECT
-	su.id,
-	su.player_id AS playerId
-FROM user_playid su
-WHERE su.stuser_id = :skyuserId
-AND su.`status` = 1
+	up.id,
+	up.player_id AS playerId
+FROM user_player up
+WHERE up.stakeholder_user_id = :skyuserId
+AND up.stakeholder_company_id IS NULL
+AND up.`status` = 1

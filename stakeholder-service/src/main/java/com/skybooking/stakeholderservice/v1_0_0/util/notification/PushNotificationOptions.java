@@ -1,38 +1,42 @@
 package com.skybooking.stakeholderservice.v1_0_0.util.notification;
 
-import java.io.IOException;
+import com.skybooking.stakeholderservice.v1_0_0.io.enitity.notification.NotificationEntity;
+import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.notification.NotificationNQ;
+import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.notification.ScriptingTO;
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.notification.NotificationRP;
+import com.skybooking.stakeholderservice.v1_0_0.util.JwtUtils;
+import com.skybooking.stakeholderservice.v1_0_0.util.header.HeaderBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+
+import javax.servlet.http.HttpServletRequest;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Scanner;
 
 public class PushNotificationOptions {
 
-    public static final String API_KEY = "ZWY3ODM2M2MtMDY1YS00NTBlLTllODktY2ZiY2JkMDZmYmZk";
-    public static final String APP_ID = "7e6328c0-0512-4250-805d-21964a7f0f36";
+    @Autowired
+    Environment environment;
 
-    private static String mountResponseRequest(HttpURLConnection con, int httpResponse) throws IOException {
+    @Autowired
+    private NotificationNQ notificationNQ;
 
-        String jsonResponse;
-        if (  httpResponse >= HttpURLConnection.HTTP_OK
-                && httpResponse < HttpURLConnection.HTTP_BAD_REQUEST) {
-            Scanner scanner = new Scanner(con.getInputStream(), "UTF-8");
-            jsonResponse = scanner.useDelimiter("\\A").hasNext() ? scanner.next() : "";
-            scanner.close();
-        }
-        else {
-            Scanner scanner = new Scanner(con.getErrorStream(), "UTF-8");
-            jsonResponse = scanner.useDelimiter("\\A").hasNext() ? scanner.next() : "";
-            scanner.close();
-        }
-        return jsonResponse;
-    }
+    @Autowired
+    private HttpServletRequest request;
 
-    public static void sendMessageToUsers(String userId, String message) {
+    @Autowired
+    private HeaderBean headerBean;
 
-        //Player id example: e21291a0-749c-4f45-b9b5-5f86a6eb0cbd
+    @Autowired
+    private NotificationRP notificationRP;
+
+    @Autowired
+    private JwtUtils jwtUtils;
+
+    public void sendMessageToUsers(String scriptKey, Integer subjectId, Long skyuserId) {
+
         try {
-            String jsonResponse;
 
             URL url = new URL("https://onesignal.com/api/v1/notifications");
             HttpURLConnection con = (HttpURLConnection)url.openConnection();
@@ -43,8 +47,7 @@ public class PushNotificationOptions {
             con.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
             con.setRequestMethod("POST");
 
-            String strJsonBody = jsonToUser(message, userId, con);
-//            String strJsonBody = jsonToAllUser(message, userId, con);
+            String strJsonBody = jsonToUser(scriptKey, subjectId ,con, skyuserId);
 
             byte[] sendBytes = strJsonBody.getBytes("UTF-8");
             con.setFixedLengthStreamingMode(sendBytes.length);
@@ -52,39 +55,47 @@ public class PushNotificationOptions {
             OutputStream outputStream = con.getOutputStream();
             outputStream.write(sendBytes);
 
-            int httpResponse = con.getResponseCode();
-//            jsonResponse = mountResponseRequest(con, httpResponse);
-//            System.out.println(jsonResponse);
+            con.getResponseCode();
 
         } catch(Throwable t) {
             t.printStackTrace();
         }
     }
 
-    public static String jsonToUser(String message, String userId, HttpURLConnection con) {
+    public String jsonToUser( String scriptKey, Integer bookingId ,HttpURLConnection con, Long skyuserId) {
 
-        con.setRequestProperty("Authorization", API_KEY);
-        String strJsonBody = "{"
-                +   "\"app_id\": \""+ APP_ID +"\","
-                +   "\"include_player_ids\": [\""+ userId +"\"],"
-                +   "\"data\": {\"foo\": \"bar\"},"
-                +   "\"contents\": {\"en\": \""+ message +"\"}"
+        ScriptingTO scriptingTO = notificationNQ.scripting( headerBean.getLocalizationId(), scriptKey);
+
+        addNotificationHisitory(bookingId, scriptingTO, skyuserId);
+
+        con.setRequestProperty("Authorization", environment.getProperty("spring.onesignal.apiKey"));
+
+        return  "{"
+                +   "\"app_id\": \""+ environment.getProperty("spring.onesignal.appId") +"\","
+                +   "\"include_player_ids\": [\""+headerBean.getPlayerId()+"\"],"
+                +   "\"data\": {\"urlKey\": \""+scriptKey+"\"},"
+                +   "\"contents\": {\"en\": \""+scriptingTO.getSubject()+"\"}"
                 + "}";
-        return strJsonBody;
 
     }
 
-    public static String jsonToAllUser(String message, String userId, HttpURLConnection con) {
+    public void addNotificationHisitory(Integer subjectId, ScriptingTO scriptingTO, Long skyuserId) {
 
-        con.setRequestProperty("Authorization", "Basic "+ API_KEY);
-        String strJsonBody = "{"
-                    +   "\"app_id\": \""+ APP_ID +"\","
-                    +   "\"included_segments\": [\"All\"],"
-                    +   "\"data\": {\"foo\": \"bar\"},"
-                    +   "\"contents\": {\"en\": \""+ message +"\"}"
-                    + "}";
-        return strJsonBody;
+        NotificationEntity notificationEntity = new NotificationEntity();
+        notificationEntity.setSendScriptId(scriptingTO.getScriptId());
+        notificationEntity.setStakeholderUserId( (skyuserId == null) ? jwtUtils.getUserToken().getStakeholderId() : skyuserId );
+
+        Long companyId = (request.getHeader("X-CompanyId") != null && !request.getHeader("X-CompanyId").isEmpty()) ? Long.valueOf(request.getHeader("X-CompanyId")) : null;
+        notificationEntity.setStakeholderCompanyId( companyId );
+
+        if (subjectId != null) {
+            notificationEntity.setBookingId(subjectId);
+            notificationEntity.setType("BOOKING_FLIGHT");
+        }
+
+        notificationRP.save(notificationEntity);
 
     }
+
 
 }

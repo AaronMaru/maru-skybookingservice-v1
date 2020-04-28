@@ -1,16 +1,12 @@
 package com.skybooking.skyflightservice.v1_0_0.ui.controller;
 
-import com.skybooking.skyflightservice.v1_0_0.io.repository.booking.BookingRP;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.payment.PaymentSV;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.payment.PaymentMandatoryRQ;
-import com.skybooking.skyflightservice.v1_0_0.ui.model.request.payment.PaymentSucceedRQ;
-import com.skybooking.skyflightservice.v1_0_0.ui.model.response.payment.PaymentSucceedRS;
-import com.skybooking.skyflightservice.v1_0_0.util.activitylog.ActivityLoggingBean;
+import com.skybooking.skyflightservice.v1_0_0.ui.model.request.payment.PaymentTransactionRQ;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 
 /**
  * ---------------------------------------------------------------------------------------------------------------------
@@ -26,12 +22,6 @@ public class PaymentController {
 
     @Autowired
     private PaymentSV paymentSV;
-
-    @Autowired
-    private ActivityLoggingBean activityLog;
-
-    @Autowired
-    private BookingRP bookingRP;
 
 
     /**
@@ -67,21 +57,26 @@ public class PaymentController {
      * Update payment succeed and going to issued air ticket
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @param paymentSucceedRQ
+     * @param paymentTransactionRQ
      * @return
      */
     @PostMapping("succeed")
-    public ResponseEntity paymentSuccess(@RequestBody PaymentSucceedRQ paymentSucceedRQ) {
-
-        PaymentSucceedRS paymentSucceedRS = paymentSV.updatePaymentSucceed(paymentSucceedRQ);
-        if (paymentSucceedRS.getBookingCode().isBlank()) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        var booking = bookingRP.getBookingByBookingCode(paymentSucceedRQ.getBookingCode());
-        var user = activityLog.getUser(booking.getStakeholderUserId());
-        activityLog.activities(ActivityLoggingBean.Action.INDEX_TICKETING_PAYMENT, user, booking);
-
-        return new ResponseEntity<>(paymentSucceedRS, HttpStatus.OK);
+    public void paymentSuccess(@RequestBody PaymentTransactionRQ paymentTransactionRQ) {
+        paymentSV.updatePaymentSucceed(paymentTransactionRQ);
     }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Fail Payment Save to DB
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param paymentTransactionRQ
+     * @return
+     */
+    @PostMapping("fail")
+    public void paymentFail(@RequestBody PaymentTransactionRQ paymentTransactionRQ) {
+        paymentSV.paymentFail(paymentTransactionRQ);
+    }
+
 }

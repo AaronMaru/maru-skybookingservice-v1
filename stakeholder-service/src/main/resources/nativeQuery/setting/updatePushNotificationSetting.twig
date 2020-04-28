@@ -1,0 +1,6 @@
+UPDATE
+    stakeholder_user_has_companies
+SET
+    push_notification = :enabled
+WHERE
+      stakeholder_user_id = :stakeholder  AND stakeholder_company_id = :company

@@ -1,6 +1,5 @@
 package com.skybooking.stakeholderservice.v1_0_0.service.implement.activity;
 
-
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.activity.ActivityEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.activity.ActivityRP;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.activity.ActivitySV;
@@ -96,6 +95,7 @@ public class ActivityIP implements ActivitySV {
         entity.setSubjectId(activityEntity.getSubjectId());
 
         activityRP.save(entity);
+
     }
 
 }

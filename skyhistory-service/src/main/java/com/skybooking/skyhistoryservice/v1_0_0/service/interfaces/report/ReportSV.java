@@ -1,25 +1,16 @@
 package com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.report;
 
-import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.report.BookingReportRS;
+import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.report.ReportPaginationRS;
+import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.report.ReportRS;
 import org.springframework.stereotype.Service;
+
+import javax.servlet.http.HttpServletRequest;
 
 @Service
 public interface ReportSV {
-    /**
-     * -----------------------------------------------------------------------------------------------------------------
-     * get dashboard report summary
-     * -----------------------------------------------------------------------------------------------------------------
-     *
-     * @param company
-     * @param userId
-     * @param userType
-     * @param userRole
-     * @param classType options: allclass, economy, first, business
-     * @param tripType  options: alltrip, oneway, return, multicity
-     * @param startDate
-     * @param endDate
-     * @return BookingReportRS
-     */
-    BookingReportRS getBookingReport(long company, long userId, String userType, String userRole, String classType, String tripType, String startDate, String endDate);
+
+    ReportRS getBookingReport(HttpServletRequest request);
+
+    ReportPaginationRS getReportListing(HttpServletRequest request);
 
 }

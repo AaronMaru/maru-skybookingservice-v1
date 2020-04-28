@@ -26,7 +26,6 @@ public class BookingTO {
     private BigDecimal totalAmount;
     private BigDecimal markupAmount;
     private BigDecimal markupPayAmount;
-    private BigDecimal disPayment;
     private Date bookDate;
     private Date depDate;
     private String currencyCode;

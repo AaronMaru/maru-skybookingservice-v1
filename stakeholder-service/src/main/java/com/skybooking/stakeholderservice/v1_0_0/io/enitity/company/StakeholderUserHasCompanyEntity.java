@@ -23,6 +23,9 @@ public class StakeholderUserHasCompanyEntity {
     @Column(name = "skyuser_role")
     private String skyuserRole;
 
+    @Column(name = "added_by")
+    private Long addedBy;
+
     @CreationTimestamp
     @Column(name = "created_at")
     @Temporal(TemporalType.TIMESTAMP)
@@ -91,5 +94,11 @@ public class StakeholderUserHasCompanyEntity {
         this.skyuserRole = skyuserRole;
     }
 
+    public Long getAddedBy() {
+        return addedBy;
+    }
 
+    public void setAddedBy(Long addedBy) {
+        this.addedBy = addedBy;
+    }
 }

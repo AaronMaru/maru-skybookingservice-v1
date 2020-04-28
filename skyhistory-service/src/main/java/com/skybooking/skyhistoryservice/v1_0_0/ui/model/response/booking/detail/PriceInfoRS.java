@@ -10,8 +10,8 @@ import java.util.List;
 public class PriceInfoRS {
 
     private BigDecimal totalAmount;
-    private BigDecimal commissionAmount;
-    private BigDecimal discountPayment;
+    private BigDecimal discountAmount;
+    private BigDecimal paidAmount;
     private String currencyCode;
 
     List<PriceBreakdownRS> priceBreakdown = new ArrayList<>();

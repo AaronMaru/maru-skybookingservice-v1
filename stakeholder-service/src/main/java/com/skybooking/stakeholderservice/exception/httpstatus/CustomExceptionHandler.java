@@ -174,6 +174,26 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
+     * Proxy Unauthorized
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Status 407
+     */
+    @ExceptionHandler(ProxyException.class)
+    public ResponseEntity<CustomErrorResponse> handleProxy(ProxyException ex, WebRequest request) {
+
+        CustomErrorResponse errors = new CustomErrorResponse();
+        errors.setTimestamp(LocalDateTime.now());
+        errors.setMessage(localization.multiLanguageRes(ex.getMessage()));
+        errors.setStatus(HttpStatus.PROXY_AUTHENTICATION_REQUIRED.value());
+        errors.setData(ex.getData());
+
+        return new ResponseEntity<>(errors, HttpStatus.PROXY_AUTHENTICATION_REQUIRED);
+
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
      * Temporary redirect
      * -----------------------------------------------------------------------------------------------------------------
      *

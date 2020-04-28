@@ -1,7 +1,12 @@
 package com.skybooking.skyflightservice.v1_0_0.service.implement.shopping;
 
+import com.google.common.collect.Sets;
 import com.hazelcast.core.HazelcastInstance;
 import com.skybooking.skyflightservice.config.AppConfig;
+import com.skybooking.skyflightservice.v1_0_0.client.distributed.action.ShoppingAction;
+import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.booking.BookingSegmentDRQ;
+import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.shopping.OriginDestination;
+import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.shopping.RevalidateRQ;
 import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.response.bargainfinder.SabreBargainFinderRS;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.cabin.CabinEntity;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.meal.MealEntity;
@@ -9,31 +14,42 @@ import com.skybooking.skyflightservice.v1_0_0.io.entity.shopping.*;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.AircraftNQ;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.AirlineNQ;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.FlightLocationNQ;
+import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.MarkupNQ;
 import com.skybooking.skyflightservice.v1_0_0.io.repository.cabin.CabinRP;
 import com.skybooking.skyflightservice.v1_0_0.io.repository.meal.MealRP;
 import com.skybooking.skyflightservice.v1_0_0.service.implement.shopping.transform.TransformSabre;
 import com.skybooking.skyflightservice.v1_0_0.service.implement.shopping.transform.TransformSabreMerger;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.bookmark.BookmarkSV;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.currency.CurrencySV;
+import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.DetailSV;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.TransformSV;
 import com.skybooking.skyflightservice.v1_0_0.service.model.currency.ExchangeCurrencyTA;
 import com.skybooking.skyflightservice.v1_0_0.service.model.security.UserAuthenticationMetaTA;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.shopping.FlightShoppingRQ;
+import com.skybooking.skyflightservice.v1_0_0.util.calculator.CalculatorUtils;
 import com.skybooking.skyflightservice.v1_0_0.util.calculator.NumberFormatter;
+import com.skybooking.skyflightservice.v1_0_0.util.shopping.ShoppingUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.collections.impl.list.mutable.FastList;
+import org.javers.core.diff.changetype.Atomic;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class TransformIP implements TransformSV {
 
     public static final String TRANSFORM_CACHED_NAME = "shopping-transform";
@@ -64,6 +80,12 @@ public class TransformIP implements TransformSV {
 
     @Autowired
     private MealRP mealRP;
+
+    @Autowired
+    private ShoppingUtils shoppingUtils;
+
+    @Autowired
+    private MarkupNQ markupNQ;
 
 
     /**
@@ -297,62 +319,92 @@ public class TransformIP implements TransformSV {
 
         var prices = source.getPrices();
 
-        var formatter = NumberFormat.getInstance(new Locale("en"));
-        formatter.setMinimumFractionDigits(2);
-        formatter.setMaximumFractionDigits(2);
-        formatter.setGroupingUsed(false);
-        formatter.setRoundingMode(RoundingMode.HALF_UP);
-
         var baseCurrency = "USD";
         var fromRate = this.currencySV.getExchangeRateByCode(baseCurrency);
         var toRate = this.currencySV.getExchangeRateByCode(currency);
 
+        var paymentMarkup = markupNQ.getGeneralMarkupPayment();
+
         for (PriceDetail price : prices) {
 
-            BigDecimal total = BigDecimal.ZERO;
-            BigDecimal baseCurrencyTotal = BigDecimal.ZERO;
-
-            BigDecimal average = BigDecimal.ZERO;
-            BigDecimal baseCurrencyTotalAvg = BigDecimal.ZERO;
+            BigDecimal totalBaseAmount = BigDecimal.ZERO;
+            BigDecimal totalCurrencyExchangedAmount = BigDecimal.ZERO;
 
             var passengers = 0;
 
-            price.setCurrency(currency);
-            price.setBaseCurrency(baseCurrency);
+            for (PriceList detail : price.getDetails()) {
 
-            for (Price detail : price.getDetails()) {
+                log.debug("Price detail : {}", price.getId());
 
-                var baseFareMarkup = new BigDecimal(formatter.format(detail.getBaseFare().doubleValue() + (detail.getBaseFare().doubleValue() * markup)));
-                var taxMarkup = new BigDecimal(formatter.format(detail.getTax().doubleValue() + (detail.getTax().doubleValue() * markup)));
+                var baseFareAmount = detail.getBaseFare();
+                var taxAmount = detail.getTax();
+                var totalAmount = NumberFormatter.trimAmount(baseFareAmount.add(taxAmount));
 
-                BigDecimal summary = BigDecimal.ZERO;
-                summary = summary.add(baseFareMarkup).add(taxMarkup).multiply(BigDecimal.valueOf(detail.getQuantity()));
+                var baseFareMarkupAmount = CalculatorUtils.getAmountPercentage(baseFareAmount, new BigDecimal(markup));
+                var baseFarePaymentMarkupAmount = CalculatorUtils.getAmountPercentage(baseFareAmount.add(baseFareMarkupAmount), paymentMarkup.getMarkup());
+                var baseFareTotalAmount = NumberFormatter.trimAmount(baseFareAmount.add(baseFareMarkupAmount).add(baseFarePaymentMarkupAmount));
 
-                BigDecimal baseCurrencySummary = BigDecimal.ZERO;
-                baseCurrencySummary = baseCurrencySummary.add(baseFareMarkup).add(taxMarkup).multiply(BigDecimal.valueOf(detail.getQuantity()));
+                var taxMarkupAmount = CalculatorUtils.getAmountPercentage(taxAmount, new BigDecimal(markup));
+                var taxPaymentMarkupAmount = CalculatorUtils.getAmountPercentage(taxAmount.add(taxMarkupAmount), paymentMarkup.getMarkup());
+                var taxTotalAmount = NumberFormatter.trimAmount(taxAmount.add(taxMarkupAmount).add(taxPaymentMarkupAmount));
 
-                total = total.add(summary);
-                baseCurrencyTotal = baseCurrencyTotal.add(baseCurrencySummary);
+                var totalMarkupAmount = NumberFormatter.trimAmount(baseFareTotalAmount.add(taxTotalAmount).multiply(new BigDecimal(detail.getQuantity())));
+
+                totalBaseAmount = totalBaseAmount.add(totalMarkupAmount);
+
+                log.debug("SABRE: BASE_FARE({}), TAX_AMOUNT({}), TOTAL_AMOUNT({})", baseFareAmount, taxAmount, totalAmount);
+                log.debug("MARKUP: USER_MARKUP({}), PAYMENT_MARKUP({}), SABRE_AMOUNT({}), TOTAL_AMOUNT({})", baseFareMarkupAmount, baseFarePaymentMarkupAmount, totalAmount, totalMarkupAmount);
+
+                var baseFareCurrencyExchange = new ExchangeCurrencyTA(baseCurrency, fromRate, currency, toRate, baseFareTotalAmount.doubleValue());
+                var taxCurrencyExchange = new ExchangeCurrencyTA(baseCurrency, fromRate, currency, toRate, taxTotalAmount.doubleValue());
+
+                var baseFareCurrencyExchangedAmount = NumberFormatter.trimAmount(currencySV.getExchangeRateConverter(baseFareCurrencyExchange));
+                var taxCurrencyExchangedAmount = NumberFormatter.trimAmount(currencySV.getExchangeRateConverter(taxCurrencyExchange));
+
+                var totalExchangedAmount = NumberFormatter.trimAmount(baseFareCurrencyExchangedAmount.add(taxCurrencyExchangedAmount).multiply(new BigDecimal(detail.getQuantity())));
+
+                totalCurrencyExchangedAmount = totalCurrencyExchangedAmount.add(totalExchangedAmount);
 
                 detail.setBaseCurrency(baseCurrency);
-                detail.setBaseCurrencyTax(NumberFormatter.trimAmount(taxMarkup));
-                detail.setBaseCurrencyBaseFare(NumberFormatter.trimAmount(baseFareMarkup));
+                detail.setBaseCurrencyBaseFare(baseFareTotalAmount);
+                detail.setBaseCurrencyTax(taxTotalAmount);
 
                 detail.setCurrency(currency);
-                detail.setBaseFare(NumberFormatter.trimAmount(currencySV.getExchangeRateConverter(new ExchangeCurrencyTA(baseCurrency, fromRate, currency, toRate, baseFareMarkup.doubleValue()))));
-                detail.setTax(NumberFormatter.trimAmount(currencySV.getExchangeRateConverter(new ExchangeCurrencyTA(baseCurrency, fromRate, currency, toRate, taxMarkup.doubleValue()))));
+                detail.setBaseFare(baseFareCurrencyExchangedAmount);
+                detail.setTax(taxCurrencyExchangedAmount);
 
                 passengers += detail.getQuantity();
             }
 
-            average = total.divide(BigDecimal.valueOf(passengers), RoundingMode.HALF_UP);
-            baseCurrencyTotalAvg = baseCurrencyTotal.divide(BigDecimal.valueOf(passengers), RoundingMode.HALF_UP);
 
-            price.setBaseCurrencyTotal(NumberFormatter.trimAmount(baseCurrencyTotal));
-            price.setBaseCurrencyTotalAvg(NumberFormatter.trimAmount(baseCurrencyTotalAvg));
+            var commissionAmount = price.getTotalCommissionAmount();
+            var commissionExchangedAmount = NumberFormatter.trimAmount(currencySV.getExchangeRateConverter(new ExchangeCurrencyTA(baseCurrency, fromRate, currency, toRate, commissionAmount.doubleValue())));
 
-            price.setTotal(NumberFormatter.trimAmount(currencySV.getExchangeRateConverter(new ExchangeCurrencyTA(baseCurrency, fromRate, currency, toRate, total.doubleValue()))));
-            price.setTotalAvg(NumberFormatter.trimAmount(currencySV.getExchangeRateConverter(new ExchangeCurrencyTA(baseCurrency, fromRate, currency, toRate, average.doubleValue()))));
+            var grandTotalExchanged = NumberFormatter.trimAmount(totalCurrencyExchangedAmount.subtract(commissionExchangedAmount));
+            var grandTotalExchangedAverage = NumberFormatter.trimAmount(grandTotalExchanged.divide(BigDecimal.valueOf(passengers), RoundingMode.HALF_DOWN));
+            var totalExchangedAverage = NumberFormatter.trimAmount(totalCurrencyExchangedAmount.divide(BigDecimal.valueOf(passengers), RoundingMode.HALF_DOWN));
+
+            var grandTotal = NumberFormatter.trimAmount(totalBaseAmount.subtract(commissionAmount));
+            var grandTotalAverage = NumberFormatter.trimAmount(grandTotal.divide(BigDecimal.valueOf(passengers), RoundingMode.HALF_DOWN));
+            var totalAverage = NumberFormatter.trimAmount(totalBaseAmount.divide(BigDecimal.valueOf(passengers), RoundingMode.HALF_DOWN));
+
+            var priceExchanged = new Price();
+            priceExchanged.setCurrency(currency);
+            priceExchanged.setTotal(totalCurrencyExchangedAmount);
+            priceExchanged.setTotalAverage(totalExchangedAverage);
+            priceExchanged.setGrandTotal(grandTotalExchanged);
+            priceExchanged.setGrandTotalAverage(grandTotalExchangedAverage);
+            priceExchanged.setTotalCommission(commissionExchangedAmount);
+
+            var priceBased = new Price();
+            priceBased.setCurrency(baseCurrency);
+            priceBased.setTotal(totalBaseAmount);
+            priceBased.setTotalAverage(totalAverage);
+            priceBased.setGrandTotal(grandTotal);
+            priceBased.setGrandTotalAverage(grandTotalAverage);
+
+            price.setPrice(priceExchanged);
+            price.setBasePrice(priceBased);
 
         }
 
@@ -406,7 +458,7 @@ public class TransformIP implements TransformSV {
                             var legDetail = source.getLegs().stream().filter(leg -> leg.getId().equalsIgnoreCase(legId)).findFirst().get();
                             var priceDetail = source.getPrices().stream().filter(price -> price.getId().equalsIgnoreCase(legDetail.getPrice())).findFirst().get();
 
-                            return priceDetail.getTotalAvg().doubleValue();
+                            return priceDetail.getPrice().getGrandTotal().doubleValue();
                         }).mapToDouble(Double::doubleValue).sum();
 
                     lowestPrice = Double.parseDouble(formatter.format(lowestPrice));
@@ -523,6 +575,7 @@ public class TransformIP implements TransformSV {
         source.setDirect(directs);
         source.setCheapest(cheaps);
 
+
         return source;
     }
 
@@ -538,4 +591,15 @@ public class TransformIP implements TransformSV {
     public ShoppingTransformEntity getShoppingTransformById(String id) {
         return (ShoppingTransformEntity) instance.getMap(TRANSFORM_CACHED_NAME).getOrDefault(id, null);
     }
+
+    @Override
+    public void setShoppingDetail(String id, ShoppingTransformEntity source) {
+        instance.getMap(TRANSFORM_CACHED_NAME).put(id, source, appConfig.getHAZELCAST_EXPIRED_TIME(), TimeUnit.SECONDS);
+    }
+
+    @Override
+    public ShoppingTransformEntity getShoppingDetail(String id) {
+        return (ShoppingTransformEntity) instance.getMap(TRANSFORM_CACHED_NAME).getOrDefault(id, null);
+    }
+
 }

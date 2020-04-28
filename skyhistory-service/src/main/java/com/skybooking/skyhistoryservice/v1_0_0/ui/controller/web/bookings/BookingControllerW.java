@@ -48,9 +48,9 @@ public class BookingControllerW {
      *
      * @return ResponseEntity
      */
-    @GetMapping("/booking/{id}")
-    public ResRS bookingDetail(@PathVariable Long id) {
-        return localization.resAPI(HttpStatus.OK,"res_succ", bookingDetailSV.getBookingDetail(id));
+    @GetMapping("/booking/{bookingCode}")
+    public ResRS bookingDetail(@PathVariable String bookingCode) {
+        return localization.resAPI(HttpStatus.OK,"res_succ", bookingDetailSV.getBookingDetail(bookingCode, null));
     }
 
 

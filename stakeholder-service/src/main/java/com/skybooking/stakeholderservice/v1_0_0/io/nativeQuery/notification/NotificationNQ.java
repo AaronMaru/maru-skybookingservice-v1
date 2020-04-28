@@ -3,6 +3,8 @@ package com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.notification;
 import com.skybooking.library.NativeQuery;
 import com.skybooking.library.NativeQueryFolder;
 import com.skybooking.library.NativeQueryParam;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -20,12 +22,22 @@ public interface NotificationNQ extends NativeQuery {
                                                       @NativeQueryParam(value = "companyId") Long companyId,
                                                       @NativeQueryParam(value = "skyuserId") Long skyuserId);
 
-    List<NotificationTO> listNotification(@NativeQueryParam(value = "action") String action,
+    Page<NotificationTO> listNotification(@NativeQueryParam(value = "stake") String stake,
                                           @NativeQueryParam(value = "locale") Long locale,
                                           @NativeQueryParam(value = "companyId") Long companyId,
-                                          @NativeQueryParam(value = "skyuserId") Long skyuserId);
+                                          @NativeQueryParam(value = "skyuserId") Long skyuserId,
+                                          @NativeQueryParam(value = "role") String role,
+                                          Pageable pageable);
 
-    List<NotificationTO> notificationDetail(@NativeQueryParam(value = "locale") Long locale,
+    NotificationDetailTO notificationDetail(@NativeQueryParam(value = "locale") Long locale,
                                             @NativeQueryParam(value = "notiId") Long notiId);
+
+    List<NotificationBookingTO> notificationFlightBooking( @NativeQueryParam(value = "locale") Long locale,
+                                                           @NativeQueryParam(value = "bookingId") Integer bookingId );
+
+    ScriptingTO scripting(@NativeQueryParam(value = "locale") Long locale,
+                          @NativeQueryParam(value = "urlKey") String urlKey);
+
+
 
 }

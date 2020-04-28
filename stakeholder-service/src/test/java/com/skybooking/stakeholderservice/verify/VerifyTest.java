@@ -27,7 +27,7 @@ public class VerifyTest {
 
 
 
-    public void verify() {
+    /*public void verify() {
         RestTemplate restAPi = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
@@ -47,6 +47,6 @@ public class VerifyTest {
             throw e;
         }
 
-    }
+    }*/
 
 }

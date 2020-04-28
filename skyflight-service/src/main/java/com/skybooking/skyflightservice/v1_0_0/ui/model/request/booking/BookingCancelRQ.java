@@ -7,7 +7,7 @@ import javax.validation.constraints.NotNull;
 @Data
 public class BookingCancelRQ {
 
-    @NotNull(message = "Booking Id is required")
-    private Integer bookingId;
+    @NotNull(message = "Booking Code is required")
+    private String bookingCode;
 
 }

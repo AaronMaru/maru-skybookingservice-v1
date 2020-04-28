@@ -37,7 +37,6 @@ public class VerifyControllerW {
      */
     @PatchMapping("/verify")
     public ResRS verifyUser(@Valid @RequestBody VerifyRQ verifyRQ) {
-        System.out.println(environment.getProperty("spring.verifyStatus.login"));
         UserDetailsTokenRS userDetailsTokenRS = verifySV.verifyUser(verifyRQ, Integer.parseInt(environment.getProperty("spring.verifyStatus.verify")));
         return localization.resAPI(HttpStatus.OK,"vf_succ", userDetailsTokenRS);
     }

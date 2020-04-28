@@ -1,0 +1,9 @@
+SELECT
+       stakeholder_user_id as stakeholder,
+       stakeholder_company_id as company,
+       notification_email as emailNotification,
+       push_notification  as pushNotification
+FROM
+     stakeholder_user_has_companies
+WHERE
+      stakeholder_company_id = :company  AND stakeholder_user_id = :stakeholder

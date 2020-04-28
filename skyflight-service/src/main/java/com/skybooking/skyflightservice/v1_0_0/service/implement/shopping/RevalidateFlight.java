@@ -8,8 +8,11 @@ import com.skybooking.skyflightservice.v1_0_0.client.distributed.action.Shopping
 import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.booking.BookingSegmentDRQ;
 import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.shopping.OriginDestination;
 import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.shopping.RevalidateRQ;
+import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.response.bargainfinder.SabreBargainFinderRS;
+import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.response.bargainfinder.itinerary.FareComponentSegment;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.shopping.*;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.DetailSV;
+import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.TransformSV;
 import com.skybooking.skyflightservice.v1_0_0.service.model.shopping.RevalidateM;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.booking.BookingCreateRQ;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.booking.BookingPassengerRQ;
@@ -34,6 +37,9 @@ public class RevalidateFlight {
     @Autowired
     private DetailSV detailSV;
 
+    @Autowired
+    private TransformSV transformSV;
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Revalidate flight shopping
@@ -48,8 +54,10 @@ public class RevalidateFlight {
         var child = 0;
         var infant = 0;
         var requestId = bookingRQ.getRequestId();
+        var cachedId = requestId;
+        List<OriginDestination> originDestinations = new ArrayList<>();
 
-        for (BookingPassengerRQ passenger: bookingRQ.getPassengers()) {
+        for (BookingPassengerRQ passenger : bookingRQ.getPassengers()) {
             if (PassengerUtil.type(passenger.getBirthDate()) == PassengerCode.ADULT) {
                 adult++;
             } else if (PassengerUtil.type(passenger.getBirthDate()) == PassengerCode.CHILD) {
@@ -61,50 +69,59 @@ public class RevalidateFlight {
 
         var seats = adult + child;
 
-        for (String leg: bookingRQ.getLegIds()) {
-            List<OriginDestination> originDestinations = new ArrayList<>();
+        for (String leg : bookingRQ.getLegIds()) {
+
+            cachedId = cachedId + leg;
             List<BookingSegmentDRQ> segments = new ArrayList<>();
             Leg legDetail = detailSV.getLegDetail(requestId, leg);
-            for (LegSegmentDetail legSegment: legDetail.getSegments()) {
+            for (LegSegmentDetail legSegment : legDetail.getSegments()) {
                 segments.add(
-                        this.setDSegment(
-                                detailSV.getSegmentDetail(requestId, legSegment.getSegment()),
-                                legSegment.getDateAdjustment(),
-                                legSegment.getBookingCode()
-                        )
+                    this.setDSegment(
+                        detailSV.getSegmentDetail(requestId, legSegment.getSegment()),
+                        legSegment.getDateAdjustment(),
+                        legSegment.getBookingCode()
+                    )
                 );
             }
 
             originDestinations.add(
-                    new OriginDestination(
-                            segments,
-                            legDetail.getDepartureTime(),
-                            legDetail.getDeparture(),
-                            legDetail.getArrival()
-                    )
+                new OriginDestination(
+                    segments,
+                    legDetail.getDepartureTime(),
+                    legDetail.getDeparture(),
+                    legDetail.getArrival()
+                )
             );
+        }
 
-            RevalidateRQ request = new RevalidateRQ();
-            request.setAdult(adult);
-            request.setChild(child);
-            request.setInfant(infant);
-            request.setOriginDestinations(originDestinations);
+        RevalidateRQ request = new RevalidateRQ();
+        request.setAdult(adult);
+        request.setChild(child);
+        request.setInfant(infant);
+        request.setOriginDestinations(originDestinations);
 
-            log.info("revalidate request: leg {} body {}",leg , request);
+        SabreBargainFinderRS pairCity = shoppingAction.revalidateV2(request);
 
-            JsonNode airItineraryPriceInfo = shoppingAction.revalidate(request);
+        var passengerList = pairCity.getItineraryResponse().getItineraryGroups().get(0).getItineraries().get(0).getPricingInformation().get(0).getFare().getPassengerInfoList();
 
-            if (!this.checkPrice(airItineraryPriceInfo, detailSV.getPriceDetail(requestId, legDetail.getPrice()), adult, child, infant)) {
-                log.error("revalidate response: body {}, price detail {}, adult {}, child {}, infant {}, error {}", airItineraryPriceInfo, detailSV.getPriceDetail(requestId, legDetail.getPrice()), adult, child, infant, MessageConstant.PRICE_CHANGED);
+        var priceCached = transformSV.getShoppingDetail(cachedId);
+
+        for (PriceList passengerPrice : priceCached.getPrices().get(0).getDetails()) {
+
+            var passengerInfo = passengerList.stream().filter(psg -> psg.getPassengerInfo().getPassengerType().equals(passengerPrice.getType())).findFirst();
+
+            if (!passengerPrice.getBaseCurrencyBaseFare().equals(passengerInfo.get().getPassengerInfo().getPassengerTotalFare().getEquivalentAmount())) {
+                return new RevalidateM(RevalidateConstant.PRICE_CHANGED, MessageConstant.PRICE_CHANGED);
+            }
+            if (!passengerPrice.getBaseCurrencyTax().equals(passengerInfo.get().getPassengerInfo().getPassengerTotalFare().getTotalTaxAmount())) {
                 return new RevalidateM(RevalidateConstant.PRICE_CHANGED, MessageConstant.PRICE_CHANGED);
             }
 
-            if (!this.checkSeats(airItineraryPriceInfo, seats)) {
-                log.error("revalidate response: body {}, seats {}, error {} .",airItineraryPriceInfo, seats, MessageConstant.UNAVAILABLE_SEATS);
-                return new RevalidateM(RevalidateConstant.UNAVAILABLE_SEATS, MessageConstant.UNAVAILABLE_SEATS);
+            for (FareComponentSegment segment : passengerInfo.get().getPassengerInfo().getFareComponents().get(0).getSegments()) {
+                if (seats > segment.getSegment().getSeatsAvailable()) {
+                    return new RevalidateM(RevalidateConstant.UNAVAILABLE_SEATS, MessageConstant.UNAVAILABLE_SEATS);
+                }
             }
-
-            log.info("revalidate response: {}", airItineraryPriceInfo);
         }
 
         return new RevalidateM(RevalidateConstant.SUCCESS);
@@ -165,11 +182,11 @@ public class RevalidateFlight {
      */
     private JsonNode getAirItineraryPricingInfo(JsonNode response) {
         return response
-                .get("OTA_AirLowFareSearchRS")
-                .get("PricedItineraries")
-                .get("PricedItinerary")
-                .get(0)
-                .get("AirItineraryPricingInfo");
+            .get("OTA_AirLowFareSearchRS")
+            .get("PricedItineraries")
+            .get("PricedItinerary")
+            .get(0)
+            .get("AirItineraryPricingInfo");
     }
 
     /**
@@ -187,16 +204,16 @@ public class RevalidateFlight {
     private Boolean checkPrice(JsonNode response, PriceDetail priceDetail, int adult, int child, int infant) {
         BigDecimal amount = BigDecimal.valueOf(0);
         Double priceValid = this.getAirItineraryPricingInfo(response)
-                .get(0)
-                .get("ItinTotalFare")
-                .get("TotalFare")
-                .get("Amount")
-                .doubleValue();
+            .get(0)
+            .get("ItinTotalFare")
+            .get("TotalFare")
+            .get("Amount")
+            .doubleValue();
 
         /**
          * calculate total amount of passengers
          */
-        for (Price price: priceDetail.getDetails()) {
+        for (PriceList price : priceDetail.getDetails()) {
             BigDecimal pricePsg = price.getBaseFare().add(price.getTax());
 
             if (adult > 0 && price.getType().equals(PassengerCode.ADULT)) {
@@ -223,7 +240,7 @@ public class RevalidateFlight {
 
         var segs = this.getAirItineraryPricingInfo(response).get(0).get("FareInfos").get("FareInfo");
 
-        for (var seg: segs) {
+        for (var seg : segs) {
             if (seats > seg.get("TPA_Extensions").get("SeatsRemaining").get("Number").intValue()) {
                 return false;
             }

@@ -11,13 +11,10 @@ import java.util.List;
 public class PriceDetail implements Serializable {
 
     private String id;
-    private String currency;
-    private BigDecimal total;
-    private BigDecimal totalAvg;
-    private BigDecimal totalCommissionAmount;
-    private String baseCurrency;
-    private BigDecimal baseCurrencyTotal;
-    private BigDecimal baseCurrencyTotalAvg;
-    private List<Price> details = new ArrayList<>();
+    private Price price;
+    private Price basePrice;
+    private boolean commission;
+    private BigDecimal totalCommissionAmount = BigDecimal.ZERO;
+    private List<PriceList> details = new ArrayList<>();
 
 }

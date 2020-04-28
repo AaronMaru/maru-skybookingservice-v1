@@ -1,9 +1,10 @@
 package com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.dashboard;
 
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.dashboard.*;
-import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.report.BookingReportRS;
+import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.dashboard.summaryReport.SummaryReportRS;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
 import java.util.List;
 
 @Service
@@ -71,21 +72,7 @@ public interface DashboardSV {
      * @param localeId
      * @return List
      */
-    List<BookingActivityRS> getBookingActivity(String filter, String startDate, String endDate, long take, long localeId);
-
-
-    /**
-     * -----------------------------------------------------------------------------------------------------------------
-     * get dashboard report summary
-     * -----------------------------------------------------------------------------------------------------------------
-     *
-     * @param classType options: allclass, economy, first, business
-     * @param tripType  options: alltrip, oneway, return, multicity
-     * @param startDate
-     * @param endDate
-     * @return BookingReportRS
-     */
-    BookingReportRS getBookingReport(String classType, String tripType, String startDate, String endDate);
+    BookingActivityPagingRS getBookingActivity(String filter, String startDate, String endDate, long take, long localeId);
 
 
     /**
@@ -95,6 +82,6 @@ public interface DashboardSV {
      *
      * @Return StaffReportRS
      */
-    StaffReportRS getStaffReport();
+    List<SummaryReportRS> getSummaryReport(String filter, String startDate, String endDate);
 
 }

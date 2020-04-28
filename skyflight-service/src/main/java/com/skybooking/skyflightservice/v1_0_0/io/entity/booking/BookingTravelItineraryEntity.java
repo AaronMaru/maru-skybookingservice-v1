@@ -42,7 +42,7 @@ public class BookingTravelItineraryEntity {
     private String currencyCode;
 
     @Column(name = "non_refundable_ind")
-    private String nonRefundableInd;
+    private Boolean nonRefundableInd;
 
     @Column(name = "baggage_info")
     private String baggageInfo;

@@ -6,8 +6,8 @@ FROM stakeholder_user_has_companies suhc
 INNER JOIN
 (
 	SELECT *
-	FROM user_playid up
-) up ON up.stuser_id = suhc.stakeholder_user_id
+	FROM user_player up
+) up ON up.stakeholder_user_id = suhc.stakeholder_user_id
 
 WHERE IF(:role = 'admin',
                     (
@@ -15,7 +15,7 @@ WHERE IF(:role = 'admin',
 						AND suhc.stakeholder_company_id = :companyId
 						AND suhc.skyuser_role = 'admin'
 					),
-					-- When staff has role editor, will push ot Admin Role
+					-- When staff has role editor, will push to Admin Role
 					IF(:role = 'editor',
 				        (
 						  suhc.stakeholder_user_id = :skyuserId

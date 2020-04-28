@@ -53,130 +53,6 @@ public class BookingIP implements BookingSV {
     @Autowired
     private DateTimeBean dateTimeBean;
 
-
-    /**
-     * -----------------------------------------------------------------------------------------------------------------
-     * Getting data bookings detail
-     * -----------------------------------------------------------------------------------------------------------------
-     *
-     * @return a booking
-     * @Param id
-     */
-    public BookingDetailRS getBookingDetail(Long id) {
-
-        List<BookingTO> bookingTO = getBookingById(id);
-        BookingDetailRS bookingDetailRS = new BookingDetailRS();
-        BookingEmailDetailRS bookingRS = setBookingDetailRS(bookingTO, id);
-        BeanUtils.copyProperties(bookingRS, bookingDetailRS);
-
-        return bookingDetailRS;
-
-    }
-
-    /**
-     * -----------------------------------------------------------------------------------------------------------------
-     * Getting data bookings detail data to email
-     * -----------------------------------------------------------------------------------------------------------------
-     *
-     * @return a booking
-     * @Param id
-     */
-    public BookingEmailDetailRS getBookingDetailEmail(Long id) {
-
-        List<BookingTO> bookingTO = getBookingById(id);
-        BookingEmailDetailRS bookingRS = setBookingDetailRS(bookingTO, id);
-        return bookingRS;
-
-    }
-
-    public List<BookingTO> getBookingById(Long id) {
-        FilterRQ filterRQ = new FilterRQ(request, jwtUtils.getUserToken());
-        Long companyId = filterRQ.getCompanyId();
-        String stake = headerBean.getCompanyId(companyId);
-
-        BookingKeyConstant constant = new BookingKeyConstant();
-        return bookingNQ.detailBooking(
-                stake,
-                id,
-                filterRQ.getSkyuserId(),
-                companyId,
-                filterRQ.getRole(),
-                headerBean.getLocalizationId(),
-                constant.COMPLETED,
-                constant.UPCOMING,
-                constant.CANCELLED,
-                constant.FAILED,
-                constant.ONEWAY,
-                constant.ROUND,
-                constant.MULTICITY
-        );
-    }
-
-    /**
-     * -----------------------------------------------------------------------------------------------------------------
-     * Getting data bookings detail data to email
-     * -----------------------------------------------------------------------------------------------------------------
-     *
-     * @return a booking
-     * @Param id
-     */
-    public BookingEmailDetailRS getBookingDetailEmailWithoutAuth(Long id, SendBookingNoAuthRQ sendBookingNoAuthRQ) {
-
-        if (sendBookingNoAuthRQ.getCompanyId() == null) {
-            sendBookingNoAuthRQ.setCompanyId(0);
-        }
-
-        String stake = sendBookingNoAuthRQ.getCompanyId() == 0 ? "skyuser" : "company";
-
-        if (sendBookingNoAuthRQ.getCompanyId() == null) {
-            sendBookingNoAuthRQ.setCompanyId(0);
-        }
-
-        BookingKeyConstant constant = new BookingKeyConstant();
-
-        List<BookingTO> bookingTO = bookingNQ.detailBooking(
-                    stake,
-                    id,
-                    sendBookingNoAuthRQ.getSkyuserId().longValue(),
-                    sendBookingNoAuthRQ.getCompanyId().longValue(),
-                    "",
-                    headerBean.getLocalizationId(),
-                    constant.COMPLETED,
-                    constant.UPCOMING,
-                    constant.CANCELLED,
-                    constant.FAILED,
-                    constant.ONEWAY,
-                    constant.ROUND,
-                    constant.MULTICITY
-                    );
-
-        BookingEmailDetailRS bookingRS = setBookingDetailRS(bookingTO, id);
-
-        return bookingRS;
-
-    }
-
-    private BookingEmailDetailRS setBookingDetailRS(List<BookingTO> bookingTO, Long id) {
-
-        BookingEmailDetailRS bookingEmailRS = new BookingEmailDetailRS();
-
-        if (bookingTO.size() == 0) {
-            throw new NotFoundException("No booking data found", null);
-        }
-
-        BeanUtils.copyProperties(bookingTO.get(0), bookingEmailRS);
-
-        bookingEmailRS.setSkyuserPhoto(environment.getProperty("spring.awsImageUrl.profile.url_small") + bookingEmailRS.getSkyuserPhoto());
-
-        bookingEmailRS.setBookingOd(bookingOD(bookingTO.get(0)));
-        bookingEmailRS.setAirTickets(getAirTickets(id));
-        bookingEmailRS.setAirItinPrices(getAirItinPrice(id));
-
-        return bookingEmailRS;
-
-    }
-
-
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Getting data bookings with pagination
@@ -187,9 +63,16 @@ public class BookingIP implements BookingSV {
     public BookingDataPaginationRS getBooking(HttpServletRequest request) {
 
         FilterRQ filterRQ = new FilterRQ(request, jwtUtils.getUserToken());
-        filterRQ.setAction(checkSearchOrFilter());
 
-        System.out.println(filterRQ);
+        if (filterRQ.getTripType().equals(BookingKeyConstant.MULTICITY)) {
+            filterRQ.setTripType("Other");
+        }
+
+        if (filterRQ.getTripType().equals(BookingKeyConstant.ROUND)) {
+            filterRQ.setTripType("Return");
+        }
+
+        filterRQ.setAction(checkSearchOrFilter());
 
         BookingDataPaginationRS bookingData = new BookingDataPaginationRS();
 
@@ -216,7 +99,9 @@ public class BookingIP implements BookingSV {
      * @Param size
      */
     public List<BookingRS> bookings(FilterRQ filterRQ) {
+
         Page<BookingTO> bookingTO = bookingNQ.listBooking(
+                filterRQ.getSkystaffId(),
                 filterRQ.getKeyword(),
                 filterRQ.getBookStatus(),
                 filterRQ.getStartRange(),
@@ -240,7 +125,7 @@ public class BookingIP implements BookingSV {
                 filterRQ.getRound(),
                 filterRQ.getMulticity(),
                 headerBean.getCompanyId(filterRQ.getCompanyId()),
-                PageRequest.of(filterRQ.getPage(), filterRQ.getSize() ) );
+                PageRequest.of(filterRQ.getPage(), filterRQ.getSize()));
 
         List<BookingRS> bookingRSList = new ArrayList<>();
 
@@ -277,48 +162,19 @@ public class BookingIP implements BookingSV {
      */
     public String checkSearchOrFilter() {
 
-        if (request.getParameter("keyword") != null && request.getParameter("keyword") != "" ) {
+        if (request.getParameter("bookStatus") != null || request.getParameter("startRange") != null ||
+            request.getParameter("endRange") != null || request.getParameter("tripType") != null ||
+            request.getParameter("className") != null || request.getParameter("bookDate") != null ||
+            request.getParameter("paymentType") != null || request.getParameter("flyingFrom") != null ||
+            request.getParameter("flyingTo") != null || request.getParameter("bookByName") != null
+        ) {
+
+            return "FILTER";
+
+        } else if(request.getParameter("keyword") != null && !request.getParameter("keyword").equals("")) {
+
             return "SEARCH";
-        }
 
-        if (request.getParameter("bookStatus") != null || request.getParameter("keyword") == "" ) {
-            return "FILTER";
-        }
-
-        if (request.getParameter("startRange") != null || request.getParameter("keyword") == "" ) {
-            return "FILTER";
-        }
-
-        if (request.getParameter("endRange") != null || request.getParameter("keyword") == "" ) {
-            return "FILTER";
-        }
-
-        if (request.getParameter("tripType") != null || request.getParameter("keyword") == "" ) {
-            return "FILTER";
-        }
-
-        if (request.getParameter("className") != null || request.getParameter("keyword") == "" ) {
-            return "FILTER";
-        }
-
-        if (request.getParameter("bookDate") != null || request.getParameter("keyword") == "" ) {
-            return "FILTER";
-        }
-
-        if (request.getParameter("paymentType") != null || request.getParameter("keyword") == "" ) {
-            return "FILTER";
-        }
-
-        if (request.getParameter("flyingFrom") != null || request.getParameter("keyword") == "" ) {
-            return "FILTER";
-        }
-
-        if (request.getParameter("flyingTo") != null || request.getParameter("keyword") == "" ) {
-            return "FILTER";
-        }
-
-        if (request.getParameter("bookByName") != null || request.getParameter("keyword") == "" ) {
-            return "FILTER";
         }
 
         return "OTHER";

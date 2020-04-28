@@ -10,9 +10,16 @@ public interface TransformSV {
     ShoppingTransformEntity getShoppingTransform(ShoppingResponseEntity response);
 
     ShoppingTransformEntity getShoppingTransformDetail(ShoppingTransformEntity source, long locale, String currency);
+
     ShoppingTransformEntity getShoppingTransformDetailMarkup(ShoppingTransformEntity source, double markup, String currency);
+
     ShoppingTransformEntity getShoppingTransformDetailWithFilter(ShoppingTransformEntity source);
 
     ShoppingTransformEntity getShoppingTransformDetailWithFavorite(FlightShoppingRQ flightShoppingRQ, ShoppingTransformEntity source, UserAuthenticationMetaTA userAuthenticationMetaTA);
+
     ShoppingTransformEntity getShoppingTransformById(String id);
+
+    void setShoppingDetail(String id, ShoppingTransformEntity source);
+
+    ShoppingTransformEntity getShoppingDetail(String id);
 }

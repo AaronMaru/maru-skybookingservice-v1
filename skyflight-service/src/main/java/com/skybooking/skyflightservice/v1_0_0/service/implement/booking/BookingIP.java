@@ -14,6 +14,7 @@ import com.skybooking.skyflightservice.v1_0_0.ui.model.response.booking.PNRCreat
 import com.skybooking.skyflightservice.v1_0_0.util.JwtUtils;
 import com.skybooking.skyflightservice.v1_0_0.util.booking.BookingUtility;
 import com.skybooking.skyflightservice.v1_0_0.util.header.HeaderBean;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,7 @@ import static com.skybooking.skyflightservice.constant.UserConstant.STAKEHOLDER_
 
 
 @Service
+@Slf4j
 public class BookingIP extends BookingDataIP implements BookingSV {
 
     private static final Logger logger = LoggerFactory.getLogger(WebClientConfiguration.class.getName());
@@ -112,8 +114,6 @@ public class BookingIP extends BookingDataIP implements BookingSV {
                 var booking = bookingDataSV.save(requestTA, metadataTA, pnrRS, request);
 
                 bookingCreated.setBookingCode(booking.getBookingCode());
-                bookingCreated.setBookingRef(booking.getItineraryRef());
-                bookingCreated.setBookingId(booking.getId());
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -126,7 +126,7 @@ public class BookingIP extends BookingDataIP implements BookingSV {
 
 
     @Override
-    public void cancel(Integer bookingId) {
+    public void cancel(String bookingCode) {
 
         var skyuserId = jwtUtils.getClaim(STAKEHOLDER_ID, Integer.class);
 
@@ -134,9 +134,9 @@ public class BookingIP extends BookingDataIP implements BookingSV {
 
         BookingEntity bookingEntity;
         if (companyId == null) {
-            bookingEntity = bookingRP.getBookingToCancelUser(bookingId, skyuserId);
+            bookingEntity = bookingRP.getBookingToCancelUser(bookingCode, skyuserId);
         } else {
-            bookingEntity = bookingRP.getBookingToCancelOwner(bookingId, companyId);
+            bookingEntity = bookingRP.getBookingToCancelOwner(bookingCode, companyId);
         }
 
         if (bookingEntity == null) {

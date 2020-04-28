@@ -20,7 +20,7 @@ public class StakeholderUserInvitationEntity {
     private Long inviteStakeholderUserId;
 
     @Column(name = "invite_from")
-    private String inviteFrom;
+    private Long inviteFrom;
 
     @Column(name = "invite_to")
     private String inviteTo;
@@ -70,11 +70,11 @@ public class StakeholderUserInvitationEntity {
         this.inviteStakeholderUserId = inviteStakeholderUserId;
     }
 
-    public String getInviteFrom() {
-        return this.inviteFrom;
+    public Long getInviteFrom() {
+        return inviteFrom;
     }
 
-    public void setInviteFrom(String inviteFrom) {
+    public void setInviteFrom(Long inviteFrom) {
         this.inviteFrom = inviteFrom;
     }
 

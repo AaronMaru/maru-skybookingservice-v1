@@ -11,6 +11,8 @@ public class BookingActivityTO {
     private String userName;
     private String userProfile;
     private String bookingType;
+    private String tripType;
     private String description;
     private Timestamp createdAt;
+    private String statusKey;
 }

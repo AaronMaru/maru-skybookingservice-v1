@@ -9,13 +9,23 @@ select u.id,
 
 FROM users u
 
-    INNER JOIN stakeholder_users su ON (
-        su.user_id = u.id AND su.status = 1 AND su.is_skyowner = 0
-     )
+INNER JOIN stakeholder_users su ON (
+    su.user_id = u.id AND su.status = 1 AND su.is_skyowner = 0
+ )
 
-    WHERE NOT EXISTS (
-        SELECT stakeholder_user_id FROM stakeholder_user_has_companies suhc
-        WHERE suhc.stakeholder_user_id = su.id AND (suhc.status = 2 OR suhc.status = 1)
-    )
+WHERE NOT EXISTS (
+    SELECT stakeholder_user_id FROM stakeholder_user_has_companies suhc
+    WHERE suhc.stakeholder_user_id = su.id AND ( suhc.status <> 1 OR suhc.status <> 2 )
+)
 
-AND u.email LIKE '%' :email '%'
+AND CASE WHEN :keyword <> 'all' THEN
+        ( u.email LIKE '%' :keyword '%'
+        OR u.phone LIKE '%' :keyword '%'
+        OR (SELECT COUNT(su.id)
+                FROM stakeholder_users su
+                WHERE su.user_id = u.id
+                AND su.status = 1 AND su.is_skyowner = 0
+                AND ( su.user_code = :keyword OR su.first_name LIKE '%' :keyword '%' OR su.last_name  LIKE '%' :keyword '%' )
+            ) > 0
+        )
+    END

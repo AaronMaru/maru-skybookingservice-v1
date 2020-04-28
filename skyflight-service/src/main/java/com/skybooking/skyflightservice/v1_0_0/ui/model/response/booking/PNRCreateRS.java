@@ -6,13 +6,10 @@ import lombok.Data;
 public class PNRCreateRS {
 
     private String bookingCode = "";
-    private String bookingRef = "";
-    private Integer bookingId;
 
-    public PNRCreateRS(String bookingCode, String bookingRef, Integer bookingId) {
+
+    public PNRCreateRS(String bookingCode) {
         this.bookingCode = bookingCode;
-        this.bookingRef = bookingRef;
-        this.bookingId = bookingId;
     }
 
     public PNRCreateRS() {

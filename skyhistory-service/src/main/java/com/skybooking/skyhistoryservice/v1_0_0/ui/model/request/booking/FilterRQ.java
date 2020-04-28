@@ -34,9 +34,11 @@ public class FilterRQ {
     private String oneway;
     private String round;
     private String multicity;
+    private Long skystaffId;
 
     public FilterRQ(HttpServletRequest request, UserToken userToken) {
 
+        this.skystaffId = request.getParameter("skystaffId") != null && !request.getParameter("skystaffId").isEmpty() ? Long.valueOf(request.getParameter("skystaffId")) : 0;
         this.keyword = request.getParameter("keyword") != null ? request.getParameter("keyword") : "";
         this.bookStatus = request.getParameter("bookStatus") != null ? request.getParameter("bookStatus").toUpperCase() : "ALL";
         this.startRange = request.getParameter("startRange") != null ? Integer.valueOf(request.getParameter("startRange")) : 0;
@@ -50,7 +52,7 @@ public class FilterRQ {
         this.bookByName = request.getParameter("bookByName") != null ? request.getParameter("bookByName").toUpperCase() : "ALL";
         this.page = request.getParameter("page") != null && !request.getParameter("page").isEmpty() ? ( Integer.valueOf(request.getParameter("page") ) - 1 ) : 0;
         this.size = request.getParameter("size") != null && !request.getParameter("size").isEmpty() ? Integer.valueOf(request.getParameter("size")) : 10;
-        this.companyHeaderId = request.getHeader("X-CompanyId") != null ? Long.valueOf(request.getHeader("X-CompanyId")): 0;
+        this.companyHeaderId = request.getHeader("X-CompanyId") != null && !request.getHeader("X-CompanyId").isEmpty() ? Long.valueOf(request.getHeader("X-CompanyId")): 0;
 
         BookingKeyConstant constant = new BookingKeyConstant();
         this.completed = constant.COMPLETED;

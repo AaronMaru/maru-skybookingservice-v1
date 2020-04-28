@@ -1,13 +1,13 @@
 package com.skybooking.stakeholderservice.v1_0_0.service.implement.company;
 
+import com.skybooking.stakeholderservice.constant.BussinessConstant;
 import com.skybooking.stakeholderservice.exception.httpstatus.BadRequestException;
-import com.skybooking.stakeholderservice.v1_0_0.io.enitity.company.BussinessDocEntity;
-import com.skybooking.stakeholderservice.v1_0_0.io.enitity.company.BussinessTypeEntity;
-import com.skybooking.stakeholderservice.v1_0_0.io.enitity.company.StakeholderCompanyEntity;
+import com.skybooking.stakeholderservice.v1_0_0.io.enitity.company.*;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.contact.ContactEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserEntity;
-import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.BussinessDocRP;
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.BussinessTypeLocaleRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.BussinessTypeRP;
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyDocRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.contact.ContactRP;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.company.CompanySV;
@@ -17,7 +17,7 @@ import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.Bussin
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.BussinessTypeRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.CompanyRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
-import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
+import com.skybooking.stakeholderservice.v1_0_0.util.header.HeaderBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.skyowner.SkyownerBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.skyuser.UserBean;
 import org.springframework.beans.BeanUtils;
@@ -49,13 +49,16 @@ public class CompanyIP implements CompanySV {
     private BussinessTypeRP bussinessTypeRP;
 
     @Autowired
-    private BussinessDocRP bussinessDocRP;
+    private CompanyDocRP companyDocRP;
 
     @Autowired
     private ApiBean apiBean;
 
     @Autowired
-    private GeneralBean generalBean;
+    private BussinessTypeLocaleRP bussinessTypeLocaleRP;
+
+    @Autowired
+    private HeaderBean headerBean;
 
 
     /**
@@ -73,7 +76,7 @@ public class CompanyIP implements CompanySV {
         StakeholderCompanyEntity company = skyownerBean.findCompany(user, id);
 
         if (company.getStatus() == Integer.parseInt(environment.getProperty("spring.companyStatus.waiting"))) {
-            throw new BadRequestException("sth_w_w", "");
+            throw new BadRequestException("Can not update company detail, because you are in pending status", null);
         }
 
         statusCompanyVld(company, companyRQ);
@@ -93,7 +96,7 @@ public class CompanyIP implements CompanySV {
 
         }
 
-        if (bizType.get().getName().equals("Goverment")) {
+        if (bizType.get().getName().equals(BussinessConstant.GOVERMENT)) {
 
             if (companyRQ.getContactPerson() != null) {
                 company.setContactPerson(companyRQ.getContactPerson());
@@ -108,8 +111,12 @@ public class CompanyIP implements CompanySV {
         }
 
         if (companyRQ.getProfile() != null) {
-            String fileName = userBean.uploadFileForm(companyRQ.getProfile(), "/company_profiles/origin", "/company_profiles/_thumbnail");
+            String fileName = userBean.uploadFileForm(companyRQ.getProfile(), "/company_profiles/medium", "/company_profiles/_thumbnail");
             company.setProfileImg(fileName);
+        }
+
+        if (companyRQ.getPhotoItenary() != null) {
+            saveOrUpdatePhotoIteneray(company, companyRQ);
         }
 
         contactRP.saveAll(contacts);
@@ -124,7 +131,8 @@ public class CompanyIP implements CompanySV {
         return companyRS;
 
     }
-    
+
+
     public void setByFields(CompanyUpdateRQ companyRQ, StakeholderCompanyEntity company) {
 
         if (companyRQ.getBusinessName() != null && !companyRQ.getBusinessName().equals("")) {
@@ -149,7 +157,6 @@ public class CompanyIP implements CompanySV {
     public List<ContactEntity> updateContacts(StakeholderCompanyEntity company, CompanyUpdateRQ companyRQ) {
 
         List<ContactEntity> contacts = contactRP.getContactCM(company.getId());
-
         for (ContactEntity contact: contacts) {
             switch (contact.getType()) {
                 case "p" :
@@ -191,6 +198,27 @@ public class CompanyIP implements CompanySV {
     }
 
 
+    private void saveOrUpdatePhotoIteneray(StakeholderCompanyEntity company, CompanyUpdateRQ companyRQ) {
+
+        String fileName = userBean.uploadFileForm(companyRQ.getPhotoItenary(), "/company_profiles/origin", "/company_profiles/origin/_thumbnail");
+
+        var companyDocs = companyDocRP.findByStakeholderCompanyAndType(company, "itenery");
+        var companyDoc = new StakeholderCompanyDocsEntity();
+
+        if (companyDocs.size() > 0) {
+            companyDoc = companyDocs.get(0);
+        }
+
+        companyDoc.setFileName(fileName);
+        companyDoc.setType("itenery");
+        companyDoc.setIsRequired(0);
+        companyDoc.setStakeholderCompany(company);
+
+        companyDocRP.save(companyDoc);
+
+    }
+
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Update company contacts
@@ -202,13 +230,7 @@ public class CompanyIP implements CompanySV {
      */
     public void updateLicense(StakeholderCompanyEntity company, CompanyUpdateRQ companyRQ, Long useID) {
 
-        companyRQ.getLicenses().forEach((k, file) -> {
-            BussinessDocEntity existLc = bussinessDocRP.findFirstByName(k);
-            if (existLc == null) {
-                throw new BadRequestException("Your license is not correct ", "");
-            }
-            generalBean.errorMultipart(file);
-        });
+        skyownerBean.licenseValid(companyRQ.getBusinessTypeId(), companyRQ.getLicenses());
 
         SkyownerRegisterRQ skyownerRQ = new SkyownerRegisterRQ();
         BeanUtils.copyProperties(companyRQ, skyownerRQ);
@@ -222,20 +244,26 @@ public class CompanyIP implements CompanySV {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * Get bussiness type
+     * Get a listing of bussiness type
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @Param company
-     * @Param companyRQ
+     * @Param Company
+     * @Param CompanyRQ
      * @Return ContactEntity
      */
     public List<BussinessTypeRS> bussinessTypes() {
-        List<BussinessTypeEntity> businessTypes = bussinessTypeRP.findAllByStatus(1);
+        List<BussinessTypeEntity> businessTypes = bussinessTypeRP.findAllByStatusAndDeletedAtIsNull(1);
         List<BussinessTypeRS> bussinessTypesRS = new ArrayList<>();
 
         for (BussinessTypeEntity businessType : businessTypes) {
             BussinessTypeRS bussinessTypeRS = new BussinessTypeRS();
-            BeanUtils.copyProperties(businessType, bussinessTypeRS);
+
+            BussinessTypeLocaleEntity businessLocale = bussinessTypeLocaleRP.findByBusinessTypeIdAndLocaleId(businessType.getId(), headerBean.getLocalizationId());
+            if (businessLocale == null) {
+                businessLocale = bussinessTypeLocaleRP.findByBusinessTypeIdAndLocaleId(businessType.getId(), (long) 1);
+            }
+            BeanUtils.copyProperties(businessLocale, bussinessTypeRS);
+            bussinessTypeRS.setId(businessType.getId());
 
             bussinessTypesRS.add(bussinessTypeRS);
         }
@@ -256,7 +284,7 @@ public class CompanyIP implements CompanySV {
         Optional<BussinessTypeEntity> bussinessType = bussinessTypeRP.findById(id);
 
         if (bussinessType.isEmpty()) {
-            throw new BadRequestException("sth_w_w", "");
+            throw new BadRequestException("sth_w_w", null);
         }
 
         List<BussinessDocRS> BussinessDocsRS = new ArrayList<>();
@@ -271,10 +299,10 @@ public class CompanyIP implements CompanySV {
     }
 
 
-    public void statusCompanyVld(StakeholderCompanyEntity company, CompanyUpdateRQ companyRQ) {
+    private void statusCompanyVld(StakeholderCompanyEntity company, CompanyUpdateRQ companyRQ) {
         if (company.getStatus() == 1) {
             if (companyRQ.getBusinessTypeId() == null || companyRQ.getBusinessTypeId().equals("")) {
-                throw new BadRequestException("Please provide business type id", "");
+                throw new BadRequestException("Please provide business type id", null);
             }
         }
     }

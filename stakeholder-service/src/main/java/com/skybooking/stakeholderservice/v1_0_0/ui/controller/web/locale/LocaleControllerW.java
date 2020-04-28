@@ -17,13 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class LocaleControllerW {
 
     @Autowired
-    private HeaderBean headerBean;
-
-    @Autowired
     private LocaleSV localeSV;
 
     @Autowired
     private LocalizationBean localization;
+
 
 
     /**
@@ -35,7 +33,7 @@ public class LocaleControllerW {
      */
     @GetMapping("/language-module/{lang}")
     public ResRS getLanguageModuleByLocaleId(@PathVariable String lang) {
-        ModuleLanguageRS response = localeSV.findModuleLanguageByLocaleId(headerBean.getLocalizationId(lang));
+        ModuleLanguageRS response = localeSV.findModuleLanguageByLocaleId();
         return localization.resAPI(HttpStatus.OK, "res_succ", response.getRoot());
     }
 

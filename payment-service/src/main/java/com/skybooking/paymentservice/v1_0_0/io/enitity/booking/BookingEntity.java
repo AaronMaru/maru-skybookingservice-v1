@@ -157,4 +157,10 @@ public class BookingEntity {
     @Temporal(TemporalType.TIMESTAMP)
     private Date updatedAt;
 
+    @Column(name = "commission_amount")
+    private BigDecimal commissionAmount;
+
+    @Column(name = "commission_total_amount")
+    private BigDecimal commissionTotalAmount;
+
 }

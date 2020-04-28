@@ -19,8 +19,8 @@ import org.springframework.jms.support.converter.MessageType;
 @Configuration
 public class ActiveMQConfig {
 
-    public static final String EMAIL = "email";
-    public static final String SMS = "sms";
+    public static final String STAKE_HOLDER_EMAIL = "stake_holder_email";
+    public static final String STAKE_HOLDER_SMS = "stake_holder_sms";
 
     @Bean
     public MessageConverter messageConverter() {

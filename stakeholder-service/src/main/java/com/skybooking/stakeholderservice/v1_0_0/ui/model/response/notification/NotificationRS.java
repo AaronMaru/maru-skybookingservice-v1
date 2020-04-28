@@ -1,68 +1,24 @@
 package com.skybooking.stakeholderservice.v1_0_0.ui.model.response.notification;
 
+import lombok.Data;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+@Data
 public class NotificationRS {
 
     private Integer id;
-    private String urlKey = "";
+    private String bookingCode;
+    private String fullname;
+    private String photo;
+    private String notiType = "";
+    private String tripType;
     private String title = "";
     private String notiIcon = "";
-    private Integer readable;
-    private Integer status;
-    private String createdAt = "";
+    private Date createdAt;
 
-    public Integer getId() {
-        return id;
-    }
+    List<NotificationBookingRS> bookingLegs = new ArrayList<>();
 
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public String getUrlKey() {
-        return urlKey;
-    }
-
-    public void setUrlKey(String urlKey) {
-        this.urlKey = urlKey;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getNotiIcon() {
-        return notiIcon;
-    }
-
-    public void setNotiIcon(String notiIcon) {
-        this.notiIcon = notiIcon;
-    }
-
-    public Integer getReadable() {
-        return readable;
-    }
-
-    public void setReadable(Integer readable) {
-        this.readable = readable;
-    }
-
-    public Integer getStatus() {
-        return status;
-    }
-
-    public void setStatus(Integer status) {
-        this.status = status;
-    }
-
-    public String getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(String createdAt) {
-        this.createdAt = createdAt;
-    }
 }

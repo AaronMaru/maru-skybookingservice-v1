@@ -7,15 +7,18 @@ import javax.persistence.*;
 import java.util.Date;
 
 @Entity
-@Table(name = "user_playid")
+@Table(name = "user_player")
 public class UserPlayerEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "stuser_id")
-    private Long stuserId;
+    @Column(name = "stakeholder_user_id")
+    private Long stakeholderUserId;
+
+    @Column(name = "stakeholder_company_id")
+    private Long stakeholderCompanyId;
 
     @Column(name = "player_id")
     private String playerId;
@@ -40,12 +43,20 @@ public class UserPlayerEntity {
         this.id = id;
     }
 
-    public Long getStuserId() {
-        return stuserId;
+    public Long getStakeholderUserId() {
+        return stakeholderUserId;
     }
 
-    public void setStuserId(Long stuserId) {
-        this.stuserId = stuserId;
+    public void setStakeholderUserId(Long stakeholderUserId) {
+        this.stakeholderUserId = stakeholderUserId;
+    }
+
+    public Long getStakeholderCompanyId() {
+        return stakeholderCompanyId;
+    }
+
+    public void setStakeholderCompanyId(Long stakeholderCompanyId) {
+        this.stakeholderCompanyId = stakeholderCompanyId;
     }
 
     public String getPlayerId() {
@@ -79,6 +90,5 @@ public class UserPlayerEntity {
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
     }
-
 
 }

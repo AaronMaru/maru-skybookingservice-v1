@@ -1,19 +1,18 @@
 SELECT
 bod.id,
 (
-
-SELECT dep_seg.dep_location_code
-FROM booking_origin_destinations dep_seg
-WHERE dep_seg.parent_id = bod.id
-ORDER BY dep_seg.id ASC
-LIMIT 1
+    SELECT dep_seg.dep_location_code
+    FROM booking_origin_destinations dep_seg
+    WHERE dep_seg.parent_id = bod.id
+    ORDER BY dep_seg.id ASC
+    LIMIT 1
 ) AS depLocode,
 (
-SELECT arr_seg.arr_location_code
-FROM booking_origin_destinations arr_seg
-WHERE arr_seg.parent_id = bod.id
-ORDER BY arr_seg.id DESC
-LIMIT 1
+    SELECT arr_seg.arr_location_code
+    FROM booking_origin_destinations arr_seg
+    WHERE arr_seg.parent_id = bod.id
+    ORDER BY arr_seg.id DESC
+    LIMIT 1
 ) AS arrLocode
 FROM booking_origin_destinations AS bod
 WHERE bod.parent_id IS NULL

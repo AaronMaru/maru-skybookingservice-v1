@@ -1,11 +1,8 @@
 package com.skybooking.skyhistoryservice.v1_0_0.util.email;
 
-import com.github.jhonnymertz.wkhtmltopdf.wrapper.Pdf;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
-import freemarker.template.TemplateException;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
@@ -14,7 +11,6 @@ import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.MimeMessage;
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -26,84 +22,11 @@ import java.util.logging.Logger;
 
 public class SendingMailThroughAWSSESSMTPServer {
 
-
     private org.slf4j.Logger logger = LoggerFactory.getLogger(SendingMailThroughAWSSESSMTPServer.class);
 
     public static int noOfQuickServiceThreads = 20;
 
     private ScheduledExecutorService quickService = Executors.newScheduledThreadPool(noOfQuickServiceThreads);
-
-    /**
-     * -----------------------------------------------------------------------------------------------------------------
-     * Send mail throw amazon
-     * -----------------------------------------------------------------------------------------------------------------
-     *
-     * @Param smtpServerHost
-     * @Param smtpServerPort
-     * @Param smtpUserName
-     * @Param smtpUserPassword
-     * @Param fromUserEmail
-     * @Param fromUserFullName
-     * @Param toEmail
-     * @Param subject
-     * @Param body
-     */
-    public void sendMail(Configuration configuration, Map<String, String> mailProperty,
-                         Map<String, Object> mailTemplateData, Map<String, Object> pdfData) {
-
-        try {
-
-            Session session = getConfig();
-
-            MimeMessage message = new MimeMessage(session);
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
-
-            Template template = configuration.getTemplate("index.ftl");
-            String html = FreeMarkerTemplateUtils.processTemplateIntoString(template, mailTemplateData);
-
-            if (mailTemplateData.containsKey("fullName")) {
-                html = this.replaceCode(html, "{{FULL_NAME}}", mailTemplateData.get("fullName").toString());
-            }
-
-            if (pdfData != null) {
-                quickService.submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            File file = pdfMultiLang(configuration, pdfData);
-                            helper.addAttachment(file.getName(), file);
-                            ;
-                        } catch (Exception e) {
-                            logger.error("Exception occur while send a mail : ", e);
-                        }
-                    }
-                });
-            }
-
-            helper.setTo(mailProperty.get("TO"));
-            helper.setText(html, true);
-            helper.setSubject(mailProperty.get("SUBJECT"));
-            helper.setFrom(mailProperty.get("FROM_USER_EMAIL"));
-
-            Transport transport = session.getTransport();
-            transport.connect(mailProperty.get("SMTP_SERVER_HOST"), mailProperty.get("SMTP_USER_NAME"),
-                    mailProperty.get("SMTP_USER_PASSWORD"));
-
-            quickService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        transport.sendMessage(message, message.getAllRecipients());
-                    } catch (Exception e) {
-                        logger.error("Exception occur while send a mail : ", e);
-                    }
-                }
-            });
-
-        } catch (Exception ex) {
-            Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, ex.getMessage(), ex);
-        }
-    }
 
 
     /**
@@ -138,26 +61,6 @@ public class SendingMailThroughAWSSESSMTPServer {
         return html.replace(target, code);
     }
 
-    public File pdfMultiLang(Configuration configuration, Map<String, Object> pdfData) throws IOException, InterruptedException {
-
-        Pdf pdf = new Pdf();
-
-        ClassPathResource resource = new ClassPathResource(pdfData.get("templateName") + ".pdf");
-        File file = new File(resource.getPath());
-
-        try {
-            Template template = configuration.getTemplate("pdf/" + pdfData.get("templateName") + ".ftl");
-            String htmlTemplate = FreeMarkerTemplateUtils.processTemplateIntoString(template, pdfData);
-
-            pdf.addPageFromString(htmlTemplate);
-            pdf.saveAs(pdfData.get("templateName") + ".pdf");
-        } catch (TemplateException e) {
-            e.printStackTrace();
-        }
-
-        return file;
-    }
-
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Send mail throw amazon
@@ -173,8 +76,8 @@ public class SendingMailThroughAWSSESSMTPServer {
      * @Param subject
      * @Param body
      */
-    public void sendReceiptAndItinerary(Configuration configuration, Map<String, String> mailProperty,
-                                        Map<String, Object> mailTemplateData, Map<String, Object> pdfData) {
+    public void sendEmail(Configuration configuration, Map<String, String> mailProperty,
+                          Map<String, Object> mailTemplateData, Map<String, Object> pdfData, List<File> fileList) {
 
         try {
 
@@ -194,23 +97,13 @@ public class SendingMailThroughAWSSESSMTPServer {
                 quickService.submit(new Runnable() {
                     @Override
                     public void run() {
-                        try {
-                            List<String> sendData = (List<String>) pdfData.get("sendData");
-                            sendData.forEach(item -> {
-                                try {
-                                    File receipt = pdfReceiptItinerary(configuration, pdfData, item);
-                                    helper.addAttachment(receipt.getName(), receipt);
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                } catch (MessagingException e) {
-                                    e.printStackTrace();
-                                }
-                            });
-                        } catch (Exception e) {
-                            logger.error("Exception occur while send a mail : ", e);
-                        }
+                        fileList.forEach(file -> {
+                            try {
+                                helper.addAttachment(file.getName(), file);
+                            } catch (MessagingException e) {
+                                e.printStackTrace();
+                            }
+                        });
                     }
                 });
             }
@@ -222,13 +115,14 @@ public class SendingMailThroughAWSSESSMTPServer {
 
             Transport transport = session.getTransport();
             transport.connect(mailProperty.get("SMTP_SERVER_HOST"), mailProperty.get("SMTP_USER_NAME"),
-                    mailProperty.get("SMTP_USER_PASSWORD"));
+                mailProperty.get("SMTP_USER_PASSWORD"));
 
             quickService.submit(new Runnable() {
                 @Override
                 public void run() {
                     try {
                         transport.sendMessage(message, message.getAllRecipients());
+                        fileList.forEach(file -> file.delete());
                     } catch (Exception e) {
                         logger.error("Exception occur while send a mail : ", e);
                     }
@@ -240,28 +134,4 @@ public class SendingMailThroughAWSSESSMTPServer {
         }
     }
 
-    public File pdfReceiptItinerary(Configuration configuration, Map<String, Object> pdfData, String keyword) throws IOException, InterruptedException {
-        Map<String, Object> receiptMap = (Map<String, Object>) pdfData.get("label_" + keyword);
-        receiptMap.put("data", pdfData.get("data_" + keyword));
-
-        if (keyword.equals("itinerary")) {
-            receiptMap.put("logoPdf", pdfData.get("logoPdf"));
-        }
-        Pdf pdf = new Pdf();
-
-        ClassPathResource resource = new ClassPathResource(receiptMap.get("templateName") + ".pdf");
-        File file = new File(resource.getPath());
-
-        try {
-            Template template = configuration.getTemplate("pdf/" + receiptMap.get("templateName") + ".ftl");
-            String htmlTemplate = FreeMarkerTemplateUtils.processTemplateIntoString(template, receiptMap);
-
-            pdf.addPageFromString(htmlTemplate);
-            pdf.saveAs(receiptMap.get("templateName") + ".pdf");
-        } catch (TemplateException e) {
-            e.printStackTrace();
-        }
-
-        return file;
-    }
 }

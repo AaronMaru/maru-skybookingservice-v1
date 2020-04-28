@@ -22,7 +22,6 @@ public class BookingRS {
     private String cabinName;
     private String cabinCode;
     private BigDecimal totalAmount;
-    private BigDecimal disPayment;
     private String bookDate;
     private String currencyCode;
     private String contName;

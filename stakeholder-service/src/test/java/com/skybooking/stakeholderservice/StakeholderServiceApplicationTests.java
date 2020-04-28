@@ -36,7 +36,6 @@ public class StakeholderServiceApplicationTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("message", is("Successfully sending")))
                 .andExpect(jsonPath("data", is(""))).andReturn();
-        System.out.println(mvcResult);
     }
 
     @Test

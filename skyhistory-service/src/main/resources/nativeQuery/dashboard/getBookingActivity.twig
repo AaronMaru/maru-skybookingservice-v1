@@ -5,7 +5,33 @@ su.userName,
 IFNULL(su.profileImg, 'default.png') AS userProfile,
 b.booking_type AS bookingType,
 al.description,
-al.created_at AS createdAt
+al.created_at AS createdAt,
+UPPER(b.trip_type) AS tripType,
+CASE WHEN b.`status` = 11 THEN
+		    CASE WHEN
+                (
+                    SELECT COUNT(bod.id) FROM booking_origin_destinations AS bod
+                    WHERE bod.booking_id = b.id
+                    AND bod.parent_id IS NOT NULL
+                    AND DATE(
+                        -- Flight depature datetime and convert to UTC
+                        CONVERT_TZ(bod.dep_date, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
+                        ) >= DATE(
+                            -- User locale current time zone and convert to UTC
+                            CONVERT_TZ(CURRENT_TIMESTAMP, CONCAT( CASE WHEN bod.dep_timezone >= 0 THEN CONCAT('+', bod.dep_timezone,':00') ELSE CONCAT(bod.dep_timezone,':00') END ), '+00:00')
+                        )
+                    ORDER BY bod.id DESC
+                    LIMIT 1
+                ) > 0
+            THEN
+                :UPCOMING
+            ELSE
+                :COMPLETED
+            END
+    	WHEN b.`status` = 3 THEN :CANCELLED
+    	WHEN b.`status` IN (1, 10, 12, 4) THEN  :FAILED
+
+END AS `statusKey`
 
 FROM bookings b
 
@@ -34,25 +60,24 @@ INNER JOIN
 WHERE b.`status` IN (11, 10)
 
 -- CHECK USERS
-AND CASE WHEN 'skyuser' = :stake
-    THEN
-        (b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id IS NULL)
+AND CASE WHEN :stake = 'skyuser' THEN (b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id IS NULL)
+
     ELSE
         -- Condition for Skyowner
-        CASE WHEN :userRole = 'admin'
-            THEN
-                b.stakeholder_company_id = :companyId
+        CASE WHEN ( :userRole = 'ADMIN' AND :skystaffId = 0 ) THEN b.stakeholder_company_id = :companyId
+
+            WHEN ( :userRole = 'ADMIN' AND :skystaffId > 0 ) THEN ( b.stakeholder_user_id = :skystaffId AND b.stakeholder_company_id = :companyId )
+
             ELSE
                 b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id = :companyId
             END
     END
 
 AND CASE WHEN 'range' = :filter THEN DATE(b.created_at) >= :startDate AND DATE(b.created_at) <= :endDate
-        WHEN 'daily' = :filter THEN DATE(b.created_at) = CURRENT_TIMESTAMP
-        WHEN 'weekly' = :filter THEN YEARWEEK(DATE(b.created_at)) = YEARWEEK(CURRENT_TIMESTAMP)
-        WHEN 'monthly' = :filter THEN MONTH(b.created_at) = MONTH( CURRENT_TIMESTAMP )
-        ELSE YEAR(b.created_at) = YEAR( CURRENT_TIMESTAMP )
+        WHEN 'daily' = :filter THEN DATE(b.created_at) = CURDATE()
+        WHEN 'weekly' = :filter THEN YEARWEEK(DATE(b.created_at)) = YEARWEEK(CURDATE())
+        WHEN 'monthly' = :filter THEN MONTH(b.created_at) = MONTH( CURDATE() )
+        ELSE YEAR(b.created_at) = YEAR( CURDATE() )
         END
 
-ORDER BY createdAt DESC
-LIMIT :take
+ORDER BY al.created_at DESC

@@ -34,7 +34,7 @@ public class PassengerAction {
 
         return webClient
                 .post()
-                .uri(appConfig.getSTAKEHOLDER_URI() + appConfig.getSTAKEHOLDER_VERSION() + "/passenger")
+                .uri(appConfig.getSTAKEHOLDER_URI() + appConfig.getSTAKEHOLDER_COMMON_VERSION() + "/passenger")
                 .header(HttpHeaders.AUTHORIZATION, authUtility.getAuthToken())
             .bodyValue(passengerSRQ)
                 .retrieve()

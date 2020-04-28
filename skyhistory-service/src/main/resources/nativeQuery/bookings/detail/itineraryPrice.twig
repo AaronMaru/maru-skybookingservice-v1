@@ -1,22 +1,9 @@
 SELECT
 	UPPER(bti.pass_type) AS passType,
 	bti.pass_qty AS passQty,
-	(
-	    (
-	        b.mPayPercent * ( ( b.mPercent * bti.base_fare) + bti.base_fare )
-	    ) + (
-	        ( b.mPercent * bti.base_fare) + bti.base_fare
-	    )
-	) AS baseFare,
-	(
-	    (
-	         b.mPayPercent * (( b.mPercent * bti.total_tax) + bti.total_tax )
-	    ) + (
-	        ( b.mPercent * bti.total_tax) + bti.total_tax
-	    )
-	) AS totalTax,
-
-	(( b.mPercent * bti.total_amount) + bti.total_amount ) AS totalAmount,
+	ROUND( ( b.mPayPercent * ( ( b.mPercent * bti.base_fare) + bti.base_fare ) ) + ( ( b.mPercent * bti.base_fare) + bti.base_fare ) , 2) AS baseFare,
+	ROUND( (b.mPayPercent * (( b.mPercent * bti.total_tax) + bti.total_tax )) + ( ( b.mPercent * bti.total_tax) + bti.total_tax ), 2) AS totalTax,
+	ROUND( (b.mPayPercent * (( b.mPercent * bti.total_amount) + bti.total_amount )) + ( ( b.mPercent * bti.total_amount) + bti.total_amount ), 2) AS totalAmount,
 	bti.currency_code AS currencyCode,
 	bti.non_refundable_ind AS nonRefund
 

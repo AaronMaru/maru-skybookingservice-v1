@@ -1,16 +1,15 @@
 package com.skybooking.skyhistoryservice.v1_0_0.io.nativeQuery.booking.detail;
 
-import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.booking.detail.BookingStopInfoRS;
 import lombok.Data;
 
-import java.util.ArrayList;
+import java.math.BigDecimal;
 import java.util.Date;
-import java.util.List;
 
 @Data
 public class ItineraryODSegmentTO {
 
     private Integer id;
+    private Integer elapsedTime;
     private String airlineCode;
     private String airlineName;
     private String airlineLogo;
@@ -26,13 +25,22 @@ public class ItineraryODSegmentTO {
     private Integer adjustmentDate;
 
     private String departureLocationCode;
-    private String departureLocationName;
+    private String departureAirportName;
+    private String departureCity;
+    private String departureCountry;
+    private BigDecimal departureLatitude;
+    private BigDecimal departureLongitude;
     private String departureTerminal;
     private Date departureDate;
 
     private String arrivalLocationCode;
-    private String arrivalLocationName;
+    private String arrivalAirportName;
+    private BigDecimal arrivalLatitude;
+    private BigDecimal arrivalLongitude;
+    private String arrivalCity;
+    private String arrivalCountry;
     private String arrivalTerminal;
     private Date arrivalDate;
+    private String status;
 
 }

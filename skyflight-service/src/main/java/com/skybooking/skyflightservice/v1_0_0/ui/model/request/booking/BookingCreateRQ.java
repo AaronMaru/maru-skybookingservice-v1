@@ -1,5 +1,6 @@
 package com.skybooking.skyflightservice.v1_0_0.ui.model.request.booking;
 
+import com.skybooking.skyflightservice.exception.anotation.ShoppingCached;
 import lombok.Data;
 
 import javax.validation.Valid;
@@ -11,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
+@ShoppingCached
 public class BookingCreateRQ {
 
     @NotBlank(message = "The request ID is required.")
@@ -19,10 +21,6 @@ public class BookingCreateRQ {
     @NotEmpty(message = "The legs ID is required.")
     @Size(min = 1, message = "The legs ID is required.")
     private String[] legIds;
-
-//    @NotNull(message = "The flight's booking companyConstant information is required.")
-//    @Valid
-//    private BookingCompanyRQ companyConstant;
 
     @NotNull(message = "The flight's person contact information is required.")
     @Valid
