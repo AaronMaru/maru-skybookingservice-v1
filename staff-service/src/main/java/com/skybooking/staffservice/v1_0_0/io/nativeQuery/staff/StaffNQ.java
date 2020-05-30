@@ -15,7 +15,11 @@ public interface StaffNQ extends NativeQuery {
 
     List<SkyuserSearchTO> listSkyuserByEmailOrPhone(@NativeQueryParam(value = "keyword") String keyword);
 
-    List<PendingStaffEmailTO> listPendingEmailStaff(@NativeQueryParam(value = "companyId") Long companyId);
+    List<PendingStaffEmailTO> listPendingEmailStaff(@NativeQueryParam(value = "companyId") Long companyId,
+                                                    @NativeQueryParam(value = "keyword") String keyword,
+                                                    @NativeQueryParam(value = "startDate") String startDate,
+                                                    @NativeQueryParam(value = "endDate") String endDate,
+                                                    @NativeQueryParam(value = "action") String action);
 
     Page<StaffTO> listStaff(@NativeQueryParam(value = "companyId") Long companyId,
                             @NativeQueryParam(value = "keyword") String keyword,

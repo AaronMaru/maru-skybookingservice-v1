@@ -18,4 +18,5 @@ public class BadRequestException extends RuntimeException {
     public Object getData() {
         return data;
     }
+
 }

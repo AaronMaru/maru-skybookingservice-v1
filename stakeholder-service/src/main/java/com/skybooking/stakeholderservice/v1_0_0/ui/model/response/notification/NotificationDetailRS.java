@@ -17,5 +17,6 @@ public class NotificationDetailRS {
     private String description;
     private String notiIcon = "";
     private Date createdAt;
+    private String subject;
 
 }

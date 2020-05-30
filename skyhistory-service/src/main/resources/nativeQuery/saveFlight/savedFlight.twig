@@ -1,7 +1,7 @@
 SELECT
 	fsave.id,
 	fsave.trip_type AS tripType,
-	fsave.class_name AS className,
+	fsave.class_code AS className,
 	fsave.adult,
 	fsave.child,
 	fsave.infant,
@@ -14,34 +14,31 @@ SELECT
 FROM flight_saves AS fsave
 WHERE fsave.user_id = :skyuserId
 AND fsave.status = 0
-AND IF(:action = "search",
-			fsave.trip_type LIKE '%' :keyword '%'
+AND CASE WHEN :action = 'search' THEN
+        (
+        	fsave.trip_type LIKE '%' :keyword '%'
 			OR fsave.class_name LIKE '%' :keyword '%'
 			OR (
-					SELECT COUNT(fsaveOD.id)
-					FROM flight_save_origin_destinations fsaveOD
-					WHERE fsaveOD.airline_name LIKE '%' :keyword '%'
-					OR fsaveOD.o_location LIKE '%' :keyword '%'
-					OR fsaveOD.d_location LIKE '%' :keyword '%'
-					OR fsaveOD.o_location_name LIKE '%' :keyword '%'
-					OR fsaveOD.d_location_name LIKE '%' :keyword '%'
-				) > 0
-		 , fsave.status = 0)
+                SELECT COUNT(fsaveOD.id)
+                FROM flight_save_origin_destinations fsaveOD
+                WHERE fsaveOD.flight_save_id = fsave.id
+                AND ( fsaveOD.airline_name LIKE '%' :keyword '%'
+                OR fsaveOD.o_location LIKE '%' :keyword '%'
+                OR fsaveOD.d_location LIKE '%' :keyword '%'
+                OR fsaveOD.o_location_name LIKE '%' :keyword '%'
+                OR fsaveOD.d_location_name LIKE '%' :keyword '%')
+            ) > 0
+        )
+    ELSE
+        fsave.status = 0
+    END
 
-AND IF(:stake = 'skyuser',
-
-			-- IF TRUE
-			(fsave.user_id = :skyuserId AND fsave.company_id = 0)
-			,
-
-			-- IF FALSE
-			-- Condition for Skyowner
-			IF(:role = 'admin',
-					fsave.company_id = :companyId
-				,
-				   	fsave.user_id = :skyuserId AND fsave.company_id = :companyId
-			)
-
-		) -- The end of if
+AND CASE WHEN 'skyuser' = :stake
+    THEN
+        (fsave.user_id = :skyuserId AND fsave.company_id = 0)
+    ELSE
+        -- For Skyowner
+        fsave.company_id = :companyId
+    END
 
 ORDER BY fsave.id DESC

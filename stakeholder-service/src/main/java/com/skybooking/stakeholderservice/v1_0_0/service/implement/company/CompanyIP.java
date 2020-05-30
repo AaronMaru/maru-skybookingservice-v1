@@ -5,10 +5,7 @@ import com.skybooking.stakeholderservice.exception.httpstatus.BadRequestExceptio
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.company.*;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.contact.ContactEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserEntity;
-import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.BussinessTypeLocaleRP;
-import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.BussinessTypeRP;
-import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyDocRP;
-import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyRP;
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.*;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.contact.ContactRP;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.company.CompanySV;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company.CompanyUpdateRQ;
@@ -24,7 +21,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
-
 import java.util.*;
 
 @Service
@@ -52,6 +48,9 @@ public class CompanyIP implements CompanySV {
     private CompanyDocRP companyDocRP;
 
     @Autowired
+    private BussinessDocLocaleRP bussinessDocLocaleRP;
+
+    @Autowired
     private ApiBean apiBean;
 
     @Autowired
@@ -76,7 +75,7 @@ public class CompanyIP implements CompanySV {
         StakeholderCompanyEntity company = skyownerBean.findCompany(user, id);
 
         if (company.getStatus() == Integer.parseInt(environment.getProperty("spring.companyStatus.waiting"))) {
-            throw new BadRequestException("Can not update company detail, because you are in pending status", null);
+            throw new BadRequestException("cmp_pending", null);
         }
 
         statusCompanyVld(company, companyRQ);
@@ -228,7 +227,7 @@ public class CompanyIP implements CompanySV {
      * @Param companyRQ
      * @Return ContactEntity
      */
-    public void updateLicense(StakeholderCompanyEntity company, CompanyUpdateRQ companyRQ, Long useID) {
+    public void updateLicense(StakeholderCompanyEntity company, CompanyUpdateRQ companyRQ, Long userID) {
 
         skyownerBean.licenseValid(companyRQ.getBusinessTypeId(), companyRQ.getLicenses());
 
@@ -237,7 +236,7 @@ public class CompanyIP implements CompanySV {
         skyownerBean.storeCompanyDocs(company, skyownerRQ, "update");
 
         company.setStatus(Integer.parseInt(environment.getProperty("spring.companyStatus.waiting")));
-        skyownerBean.storeCompanyStatus(company.getId(), useID, 0, "Waiting admin approve");
+        skyownerBean.storeCompanyStatus(company.getId(), userID, 0, "Waiting admin approve");
 
     }
 
@@ -262,6 +261,7 @@ public class CompanyIP implements CompanySV {
             if (businessLocale == null) {
                 businessLocale = bussinessTypeLocaleRP.findByBusinessTypeIdAndLocaleId(businessType.getId(), (long) 1);
             }
+
             BeanUtils.copyProperties(businessLocale, bussinessTypeRS);
             bussinessTypeRS.setId(businessType.getId());
 
@@ -290,7 +290,16 @@ public class CompanyIP implements CompanySV {
         List<BussinessDocRS> BussinessDocsRS = new ArrayList<>();
         for (BussinessDocEntity doc : bussinessType.get().getBussinessDocs()) {
             BussinessDocRS bussinessDocRS = new BussinessDocRS();
-            BeanUtils.copyProperties(doc, bussinessDocRS);
+
+            BussinessDocLocaleEntity bussinessDocLocale = bussinessDocLocaleRP.findByBusinessDocIdAndLocaleId(doc.getId(), headerBean.getLocalizationId());
+            if (bussinessDocLocale == null) {
+                bussinessDocLocale = bussinessDocLocaleRP.findByBusinessDocIdAndLocaleId(doc.getId(), (long) 1);
+            }
+            bussinessDocRS.setIsRequired(doc.getIsRequired());
+            bussinessDocRS.setId(doc.getId());
+            if (bussinessDocLocale != null) {
+                bussinessDocRS.setName(bussinessDocLocale.getName());
+            }
 
             BussinessDocsRS.add(bussinessDocRS);
         }
@@ -302,7 +311,7 @@ public class CompanyIP implements CompanySV {
     private void statusCompanyVld(StakeholderCompanyEntity company, CompanyUpdateRQ companyRQ) {
         if (company.getStatus() == 1) {
             if (companyRQ.getBusinessTypeId() == null || companyRQ.getBusinessTypeId().equals("")) {
-                throw new BadRequestException("Please provide business type id", null);
+                throw new BadRequestException("biz_type_vld", null);
             }
         }
     }

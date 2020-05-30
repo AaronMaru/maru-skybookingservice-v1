@@ -31,6 +31,7 @@ public class FilterRQ {
     private String upcoming;
     private String cancelled;
     private String failed;
+    private String pending;
     private String oneway;
     private String round;
     private String multicity;
@@ -54,14 +55,14 @@ public class FilterRQ {
         this.size = request.getParameter("size") != null && !request.getParameter("size").isEmpty() ? Integer.valueOf(request.getParameter("size")) : 10;
         this.companyHeaderId = request.getHeader("X-CompanyId") != null && !request.getHeader("X-CompanyId").isEmpty() ? Long.valueOf(request.getHeader("X-CompanyId")): 0;
 
-        BookingKeyConstant constant = new BookingKeyConstant();
-        this.completed = constant.COMPLETED;
-        this.upcoming = constant.UPCOMING;
-        this.cancelled = constant.CANCELLED;
-        this.failed = constant.FAILED;
-        this.oneway = constant.ONEWAY;
-        this.round = constant.ROUND;
-        this.multicity = constant.MULTICITY;
+        this.completed = BookingKeyConstant.COMPLETED;
+        this.upcoming = BookingKeyConstant.UPCOMING;
+        this.cancelled = BookingKeyConstant.CANCELLED;
+        this.failed = BookingKeyConstant.FAILED;
+        this.pending = BookingKeyConstant.PENDING;
+        this.oneway = BookingKeyConstant.ONEWAY;
+        this.round = BookingKeyConstant.ROUND;
+        this.multicity = BookingKeyConstant.MULTICITY;
 
         this.role = userToken.getUserRole().toUpperCase();
         this.skyuserId = userToken.getStakeholderId();

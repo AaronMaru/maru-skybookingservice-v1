@@ -38,8 +38,8 @@ public class InvitationControllerW {
      */
     @GetMapping("/find-skyuser")
     public ResRS findSkyUser() {
-        List<SkyuserDetailsRS> skyUsers =  invitationSV.findSkyUsers();
-        return localization.resAPI(HttpStatus.OK,"res_succ", skyUsers);
+        List<SkyuserDetailsRS> skyUsers = invitationSV.findSkyUsers();
+        return localization.resAPI(HttpStatus.OK, "res_succ", skyUsers);
     }
 
 
@@ -53,7 +53,7 @@ public class InvitationControllerW {
     @PostMapping("/invite-skyuser")
     public ResRS inviteSkyUser(@Valid @RequestBody SkyuserIdStaffRQ inviteRQ) {
         invitationSV.inviteSkyUser(inviteRQ);
-        return localization.resAPI(HttpStatus.OK,"inv_succ", "");
+        return localization.resAPI(HttpStatus.OK, "inv_succ", "");
     }
 
 
@@ -67,7 +67,7 @@ public class InvitationControllerW {
     @PostMapping("/invite-skyuser-no-acc")
     public ResRS inviteSkyUserNoAcc(@Valid @RequestBody InviteStaffNoAccRQ inviteStaffNoAccRQ) throws UnsupportedEncodingException {
         invitationSV.inviteSkyUserNotExistsAcc(inviteStaffNoAccRQ);
-        return localization.resAPI(HttpStatus.OK,"inv_succ", "");
+        return localization.resAPI(HttpStatus.OK, "inv_succ", "");
     }
 
 
@@ -81,7 +81,7 @@ public class InvitationControllerW {
     @GetMapping("/list-pending-email")
     public ResRS getPendingEmail() {
         List<PendingEmailStaffRS> emails = invitationSV.getPendingEmail();
-        return localization.resAPI(HttpStatus.OK,"res_succ", emails);
+        return localization.resAPI(HttpStatus.OK, "res_succ", emails);
     }
 
 
@@ -96,7 +96,7 @@ public class InvitationControllerW {
     @DeleteMapping("/list-pending-email/{id}")
     public ResRS deletePendingEmail(@PathVariable Integer id) {
         invitationSV.removePendingEmail(id);
-        return localization.resAPI(HttpStatus.OK,"del_succ", "");
+        return localization.resAPI(HttpStatus.OK, "del_succ", "");
     }
 
 
@@ -111,7 +111,7 @@ public class InvitationControllerW {
     @PostMapping("/list-pending-email/resend")
     public ResRS resendPendingEmail(@RequestBody ResendPendingEmailRQ resendPendingEmailRQ) throws UnsupportedEncodingException {
         invitationSV.resendPendingEmail(resendPendingEmailRQ);
-        return localization.resAPI(HttpStatus.OK,"sent_succ", "");
+        return localization.resAPI(HttpStatus.OK, "sent_succ", "");
     }
 
     /**
@@ -124,8 +124,8 @@ public class InvitationControllerW {
      */
     @PostMapping("/utils/invitation/expire")
     public ResRS checkExpire(@RequestBody InvitationExpireRQ invitationExpireRQ) throws UnsupportedEncodingException {
-        HashMap<String, Boolean> isExpire = invitationSV.checkExpired(invitationExpireRQ);
-        return localization.resAPI(HttpStatus.OK,"res_succ", isExpire);
+        HashMap<String, Object> isExpire = invitationSV.checkExpired(invitationExpireRQ);
+        return localization.resAPI(HttpStatus.OK, "res_succ", isExpire);
     }
 
 }

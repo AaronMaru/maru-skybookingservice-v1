@@ -70,7 +70,7 @@ public class CareerIP implements CareerSV {
         var career = careerRP.findByIdAndStatus(id, 1);
 
         if (career.isEmpty()) {
-            throw new NotFoundException("This url not found", null);
+            throw new NotFoundException("url_not_found", null);
         }
 
         CareersDetailRS careersDetailRS = new CareersDetailRS();

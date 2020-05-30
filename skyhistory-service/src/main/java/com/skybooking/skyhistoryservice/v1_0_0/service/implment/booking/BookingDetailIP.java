@@ -78,7 +78,6 @@ public class BookingDetailIP implements BookingDetailSV {
             }
         }
 
-        BookingKeyConstant constant = new BookingKeyConstant();
         BookingDetailTO bookingDetailTO = bookingDetailNQ.bookingDetail(
                 userType,
                 bookingCode,
@@ -86,18 +85,19 @@ public class BookingDetailIP implements BookingDetailSV {
                 companyId,
                 role,
                 headerBean.getLocalizationId(),
-                constant.COMPLETED,
-                constant.UPCOMING,
-                constant.CANCELLED,
-                constant.FAILED,
-                constant.ONEWAY,
-                constant.ROUND,
-                constant.MULTICITY,
+                BookingKeyConstant.COMPLETED,
+                BookingKeyConstant.UPCOMING,
+                BookingKeyConstant.CANCELLED,
+                BookingKeyConstant.FAILED,
+                BookingKeyConstant.PENDING,
+                BookingKeyConstant.ONEWAY,
+                BookingKeyConstant.ROUND,
+                BookingKeyConstant.MULTICITY,
                 environment.getProperty("spring.awsImageUrl.profile.url_small")
         );
 
         if (bookingDetailTO == null)
-            throw new NotFoundException("This url not found", null);
+            throw new NotFoundException("url_not_found", null);
 
         /**
          * Get Baggage Information

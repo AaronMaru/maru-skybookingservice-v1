@@ -45,9 +45,6 @@ public class UserControllerW {
     @Autowired
     private GeneralBean generalBean;
 
-    @Autowired
-    private HttpServletRequest request;
-
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -91,7 +88,7 @@ public class UserControllerW {
     @PatchMapping("/change-password")
     public ResRS changPassword(@Valid @RequestBody ChangePasswordRQ passwordRQ) {
         userSV.changePassword(passwordRQ);
-        return localization.resAPI(HttpStatus.OK,"ch_pwd_succ", "");
+        return localization.resAPI(HttpStatus.OK,"ch_pwd_succ", null);
     }
 
 
@@ -201,6 +198,19 @@ public class UserControllerW {
     public ResRS optionInv(@Valid @RequestBody OptionStaffRQ optionRQ) {
         userSV.options(optionRQ);
         return localization.resAPI(HttpStatus.OK,"res_succ", null);
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Change Language
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param optionStaffRQ;
+     */
+    @PatchMapping("/change-language")
+    public ResRS changeLanguage(@Valid @RequestBody ChangeLanguageRQ changeLanguageRQ) {
+        userSV.changeLanguage(changeLanguageRQ);
+        return localization.resAPI(HttpStatus.OK,"update_succ", null);
     }
 
 }

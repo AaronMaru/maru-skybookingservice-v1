@@ -2,6 +2,7 @@ package com.skybooking.stakeholderservice.config;
 
 import com.skybooking.stakeholderservice.security.CustomAccessTokenConverter;
 import com.skybooking.stakeholderservice.security.CustomJWTEnhancer;
+import com.skybooking.stakeholderservice.v1_0_0.service.implement.login.UserDetailsIP;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -38,6 +39,9 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     @Autowired
     Environment environment;
 
+    @Autowired
+    private UserDetailsIP userDetailsIP;
+
 
     @Bean
     @Qualifier("jwtAccessTokenConverter")
@@ -73,7 +77,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
                 .tokenStore(tokenStore())
                 .accessTokenConverter(accessTokenConverter())
                 .tokenEnhancer(enhancerChain)
-                .authenticationManager(authenticationManager);
+                .authenticationManager(authenticationManager).userDetailsService(userDetailsIP);
     }
 
     @Bean
@@ -88,5 +92,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     public void configure(AuthorizationServerSecurityConfigurer oauthServer) throws Exception {
         oauthServer.checkTokenAccess("permitAll()");
     }
+
+
 
 }

@@ -11,6 +11,6 @@ public class PagesRS {
     private String metaDescription;
     private String metaKeyword;
     private String code;
-    private String awsUrl = "https://skybooking.s3.amazonaws.com/cms/frontend_page/";
+    private String awsUrl;
 
 }

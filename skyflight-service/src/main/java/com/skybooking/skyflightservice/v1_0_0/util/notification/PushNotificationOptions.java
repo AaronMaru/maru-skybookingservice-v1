@@ -1,21 +1,23 @@
 package com.skybooking.skyflightservice.v1_0_0.util.notification;
 
+import com.skybooking.skyflightservice.v1_0_0.client.onesignal.action.NotificationAction;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.booking.BookingEntity;
+import com.skybooking.skyflightservice.v1_0_0.io.entity.locale.LocaleEntity;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.notification.NotificationEntity;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.notification.NotificationNQ;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.notification.ScriptingTO;
 import com.skybooking.skyflightservice.v1_0_0.io.repository.booking.BookingRP;
+import com.skybooking.skyflightservice.v1_0_0.io.repository.locale.LocaleRP;
 import com.skybooking.skyflightservice.v1_0_0.io.repository.notification.NotificationRP;
+import com.skybooking.skyflightservice.v1_0_0.io.repository.redis.BookingLanguageRedisRP;
 import com.skybooking.skyflightservice.v1_0_0.util.JwtUtils;
-import com.skybooking.skyflightservice.v1_0_0.util.header.HeaderBean;
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.http.HttpServletRequest;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.util.List;
 
 @Component
 public class PushNotificationOptions {
@@ -27,12 +29,6 @@ public class PushNotificationOptions {
     private NotificationNQ notificationNQ;
 
     @Autowired
-    private HttpServletRequest request;
-
-    @Autowired
-    private HeaderBean headerBean;
-
-    @Autowired
     private NotificationRP notificationRP;
 
     @Autowired
@@ -41,59 +37,60 @@ public class PushNotificationOptions {
     @Autowired
     private BookingRP bookingRP;
 
-    public void sendMessageToUsers(String scriptKey, Integer subjectId, Long skyuserId) {
+    @Autowired
+    private BookingLanguageRedisRP bookingLanguageRedisRP;
 
-        try {
+    @Autowired
+    private LocaleRP localeRP;
 
-            URL url = new URL("https://onesignal.com/api/v1/notifications");
-            HttpURLConnection con = (HttpURLConnection)url.openConnection();
-            con.setUseCaches(false);
-            con.setDoOutput(true);
-            con.setDoInput(true);
+    @Autowired
+    private NotificationAction notificationAction;
 
-            con.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-            con.setRequestMethod("POST");
+    public void sendMessageToUsers(String scriptKey, Integer bookingId, Long skyuserId) {
 
-            String strJsonBody = jsonToUser(scriptKey, subjectId ,con, skyuserId);
-
-            byte[] sendBytes = strJsonBody.getBytes("UTF-8");
-            con.setFixedLengthStreamingMode(sendBytes.length);
-
-            OutputStream outputStream = con.getOutputStream();
-            outputStream.write(sendBytes);
-
-            con.getResponseCode();
-
-        } catch(Throwable t) {
-            t.printStackTrace();
-        }
-
-    }
-
-    public String jsonToUser( String scriptKey, Integer bookingId ,HttpURLConnection con, Long skyuserId) {
-
-        ScriptingTO scriptingTO = notificationNQ.scripting((long) 1, scriptKey);
         BookingEntity booking = bookingRP.findById(bookingId).get();
-        String playerId = notificationNQ.getPlayerIdByStakeholderUserId(booking.getStakeholderUserId());
+        var bookingLanguageCached = bookingLanguageRedisRP.findById(booking.getBookingCode());
+
+        LocaleEntity localeEntity = localeRP.findLocaleByLocale(bookingLanguageCached.get().getLanguage());
+
+        ScriptingTO scriptingTO = notificationNQ.scripting(localeEntity.getId(), scriptKey);
+        List<String> playerIds = notificationNQ.getPlayerIdByStakeholderUserId(booking.getStakeholderUserId());
 
         addNotificationHistory(booking, scriptingTO, skyuserId);
-        con.setRequestProperty("Authorization", environment.getProperty("spring.onesignal.apiKey"));
 
-        return  "{"
-                +   "\"app_id\": \""+ environment.getProperty("spring.onesignal.appId") +"\","
-                +   "\"include_player_ids\": [\""+playerId+"\"],"
-                +   "\"data\": {\"urlKey\": \""+scriptKey+"\"},"
-                +   "\"contents\": {\"en\": \""+scriptingTO.getSubject()+"\"}"
-                + "}";
+        playerIds.forEach(playerId -> {
 
+            String bookingCode = booking.getBookingCode();
+            String notiType = "BOOKING_FLIGHT";
+
+
+            var notificationData = new JSONObject();
+
+            var data = new JSONObject();
+            data.put("notiType", notiType);
+            data.put("bookingCode", bookingCode);
+
+            var contents = new JSONObject();
+            contents.put("en", scriptingTO.getSubject());
+
+            JSONArray playerIdArray = new JSONArray();
+            playerIdArray.appendElement(playerId);
+
+            notificationData.put("contents", contents);
+            notificationData.put("data", data);
+            notificationData.put("include_player_ids", playerIdArray);
+            notificationData.put("app_id", environment.getProperty("spring.onesignal.appId"));
+
+            notificationAction.sendNotification(notificationData.toString());
+        });
     }
 
     public void addNotificationHistory(BookingEntity booking, ScriptingTO scriptingTO, Long skyuserId) {
 
         NotificationEntity notificationEntity = new NotificationEntity();
         notificationEntity.setSendScriptId(scriptingTO.getScriptId());
-        notificationEntity.setStakeholderUserId( (skyuserId == null) ? jwtUtils.getUserToken().getStakeholderId() : skyuserId );
-        notificationEntity.setStakeholderCompanyId( booking.getStakeholderCompanyId() == null ? 0 : booking.getStakeholderCompanyId().longValue() );
+        notificationEntity.setStakeholderUserId((skyuserId == null) ? jwtUtils.getUserToken().getStakeholderId() : skyuserId);
+        notificationEntity.setStakeholderCompanyId(booking.getStakeholderCompanyId() == null ? null : booking.getStakeholderCompanyId().longValue());
 
         if (booking.getId() != null) {
             notificationEntity.setBookingId(booking.getId());

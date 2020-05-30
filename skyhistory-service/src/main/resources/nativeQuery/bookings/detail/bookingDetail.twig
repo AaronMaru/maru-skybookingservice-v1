@@ -114,7 +114,8 @@ CASE WHEN (b.`status` = 11 AND (
 		) THEN :COMPLETED
 
 	WHEN (b.`status` IN (3)) THEN :CANCELLED
-	WHEN (b.`status` IN (1, 10, 12, 4)) THEN  :FAILED
+	WHEN (b.`status` IN (1, 4)) THEN :PENDING
+	WHEN (b.`status` IN (10, 12)) THEN :FAILED
 
 END AS statusKey
 
@@ -122,6 +123,8 @@ FROM bookings b
 
 LEFT JOIN (
     SELECT * FROM booking_payment_transactions bPay
+    WHERE bPay.status = 1
+    GROUP BY booking_id
 ) bPay ON bPay.booking_id = b.id
 
 -- Condition by Booking status
@@ -134,11 +137,5 @@ AND CASE WHEN :stake = "skyuser"
         (b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id IS NULL)
     ELSE
         -- Condition for Skyowner
-        CASE WHEN
-                :role = 'ADMIN'
-            THEN
-                b.stakeholder_company_id = :companyId
-            ELSE
-                b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id = :companyId
-            END
+        b.stakeholder_company_id = :companyId
     END

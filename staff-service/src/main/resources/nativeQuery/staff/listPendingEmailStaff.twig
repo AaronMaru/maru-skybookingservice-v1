@@ -23,6 +23,16 @@ SELECT sui.id,
 FROM stakeholder_user_invitations sui
 
 WHERE sui.stakeholder_company_id = :companyId
+
+AND (CASE WHEN :action = 'SEARCH' THEN
+		sui.invite_to LIKE '%' :keyword '%'
+	END
+	OR
+	CASE WHEN :action = 'FILTER' THEN
+		sui.created_at >= :startDate OR sui.created_at >= :endDate
+	END
+)
+
 AND (
         sui.`status` = 0
         OR (SELECT COUNT(suin.id)

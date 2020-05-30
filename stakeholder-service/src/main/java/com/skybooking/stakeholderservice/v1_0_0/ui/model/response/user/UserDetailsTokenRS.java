@@ -12,6 +12,7 @@ import java.util.List;
 public class UserDetailsTokenRS {
 
     private String token;
+    private String refreshToken;
 
     @Column(name = "first_name")
     private String firstName;

@@ -84,6 +84,26 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
 
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Conflict
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Status 409
+     */
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<CustomErrorResponse> handleConflict(ConflictException ex, WebRequest request) {
+
+        CustomErrorResponse errors = new CustomErrorResponse();
+        errors.setTimestamp(LocalDateTime.now());
+        errors.setMessage(localization.multiLanguageRes(ex.getMessage()));
+        errors.setStatus(HttpStatus.CONFLICT.value());
+        errors.setData(ex.getData());
+
+        return new ResponseEntity<>(errors, HttpStatus.CONFLICT);
+
+    }
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------

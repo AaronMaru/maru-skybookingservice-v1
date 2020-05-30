@@ -1,6 +1,7 @@
 package com.skybooking.staffservice.v1_0_0.service.implement.staff;
 
 import com.skybooking.staffservice.constant.BookingStatusConstant;
+import com.skybooking.staffservice.constant.NotificationConstant;
 import com.skybooking.staffservice.constant.StaffStatusConstant;
 import com.skybooking.staffservice.exception.httpstatus.BadRequestException;
 import com.skybooking.staffservice.exception.httpstatus.ForbiddenException;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @Service
@@ -56,7 +58,7 @@ public class StaffIP implements StaffSV {
         filterRQ.setAction( checkSearchOrFilter() );
 
         Page<StaffTO> staffsTO = staffNQ.listStaff(
-                filterRQ.getCompanyId(),
+                filterRQ.getCompanyHeaderId(),
                 filterRQ.getKeyword(),
                 filterRQ.getRole(),
                 filterRQ.getStartPRange(),
@@ -76,7 +78,7 @@ public class StaffIP implements StaffSV {
 
         StaffPaginationRS staffPaging = new StaffPaginationRS();
 
-        staffPaging.setPage(filterRQ.getPage());
+        staffPaging.setPage(filterRQ.getPage() + 1);
         staffPaging.setSize(filterRQ.getSize());
         staffPaging.setData(staffs);
         staffPaging.setTotals(staffsTO.getTotalElements());
@@ -109,8 +111,7 @@ public class StaffIP implements StaffSV {
 
         }
 
-        return "OTHER";
-
+        return "SEARCH";
     }
 
 
@@ -123,7 +124,7 @@ public class StaffIP implements StaffSV {
      */
     public List<StaffRS> staffs(Page<StaffTO> staffsTO) {
 
-        Long companyId = jwtUtils.getClaim("companyId", Long.class);
+        FilterRQ filterRQ = new FilterRQ(request, jwtUtils.getUserToken());
 
         List<StaffRS> staffsRS = new ArrayList<>();
 
@@ -134,7 +135,7 @@ public class StaffIP implements StaffSV {
 
             List<StaffTotalBookingTO> bookingListTO = staffNQ.listStaffTotalBooking(
                     staffTO.getSkyuserId(),
-                    companyId,
+                    filterRQ.getCompanyHeaderId(),
                     constant.COMPLETED,
                     constant.UPCOMING,
                     constant.CANCELLED,
@@ -142,6 +143,7 @@ public class StaffIP implements StaffSV {
                     );
 
             BeanUtils.copyProperties(staffTO, staffRS);
+            staffRS.setJoinDate(dateTimeBean.convertDateTime(staffTO.getJoinDate()));
 
             StaffTotalBookingRS bookingStatus = new StaffTotalBookingRS();
             AmountRS defaults = new AmountRS();
@@ -204,13 +206,13 @@ public class StaffIP implements StaffSV {
      */
     public Object staffProfile(Long id) {
 
-        Long companyId = jwtUtils.getClaim("companyId", Long.class);
+        FilterRQ filterRQ = new FilterRQ(request, jwtUtils.getUserToken());
 
         StaffStatusConstant staffConstant = new StaffStatusConstant();
 
         List<StaffProfileTO> staffTO = staffNQ.findProfileStaff(
-                                    id,
-                                    companyId,
+                                    (id != null) ? id : filterRQ.getSkyuserId(),
+                                    filterRQ.getCompanyHeaderId(),
                                     staffConstant.ACTIVE,
                                     staffConstant.INACTIVE,
                                     staffConstant.BANNED
@@ -218,12 +220,12 @@ public class StaffIP implements StaffSV {
         StaffProfileRS staffRS = new StaffProfileRS();
 
         if (staffTO.stream().findFirst().isEmpty()) {
-            throw new NotFoundException("This url not found", null);
+            throw new NotFoundException("url_not_found", null);
         }
 
         BeanUtils.copyProperties(staffTO.stream().findFirst().get(), staffRS);
 
-        SkyuserTO skyUser = staffNQ.findSkyuser(id, environment.getProperty("spring.awsImageUrl.profile.url_larg"));
+        SkyuserTO skyUser = staffNQ.findSkyuser((id != null) ? id : filterRQ.getSkyuserId(), environment.getProperty("spring.awsImageUrl.profile.url_larg"));
         BeanUtils.copyProperties(skyUser, staffRS);
 
         staffRS.setJoinDate(dateTimeBean.convertDateTime(skyUser.getCreatedAt()));
@@ -243,26 +245,36 @@ public class StaffIP implements StaffSV {
     public void deactiveStaff(DeactiveStaffRQ deactiveStaffRQ) {
 
         FilterRQ filterRQ = new FilterRQ(request, jwtUtils.getUserToken());
+
         StakeholderUserHasCompanyEntity staff = companyHasUserRP.findByStakeholderCompanyIdAndStakeholderUserId(filterRQ.getCompanyHeaderId(), deactiveStaffRQ.getSkyuserId());
         if ( !filterRQ.getUserRole().equals("admin") ) {
-            throw new ForbiddenException("Can not access this api", null);
+            throw new ForbiddenException("cant_ac_api", null);
         }
         if ( staff == null ) {
             throw new BadRequestException("sth_w_w", null);
         }
         if ( staff.getStatus() == 1 ) {
-            throw new BadRequestException("Can not update skyowner role", null);
+            throw new BadRequestException("cant_up_role", null);
         }
         if ( filterRQ.getSkyuserId().equals(deactiveStaffRQ.getSkyuserId()) ) {
-            throw new BadRequestException("Can not update yourselft", null);
+            throw new BadRequestException("cant_up_own_role", null);
         }
+        HashMap<String, Object> scriptData = new HashMap<>();
+
         if ( deactiveStaffRQ.getStatus() != null && !deactiveStaffRQ.getStatus().equals("") ) {
             staff.setJoinStatus(deactiveStaffRQ.getStatus());
-            String keyNotification = (deactiveStaffRQ.getStatus() == 1) ? "skyowner_enabled_staff" : "skyowner_disabled_staff";
-            notification.sendMessageToUsers(keyNotification, null, null);
+            scriptData.put("scriptKey", (deactiveStaffRQ.getStatus() == 1) ? "skyowner_enabled_staff" : "skyowner_disabled_staff");
+            scriptData.put("skyuserId", staff.getStakeholderUserId());
+            notification.sendMessageToUsers(scriptData);
         }
         if ( deactiveStaffRQ.getRole() != null && !deactiveStaffRQ.getRole().equals("") ) {
+            scriptData.put(NotificationConstant.NEW_ROLE, deactiveStaffRQ.getRole());
+            scriptData.put(NotificationConstant.CURRENT_ROLE, staff.getSkyuserRole());
+            scriptData.put("scriptKey", "skyowner_update_staff_role");
+            scriptData.put("skyuserId", staff.getStakeholderUserId());
             staff.setSkyuserRole(deactiveStaffRQ.getRole());
+
+            notification.sendMessageToUsers(scriptData);
         }
         companyHasUserRP.save(staff);
 

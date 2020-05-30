@@ -2,7 +2,10 @@ package com.skybooking.skyflightservice.listener;
 
 import com.skybooking.skyflightservice.v1_0_0.client.skyhistory.action.SkyhistoryAction;
 import com.skybooking.skyflightservice.v1_0_0.client.skyhistory.request.SendBookingPDFRQ;
+import com.skybooking.skyflightservice.v1_0_0.io.entity.booking.BookingEntity;
+import com.skybooking.skyflightservice.v1_0_0.service.implement.payment.PaymentIP;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.booking.TicketSV;
+import com.skybooking.skyflightservice.v1_0_0.ui.model.request.payment.PaymentTransactionRQ;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.response.ticketing.TicketRS;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jms.annotation.JmsListener;
@@ -25,8 +28,17 @@ public class Consumer {
     @Autowired
     private TicketSV ticketSV;
 
+    @Autowired
+    private PaymentIP paymentIP;
+
     @JmsListener(destination = SKY_FLIGHT_PAYMENT)
-    public void payment(SendBookingPDFRQ sendBookingPDFRQ) {
+    public void payment(PaymentTransactionRQ paymentSucceedRQ) {
+
+        BookingEntity bookingEntity = paymentIP.saveBookingPayment(paymentSucceedRQ);
+
+        // hit payment skyHistory
+        SendBookingPDFRQ sendBookingPDFRQ = new SendBookingPDFRQ(bookingEntity.getBookingCode(),
+                paymentSucceedRQ.getEmail(), paymentSucceedRQ.getSkyuserId(), paymentSucceedRQ.getCompanyId());
 
         skyhistoryAction.sendPayment(sendBookingPDFRQ);
 

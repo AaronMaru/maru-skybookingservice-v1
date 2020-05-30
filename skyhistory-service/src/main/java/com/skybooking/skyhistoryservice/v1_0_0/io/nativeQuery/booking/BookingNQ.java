@@ -39,22 +39,8 @@ public interface BookingNQ extends NativeQuery {
                                 @NativeQueryParam(value = "ROUND") String ROUND,
                                 @NativeQueryParam(value = "MULTICITY") String MULTICITY,
                                 @NativeQueryParam(value = "stake") String stake,
+                                @NativeQueryParam(value = "PENDING") String PENDING,
                                 Pageable pageable);
-
-    List<BookingTO> detailBooking(@NativeQueryParam(value = "stake") String stake,
-                                  @NativeQueryParam(value = "bookingId") Long id,
-                                  @NativeQueryParam(value = "skyuserId") Long skyuserId,
-                                  @NativeQueryParam(value = "companyId") Long companyId,
-                                  @NativeQueryParam(value = "role") String role,
-                                  @NativeQueryParam(value = "locale") Long locale,
-                                  @NativeQueryParam(value = "COMPLETED") String COMPLETED,
-                                  @NativeQueryParam(value = "UPCOMING") String UPCOMING,
-                                  @NativeQueryParam(value = "CANCELLED") String CANCELLED,
-                                  @NativeQueryParam(value = "FAILED") String FAILED,
-                                  @NativeQueryParam(value = "ONEWAY") String ONEWAY,
-                                  @NativeQueryParam(value = "ROUND") String ROUND,
-                                  @NativeQueryParam(value = "MULTICITY") String MULTICITY
-                                  );
 
     List<BookingOdTO> listBookingOd(@NativeQueryParam(value = "bookingId") Integer bookingId);
     BookingOdSegTO bookingOdSeg(@NativeQueryParam(value = "bodId") Integer bodId, @NativeQueryParam(value = "localeId") Long localeId);

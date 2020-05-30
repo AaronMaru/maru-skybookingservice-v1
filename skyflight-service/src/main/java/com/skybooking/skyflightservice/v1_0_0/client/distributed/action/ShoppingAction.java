@@ -3,9 +3,12 @@ package com.skybooking.skyflightservice.v1_0_0.client.distributed.action;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.skybooking.skyflightservice.config.AppConfig;
+import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.shopping.FlightShoppingRevalidateRQ;
 import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.shopping.RevalidateRQ;
 import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.response.bargainfinder.SabreBargainFinderRS;
+import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.flight.FlightInfoTO;
 import com.skybooking.skyflightservice.v1_0_0.security.token.DSTokenHolder;
+import com.skybooking.skyflightservice.v1_0_0.service.interfaces.flight.FlightInfoSV;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.shopping.FlightLegRQ;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.shopping.FlightShoppingRQ;
 import com.skybooking.skyflightservice.v1_0_0.util.datetime.DatetimeFormat;
@@ -18,6 +21,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ShoppingAction {
@@ -30,6 +34,9 @@ public class ShoppingAction {
 
     @Autowired
     private WebClient client;
+
+    @Autowired
+    private FlightInfoSV flightInfoSV;
 
 
     /**
@@ -69,9 +76,12 @@ public class ShoppingAction {
 
         var requests = new ArrayList<Mono<SabreBargainFinderRS>>();
 
+        var airlines = flightInfoSV.getFlightInfoEnabled().stream().map(FlightInfoTO::getAirlineCode).collect(Collectors.toList());
+
         for (FlightLegRQ leg : body.getLegs()) {
 
             var request = new com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.shopping.FlightShoppingRQ();
+            request.setAirlines(airlines);
 
             var requestLeg = new com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.shopping.FlightLegRQ();
 
@@ -85,6 +95,7 @@ public class ShoppingAction {
             request.setClassType(body.getClassType());
             request.setTripType("one");
             request.getLegs().add(requestLeg);
+
 
             requests.add(this.getShopping(request));
 
@@ -156,6 +167,26 @@ public class ShoppingAction {
                 .bodyToMono(JsonNode.class).block();
         } catch (Exception e) {
             throw e;
+        }
+    }
+
+    public SabreBargainFinderRS getShoppingRevalidate(FlightShoppingRevalidateRQ body) {
+
+        try {
+            return client
+                .mutate()
+                .exchangeStrategies(ExchangeStrategies.builder().codecs(clientCodecConfigurer -> {
+                    clientCodecConfigurer.defaultCodecs().maxInMemorySize(16 * 1024 * 1024);
+                }).build())
+                .build()
+                .post()
+                .uri(appConfig.getDISTRIBUTED_URI() + "/flight/" + appConfig.getDISTRIBUTED_VERSION() + "/shopping-revalidate")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
+                .bodyValue(body)
+                .retrieve()
+                .bodyToMono(SabreBargainFinderRS.class).block();
+        } catch (Exception e) {
+            return null;
         }
     }
 

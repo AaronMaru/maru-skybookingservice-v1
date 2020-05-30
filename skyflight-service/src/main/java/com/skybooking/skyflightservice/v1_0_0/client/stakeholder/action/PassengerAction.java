@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import javax.servlet.http.HttpServletRequest;
+
 @Service
 public class PassengerAction {
 
@@ -21,6 +23,8 @@ public class PassengerAction {
     @Autowired
     private AuthUtility authUtility;
 
+    @Autowired
+    private HttpServletRequest httpServletRequest;
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -32,11 +36,22 @@ public class PassengerAction {
      */
     public Mono<Object> create(PassengerSRQ passengerSRQ) {
 
+        if (httpServletRequest.getHeader("X-CompanyId") != null) {
+            return webClient
+                    .post()
+                    .uri(appConfig.getSTAKEHOLDER_URI() + appConfig.getSTAKEHOLDER_COMMON_VERSION() + "/passenger")
+                    .header(HttpHeaders.AUTHORIZATION, authUtility.getAuthToken())
+                    .header("X-CompanyId", httpServletRequest.getHeader("X-CompanyId"))
+                    .bodyValue(passengerSRQ)
+                    .retrieve()
+                    .bodyToMono(Object.class);
+        }
+
         return webClient
                 .post()
                 .uri(appConfig.getSTAKEHOLDER_URI() + appConfig.getSTAKEHOLDER_COMMON_VERSION() + "/passenger")
                 .header(HttpHeaders.AUTHORIZATION, authUtility.getAuthToken())
-            .bodyValue(passengerSRQ)
+                .bodyValue(passengerSRQ)
                 .retrieve()
                 .bodyToMono(Object.class);
     }

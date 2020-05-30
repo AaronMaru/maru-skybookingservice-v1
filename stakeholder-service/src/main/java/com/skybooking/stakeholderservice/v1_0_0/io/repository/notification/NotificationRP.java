@@ -8,7 +8,10 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface NotificationRP extends JpaRepository<NotificationEntity, Long> {
 
-    @Query(value = "SELECT * FROM user_notification_history WHERE id = ?1 AND stakeholder_user_id = ?2 AND (CASE WHEN ?3 THEN stakeholder_company_id = ?3 ELSE stakeholder_company_id IS NULL END)", nativeQuery = true)
-    NotificationEntity findNotification(Long id, Long skyuserId, Long companyId);
+//    @Query(value = "SELECT * FROM user_notification_history WHERE id = ?1 AND stakeholder_user_id = ?2 AND (CASE WHEN ?3 THEN stakeholder_company_id = ?3 ELSE stakeholder_company_id IS NULL END)", nativeQuery = true)
+//    NotificationEntity findNotification(Long id, Long skyuserId, Long companyId);
+
+    NotificationEntity findByIdAndStakeholderUserId(Long id, Long skyuserId);
+    NotificationEntity findByIdAndStakeholderCompanyId(Long id, Long companyId);
 
 }

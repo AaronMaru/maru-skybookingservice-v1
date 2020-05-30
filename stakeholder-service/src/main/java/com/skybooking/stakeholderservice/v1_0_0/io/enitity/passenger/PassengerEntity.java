@@ -2,6 +2,7 @@ package com.skybooking.stakeholderservice.v1_0_0.io.enitity.passenger;
 
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.StakeHolderUserEntity;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -11,6 +12,7 @@ import java.util.Date;
 @Entity
 @Table(name = "booking_passengers")
 @Data
+@NoArgsConstructor
 public class PassengerEntity {
 
     @Id

@@ -17,7 +17,6 @@ import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.dashboard.summa
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.dashboard.summaryReport.StaffReportListRS;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.dashboard.summaryReport.SummaryReportRS;
 import com.skybooking.skyhistoryservice.v1_0_0.util.JwtUtils;
-import com.skybooking.skyhistoryservice.v1_0_0.util.datetime.DateTimeBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.general.ApiBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.header.HeaderBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.localization.LocalizationBean;
@@ -28,7 +27,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -113,21 +111,21 @@ public class DashboardIP implements DashboardSV {
         String stake = headerBean.getCompanyId(filterRQ.getCompanyHeaderId());
 
         var bookings = dashboardNQ.getBookingProgress(
-                filterRQ.getCompanyHeaderId(),
-                filterRQ.getSkyuserId(),
-                stake,
-                filterRQ.getRole(),
-                filter,
-                startDate,
-                endDate,
-                constant.COMPLETED,
-                constant.UPCOMING,
-                constant.CANCELLED,
-                constant.FAILED
+            filterRQ.getCompanyHeaderId(),
+            filterRQ.getSkyuserId(),
+            stake,
+            filterRQ.getRole(),
+            filter,
+            startDate,
+            endDate,
+            constant.COMPLETED,
+            constant.UPCOMING,
+            constant.CANCELLED,
+            constant.FAILED
         );
 
         var totalBookings = bookings.stream().reduce(0,
-                (totalResult, booking) -> totalResult + booking.getAmount().intValueExact(), Integer::sum);
+            (totalResult, booking) -> totalResult + booking.getAmount().intValueExact(), Integer::sum);
 
         var summary = new TreeMap<String, BookingProgressRS>();
         summary.put(constant.COMPLETED, new BookingProgressRS(constant.COMPLETED));
@@ -209,19 +207,19 @@ public class DashboardIP implements DashboardSV {
             for (int i = 1; i <= 4; i++) {
 
 
-                String weekDate =  dateString+"-0" + j;
+                String weekDate = dateString + "-0" + j;
                 if (j > 9) {
-                    weekDate =  dateString+"-" + j;
+                    weekDate = dateString + "-" + j;
                 }
 
                 BookingTimeLineWeeklyTO bookingTimeLineWeeklyTO = dashboardNQ.getBookingTimelineWeekly(
-                                filterRQ.getCompanyHeaderId(),
-                                filterRQ.getSkyuserId(),
-                                stake,
-                                filterRQ.getRole(),
-                                dateString,
-                                i
-                            );
+                    filterRQ.getCompanyHeaderId(),
+                    filterRQ.getSkyuserId(),
+                    stake,
+                    filterRQ.getRole(),
+                    dateString,
+                    i
+                );
 
 
                 BookingTimelineRS bookingTimelineRS1 = new BookingTimelineRS();
@@ -281,10 +279,10 @@ public class DashboardIP implements DashboardSV {
         FilterRQ filterRQ = new FilterRQ(request, jwtUtils.getUserToken());
 
         var sellers = dashboardNQ.getBookingTopSeller(filterRQ.getCompanyHeaderId(), filter, startDate, endDate, take).stream()
-                .filter(seller -> seller.getTotalAmount().intValue() > 0).collect(Collectors.toList());
+            .filter(seller -> seller.getTotalAmount().intValue() > 0).collect(Collectors.toList());
 
         sellers.forEach(seller -> seller.setUserProfile(
-                environment.getProperty("spring.awsImageUrl.profile.url_small") + seller.getUserProfile()));
+            environment.getProperty("spring.awsImageUrl.profile.url_small") + seller.getUserProfile()));
 
         return BookingTopSellerTF.getResponseList(sellers);
 
@@ -312,29 +310,29 @@ public class DashboardIP implements DashboardSV {
         String stake = headerBean.getCompanyId(filterRQ.getCompanyHeaderId());
 
         var bookings = dashboardNQ.getBookingActivity(
-                        filterRQ.getCompanyHeaderId(),
-                        filterRQ.getSkyuserId(),
-                        stake,
-                        filterRQ.getRole(),
-                        filter,
-                        startDate,
-                        endDate,
-                        constant.COMPLETED,
-                        constant.UPCOMING,
-                        constant.CANCELLED,
-                        constant.FAILED,
-                        filterRQ.getSkystaffId(),
-                        PageRequest.of(filterRQ.getPage(), filterRQ.getSize())
-                    );
+            filterRQ.getCompanyHeaderId(),
+            filterRQ.getSkyuserId(),
+            stake,
+            filterRQ.getRole(),
+            filter,
+            startDate,
+            endDate,
+            constant.COMPLETED,
+            constant.UPCOMING,
+            constant.CANCELLED,
+            constant.FAILED,
+            filterRQ.getSkystaffId(),
+            PageRequest.of(filterRQ.getPage(), filterRQ.getSize())
+        );
 
         var responses = BookingActivityTF.getResponsePage(bookings);
 
         responses.forEach(response -> {
 
             response.setUserProfile(
-                    environment.getProperty("spring.awsImageUrl.profile.url_small") + response.getUserProfile());
+                environment.getProperty("spring.awsImageUrl.profile.url_small") + response.getUserProfile());
             response.setLegs(BookingActivityTF.getResponseSegmentList(
-                    dashboardNQ.getBookingActivityFlightSegment(response.getBookingId(), localeId)));
+                dashboardNQ.getBookingActivityFlightSegment(response.getBookingId(), localeId)));
         });
 
         data.setData(responses);

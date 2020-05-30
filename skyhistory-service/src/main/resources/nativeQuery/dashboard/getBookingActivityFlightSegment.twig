@@ -1,29 +1,17 @@
 SELECT
-( SELECT dep_seg.dep_location_code
-    FROM booking_origin_destinations dep_seg
-    WHERE dep_seg.parent_id = bod.id
-    ORDER BY dep_seg.id ASC
-    LIMIT 1
-) AS depLocode,
-
-ai.depAirName,
-ai.depCityName,
+depAirInfo.`code` AS depLocode,
+depAirInfo.depAirName,
+depAirInfo.depCityName,
 (   SELECT dep_seg.dep_date
     FROM booking_origin_destinations dep_seg
     WHERE dep_seg.parent_id = bod.id
+    AND dep_seg.booking_id = bod.booking_id
     ORDER BY dep_seg.id ASC
     LIMIT 1
 ) AS depDateTime,
-(
-    SELECT arr_seg.arr_location_code
-    FROM booking_origin_destinations arr_seg
-    WHERE arr_seg.parent_id = bod.id
-    ORDER BY arr_seg.id DESC
-    LIMIT 1
-
-) AS arrLocode,
-arr_ai.arrAirName,
-arr_ai.arrCityName
+arrAirInfo.`code` AS arrLocode,
+arrAirInfo.arrAirName,
+arrAirInfo.arrCityName
 
 FROM booking_origin_destinations bod
 
@@ -31,52 +19,37 @@ FROM booking_origin_destinations bod
 INNER JOIN
 (
     SELECT
-    ai.`code`,
-
+    depAirInfo.`code`,
     IFNULL(
         (
             SELECT ail.`name` AS airportName
             FROM airport_info_locale ail
             WHERE ail.locale_id = :localeId
-            AND ail.airport_info_id = ai.id
+            AND ail.airport_info_id = depAirInfo.id
         ),
         (
             SELECT ail.`name` AS airportName
             FROM airport_info_locale ail
             WHERE ail.locale_id = ( SELECT id FROM frontend_locales WHERE locale = 'en')
-            AND ail.airport_info_id = ai.id
+            AND ail.airport_info_id = depAirInfo.id
         )
     ) AS depAirName,
-    cc.depCityName
+    ccl.depCityName
 
-    FROM airport_info ai
+    FROM airport_info depAirInfo
 
-    INNER JOIN
-    (
-        SELECT
-        cc.id,
-        IFNULL(
-            (
-                SELECT ccl.`name` AS depCityName
-                FROM country_city_locale ccl
-                WHERE ccl.locale_id = :localeId
-                AND ccl.country_city_id = cc.id
-            ),
-            (
-                SELECT ccl.`name` AS depCityName
-                FROM country_city_locale ccl
-                WHERE ccl.locale_id = ( SELECT id FROM frontend_locales WHERE locale = 'en')
-                AND ccl.country_city_id = cc.id
-            )
-        ) AS depCityName
+	LEFT JOIN
+	(
+		SELECT ccl.country_city_id, ccl.`name` AS depCityName
+		FROM country_city_locale ccl
+		WHERE ccl.locale_id = :localeId
+	) ccl ON ccl.country_city_id = depAirInfo.country_city_id
 
-        FROM country_city cc
-    ) cc ON cc.id = ai.country_city_id
-
-) ai ON ai.`code` = (SELECT dep_seg.dep_location_code
+) depAirInfo ON depAirInfo.`code` = (SELECT dep_seg.dep_location_code
                         FROM booking_origin_destinations dep_seg
                         WHERE dep_seg.parent_id = bod.id
-                        ORDER BY dep_seg.id DESC
+                        AND dep_seg.booking_id = bod.booking_id
+                        ORDER BY dep_seg.id ASC
                         LIMIT 1)
 -- The end of departure information
 
@@ -85,46 +58,38 @@ INNER JOIN
 INNER JOIN
     (
     SELECT
-    arr_ai.`code`,
+    arrAirInfo.`code`,
     IFNULL(
-        (SELECT ail.`name` AS arrAirName
+        (
+		  	SELECT ail.`name` AS arrAirName
             FROM airport_info_locale ail
             WHERE ail.locale_id = :localeId
-            AND ail.airport_info_id = arr_ai.id
+            AND ail.airport_info_id = arrAirInfo.id
         ),
-        (SELECT ail.`name` AS arrAirName
-        FROM airport_info_locale ail
-        WHERE ail.locale_id = ( SELECT id FROM frontend_locales WHERE locale = 'en') AND ail.airport_info_id = arr_ai.id
+        (
+		  	SELECT ail.`name` AS arrAirName
+	        FROM airport_info_locale ail
+	        WHERE ail.locale_id = ( SELECT id FROM frontend_locales WHERE locale = 'en') AND ail.airport_info_id = arrAirInfo.id
         )
     ) AS arrAirName,
-    arr_cc.arrCityName
+    ccl.arrCityName
 
-    FROM airport_info arr_ai
+    FROM airport_info arrAirInfo
 
-    INNER JOIN
-    ( SELECT arr_cc.id,
-    IFNULL(
-        (
-            SELECT ccl.`name` AS arrCityName
-            FROM country_city_locale ccl
-            WHERE ccl.locale_id = :localeId
-            AND ccl.country_city_id = arr_cc.id
-        ),
-        (
-            SELECT ccl.`name` AS arrCityName
-            FROM country_city_locale ccl
-            WHERE ccl.locale_id = ( SELECT id FROM frontend_locales WHERE locale = 'en') AND ccl.country_city_id = arr_cc.id
-        )
-    ) AS arrCityName
-    FROM country_city arr_cc
-    ) arr_cc ON arr_cc.id = arr_ai.country_city_id
+	LEFT JOIN
+	(
+        SELECT ccl.country_city_id, ccl.`name` AS arrCityName
+        FROM country_city_locale ccl
+        WHERE ccl.locale_id = :localeId
+	) ccl ON ccl.country_city_id = arrAirInfo.country_city_id
 
-) arr_ai ON arr_ai.`code` = (SELECT arr_seg.arr_location_code
-                                FROM booking_origin_destinations arr_seg
-                                WHERE arr_seg.parent_id = bod.id
-                                ORDER BY arr_seg.id ASC
-                                LIMIT 1
-                            )
+) arrAirInfo ON arrAirInfo.`code` = (SELECT arr_seg.arr_location_code
+		                             FROM booking_origin_destinations arr_seg
+		                             WHERE arr_seg.parent_id = bod.id
+		                             AND arr_seg.booking_id = bod.booking_id
+		                             ORDER BY arr_seg.id DESC
+		                             LIMIT 1
+		                            )
 -- The end of arrival information
 
 WHERE bod.parent_id IS NULL

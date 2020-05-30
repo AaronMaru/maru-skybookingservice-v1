@@ -30,4 +30,7 @@ public class AppConfig {
 
     @Value("${spring.service.stakeholder.version}")
     private String stakeholderVersion;
+
+    @Value("${spring.serverAddress}")
+    private String paymentUrl;
 }

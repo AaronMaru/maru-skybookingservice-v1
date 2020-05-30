@@ -6,6 +6,8 @@ import com.skybooking.library.NativeQueryParam;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @NativeQueryFolder("notification")
 @Component
 public interface NotificationNQ extends NativeQuery {
@@ -15,5 +17,5 @@ public interface NotificationNQ extends NativeQuery {
                           @NativeQueryParam(value = "urlKey") String urlKey);
 
     @Transactional
-    String getPlayerIdByStakeholderUserId(@NativeQueryParam(value = "stakeholderUserId") Integer stakeholderUserId);
+    List<String> getPlayerIdByStakeholderUserId(@NativeQueryParam(value = "stakeholderUserId") Integer stakeholderUserId);
 }

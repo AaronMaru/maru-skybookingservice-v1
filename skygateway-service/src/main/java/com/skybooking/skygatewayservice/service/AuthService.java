@@ -24,8 +24,9 @@ public class AuthService {
             String tokenId = this.getClaim(authorization.substring("Bearer".length()+1), "jti", String.class);
 
             var auth = oauthUserRP.getFirst(tokenId);
+            System.out.println(auth);
             if (auth == null) {
-                return AuthConstant.AUTHORIZED;
+                return AuthConstant.REVOKED;
             }
 
             return auth.getStatus();

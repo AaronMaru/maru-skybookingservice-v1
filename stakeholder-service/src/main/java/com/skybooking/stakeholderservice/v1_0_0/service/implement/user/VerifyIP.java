@@ -1,17 +1,19 @@
 package com.skybooking.stakeholderservice.v1_0_0.service.implement.user;
 
 import com.skybooking.stakeholderservice.exception.httpstatus.BadRequestException;
+import com.skybooking.stakeholderservice.exception.httpstatus.ConflictException;
+import com.skybooking.stakeholderservice.exception.httpstatus.ForbiddenException;
 import com.skybooking.stakeholderservice.exception.httpstatus.UnauthorizedException;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.redis.UserTokenEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.StakeHolderUserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.verify.VerifyUserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyHasUserRP;
-import com.skybooking.stakeholderservice.v1_0_0.io.repository.contact.ContactRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.redis.UserTokenRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserRepository;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.verify.VerifyUserRP;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.user.VerifySV;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.TokenRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.verify.SendVerifyRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.verify.VerifyMRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.verify.VerifyRQ;
@@ -20,6 +22,7 @@ import com.skybooking.stakeholderservice.v1_0_0.util.activitylog.ActivityLogging
 import com.skybooking.stakeholderservice.v1_0_0.util.email.EmailBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
+import com.skybooking.stakeholderservice.v1_0_0.util.localization.LocalizationBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.notification.PushNotificationOptions;
 import com.skybooking.stakeholderservice.v1_0_0.util.skyuser.UserBean;
 import org.apache.commons.lang.math.NumberUtils;
@@ -28,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -69,6 +73,9 @@ public class VerifyIP implements VerifySV {
     @Autowired
     private PushNotificationOptions notification;
 
+    @Autowired
+    private LocalizationBean localizationBean;
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -106,9 +113,19 @@ public class VerifyIP implements VerifySV {
         UserDetailsTokenRS userDetailsTokenRS = new UserDetailsTokenRS();
         if (status == 1) {
             UserTokenEntity userToken = userTokenRP.findById(user.getId()).orElse(null);
-            BeanUtils.copyProperties(userBean.userFields(user, userToken.getToken()), userDetailsTokenRS);
-            notification.sendMessageToUsers("skyuser_welcome_message", null, user.getStakeHolderUser().getId());
-            return userDetailsTokenRS;
+
+            TokenRS token = new TokenRS();
+            token.setToken(userToken.getToken());
+            token.setRefreshToken(userToken.getRefreshToken());
+
+            BeanUtils.copyProperties(userBean.userFields(user, token), userDetailsTokenRS);
+
+            HashMap<String, Object> data = new HashMap<>();
+            data.put("scriptKey", "skyuser_welcome_message");
+            data.put("skyuserId", user.getStakeHolderUser().getId());
+            notification.sendMessageToUsers(data);
+
+            userBean.storeUserTokenLastLogin(token.getToken(), user);
         }
 
         return userDetailsTokenRS;
@@ -127,15 +144,12 @@ public class VerifyIP implements VerifySV {
      */
     public int resendVerify(SendVerifyRQ verifyRQ, Integer status) {
 
-        UserEntity user = userRepository.findByEmailOrPhoneAndProviderIdIsNull(verifyRQ.getUsername(), verifyRQ.getCode());
+        UserEntity user = userValidation(verifyRQ.getUsername(), verifyRQ.getCode());
 
-        if (user == null) {
-            throw new UnauthorizedException("sth_w_w", null);
-        }
         StakeHolderUserEntity stakeHolderUser = user.getStakeHolderUser();
 
         if (stakeHolderUser.getStatus() == Integer.parseInt(environment.getProperty("spring.stkStatus.active"))) {
-            throw new UnauthorizedException("The user already active", null);
+            throw new UnauthorizedException("act_ald", null);
         }
 
         generalBean.expireRequest(user, status);
@@ -186,14 +200,10 @@ public class VerifyIP implements VerifySV {
      */
     public void sendVerify(SendVerifyRQ sendVerifyRQ, Integer status) {
 
-        String username = userBean.getUsername(sendVerifyRQ.getUsername(),null);
         if (status == Integer.parseInt(environment.getProperty("spring.verifyStatus.verifyUserApp"))) {
             checkOwnerStaff(sendVerifyRQ);
         } else {
-            UserEntity user = userRepository.findByEmailOrPhoneAndProviderIdIsNull(username, sendVerifyRQ.getCode());
-            if (user == null) {
-                throw new BadRequestException(String.format("Sorry! The %s does not exist in the system.", NumberUtils.isNumber(sendVerifyRQ.getUsername()) ? "phone" : "email"), null);
-            }
+            userValidation(sendVerifyRQ.getUsername(), sendVerifyRQ.getCode());
         }
 
         String receiver = userBean.getUsername(sendVerifyRQ.getUsername(), sendVerifyRQ.getCode());
@@ -217,33 +227,29 @@ public class VerifyIP implements VerifySV {
      */
     public void checkOwnerStaff(SendVerifyRQ sendVerifyRQ) {
 
-        String username = "";
-        String emailOrPhone = "";
+        String username = userBean.getUsername(sendVerifyRQ.getUsername(), null);
+        String phoneOrEmail = phoneOrEmail(sendVerifyRQ.getUsername());
 
-        if (NumberUtils.isNumber(sendVerifyRQ.getUsername())) {
-            username = sendVerifyRQ.getUsername().replaceFirst("^0+(?!$)", "");
-            emailOrPhone = "phone";
-        } else {
-            username = sendVerifyRQ.getUsername();
-            emailOrPhone = "email";
-        }
-
-        UserEntity user = userRepository.findByEmailOrPhoneAndProviderIdIsNull(username, sendVerifyRQ.getCode());
+        UserEntity user = userRepository.findByEmailOrPhone(username, sendVerifyRQ.getCode());
 
         if (user != null) {
             Map<String, Object> data = new LinkedHashMap();
             if (user.getStakeHolderUser().getIsSkyowner() == 1) {
                 data.put("type", "skyowner");
-                throw new BadRequestException(String.format("Sorry! This %s was signed up as Skyowner already.", emailOrPhone), data);
+                throw new BadRequestException(String.format(localizationBean.multiLanguageRes("exist_skyowner"), phoneOrEmail), data);
             }
 
             var checkStaff = companyHasUserRP.findByStakeholderUserId(user.getStakeHolderUser().getId());
             if (checkStaff != null) {
                 data.put("type", "staff");
-                throw new BadRequestException(String.format("Sorry! This %s was signed up as Skystaff already.", emailOrPhone), data);
+                throw new BadRequestException(String.format(localizationBean.multiLanguageRes("exist_skystaff"), phoneOrEmail), data);
             }
 
-            throw new BadRequestException(String.format("Sorry! This %s was signed up as Skyuser already.", emailOrPhone), null);
+            if (user.getProviderId() != null) {
+                throw new BadRequestException(String.format(localizationBean.multiLanguageRes("exist_skyuser"), phoneOrEmail), null);
+            }
+
+            throw new ForbiddenException(String.format(localizationBean.multiLanguageRes("exist_skyuser"), phoneOrEmail), null);
 
         }
 
@@ -259,29 +265,67 @@ public class VerifyIP implements VerifySV {
      */
     public int sendCodeResetPassword(SendVerifyRQ verifyRQ) {
 
-        UserEntity user = userRepository.findByEmailOrPhoneAndProviderIdIsNull(verifyRQ.getUsername(), verifyRQ.getCode());
-
-        if (user == null || user.getProviderId() != null) {
-            throw new UnauthorizedException("Unauthorized", null);
-        }
+        UserEntity user = userValidation(verifyRQ.getUsername(), verifyRQ.getCode());
 
         StakeHolderUserEntity stakeHolderUser = user.getStakeHolderUser();
         String fullName = stakeHolderUser.getFirstName() + " " + stakeHolderUser.getLastName();
-        String receiver = NumberUtils.isNumber(verifyRQ.getUsername())
-                ? verifyRQ.getCode() + verifyRQ.getUsername().replaceFirst("^0+(?!$)", "")
-                : verifyRQ.getUsername();
+        String receiver = userBean.getUsername(verifyRQ.getUsername(), verifyRQ.getCode());
 
         generalBean.expireRequest(user,
                 Integer.parseInt(environment.getProperty("spring.verifyStatus.forgotPassword")));
-        int code = apiBean.createVerifyCode(user,
+        int tokenCode = apiBean.createVerifyCode(user,
                 Integer.parseInt(environment.getProperty("spring.verifyStatus.forgotPassword")), null);
+
         userRepository.save(user);
 
-        Map<String, Object> mailData = emailBean.mailData(receiver, fullName, code, RESET_YOUR_PASSWORD);
+        Map<String, Object> mailData = emailBean.mailData(receiver, fullName, tokenCode, RESET_YOUR_PASSWORD);
         emailBean.sendEmailSMS("send-login", mailData);
 
-        return code;
+        return tokenCode;
     }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * User validation
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param usernameRQ
+     * @Param codeRQ
+     * @Return UserEntity
+     */
+    private UserEntity userValidation(String usernameRQ, String codeRQ) {
+
+        String username = userBean.getUsername(usernameRQ, null);
+
+        UserEntity user = userRepository.findByEmailOrPhone(username, codeRQ);
+
+        if (user == null) {
+            throw new BadRequestException(String.format(localizationBean.multiLanguageRes("cont_not_exist"), phoneOrEmail(usernameRQ)), null);
+        }
+
+        if (user.getProviderId() != null) {
+            throw new ConflictException(String.format(localizationBean.multiLanguageRes("reset_pwd_social"), user.getProvider()), null);
+        }
+
+        return user;
+
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Determine phone or email than get as string
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param username
+     * @Return String
+     */
+    private String phoneOrEmail(String username) {
+        String phoneOrEmail = NumberUtils.isNumber(username) ? "phone" : "email";
+        return phoneOrEmail;
+    }
+
 }
 
 

@@ -1,0 +1,7 @@
+SELECT id,
+       airline_code AS airlineCode,
+       airline_name AS airlineName,
+       alternative_business_name AS businessName
+FROM
+    flight_info fi
+WHERE fi.status = 1;

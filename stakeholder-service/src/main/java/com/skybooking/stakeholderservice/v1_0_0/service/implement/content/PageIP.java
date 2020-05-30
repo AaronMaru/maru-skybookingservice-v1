@@ -2,6 +2,7 @@ package com.skybooking.stakeholderservice.v1_0_0.service.implement.content;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.skybooking.stakeholderservice.constant.AwsPartConstant;
 import com.skybooking.stakeholderservice.exception.httpstatus.NotFoundException;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.content.page.FrontConfigRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.content.page.FrontendPageLocaleRP;
@@ -9,6 +10,7 @@ import com.skybooking.stakeholderservice.v1_0_0.io.repository.content.page.Front
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.content.PageSV;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.content.BannerRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.content.PagesRS;
+import com.skybooking.stakeholderservice.v1_0_0.util.general.AwsPartBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.header.HeaderBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -34,7 +36,7 @@ public class PageIP implements PageSV {
     private HeaderBean headerBean;
 
     @Autowired
-    private HttpServletRequest request;
+    private AwsPartBean awsPartBean;
 
     @Autowired
     Environment environment;
@@ -82,6 +84,7 @@ public class PageIP implements PageSV {
             pageRS.setMetaDescription(data.getMetaDescription());
             pageRS.setMetaKeyword(data.getMetaKeyword());
             pageRS.setCode(data.getCode());
+            pageRS.setAwsUrl(awsPartBean.partUrl(AwsPartConstant.CONTENT, null));
 
             pagesRS.add(pageRS);
 
@@ -105,7 +108,7 @@ public class PageIP implements PageSV {
         var page = data.stream().filter(item -> item.getCode().equals(code)).findFirst();
 
         if (page.isEmpty()) {
-            throw new NotFoundException("This url not found", null);
+            throw new NotFoundException("url_not_found", null);
         }
 
         return page.get();

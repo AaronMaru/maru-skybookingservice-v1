@@ -26,7 +26,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.List;
@@ -67,6 +66,7 @@ public class PassengerIP implements PassengerSV {
     @Autowired
     private HttpServletRequest httpServletRequest;
 
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * get list of passengers
@@ -81,20 +81,18 @@ public class PassengerIP implements PassengerSV {
         FilterRQ filterRQ = new FilterRQ(httpServletRequest, jwtUtils.getUserToken());
 
         String stake = headerBean.getCompanyId(filterRQ.getCompanyHeaderId());
-
         Integer size = filterRQ.getSize();
         Integer page = filterRQ.getPage();
 
         if (request.getParameter("passType") != null) {
             List<String> validatePassType = Arrays.asList("ADT", "CNN", "INF");
             if (!validatePassType.contains(request.getParameter("passType").toUpperCase())) {
-                throw new BadRequestException("The param value must be one in (ADT,  INF, CNN).", null);
+                throw new BadRequestException("psg_vld", null);
             }
         }
 
         String passType = request.getParameter("passType") == null ? ""
                 : request.getParameter("passType").toUpperCase();
-
         Page<PassengerTO> passengers = passengerNQ.getPassenger(filterRQ.getSkyuserId(), filterRQ.getCompanyHeaderId(),
                 filterRQ.getRole(), passType, stake, localeId, PageRequest.of(page, size));
 
@@ -151,14 +149,17 @@ public class PassengerIP implements PassengerSV {
     public PassengerRS createItem(PassengerRQ passengerRQ) {
 
         Long localeId = headerBean.getLocalizationId();
+
         FilterRQ filterRQ = new FilterRQ(httpServletRequest, jwtUtils.getUserToken());
 
-        if (repository.existsByIdNumberAndIdType(passengerRQ.getIdNumber(), passengerRQ.getIdType())) {
-            throw new BadRequestException("Passenger already exist", null);
+        PassengerEntity passengerEntity = this.checkPassenger(passengerRQ, filterRQ);
+
+        if (passengerEntity != null) {
+            throw new BadRequestException("unique_passenger", null);
         }
 
         if (countryRP.existsIso(passengerRQ.getNationality()) == null) {
-            throw new BadRequestException("Nationality not found", null);
+            throw new BadRequestException("not_found", null);
         }
 
         UserEntity userEntity = userBean.getUserPrincipal();
@@ -200,7 +201,7 @@ public class PassengerIP implements PassengerSV {
         PassengerEntity passenger = this.getPassengerById(id);
         if (passengerRQ.getNationality() != null) {
             if (countryRP.existsIso(passengerRQ.getNationality()) == null) {
-                throw new BadRequestException("Nationality not found", null);
+                throw new BadRequestException("not_found", null);
             }
         }
 
@@ -210,23 +211,19 @@ public class PassengerIP implements PassengerSV {
 
         this.logger.activities(Action.UPDATE_PASSENGER);
 
-        var passengerRS = getPassengerRS(passenger, filterRQ, stake, localeId);
-
-        return passengerRS;
+        return getPassengerRS(passenger, filterRQ, stake, localeId);
     }
 
     private PassengerRS getPassengerRS(PassengerEntity passenger, FilterRQ filterRQ, String stake, long localeId) {
         var passengerRS = PassengerTF.getResponse(repository.save(passenger));
 
-        PassengerTO passengerTO = passengerNQ.getPassengerById(passengerRS.getId(), filterRQ.getSkyuserId(),
-                filterRQ.getCompanyHeaderId(), filterRQ.getRole(), stake, localeId);
+        PassengerTO passengerTO = passengerNQ.getPassengerById(passengerRS.getId(), filterRQ.getSkyuserId(), filterRQ.getCompanyHeaderId(), filterRQ.getRole(), stake, localeId);
 
         BeanUtils.copyProperties(passengerTO, passengerRS);
         userBean.setPasengerType(passengerRS.getBirthDate(), passengerRS);
 
         return passengerRS;
     }
-
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -249,7 +246,6 @@ public class PassengerIP implements PassengerSV {
 
     }
 
-
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * This method will find passenger of stakeholder by passenger's id
@@ -264,10 +260,10 @@ public class PassengerIP implements PassengerSV {
 
         String stake = headerBean.getCompanyId(filterRQ.getCompanyHeaderId());
 
-        var data = repository.findPassenger(id, filterRQ.getSkyuserId(), null);
+        var data = repository.findPassenger(id, null);
 
         if (stake.equals("company"))
-            data = repository.findPassenger(id, filterRQ.getSkyuserId(), filterRQ.getCompanyHeaderId());
+            data = repository.findPassenger(id, filterRQ.getCompanyHeaderId());
 
         if (data != null)
             return data;
@@ -287,27 +283,49 @@ public class PassengerIP implements PassengerSV {
     @Override
     public void bookingCreatePassenger(PassengerRQ passengerRQ) {
 
+        if (countryRP.existsIso(passengerRQ.getNationality()) == null) {
+            throw new BadRequestException("not_found", null);
+        }
+
         FilterRQ filterRQ = new FilterRQ(httpServletRequest, jwtUtils.getUserToken());
 
-        if (!repository.existsByIdNumberAndIdType(passengerRQ.getIdNumber(), passengerRQ.getIdType())) {
-            if (countryRP.existsIso(passengerRQ.getNationality()) == null) {
-                throw new BadRequestException("Nationality not found", null);
-            }
+        PassengerEntity passengerEntity = this.checkPassenger(passengerRQ, filterRQ);
 
-            PassengerEntity passenger = PassengerTF.getEntity(passengerRQ);
-
-            String stake = headerBean.getCompanyId(filterRQ.getCompanyHeaderId());
-
-            if (stake.equals("company")) {
-                passenger.setCompanyId(filterRQ.getCompanyHeaderId());
-            }
-
-            UserEntity userEntity = userBean.getUserPrincipal();
-
-            passenger.setStakeHolderUserEntity(userEntity.getStakeHolderUser());
-
-            this.logger.activities(Action.CREATE_PASSENGER);
-            repository.save(passenger);
+        if (passengerEntity == null){
+            passengerEntity = new PassengerEntity();
         }
+
+        BeanUtils.copyProperties(passengerRQ, passengerEntity);
+
+        String stake = headerBean.getCompanyId(filterRQ.getCompanyHeaderId());
+
+        if (stake.equals("company")) {
+            passengerEntity.setCompanyId(filterRQ.getCompanyHeaderId());
+        }
+
+        UserEntity userEntity = userBean.getUserPrincipal();
+
+        passengerEntity.setStakeHolderUserEntity(userEntity.getStakeHolderUser());
+
+        this.logger.activities(Action.CREATE_PASSENGER);
+        repository.save(passengerEntity);
+    }
+
+    private PassengerEntity checkPassenger(PassengerRQ passengerRQ, FilterRQ filterRQ) {
+        PassengerEntity passengerEntity;
+
+        if (jwtUtils.getUserToken().getCompanyId() == 0) {
+            passengerEntity = repository.checkExistPassengerSkyUser(filterRQ.getSkyuserId(), passengerRQ.getIdNumber(),
+                    passengerRQ.getIdType());
+        } else {
+            if (filterRQ.getCompanyHeaderId() == 0) {
+                passengerEntity = repository.checkExistPassengerSkyUser(filterRQ.getSkyuserId(),
+                        passengerRQ.getIdNumber(), passengerRQ.getIdType());
+            } else {
+                passengerEntity = repository.checkExistPassengerSkyOwner(filterRQ.getSkyuserId(),
+                        passengerRQ.getIdNumber(), passengerRQ.getIdType(), filterRQ.getCompanyHeaderId());
+            }
+        }
+        return passengerEntity;
     }
 }

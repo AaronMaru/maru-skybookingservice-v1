@@ -15,6 +15,14 @@ public interface UserRepository extends JpaRepository<UserEntity, Integer> {
     @Query(value = "SELECT * FROM users WHERE provider IS NULL AND (username = ?1 OR email = ?1)", nativeQuery = true)
     UserEntity findByUsernameOrEmail(String username);
 
+    /**
+     * Find user to refresh token
+     */
+    @Query(value = "SELECT * FROM users WHERE username = ?1 OR email = ?1", nativeQuery = true)
+    UserEntity findUserForRefreshToken(String username);
+
+    @Query(value = "SELECT * FROM users WHERE provider IS NULL AND (email = ?1 OR (phone = ?1 AND code = ?2))", nativeQuery = true)
+    UserEntity findByPhoneOrEmail(String username, String code);
 
     /**
      * Find user login by phone

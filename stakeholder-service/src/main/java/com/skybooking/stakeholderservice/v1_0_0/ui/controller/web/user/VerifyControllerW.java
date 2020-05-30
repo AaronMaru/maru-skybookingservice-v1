@@ -53,7 +53,7 @@ public class VerifyControllerW {
     @PostMapping("/resend-verify")
     public ResRS resendVerify(@RequestBody SendVerifyRQ sendVerifyRQ) {
         verifySV.resendVerify(sendVerifyRQ, Integer.parseInt(environment.getProperty("spring.verifyStatus.verify")));
-        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"vf_rdy_sent", "");
+        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"vf_rdy_sent", null);
     }
 
 
@@ -68,7 +68,7 @@ public class VerifyControllerW {
     @PostMapping("/send-forgot-password")
     public ResRS sendCodeResetPassword(@RequestBody SendVerifyRQ sendVerifyRQ) {
         verifySV.sendCodeResetPassword(sendVerifyRQ);
-        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"vf_rdy_sent", "");
+        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"vf_rdy_sent", null);
     }
 
 
@@ -83,7 +83,7 @@ public class VerifyControllerW {
     @PatchMapping("/verify-active")
     public ResRS verifyUserToActive(@Valid @RequestBody VerifyRQ verifyRQ) {
         verifySV.verifyUser(verifyRQ, Integer.parseInt(environment.getProperty("spring.verifyStatus.activeUser")));
-        return localization.resAPI(HttpStatus.OK,"acc_act_succ", "");
+        return localization.resAPI(HttpStatus.OK,"acc_act_succ", null);
     }
 
 
@@ -98,7 +98,7 @@ public class VerifyControllerW {
     @PostMapping("/send-verify-active")
     public ResRS sendVerifyToActive(@RequestBody SendVerifyRQ sendVerifyRQ) {
         verifySV.resendVerify(sendVerifyRQ, Integer.parseInt(environment.getProperty("spring.verifyStatus.activeUser")));
-        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"vf_rdy_sent", "");
+        return localization.resAPI(HttpStatus.TEMPORARY_REDIRECT,"vf_rdy_sent", null);
     }
 
 

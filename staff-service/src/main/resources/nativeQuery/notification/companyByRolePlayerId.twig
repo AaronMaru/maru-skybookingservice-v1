@@ -1,6 +1,7 @@
 SELECT
 	suhc.id,
-	up.player_id AS playerId
+	up.player_id AS playerId,
+	up.stakeholder_user_id AS skyuserId
 FROM stakeholder_user_has_companies suhc
 
 INNER JOIN

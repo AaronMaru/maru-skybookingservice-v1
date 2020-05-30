@@ -24,7 +24,7 @@
 									<a href="http://skybooking.app.link/IXBskEzxv0"><img style="width:100px;height:35px;" src="${mailUrl}app_store_link.png"></a>
 								</li>
 								<li style="list-style:none;padding:5px;color:#FF5722;font-weight:500;font-size:15px;display:inline-block;margin-top:10px;">
-									<a href="https://apps.apple.com/us/app/skybooking/id1457926345"><img style="width:100px;height:35px;" src="${mailUrl}play_store_link.png"></a>
+									<a href="http://skybooking.app.link/IXBskEzxv0"><img style="width:100px;height:35px;" src="${mailUrl}play_store_link.png"></a>
 								</li>
 							</ul>
 							<ul class="scl-icn" style="text-align:center;margin: 0;padding: 0;">
@@ -46,7 +46,7 @@
 								</li>
 							</ul>
 						</div>
-						<p style="font-weight:300;font-size:14px;text-align:justify;text-align:center;font-size:14px;color:#848383;margin-top:0;padding:10px;" class="cop-rit">@ 2018 Skybooking. All Right Reserved | By : Skybooking Co.Ltd</p>
+						<p style="font-weight:300;font-size:14px;text-align:justify;text-align:center;font-size:14px;color:#848383;margin-top:0;padding:10px;" class="cop-rit">@ ${.now?string('yyyy')} Skybooking. All Right Reserved | By : Skybooking Co.Ltd</p>
 					</div>
 				</div>
 			</div>

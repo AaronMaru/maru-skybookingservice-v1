@@ -30,7 +30,6 @@ public class GeneralBean {
     @Autowired
     private LocalizationBean localization;
 
-
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Check string or empty string
@@ -83,17 +82,12 @@ public class GeneralBean {
 
             numUser = "0001";
             if (numIncr.equals("9")) {
-
                 return prefix + "A" + type + numUser + currentYear;
-
             } else if (!NumberUtils.isNumber(numIncr)) {
-
                 return prefix + (char) (numIncr.charAt(0) + 1) + type + numUser + currentYear;
 
             } else {
-
                 return prefix + (NumberUtils.toInt(numIncr) + 1) + type + numUser + currentYear;
-
             }
 
         } else {
@@ -102,7 +96,6 @@ public class GeneralBean {
             return firstCode + "0000".substring(numInc.length()) + numInc + currentYear;
 
         }
-
 
     }
 
@@ -216,7 +209,7 @@ public class GeneralBean {
         }
 
         body.put("message", validation);
-        body.put("data", "");
+        body.put("data", null);
 
         return body;
 
@@ -232,7 +225,7 @@ public class GeneralBean {
      */
     public void errorMultipart(MultipartFile multipartFile) {
         if (multipartFile != null && multipartFile.getSize() > 6000000) {
-            throw new BadRequestException("Oop the file size to large", null);
+            throw new BadRequestException("file_lg", null);
         }
     }
 

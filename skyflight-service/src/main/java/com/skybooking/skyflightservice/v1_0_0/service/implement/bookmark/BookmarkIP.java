@@ -8,6 +8,7 @@ import com.skybooking.skyflightservice.v1_0_0.io.entity.shopping.Leg;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.shopping.LegSegmentDetail;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.AirlineNQ;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.FlightLocationNQ;
+import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.MarkupNQ;
 import com.skybooking.skyflightservice.v1_0_0.io.repository.bookmark.FlightSaveOriginDestinationRP;
 import com.skybooking.skyflightservice.v1_0_0.io.repository.bookmark.FlightSavesRP;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.bookmark.BookmarkSV;
@@ -20,6 +21,8 @@ import com.skybooking.skyflightservice.v1_0_0.service.model.security.UserAuthent
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.shopping.FlightShoppingRQ;
 import com.skybooking.skyflightservice.v1_0_0.util.DateUtility;
 import com.skybooking.skyflightservice.v1_0_0.util.booking.BookingUtility;
+import com.skybooking.skyflightservice.v1_0_0.util.calculator.CalculatorUtils;
+import com.skybooking.skyflightservice.v1_0_0.util.calculator.NumberFormatter;
 import com.skybooking.skyflightservice.v1_0_0.util.shopping.ShoppingUtils;
 import org.eclipse.collections.impl.list.mutable.FastList;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,6 +66,9 @@ public class BookmarkIP implements BookmarkSV {
 
     @Autowired
     private ShoppingUtils shoppingUtils;
+
+    @Autowired
+    private MarkupNQ markupNQ;
 
 
     /**
@@ -199,25 +205,31 @@ public class BookmarkIP implements BookmarkSV {
             var multiAirlineLogo = appConfig.getAIRLINE_LOGO_PATH() + "/air_multiple.png";
 
             var query = querySV.flightShoppingById(bookmark.getRequest()).getQuery();
-            var markUp = shoppingUtils.getUserMarkupPrice(metadata, query.getClassType());
 
-            var baseFare = bookingUtility.getBookingTotalAmount(bookmark.getRequest(), itinerary.getLowest().toArray(new String[0]));
-            var totalAmount = bookingUtility.getBookingTotalMarkupAmount(baseFare, markUp.getMarkup().doubleValue());
+            var markUp = shoppingUtils.getUserMarkupPrice(metadata, query.getClassType());
+            var paymentMarkup = markupNQ.getGeneralMarkupPayment();
+
+            var baseFare = NumberFormatter.trimAmount(bookingUtility.getBookingTotalAmount(bookmark.getRequest(), itinerary.getLowest().toArray(new String[0])));
+            var totalMarkupAmount = NumberFormatter.trimAmount(bookingUtility.getBookingTotalMarkupAmount(baseFare.doubleValue(), markUp.getMarkup().doubleValue()));
+            var totalBaseFareMarkupAmount = NumberFormatter.trimAmount(baseFare).add(totalMarkupAmount);
+            var totalPaymentMarkupAmount = CalculatorUtils.getAmountPercentage(totalBaseFareMarkupAmount, paymentMarkup.getMarkup());
+
+            var totalAmount = NumberFormatter.trimAmount(baseFare.add(totalMarkupAmount).add(totalPaymentMarkupAmount));
 
             var flightSavedEntity = new FlightSavesEntity();
 
             flightSavedEntity.setTripType(query.getTripType().toString());
             flightSavedEntity.setClassCode(query.getClassType().toUpperCase());
-            flightSavedEntity.setClassName(query.getClassType().toUpperCase());
+            flightSavedEntity.setClassName(bookingUtility.getFlightClassType(query.getClassType()));
             flightSavedEntity.setAdult(query.getAdult());
             flightSavedEntity.setChild(query.getChild());
             flightSavedEntity.setInfant(query.getInfant());
 
-            flightSavedEntity.setAmount(BigDecimal.valueOf(totalAmount).add(BigDecimal.valueOf(baseFare)));
+            flightSavedEntity.setAmount(totalAmount);
             flightSavedEntity.setDecimalPlaces(2);
             flightSavedEntity.setUserId(metadata.getStakeholderId());
             flightSavedEntity.setTagId(bookmark.getItinerary());
-            flightSavedEntity.setBaseFare(BigDecimal.valueOf(baseFare));
+            flightSavedEntity.setBaseFare(baseFare);
 
             flightSavedEntity.setStopSearch(0);
 
@@ -249,7 +261,7 @@ public class BookmarkIP implements BookmarkSV {
 
                     var segments = FastList.newList(leg.getSegments());
 
-                    var stop = segments.summarizeInt(LegSegmentDetail::getStops).getSum();
+                    var stop = leg.getStops();
 
                     var firstSegmentDetail = segments.getFirst();
                     var firstSegment = detailSV.getSegmentDetail(bookmark.getRequest(), firstSegmentDetail.getSegment());

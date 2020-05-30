@@ -33,11 +33,16 @@ spring:
         pool.enabled: false
         broker-url: tcp://192.168.1.126:61616
 
+    redis:
+        host: 3.229.56.17
+        port: 6379
+        password:
+
 native-query:
     package-scan: com.skybooking.skyflightservice
 
 hazelcast:
-    expire: 60
+    expire: 1800
 
 job:
     cancel-booking: PT5M

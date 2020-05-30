@@ -1,5 +1,6 @@
 package com.skybooking.skyflightservice.v1_0_0.service.implement.booking;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skybooking.skyflightservice.config.WebClientConfiguration;
 import com.skybooking.skyflightservice.exception.httpstatus.BadRequestException;
 import com.skybooking.skyflightservice.v1_0_0.client.distributed.action.BookingAction;
@@ -14,6 +15,7 @@ import com.skybooking.skyflightservice.v1_0_0.ui.model.response.booking.PNRCreat
 import com.skybooking.skyflightservice.v1_0_0.util.JwtUtils;
 import com.skybooking.skyflightservice.v1_0_0.util.booking.BookingUtility;
 import com.skybooking.skyflightservice.v1_0_0.util.header.HeaderBean;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +57,7 @@ public class BookingIP extends BookingDataIP implements BookingSV {
 
 
     @Override
+    @SneakyThrows
     public PNRCreateRS create(BookingCreateRQ request, BookingMetadataTA metadataTA) {
 
         var bookingCreated = new PNRCreateRS();
@@ -65,8 +68,16 @@ public class BookingIP extends BookingDataIP implements BookingSV {
         }
 
         /** action booking request */
-        var pnrRS = bookingAction.create(bookingRequestBody.getBCreateDRQ(request));
-        System.out.println(pnrRS);
+        var mapper = new ObjectMapper();
+
+        log.debug("BOOKING PNR: [{}]", request.getRequestId());
+
+        var pnrRQ = bookingRequestBody.getBCreateDRQ(request);
+        log.debug("BOOKING PNR REQUEST: {}", mapper.writeValueAsString(pnrRQ));
+
+        var pnrRS = bookingAction.create(pnrRQ);
+        log.debug("BOOKING PNR RESPONSE: {}", mapper.writeValueAsString(pnrRS));
+
         var status =
             pnrRS
                 .get("CreatePassengerNameRecordRS")

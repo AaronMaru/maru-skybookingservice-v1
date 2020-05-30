@@ -33,3 +33,7 @@ build/
 /src/main/resources/bootstrap.yml
 
 *.pdf
+
+*.log
+*.tmp
+*.gz

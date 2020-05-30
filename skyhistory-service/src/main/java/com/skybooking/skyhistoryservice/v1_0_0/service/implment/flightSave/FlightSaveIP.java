@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,7 +42,6 @@ public class FlightSaveIP implements FlightSaveSV {
     private HeaderBean headerBean;
 
 
-
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Get list item
@@ -59,10 +59,10 @@ public class FlightSaveIP implements FlightSaveSV {
         Long companyId = jwtUtils.getClaim("companyId", Long.class);
 
         String stake = headerBean.getCompanyId(companyId);
-        String role = (stake.equals("company")) ? jwtUtils.getClaim("userRole", String.class) : "";
+//        String role = (stake.equals("company")) ? jwtUtils.getClaim("userRole", String.class) : "";
 
-        String action = keyword != null ? "search" : "";
-        Page<SaveFlightTO> saveFlightTOS = saveFlightNQ.savedFlight(skyuserId, companyId, action, keyword, role, stake, PageRequest.of(page - 1, size));
+        String action = !keyword.equals("") ? "search" : "";
+        Page<SaveFlightTO> saveFlightTOS = saveFlightNQ.savedFlight(skyuserId, companyId, action, keyword, stake, PageRequest.of(page - 1, size));
 
         List<FlightSaveRS> saveFlies = new ArrayList<>();
         saveFlightTOS.forEach(dataTO -> {
@@ -87,7 +87,8 @@ public class FlightSaveIP implements FlightSaveSV {
 
 
     private List<FlightSaveODRS> saveFlightsSegment(Long flightId) {
-        List<SaveFlightODTO> saveFlightODTO = saveFlightNQ.saveFlightSegments(flightId);
+
+        List<SaveFlightODTO> saveFlightODTO = saveFlightNQ.saveFlightSegments(flightId, headerBean.getLocalizationId());
 
         List<FlightSaveODRS> fSaveODs = new ArrayList<>();
 

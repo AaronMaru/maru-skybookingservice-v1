@@ -1,14 +1,15 @@
 SELECT
 	suhc.id,
 	suhc.skyuser_role AS skyuserRole,
-	up.player_id AS playerId
+	up.player_id AS playerId,
+	up.stakeholder_user_id AS skyuserId
 FROM stakeholder_user_has_companies suhc
 
 INNER JOIN
 (
 	SELECT *
 	FROM user_player up
-) up ON up.stuser_id = suhc.stakeholder_user_id
+) up ON up.stakeholder_user_id = suhc.stakeholder_user_id
 
-WHERE suhc.stakeholder_user_id = :skyuserId
-AND suhc.stakeholder_company_id = :companyId
+WHERE suhc.stakeholder_company_id = :companyId
+AND suhc.skyuser_role = :role

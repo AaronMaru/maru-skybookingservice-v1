@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 public class PriceInfo {
 
     private BigDecimal grossAmount;
-    private BigDecimal finalAmount;
+    private BigDecimal paidAmount;
     private BigDecimal discountPaymentMethodPercentage;
     private BigDecimal discountPaymentMethodAmount;
     private BigDecimal markupPaymentMethodPercentage;

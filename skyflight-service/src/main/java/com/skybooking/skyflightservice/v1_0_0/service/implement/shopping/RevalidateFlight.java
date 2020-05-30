@@ -69,19 +69,33 @@ public class RevalidateFlight {
 
         var seats = adult + child;
 
+        var classOfServiceId = requestId;
+        for (String leg : bookingRQ.getLegIds()) {
+            classOfServiceId = classOfServiceId + leg;
+        }
+
+        List<String> classOfServices = transformSV.getNewClassOfService(classOfServiceId);
+        var indexClassOfService = 0;
         for (String leg : bookingRQ.getLegIds()) {
 
             cachedId = cachedId + leg;
             List<BookingSegmentDRQ> segments = new ArrayList<>();
             Leg legDetail = detailSV.getLegDetail(requestId, leg);
             for (LegSegmentDetail legSegment : legDetail.getSegments()) {
+
+                var classOfService = legSegment.getBookingCode();
+                if (classOfServices.size() > 0) {
+                    classOfService = classOfServices.get(indexClassOfService);
+                }
                 segments.add(
                     this.setDSegment(
                         detailSV.getSegmentDetail(requestId, legSegment.getSegment()),
-                        legSegment.getDateAdjustment(),
-                        legSegment.getBookingCode()
+                        legSegment.getDateAdjustment() + legSegment.getPreviousDateAdjustment(),
+                            classOfService
                     )
                 );
+
+                indexClassOfService++;
             }
 
             originDestinations.add(
@@ -101,6 +115,10 @@ public class RevalidateFlight {
         request.setOriginDestinations(originDestinations);
 
         SabreBargainFinderRS pairCity = shoppingAction.revalidateV2(request);
+
+        if (pairCity.getItineraryResponse().getStatistics().getItineraryCount() == 0) {
+            return new RevalidateM(RevalidateConstant.UNAVAILABLE_SEATS, MessageConstant.UNAVAILABLE_SEATS);
+        }
 
         var passengerList = pairCity.getItineraryResponse().getItineraryGroups().get(0).getItineraries().get(0).getPricingInformation().get(0).getFare().getPassengerInfoList();
 

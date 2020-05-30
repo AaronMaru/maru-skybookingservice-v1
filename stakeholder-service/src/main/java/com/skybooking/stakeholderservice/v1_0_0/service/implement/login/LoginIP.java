@@ -7,10 +7,10 @@ import com.skybooking.stakeholderservice.exception.httpstatus.UnauthorizedExcept
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserRepository;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.login.LoginSV;
-import com.skybooking.stakeholderservice.v1_0_0.transformer.TokenTF;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.login.LoginRQ;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.TokenRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
-import com.skybooking.stakeholderservice.v1_0_0.util.notification.PushNotificationOptions;
+import com.skybooking.stakeholderservice.v1_0_0.util.localization.LocalizationBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.skyuser.UserBean;
 import org.apache.commons.lang.math.NumberUtils;
 import org.springframework.beans.BeanUtils;
@@ -32,6 +32,9 @@ public class LoginIP implements LoginSV {
     @Autowired
     private BCryptPasswordEncoder pwdEncode;
 
+    @Autowired
+    private LocalizationBean localizationBean;
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -49,31 +52,26 @@ public class LoginIP implements LoginSV {
 
         String password = loginRQ.getPassword();
 
-        UserEntity user = userRepository.findByUsernameOrEmail(loginRQ.getUsername());
+        UserEntity user = userRepository.findByPhoneOrEmail(loginRQ.getUsername(), loginRQ.getCode());
 
-        String emailOrPhone = "email";
-        if (NumberUtils.isNumber(loginRQ.getUsername())) {
-            user = userRepository.findByPhoneAndCode(loginRQ.getUsername(), loginRQ.getCode());
-            emailOrPhone = "phone";
-        }
+        String emailOrPhone = NumberUtils.isNumber(loginRQ.getUsername()) ? "phone" : "email";
 
         if (user == null) {
-            throw new UnauthorizedException(String.format("Your %s or password is incorrect", emailOrPhone), null);
+            throw new UnauthorizedException(String.format(localizationBean.multiLanguageRes("acc_inc"), emailOrPhone), null);
         }
 
         if (!pwdEncode.matches(loginRQ.getPassword(), user.getPassword())) {
-            throw new UnauthorizedException(String.format("Your %s or password is incorrect", emailOrPhone), null);
+            throw new UnauthorizedException(String.format(localizationBean.multiLanguageRes("acc_inc"), emailOrPhone), null);
         }
 
         checkUserStatus(user, password);
 
-        TokenTF data = userBean.getCredential(loginRQ.getUsername(),loginRQ.getPassword(), credential, loginRQ.getCode(), null);
+        TokenRS token = userBean.getCredential(loginRQ.getUsername(),loginRQ.getPassword(), credential, loginRQ.getCode(), null);
 
         userBean.registerPlayer(user);
 
         UserDetailsTokenRS userDetailsTokenRS = new UserDetailsTokenRS();
-        BeanUtils.copyProperties(userBean.userFields(user, data.getAccess_token()), userDetailsTokenRS);
-
+        BeanUtils.copyProperties(userBean.userFields(user, token), userDetailsTokenRS);
         userBean.storeUserTokenLastLogin(userDetailsTokenRS.getToken(), user);
 
         return userDetailsTokenRS;
@@ -92,7 +90,7 @@ public class LoginIP implements LoginSV {
 
         if (user.getVerified() != 1) {
             userBean.storeTokenRedis(user, password);
-            throw new TemporaryException("You need to confirm your account. We have sent you an activation code, please check your email or SMS.", null);
+            throw new TemporaryException("usr_log_not_vf", null);
         }
 
         if (user.getStakeHolderUser() == null) {
@@ -105,9 +103,9 @@ public class LoginIP implements LoginSV {
 
         switch (user.getStakeHolderUser().getStatus()) {
             case 0:
-                throw new ForbiddenException("Your account inactive", null);
+                throw new ForbiddenException("acc_deact", null);
             case 2:
-                throw new ProxyException("Your account was ban", null);
+                throw new ProxyException("acc_ban", null);
         }
 
     }

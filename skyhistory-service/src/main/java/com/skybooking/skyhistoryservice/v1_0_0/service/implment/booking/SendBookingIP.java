@@ -2,10 +2,10 @@ package com.skybooking.skyhistoryservice.v1_0_0.service.implment.booking;
 
 import com.skybooking.skyhistoryservice.exception.httpstatus.BadRequestException;
 import com.skybooking.skyhistoryservice.v1_0_0.io.enitity.booking.BookingEntity;
-import com.skybooking.skyhistoryservice.v1_0_0.io.enitity.company.StakeholderCompanyEntity;
+import com.skybooking.skyhistoryservice.v1_0_0.io.enitity.company.StakeholderCompanyDocsEntity;
 import com.skybooking.skyhistoryservice.v1_0_0.io.enitity.user.StakeHolderUserEntity;
 import com.skybooking.skyhistoryservice.v1_0_0.io.repository.booking.BookingRP;
-import com.skybooking.skyhistoryservice.v1_0_0.io.repository.company.CompanyRP;
+import com.skybooking.skyhistoryservice.v1_0_0.io.repository.company.CompanyDocsRP;
 import com.skybooking.skyhistoryservice.v1_0_0.io.repository.user.StakeHolderUserRP;
 import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.booking.BookingDetailSV;
 import com.skybooking.skyhistoryservice.v1_0_0.service.interfaces.booking.SendBookingSV;
@@ -39,7 +39,7 @@ public class SendBookingIP implements SendBookingSV {
     private EmailBean emailBean;
 
     @Autowired
-    private CompanyRP companyRP;
+    private CompanyDocsRP companyDocsRP;
 
     @Autowired
     private Environment environment;
@@ -63,7 +63,7 @@ public class SendBookingIP implements SendBookingSV {
         BookingEntity booking = bookingRP.findByBookingCode(sendBookingPDFRQ.getBookingCode());
 
         if (booking == null) {
-            throw new BadRequestException("No booking data found", "");
+            throw new BadRequestException("no_bk", null);
         }
 
         String template = YOUR_FLIGHT_TICKET;
@@ -104,7 +104,7 @@ public class SendBookingIP implements SendBookingSV {
         BookingEntity booking = bookingRP.findByBookingCode(sendBookingNoAuthRQ.getBookingCode());
 
         if (booking == null) {
-            throw new BadRequestException("No booking data found", "");
+            throw new BadRequestException("no_bk", null);
         }
 
         StakeHolderUserEntity stakeHolderUserEntity = stakeHolderUserRP
@@ -145,7 +145,7 @@ public class SendBookingIP implements SendBookingSV {
 
         BookingEntity booking = bookingRP.findByBookingCode(sendBookingPDFRQ.getBookingCode());
         if (booking == null) {
-            throw new BadRequestException("No booking data found", "");
+            throw new BadRequestException("no_bk", null);
         }
 
         BookingDetailRS bookingEmailDetailRS = bookingDetailSV.getBookingDetail(booking.getBookingCode(), null);
@@ -171,7 +171,7 @@ public class SendBookingIP implements SendBookingSV {
         BookingEntity booking = bookingRP.findByBookingCode(sendBookingNoAuthRQ.getBookingCode());
 
         if (booking == null) {
-            throw new BadRequestException("No booking data found", "");
+            throw new BadRequestException("no_bk", null);
         }
 
         StakeHolderUserEntity stakeHolderUserEntity = stakeHolderUserRP
@@ -194,10 +194,20 @@ public class SendBookingIP implements SendBookingSV {
 
     private String embedLogo() {
         String userType = jwtUtils.getClaim("userType", String.class);
-        String companyLogo = "https://skybooking.s3.amazonaws.com/uploads/company_profiles/origin/default.png";
-        String profileOwner = jwtUtils.getClaim("profile", String.class);
 
-        return userType.equals("skyowner") ? profileOwner : companyLogo;
+        if (userType.equals("skyuser")) {
+            return "https://s3.amazonaws.com/skybooking/uploads/mail/images/logo.png";
+        }
+
+        Integer companyId = jwtUtils.getClaim("companyId", Integer.class);
+        StakeholderCompanyDocsEntity stakeholderCompanyDocsEntity = companyDocsRP.getItineraryProfile(companyId);
+
+        if (stakeholderCompanyDocsEntity != null) {
+            return environment.getProperty("spring.awsImageUrl.companyProfile") + stakeholderCompanyDocsEntity.getFileName();
+        } else {
+            return environment.getProperty("spring.awsImageUrl.companyProfile") + "default.png";
+        }
+
     }
 
     private String embedLogoNoAuth(Integer companyId) {
@@ -205,13 +215,16 @@ public class SendBookingIP implements SendBookingSV {
         companyId = companyId == null ? 0 : companyId;
 
         if (companyId == 0) {
-            return "https://skybooking.s3.amazonaws.com/uploads/company_profiles/origin/default.png";
+            return "https://s3.amazonaws.com/skybooking/uploads/mail/images/logo.png";
         }
 
-        StakeholderCompanyEntity stakeholderCompanyEntity = companyRP.findById(companyId.longValue()).orElse(null);
-        return stakeholderCompanyEntity.getProfileImg() == null
-            ? environment.getProperty("spring.awsImageUrl.companyProfile") + "/origin/default.png"
-            : stakeholderCompanyEntity.getProfileImg();
+        StakeholderCompanyDocsEntity stakeholderCompanyDocsEntity = companyDocsRP.getItineraryProfile(companyId);
+
+        if (stakeholderCompanyDocsEntity != null) {
+            return environment.getProperty("spring.awsImageUrl.companyProfile") + stakeholderCompanyDocsEntity.getFileName();
+        } else {
+            return environment.getProperty("spring.awsImageUrl.companyProfile") + "default.png";
+        }
     }
 
     @Override
@@ -220,7 +233,7 @@ public class SendBookingIP implements SendBookingSV {
         BookingEntity booking = bookingRP.findByBookingCode(bookingCode);
 
         if (booking == null) {
-            throw new BadRequestException("No booking data found", "");
+            throw new BadRequestException("no_bk", null);
         }
 
         PrintRS printRS = new PrintRS();
@@ -265,7 +278,7 @@ public class SendBookingIP implements SendBookingSV {
                     BookingStopInfoTF bookingStopInfoTF = new BookingStopInfoTF();
                     BeanUtils.copyProperties(itemStopInfo, bookingStopInfoTF);
                     bookingStopInfoTF
-                        .setElapsedHourMinute(dateTimeBean.convertElapseTime(bookingStopInfoTF.getElapsedTime()));
+                        .setDurationHourMinute(dateTimeBean.convertNumberToHour(bookingStopInfoTF.getDuration()));
 
                     bookingStopInfoTFList.add(bookingStopInfoTF);
                 });
@@ -275,14 +288,14 @@ public class SendBookingIP implements SendBookingSV {
                 itineraryODSegmentTF.setDepartureInfo(departureTF);
                 itineraryODSegmentTF.setArrivalInfo(arrivalTF);
                 itineraryODSegmentTF
-                    .setElapsedHourMinute(dateTimeBean.convertElapseTime(itineraryODSegmentTF.getElapsedTime()));
+                    .setLayoverHourMinute(dateTimeBean.convertNumberToHour(itineraryODSegmentTF.getLayover()));
                 itineraryODSegmentTF.setStopInfo(bookingStopInfoTFList);
                 itineraryODSegmentTFList.add(itineraryODSegmentTF);
             });
 
             BeanUtils.copyProperties(itemItineraryInfo, itineraryODInfoTF);
             itineraryODInfoTF.setItinerarySegment(itineraryODSegmentTFList);
-            itineraryODInfoTF.setElapsedHourMinute(dateTimeBean.convertElapseTime(itemItineraryInfo.getElapsedTime()));
+            itineraryODInfoTF.setElapsedHourMinute(dateTimeBean.convertNumberToHour(itemItineraryInfo.getElapsedTime()));
             itineraryODInfoTFList.add(itineraryODInfoTF);
         });
 

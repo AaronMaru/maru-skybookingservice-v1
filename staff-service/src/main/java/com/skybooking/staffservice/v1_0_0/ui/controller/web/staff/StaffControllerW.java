@@ -5,6 +5,7 @@ import com.skybooking.staffservice.v1_0_0.ui.model.request.staff.DeactiveStaffRQ
 import com.skybooking.staffservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.staff.StaffPaginationRS;
 import com.skybooking.staffservice.v1_0_0.util.localization.LocalizationBean;
+import com.skybooking.staffservice.v1_0_0.util.notification.PushNotificationOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -14,7 +15,6 @@ import javax.servlet.http.HttpServletRequest;
 @RestController
 @RequestMapping("/wv1.0.0")
 public class StaffControllerW {
-
 
     @Autowired
     private StaffSV staffSV;
@@ -47,6 +47,12 @@ public class StaffControllerW {
     @GetMapping("/staff-profile/{id}")
     public ResRS staffProfile(@PathVariable Long id) {
         Object staffProfile = staffSV.staffProfile(id);
+        return localization.resAPI(HttpStatus.OK,"res_succ", staffProfile);
+    }
+
+    @GetMapping("/staff-profile")
+    public ResRS staffProfile() {
+        Object staffProfile = staffSV.staffProfile(null);
         return localization.resAPI(HttpStatus.OK,"res_succ", staffProfile);
     }
 

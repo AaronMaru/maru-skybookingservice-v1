@@ -1,6 +1,8 @@
 package com.skybooking.skyflightservice.v1_0_0.util.booking;
 
+import com.skybooking.skyflightservice.constant.FlightCabinConstant;
 import com.skybooking.skyflightservice.constant.TripTypeEnum;
+import com.skybooking.skyflightservice.constant.UserConstant;
 import com.skybooking.skyflightservice.constant.passenger.PassengerCode;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.booking.BookingEntity;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.MarkupNQ;
@@ -67,6 +69,27 @@ public class BookingUtility {
         }
 
         return tripType;
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get cabin name by cabin code
+     * -----------------------------------------------------------------------------------------------------------------
+     * @param code
+     * @return String
+     */
+    public String getFlightClassType(String code) {
+        switch (code.toUpperCase()) {
+            case FlightCabinConstant.ECONOMY_CLASS_CODE:
+                return FlightCabinConstant.ECONOMY_CLASS_NAME;
+            case FlightCabinConstant.BUSINESS_CLASS_CODE:
+                return FlightCabinConstant.BUSINESS_CLASS_NAME;
+            case FlightCabinConstant.FIRST_CLASS_CODE:
+                return FlightCabinConstant.FIRST_CLASS_NAME;
+            default:
+                throw new IllegalArgumentException("Invalid cabin type.");
+        }
     }
 
 
@@ -153,14 +176,20 @@ public class BookingUtility {
         // get markup percentage
         var markUpTO = new MarkupTO();
 
-        if (userType.equalsIgnoreCase("skyuser")) {
+        if (userType.equalsIgnoreCase(UserConstant.SKYUSER)) {
             markUpTO = markupNQ.getMarkupPriceSkyUser(userId, cabinType.toUpperCase());
         } else {
             markUpTO = markupNQ.getMarkupPriceSkyOwnerUser(userId, cabinType.toUpperCase());
         }
 
         if (markUpTO == null || markUpTO.getMarkup() == null) {
-            markUpTO = markupNQ.getMarkupPriceAnonymousUser(cabinType.toUpperCase(), "skyuser");
+
+            if (userType.equalsIgnoreCase(UserConstant.SKYOWNER)) {
+                markUpTO = markupNQ.getMarkupPriceAnonymousUser(cabinType.toUpperCase(), UserConstant.SKYOWNER);
+            } else {
+                markUpTO = markupNQ.getMarkupPriceAnonymousUser(cabinType.toUpperCase(), UserConstant.SKYUSER);
+            }
+
         }
 
         return markUpTO.getMarkup().doubleValue();
@@ -203,7 +232,6 @@ public class BookingUtility {
 //
 //        return NumberFormatter.amount(totalAmount.doubleValue());
 //    }
-
     public double getBookingTotalAmount(BookingCreateRQ request, String[] legIds) {
 
         BigDecimal totalAmount = BigDecimal.ZERO;
@@ -471,11 +499,12 @@ public class BookingUtility {
 
         PriceInfo priceInfo = new PriceInfo();
         BigDecimal grossAmount = NumberFormatter.trimAmount(booking.getTotalAmount().add(booking.getMarkupAmount()).add(booking.getMarkupPayAmount()));
+        BigDecimal totalAmountNoCommission = booking.getCommissionTotalAmount();
         BigDecimal discountPaymentMethodPercentage = paymentMandatoryRQ.getPercentage().divide(BigDecimal.valueOf(100));
-        BigDecimal discountPaymentMethodAmount = NumberFormatter.trimAmount(grossAmount.multiply(discountPaymentMethodPercentage));
-        BigDecimal finalAmount = grossAmount.subtract(discountPaymentMethodAmount);
+        BigDecimal discountPaymentMethodAmount = NumberFormatter.trimAmount(totalAmountNoCommission.multiply(discountPaymentMethodPercentage));
+        BigDecimal paidAmount = totalAmountNoCommission.subtract(discountPaymentMethodAmount);
         BigDecimal paymentMethodFeePercentage = paymentMandatoryRQ.getPercentageBase().divide(BigDecimal.valueOf(100));
-        BigDecimal paymentMethodFeeAmount = NumberFormatter.trimAmount(finalAmount.multiply(paymentMethodFeePercentage));
+        BigDecimal paymentMethodFeeAmount = NumberFormatter.trimAmount(paidAmount.multiply(paymentMethodFeePercentage));
 
         priceInfo.setGrossAmount(grossAmount);
         priceInfo.setMarkupPaymentMethodPercentage(booking.getMarkupPayPercentage());
@@ -492,7 +521,7 @@ public class BookingUtility {
         /**
          * final amount: discount already
          */
-        priceInfo.setFinalAmount(finalAmount);
+        priceInfo.setPaidAmount(paidAmount);
 
         return priceInfo;
     }

@@ -1,11 +1,9 @@
 package com.skybooking.skyhistoryservice.v1_0_0.util.datetime;
 
-import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
-import java.util.TimeZone;
 
 public class DateTimeBean {
 
@@ -30,12 +28,12 @@ public class DateTimeBean {
      *
      * @Param minute
      */
-    public String convertElapseTime(Integer minute) {
+    public String convertNumberToHour(Integer minute) {
 
-        String duration = minute > 60 ? minute/60 + "h" + minute%60 + "m" : minute + "m";
+        String duration = minute > 60 ? minute / 60 + "h" + minute % 60 + "m" : minute + "m";
 
-        if(minute%60 == 0 && minute > 60) {
-            duration = minute/60 + "h";
+        if (minute % 60 == 0 && minute > 60) {
+            duration = minute / 60 + "h";
         }
 
         return duration;

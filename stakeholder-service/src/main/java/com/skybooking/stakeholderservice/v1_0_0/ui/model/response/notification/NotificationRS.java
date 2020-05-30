@@ -18,6 +18,8 @@ public class NotificationRS {
     private String title = "";
     private String notiIcon = "";
     private Date createdAt;
+    private String subject = "";
+    private String subjectStatus = "";
 
     List<NotificationBookingRS> bookingLegs = new ArrayList<>();
 

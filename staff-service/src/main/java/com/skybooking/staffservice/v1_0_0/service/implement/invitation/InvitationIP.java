@@ -1,10 +1,13 @@
 package com.skybooking.staffservice.v1_0_0.service.implement.invitation;
 
+import com.skybooking.staffservice.constant.NotificationConstant;
 import com.skybooking.staffservice.exception.httpstatus.BadRequestException;
 import com.skybooking.staffservice.exception.httpstatus.ConflictException;
 import com.skybooking.staffservice.exception.httpstatus.UnauthorizedException;
 import com.skybooking.staffservice.v1_0_0.io.enitity.user.StakeholderUserInvitationEntity;
-import com.skybooking.staffservice.v1_0_0.io.enitity.user.UserEntity;
+import com.skybooking.staffservice.v1_0_0.io.nativeQuery.notification.CompanyPlayerTO;
+import com.skybooking.staffservice.v1_0_0.io.nativeQuery.notification.NotificationNQ;
+import com.skybooking.staffservice.v1_0_0.io.nativeQuery.notification.ScriptingTO;
 import com.skybooking.staffservice.v1_0_0.io.nativeQuery.staff.PendingStaffEmailTO;
 import com.skybooking.staffservice.v1_0_0.io.nativeQuery.staff.RoleTO;
 import com.skybooking.staffservice.v1_0_0.io.nativeQuery.staff.SkyuserSearchTO;
@@ -12,13 +15,13 @@ import com.skybooking.staffservice.v1_0_0.io.nativeQuery.staff.StaffNQ;
 import com.skybooking.staffservice.v1_0_0.io.repository.company.CompanyHasUserRP;
 import com.skybooking.staffservice.v1_0_0.io.repository.users.StakeHolderUserRP;
 import com.skybooking.staffservice.v1_0_0.io.repository.users.StakeholderUserInvitationRP;
-import com.skybooking.staffservice.v1_0_0.io.repository.users.UserRepository;
 import com.skybooking.staffservice.v1_0_0.service.interfaces.invitation.InvitationSV;
 import com.skybooking.staffservice.v1_0_0.ui.model.request.FilterRQ;
 import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.InvitationExpireRQ;
 import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.InviteStaffNoAccRQ;
 import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.ResendPendingEmailRQ;
 import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.SkyuserIdStaffRQ;
+import com.skybooking.staffservice.v1_0_0.ui.model.response.invitation.InviteNotifyRS;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.invitation.PendingEmailStaffRS;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.invitation.SkyuserDetailsRS;
 import com.skybooking.staffservice.v1_0_0.util.JwtUtils;
@@ -26,6 +29,7 @@ import com.skybooking.staffservice.v1_0_0.util.datetime.DateTimeBean;
 import com.skybooking.staffservice.v1_0_0.util.decrypt.AES;
 import com.skybooking.staffservice.v1_0_0.util.email.EmailBean;
 import com.skybooking.staffservice.v1_0_0.util.general.GeneralBean;
+import com.skybooking.staffservice.v1_0_0.util.header.HeaderBean;
 import com.skybooking.staffservice.v1_0_0.util.notification.PushNotificationOptions;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,9 +68,6 @@ public class InvitationIP implements InvitationSV {
     Environment environment;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private GeneralBean general;
 
     @Autowired
@@ -89,6 +90,13 @@ public class InvitationIP implements InvitationSV {
 
     @Autowired
     private DateTimeBean dateTimeBean;
+
+    @Autowired
+    private NotificationNQ notificationNQ;
+
+    @Autowired
+    private HeaderBean headerBean;
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -137,29 +145,26 @@ public class InvitationIP implements InvitationSV {
             throw new UnauthorizedException("sth_w_w", null);
         }
 
-        UserEntity skyuser = userRepository.findById(inviteStaff.getUserId());
+        var skyuser = stakeHolderUserRP.findById(inviteStaff.getUserId());
 
-        if (skyuser == null) {
+        if (skyuser.isEmpty()) {
             throw new BadRequestException("The user dose not exist", null);
         }
 
-        if (skyuser.getStakeHolderUser() == null) {
-            throw new BadRequestException("Can not add this user", null);
-        }
-
-        String b = companyHasUserRP.existUserCompany(skyuser.getStakeHolderUser().getId());
+        String b = companyHasUserRP.existUserCompany(skyuser.get().getId());
         List<RoleTO> roleTO = invitationNQ.listOrFindRole("byRole", inviteStaff.getSkyuserRole());
 
         if (b.equals("1") || roleTO.size() == 0) {
             throw new BadRequestException("sth_w_w", null);
         }
 
-        general.addInvitation(skyuser.getStakeHolderUser().getId(), filterRQ.getCompanyHeaderId(), inviteStaff.getSkyuserRole(), null, "hasAcc");
+        var invited = general.addInvitation(skyuser.get().getId(), filterRQ.getCompanyHeaderId(), inviteStaff.getSkyuserRole(), null, "hasAcc");
 
-        Map<String, Object> mailData = emailBean.mailData((skyuser.getEmail() == null) ? "" : skyuser.getEmail(), "Customer", 0, ADD_SKYUSER_TO_STAFF);
+        Map<String, Object> mailData = emailBean.mailData((skyuser.get().getUserEntity().getEmail() == null) ? "" : skyuser.get().getUserEntity().getEmail(), "Customer", 0, ADD_SKYUSER_TO_STAFF);
         mailData.put("inviterName", "Layla");
         emailBean.sendEmailSMS("Invitation", mailData);
-        notification.sendMessageToUsers("add_skyuser_staff", null, null);
+
+        sendNotifyToAllStaff(skyuser.get().getId(), filterRQ.getCompanyHeaderId(), invited);
 
     }
 
@@ -227,8 +232,13 @@ public class InvitationIP implements InvitationSV {
     public List<PendingEmailStaffRS> getPendingEmail() {
 
         FilterRQ filterRQ = new FilterRQ(request, jwtUtils.getUserToken());
+        filterRQ.setAction(checkSearchOrFilter());
+        List<PendingStaffEmailTO> emailsTO = invitationNQ.listPendingEmailStaff(filterRQ.getCompanyHeaderId(),
+                filterRQ.getKeyword(),
+                filterRQ.getStartDate(),
+                filterRQ.getEndDate(),
+                filterRQ.getAction());
 
-        List<PendingStaffEmailTO> emailsTO = invitationNQ.listPendingEmailStaff(filterRQ.getCompanyHeaderId());
         List<PendingEmailStaffRS> emailsRS = new ArrayList<>();
 
         for (PendingStaffEmailTO emailTO : emailsTO) {
@@ -242,6 +252,21 @@ public class InvitationIP implements InvitationSV {
 
         return emailsRS;
 
+    }
+    private String checkSearchOrFilter() {
+
+        if (request.getParameter("startDate") != null || request.getParameter("endDate") != null
+        ) {
+
+            return "FILTER";
+
+        } else if(request.getParameter("keyword") != null && !request.getParameter("keyword").equals("")) {
+
+            return "SEARCH";
+
+        }
+
+        return "SEARCH";
     }
 
 
@@ -281,7 +306,7 @@ public class InvitationIP implements InvitationSV {
         StakeholderUserInvitationEntity userInvited = userInvRP.findByIdAndStakeholderCompanyId(resendPendingEmail.getInviteId(), filterRQ.getCompanyHeaderId());
 
         if (userInvited == null) {
-            throw new BadRequestException("Sorry!, this user dose not exists in the invitation lists", null);
+            throw new BadRequestException("inv_usr_list", null);
         }
 
         userInvited.setUpdatedAt(null);
@@ -294,7 +319,11 @@ public class InvitationIP implements InvitationSV {
 
         if (userInvited.getInviteTo() == null) {
             var skyUser = stakeHolderUserRP.findById(userInvited.getInviteFrom());
-            notification.sendMessageToUsers("add_skyuser_staff", null, skyUser.get().getId());
+            HashMap<String, Object> scriptData = new HashMap<>();
+            scriptData.put("skyuserId", skyUser.get().getId().toString());
+            scriptData.put("scriptKey", "skyowner_add_staffs");
+            scriptData.put("type", NotificationConstant.ADD_SKYUSER);
+            notification.sendMessageToUsers(scriptData);
         } else {
             emailBean.sendEmailSMS("Invitation again", mailData);
         }
@@ -311,17 +340,21 @@ public class InvitationIP implements InvitationSV {
      * @Return HashMap<String, Boolean>
      */
     @Override
-    public HashMap<String, Boolean> checkExpired(InvitationExpireRQ invitationExpireRQ) throws UnsupportedEncodingException {
+    public HashMap<String, Object> checkExpired(InvitationExpireRQ invitationExpireRQ) throws UnsupportedEncodingException {
 
-        int inviteId = Integer.valueOf(this.decryptId(this.decode(invitationExpireRQ.getInviteKey())));
+        int inviteId = Integer.parseInt(this.decryptId(this.decode(invitationExpireRQ.getInviteKey())));
 
         StakeholderUserInvitationEntity userInvited = userInvRP.findStakeholderUserInvitationById(inviteId);
 
         boolean isExpire = this.expiredInvitation(userInvited);
 
-        HashMap<String, Boolean> data = new HashMap<>();
+        HashMap<String, Object> data = new HashMap<>();
 
         data.put("expired", isExpire);
+
+        if (isExpire) {
+            data.put("email", userInvited.getInviteTo());
+        }
 
         return data;
 
@@ -348,10 +381,7 @@ public class InvitationIP implements InvitationSV {
 
         int diffMin = (int) (diff / (60 * 1000));
 
-        if (diffMin > INVITATION_DURATION) {
-            return false;
-        }
-        return true;
+        return diffMin <= INVITATION_DURATION;
 
     }
 
@@ -412,9 +442,12 @@ public class InvitationIP implements InvitationSV {
     //Validation
     public String ValidationCompanyId(Long cId) {
 
-        Long companyId = (request.getHeader("X-CompanyId") != null && !request.getHeader("X-CompanyId").isEmpty())
-                ? Long.valueOf(request.getHeader("X-CompanyId"))
-                : 0;
+        if ((request.getHeader("X-CompanyId") == null || request.getHeader("X-CompanyId").isEmpty())) {
+            throw new BadRequestException("sth_w_w", null);
+        }
+
+        Long companyId = (long) Integer.parseInt(request.getHeader("X-CompanyId"));
+
         if (companyId == 0) {
             return "skyuser";
         }
@@ -424,6 +457,54 @@ public class InvitationIP implements InvitationSV {
         }
 
         return "company";
+    }
+
+
+    private void sendNotifyToAllStaff(Long skyuserId, Long companyId, StakeholderUserInvitationEntity invitation) {
+        var playerId = notificationNQ.stakeholderPlayerId(skyuserId);
+
+        var skyuser = stakeHolderUserRP.findById(skyuserId).get();
+
+        List<CompanyPlayerTO> players = notificationNQ.companyPlayerId(companyId, "admin");
+        LinkedHashSet<InviteNotifyRS> storeNotify = new LinkedHashSet<>();
+
+        players.forEach(data -> {
+            InviteNotifyRS inviteNotifyRS = companyPlayer((long) data.getSkyuserId(), data.getPlayerId(), null);
+            storeNotify.add(inviteNotifyRS);
+        });
+        InviteNotifyRS inviteNotifyRS = companyPlayer(skyuser.getId(), (playerId.size() > 0) ? playerId.get(0).getPlayerId() : "", "has");
+        storeNotify.add(inviteNotifyRS);
+
+        storeNotify.forEach(data -> {
+            HashMap<String, Object> scriptData = new HashMap<>();
+            if (data.getNoCompanyId() != null) {
+                scriptData.put("addSkyuser", "");
+                scriptData.put("inviteId", invitation.getId());
+            }
+            scriptData.put("scriptId", data.getScriptId());
+            scriptData.put("skyuserId", data.getSkyuserId());
+            scriptData.put("scriptKey", "skyowner_add_staffs");
+            scriptData.put("type", NotificationConstant.ADD_SKYUSER);
+
+            notification.addNotificationHisitory(scriptData);
+        });
+    }
+
+    public InviteNotifyRS companyPlayer(Long skyuserId, String playerId, String option) {
+        InviteNotifyRS inviteNotifyRS = new InviteNotifyRS();
+        HashMap<String, Object> scriptData = new HashMap<>();
+        scriptData.put("playerId", playerId);
+        scriptData.put("noInsert", "");
+        scriptData.put("scriptKey", "skyowner_add_staffs");
+        notification.sendMessageToUsers(scriptData);
+
+        ScriptingTO scriptingTO = notificationNQ.scripting(headerBean.getLocalizationId(), "skyowner_add_staffs");
+        inviteNotifyRS.setSkyuserId(skyuserId);
+        inviteNotifyRS.setScriptId(scriptingTO.getScriptId());
+        if (option != null) {
+            inviteNotifyRS.setNoCompanyId("addSkyuser");
+        }
+        return inviteNotifyRS;
     }
 
 

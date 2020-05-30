@@ -27,7 +27,7 @@ public class RolePermission {
         List<RolePermissionTO> rolePermission = staffNQ.findPermissionRole(role, permission);
 
         if (rolePermission.size() == 0) {
-            throw new MethodNotAllowException("No permission on this url", "");
+            throw new MethodNotAllowException("No permission on this url", null);
         }
 
     }

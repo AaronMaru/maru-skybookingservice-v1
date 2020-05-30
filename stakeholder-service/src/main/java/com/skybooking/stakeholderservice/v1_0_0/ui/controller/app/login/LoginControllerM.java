@@ -2,6 +2,7 @@ package com.skybooking.stakeholderservice.v1_0_0.ui.controller.app.login;
 
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.login.LoginSV;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.login.LoginRQ;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.login.LoginRefreshRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
@@ -24,12 +25,6 @@ public class LoginControllerM {
 
     @Autowired
     private LocalizationBean localization;
-
-    @Autowired
-    private ApiBean apiBean;
-
-    @Autowired
-    private HeaderBean headerBean;
 
 
 

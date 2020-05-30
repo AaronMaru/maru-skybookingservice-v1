@@ -13,5 +13,6 @@ public class BookingCreateDRQ {
     private BookingContactRQ contact;
     private List<BookingPassengerDRQ> passengers;
     private List<BookingSegmentDRQ> segments;
+    private List<BookingFareComponentRQ> fareComponents;
 
 }

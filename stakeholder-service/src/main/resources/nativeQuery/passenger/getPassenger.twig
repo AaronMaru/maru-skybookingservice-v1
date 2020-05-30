@@ -20,14 +20,12 @@ FROM
 
 WHERE
 CASE WHEN :stake = "skyuser" THEN
-    ( bopas.stakeholder_user_id = :skyuserId AND bopas.stakeholder_company_id IS NULL )
-ELSE -- Condition for Skyowner
-    CASE WHEN :role = 'admin' THEN
+        ( bopas.stakeholder_user_id = :skyuserId AND bopas.stakeholder_company_id IS NULL )
+    ELSE
+        -- Condition for Skyowner
         bopas.stakeholder_company_id = :companyId
-    ELSE bopas.stakeholder_user_id = :skyuserId
-        AND bopas.stakeholder_company_id = :companyId
     END
-END
+
 AND CASE WHEN :passType = 'ADT' THEN
         ABS( DATEDIFF( bopas.birthday, CURRENT_TIMESTAMP ) / 365.25 ) >= 12
     WHEN :passType = 'CNN' THEN

@@ -28,6 +28,9 @@ spring:
     key: AKIAJEC5JZZKMU7GNCFQ
     secret: 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
     visibility: public
+  awsImageUrl:
+    mailTemplate: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/mail/images/
+    companyProfile: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/company_profiles/
 
   activemq:
     in-memory: false

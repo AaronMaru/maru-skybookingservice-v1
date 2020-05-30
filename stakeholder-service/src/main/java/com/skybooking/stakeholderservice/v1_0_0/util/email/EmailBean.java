@@ -1,12 +1,10 @@
 package com.skybooking.stakeholderservice.v1_0_0.util.email;
 
-import com.skybooking.stakeholderservice.v1_0_0.io.enitity.setting.FrontendConfigEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.mail.MailScriptLocaleTO;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.mail.MultiLanguageNQ;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.mail.MultiLanguageTO;
-import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.setting.SettingSV;
-import com.skybooking.stakeholderservice.v1_0_0.util.general.SmsMessage;
 import com.skybooking.stakeholderservice.v1_0_0.util.header.HeaderBean;
+import com.skybooking.stakeholderservice.v1_0_0.util.localization.LocalizationBean;
 import freemarker.template.Configuration;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.validator.routines.EmailValidator;
@@ -45,7 +43,7 @@ public class EmailBean {
     private MultiLanguageNQ multiLanguageNQ;
 
     @Autowired
-    private SettingSV settingSV;
+    private LocalizationBean localizationBean;
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -57,7 +55,6 @@ public class EmailBean {
      */
     public Boolean sendEmailSMS(String message, Map<String, Object> mailTemplateData) {
 
-        SmsMessage sms = new SmsMessage();
 
         boolean validEmail = EmailValidator.getInstance().isValid(mailTemplateData.get("receiver").toString());
         if (NumberUtils.isNumber(mailTemplateData.get("receiver").toString().replaceAll("[+]", ""))) {
@@ -67,7 +64,7 @@ public class EmailBean {
                 link = mailTemplateData.get("deepLink").toString();
             }
 
-            mailTemplateData.put("message", sms.sendSMS(message, Integer.parseInt(mailTemplateData.get("code").toString()), link));
+            mailTemplateData.put("message", sendSMS(message, Integer.parseInt(mailTemplateData.get("code").toString()), link));
             jmsTemplate.convertAndSend(STAKE_HOLDER_SMS, mailTemplateData);
             return true;
         } else if (validEmail) {
@@ -175,6 +172,45 @@ public class EmailBean {
 
 
         return multiLanguageTO;
+
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Message for sms
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param cases
+     * @Param code
+     * @Return String
+     */
+    public String sendSMS(String cases, int code, String link) {
+
+        String msg = "";
+
+        switch (cases) {
+            case "send-login":
+                msg = code + " " + localizationBean.multiLanguageRes("log_code");
+                break;
+            case "success-reset-password":
+                msg = localizationBean.multiLanguageRes("reset_pwd_succ");
+                break;
+            case "deactive-account":
+                msg = localizationBean.multiLanguageRes("succ_deact");
+                break;
+            case "login-success":
+                msg = localizationBean.multiLanguageRes("log_succ");
+                break;
+            case "send-download-link":
+                msg = localizationBean.multiLanguageRes("send_dwn_link") + " " + link;
+                break;
+            default:
+                msg = "No message";
+                break;
+        }
+
+        return msg;
 
     }
 

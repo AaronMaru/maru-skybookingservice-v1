@@ -1,10 +1,12 @@
 package com.skybooking.stakeholderservice.v1_0_0.service.interfaces.user;
 
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company.CompanyRQ;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.login.LoginRefreshRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user.*;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.verify.SendVerifyRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.CompanyRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.InvitationRS;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.TokenRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
 import org.springframework.http.HttpHeaders;
@@ -30,5 +32,9 @@ public interface UserSV {
     UserDetailsTokenRS resetPasswordMobile(ResetPasswordMobileRQ resetPasswordMobileRQ);
 
     Boolean logout(HttpHeaders httpHeaders);
+
+    void changeLanguage(ChangeLanguageRQ changeLanguageRQ);
+
+    TokenRS refreshToken(HttpHeaders httpHeaders, LoginRefreshRQ loginRQ);
 
 }

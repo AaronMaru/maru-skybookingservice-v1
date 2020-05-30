@@ -8,7 +8,11 @@ SELECT
 	IFNULL((SELECT b.booking_code FROM bookings b WHERE b.id = nohi.booking_id), '' ) AS bookingCode,
 	IFNULL((SELECT b.trip_type FROM bookings b WHERE b.id = nohi.booking_id), '' ) AS tripType,
 	UPPER(nohi.type) AS notiType,
-	nohi.created_at AS createdAt
+	nohi.created_at AS createdAt,
+	nohi.stakeholder_user_id AS skyuserId,
+	nohi.stakeholder_company_id AS companyId,
+	nohi.replace_one AS replaceOne,
+	nohi.replace_two AS replaceTwo
 
 FROM user_notification_history nohi
 
@@ -42,7 +46,7 @@ WHERE CASE WHEN :stake = "skyuser" THEN
         ( nohi.stakeholder_user_id = :skyuserId AND nohi.stakeholder_company_id IS NULL )
     ELSE
         -- Condition for Skyowner
-        CASE WHEN ( :role = "admin" ) THEN nohi.stakeholder_company_id = :companyId
+        CASE WHEN ( :role = "admin" ) THEN nohi.stakeholder_company_id = :companyId AND nohi.stakeholder_user_id = :skyuserId
              ELSE ( nohi.stakeholder_user_id = :skyuserId AND nohi.stakeholder_company_id = :companyId )
              END
     END

@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface CompanyHasUserRP extends JpaRepository<StakeholderUserHasCompanyEntity, Long> {
 
@@ -24,4 +26,6 @@ public interface CompanyHasUserRP extends JpaRepository<StakeholderUserHasCompan
 
     @Query(value = "SELECT * FROM stakeholder_user_has_companies WHERE stakeholder_company_id = :companyId AND status = 1", nativeQuery = true)
     StakeholderUserHasCompanyEntity findOwnerCompany(Long companyId);
+
+    List<StakeholderUserHasCompanyEntity> findByStakeholderCompanyId(Long id);
 }

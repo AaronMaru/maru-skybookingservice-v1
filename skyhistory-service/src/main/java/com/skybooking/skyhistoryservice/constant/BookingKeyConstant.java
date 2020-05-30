@@ -2,14 +2,11 @@ package com.skybooking.skyhistoryservice.constant;
 
 public class BookingKeyConstant {
 
-    public static final Integer PAYMENT_SELECTED = 6;
-    public static final Integer PAYMENT_CREATED = 5;
-    public static final Integer PAYMENT_PROCESSING = 4;
-
     public static final String COMPLETED = "COMPLETED";
     public static final String UPCOMING = "UPCOMING";
     public static final String CANCELLED = "CANCELLED";
     public static final String FAILED = "FAILED";
+    public static final String PENDING = "PENDING";
 
     /**
      * Trip Type of Booking

@@ -1,12 +1,7 @@
 package com.skybooking.skyflightservice.v1_0_0.service.implement.shopping;
 
-import com.google.common.collect.Sets;
 import com.hazelcast.core.HazelcastInstance;
 import com.skybooking.skyflightservice.config.AppConfig;
-import com.skybooking.skyflightservice.v1_0_0.client.distributed.action.ShoppingAction;
-import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.booking.BookingSegmentDRQ;
-import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.shopping.OriginDestination;
-import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.shopping.RevalidateRQ;
 import com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.response.bargainfinder.SabreBargainFinderRS;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.cabin.CabinEntity;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.meal.MealEntity;
@@ -21,7 +16,6 @@ import com.skybooking.skyflightservice.v1_0_0.service.implement.shopping.transfo
 import com.skybooking.skyflightservice.v1_0_0.service.implement.shopping.transform.TransformSabreMerger;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.bookmark.BookmarkSV;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.currency.CurrencySV;
-import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.DetailSV;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.shopping.TransformSV;
 import com.skybooking.skyflightservice.v1_0_0.service.model.currency.ExchangeCurrencyTA;
 import com.skybooking.skyflightservice.v1_0_0.service.model.security.UserAuthenticationMetaTA;
@@ -29,23 +23,18 @@ import com.skybooking.skyflightservice.v1_0_0.ui.model.request.shopping.FlightSh
 import com.skybooking.skyflightservice.v1_0_0.util.calculator.CalculatorUtils;
 import com.skybooking.skyflightservice.v1_0_0.util.calculator.NumberFormatter;
 import com.skybooking.skyflightservice.v1_0_0.util.shopping.ShoppingUtils;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.eclipse.collections.impl.list.mutable.FastList;
-import org.javers.core.diff.changetype.Atomic;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
@@ -53,6 +42,8 @@ import java.util.stream.Collectors;
 public class TransformIP implements TransformSV {
 
     public static final String TRANSFORM_CACHED_NAME = "shopping-transform";
+    public static final String CLASS_OF_SERVICE_CACHED_NAME = "class-of-service";
+    public static final String FARE_BASIS_CACHED_NAME = "fare-basis";
 
     @Autowired
     private HazelcastInstance instance;
@@ -96,6 +87,7 @@ public class TransformIP implements TransformSV {
      * @param shoppingResponse
      * @return ShoppingTransformEntity
      */
+    @SneakyThrows
     public ShoppingTransformEntity getShoppingTransform(ShoppingResponseEntity shoppingResponse) {
 
         if (!validateSabreResponse(shoppingResponse)) return null;
@@ -113,6 +105,12 @@ public class TransformIP implements TransformSV {
         var transform = new TransformSabreMerger(getTransformSabres(shoppingResponse.getResponses()), directions).processingTransformer();
         transform.setRequestId(requestId);
         transform.setTrip(tripType);
+
+        var mapper = new ObjectMapper();
+
+        log.debug("SHOPPING : [{}]", requestId);
+        log.debug("SABRE RESPONSE: {}", mapper.writeValueAsString(shoppingResponse));
+        log.debug("SABRE TRANSFORM RESPONSE: {}", mapper.writeValueAsString(transform));
 
         instance.getMap(TRANSFORM_CACHED_NAME).put(requestId, transform, appConfig.getHAZELCAST_EXPIRED_TIME(), TimeUnit.SECONDS);
 
@@ -313,7 +311,8 @@ public class TransformIP implements TransformSV {
      * @return ShoppingTransformEntity
      */
     @Override
-    public ShoppingTransformEntity getShoppingTransformDetailMarkup(ShoppingTransformEntity source, double markup, String currency) {
+    @SneakyThrows
+    public ShoppingTransformEntity getShoppingTransformDetailMarkup(ShoppingTransformEntity source, BigDecimal markup, String currency) {
 
         if (source == null) return null;
 
@@ -340,11 +339,11 @@ public class TransformIP implements TransformSV {
                 var taxAmount = detail.getTax();
                 var totalAmount = NumberFormatter.trimAmount(baseFareAmount.add(taxAmount));
 
-                var baseFareMarkupAmount = CalculatorUtils.getAmountPercentage(baseFareAmount, new BigDecimal(markup));
+                var baseFareMarkupAmount = CalculatorUtils.getAmountPercentage(baseFareAmount, markup);
                 var baseFarePaymentMarkupAmount = CalculatorUtils.getAmountPercentage(baseFareAmount.add(baseFareMarkupAmount), paymentMarkup.getMarkup());
                 var baseFareTotalAmount = NumberFormatter.trimAmount(baseFareAmount.add(baseFareMarkupAmount).add(baseFarePaymentMarkupAmount));
 
-                var taxMarkupAmount = CalculatorUtils.getAmountPercentage(taxAmount, new BigDecimal(markup));
+                var taxMarkupAmount = CalculatorUtils.getAmountPercentage(taxAmount, markup);
                 var taxPaymentMarkupAmount = CalculatorUtils.getAmountPercentage(taxAmount.add(taxMarkupAmount), paymentMarkup.getMarkup());
                 var taxTotalAmount = NumberFormatter.trimAmount(taxAmount.add(taxMarkupAmount).add(taxPaymentMarkupAmount));
 
@@ -409,6 +408,9 @@ public class TransformIP implements TransformSV {
         }
 
         source.setPrices(prices);
+
+        var mapper = new ObjectMapper();
+        log.debug("SABRE TRANSFORM MARKUP RESPONSE: {}", mapper.writeValueAsString(source));
 
         return source;
     }
@@ -600,6 +602,26 @@ public class TransformIP implements TransformSV {
     @Override
     public ShoppingTransformEntity getShoppingDetail(String id) {
         return (ShoppingTransformEntity) instance.getMap(TRANSFORM_CACHED_NAME).getOrDefault(id, null);
+    }
+
+    @Override
+    public void setNewClassOfService(String id, List<String> classOfService) {
+        instance.getMap(CLASS_OF_SERVICE_CACHED_NAME).put(id, classOfService, appConfig.getHAZELCAST_EXPIRED_TIME(), TimeUnit.SECONDS);
+    }
+
+    @Override
+    public List<String> getNewClassOfService(String id) {
+        return (List<String>) instance.getMap(CLASS_OF_SERVICE_CACHED_NAME).getOrDefault(id, new ArrayList<>());
+    }
+
+    @Override
+    public void setFareBasis(String id, List<String> fareBasis) {
+        instance.getMap(FARE_BASIS_CACHED_NAME).put(id, fareBasis, appConfig.getHAZELCAST_EXPIRED_TIME(), TimeUnit.SECONDS);
+    }
+
+    @Override
+    public List<String> getFareBasis(String id) {
+        return (List<String>) instance.getMap(FARE_BASIS_CACHED_NAME).getOrDefault(id, new ArrayList<>());
     }
 
 }

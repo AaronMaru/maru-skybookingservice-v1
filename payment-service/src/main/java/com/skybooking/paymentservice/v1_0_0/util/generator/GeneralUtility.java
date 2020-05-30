@@ -1,5 +1,6 @@
 package com.skybooking.paymentservice.v1_0_0.util.generator;
 
+import com.skybooking.paymentservice.config.AppConfig;
 import com.skybooking.paymentservice.v1_0_0.ui.model.request.PaymentRQ;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -16,7 +17,7 @@ import java.util.UUID;
 public class GeneralUtility {
 
     @Autowired
-    private HttpServletRequest request;
+    private AppConfig appConfig;
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -26,7 +27,7 @@ public class GeneralUtility {
      * @return
      */
     public String getBaseUrl() {
-        return String.format("%s://%s:%d/", request.getScheme(), request.getServerName(), request.getServerPort());
+        return appConfig.getPaymentUrl();
     }
 
     /**

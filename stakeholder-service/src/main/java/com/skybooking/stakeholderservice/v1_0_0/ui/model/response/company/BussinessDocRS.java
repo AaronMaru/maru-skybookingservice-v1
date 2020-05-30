@@ -3,7 +3,7 @@ package com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company;
 public class BussinessDocRS {
 
     private Long id;
-    private String name;
+    private String name = "";
     private Integer isRequired;
 
     public Long getId() {

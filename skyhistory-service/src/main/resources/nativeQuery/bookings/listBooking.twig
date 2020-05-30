@@ -102,7 +102,8 @@ CASE WHEN (b.`status` = 11 AND (
 		) THEN :COMPLETED
 
 	WHEN (b.`status` IN (3)) THEN :CANCELLED
-	WHEN (b.`status` IN (1, 10, 12, 4)) THEN  :FAILED
+	WHEN (b.`status` IN (1, 4)) THEN :PENDING
+	WHEN (b.`status` IN (10, 12)) THEN  :FAILED
 
 END AS statusKey
 
@@ -117,12 +118,10 @@ AND CASE WHEN :stake = "skyuser" THEN (b.stakeholder_user_id = :skyuserId AND b.
 
     ELSE
         -- Condition for Skyowner
-        CASE WHEN ( :role = 'ADMIN' AND :skystaffId = 0 ) THEN b.stakeholder_company_id = :companyId
-
-            WHEN ( :role = 'ADMIN' AND :skystaffId > 0 ) THEN ( b.stakeholder_user_id = :skystaffId AND b.stakeholder_company_id = :companyId )
-
+        CASE WHEN :skystaffId = 0 THEN
+                b.stakeholder_company_id = :companyId
             ELSE
-                b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id = :companyId
+                ( b.stakeholder_user_id = :skystaffId AND b.stakeholder_company_id = :companyId )
             END
     END
 
@@ -277,8 +276,11 @@ AND CASE WHEN
                     WHEN :bookStatus = :CANCELLED THEN
                         b.`status` = 3
 
+                    WHEN :bookStatus = :PENDING THEN
+                        b.`status` IN (1, 4)
+
                     WHEN :bookStatus = :FAILED THEN
-                        b.`status` IN (4, 10)
+                        b.`status` = 10
                     END
 
             ELSE
@@ -369,8 +371,12 @@ AND CASE WHEN
 
                 WHEN  :keyword = :CANCELLED THEN
                     b.`status` = 3
+
+                WHEN  :keyword = :PENDING THEN
+                    b.`status` IN (1, 4)
+
                 WHEN  :keyword = :FAILED THEN
-                    b.`status` IN (4, 10)
+                    b.`status` = 10
 		        END
 
     ELSE

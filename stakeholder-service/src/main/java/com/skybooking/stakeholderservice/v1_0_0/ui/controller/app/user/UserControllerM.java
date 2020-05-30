@@ -188,4 +188,18 @@ public class UserControllerM {
         return localization.resAPI(HttpStatus.OK,"res_succ", userSV.getInvitations());
     }
 
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Change Language
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param optionStaffRQ;
+     */
+    @PatchMapping("/change-language")
+    public ResRS changeLanguage(@Valid @RequestBody ChangeLanguageRQ changeLanguageRQ) {
+        userSV.changeLanguage(changeLanguageRQ);
+        return localization.resAPI(HttpStatus.OK,"update_succ", null);
+    }
+
 }

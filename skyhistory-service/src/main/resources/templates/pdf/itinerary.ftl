@@ -323,7 +323,7 @@
             </h4>
                 <#list itemItineraryInfo.itinerarySegment as itemItinerarySegment>
                     <#if itemItinerarySegment?index != 0 && itemItineraryInfo.itinerarySegment?size gt 1>
-                        <p>Transfer in ${itemItinerarySegment.departureInfo.city}<#if itemItinerarySegment.departureInfo.terminal != ""> T${itemItinerarySegment.departureInfo.terminal}</#if> ${itemItinerarySegment.elapsedHourMinute}</p>
+                        <p>Transfer in ${itemItinerarySegment.departureInfo.city}<#if itemItinerarySegment.departureInfo.terminal != ""> T${itemItinerarySegment.departureInfo.terminal}</#if> ${itemItinerarySegment.layoverHourMinute}</p>
                     </#if>
                     <div class="time-airport">
                         <span>${itemItinerarySegment.airlineCode}${itemItinerarySegment.flightNumber}${itemItinerarySegment.airlineRef??? then(' / ' + itemItinerarySegment.airlineRef, '')}</span>
@@ -333,7 +333,7 @@
 
                      <#if itemItinerarySegment.stopQty gt 0>
                          <#list itemItinerarySegment.stopInfo as itemStopInfo>
-                             <p>Stop in ${itemStopInfo.city} ${itemStopInfo.elapsedHourMinute}</p>
+                             <p>Stop in ${itemStopInfo.city} ${itemStopInfo.durationHourMinute}</p>
                          </#list>
                      </#if>
 
@@ -402,7 +402,7 @@
                                 <!-- If have piece -->
                                 <p>Checked Baggage: ${itemBaggageAllowance.pieces}  piece(s) per person </p>
                                 <p> <i class="bag_anounce" >Dimensions (length+width+height) per piece cannot exceed 158CM.Each piece cannot exceed 56*36*23CM in size.</i> </p>
-                                <p>${itemBaggageAllowance.weights} ${itemBaggageAllowance.unit} x ${itemBaggageAllowance.pieces} Pieces (${itemBaggageAllowance.weights * itemBaggageAllowance.pieces} ${itemBaggageAllowance.unit}) </p>
+                                <p>${itemBaggageAllowance.weights} ${itemBaggageAllowance.unit} x ${itemBaggageAllowance.pieces} Pieces</p>
                             </#if>
                         </span>
                     </div>

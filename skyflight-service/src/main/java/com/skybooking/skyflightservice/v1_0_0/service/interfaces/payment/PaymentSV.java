@@ -1,5 +1,6 @@
 package com.skybooking.skyflightservice.v1_0_0.service.interfaces.payment;
 
+import com.skybooking.skyflightservice.v1_0_0.io.entity.booking.BookingEntity;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.payment.PaymentMandatoryRQ;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.payment.PaymentTransactionRQ;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.response.payment.PaymentMandatoryRS;
@@ -44,4 +45,5 @@ public interface PaymentSV {
 
     void paymentFail(PaymentTransactionRQ paymentTransactionRQ);
 
+    BookingEntity saveBookingPayment(PaymentTransactionRQ paymentSucceedRQ);
 }

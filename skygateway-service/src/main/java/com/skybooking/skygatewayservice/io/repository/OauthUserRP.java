@@ -9,5 +9,5 @@ import org.springframework.stereotype.Repository;
 public interface OauthUserRP extends JpaRepository<OauthUserAccessTokenEntity, Long> {
 
     @Query(value = "SELECT * FROM oauth_user_access_tokens WHERE jwt_id = :jwtId", nativeQuery = true)
-    OauthUserAccessTokenEntity getFirst(String jwtId);
+    OauthUserAccessTokenEntity  getFirst(String jwtId);
 }

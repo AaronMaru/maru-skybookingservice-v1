@@ -72,10 +72,12 @@ public class MetadataIP implements MetadataSV {
         metadata.setUserId(jwtUtils.getClaim("userId", Integer.class));
         metadata.setStakeholderId(jwtUtils.getClaim("stakeholderId", Integer.class));
 
-        if (UserConstant.SKYOWNER.equalsIgnoreCase(userType)) {
-            if (header.getCompanyId() == null) {
-                metadata.setUserType(UserConstant.SKYUSER);
-            }
+        if (header.getCompanyId() != null) {
+            metadata.setUserType(UserConstant.SKYOWNER);
+        }
+
+        if (UserConstant.SKYOWNER.equalsIgnoreCase(userType) && header.getCompanyId() == null) {
+            metadata.setUserType(UserConstant.SKYUSER);
         }
 
         metadata.setCompanyId(header.getCompanyId());

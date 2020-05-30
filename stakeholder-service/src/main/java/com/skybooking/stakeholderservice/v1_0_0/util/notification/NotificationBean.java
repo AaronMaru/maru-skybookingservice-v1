@@ -1,17 +1,15 @@
 package com.skybooking.stakeholderservice.v1_0_0.util.notification;
 
+import com.skybooking.stakeholderservice.constant.NotificationConstant;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.notification.CompanyByRolePlayerTO;
-import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.notification.CompanyPlayerTO;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.notification.NotificationNQ;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.notification.StakeholderUserPlayerTO;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.notification.CompanyByRolePlayerRS;
-import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.notification.CompanyPlayerRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.notification.StakeholderUserPlayerRS;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class NotificationBean {
 
@@ -49,20 +47,20 @@ public class NotificationBean {
      *
      * @Return List<CompanyPlayerRS>
      */
-    public List<CompanyPlayerRS> companyPlayerId(Long companyId, Long skyuserId) {
-
-        List<CompanyPlayerTO> playersTO = notificationNQ.companyPlayerId(companyId, skyuserId);
-        List<CompanyPlayerRS> playersRS = new ArrayList<>();
-
-        for (CompanyPlayerTO playerTO : playersTO) {
-            CompanyPlayerRS playerRS = new CompanyPlayerRS();
-            BeanUtils.copyProperties(playerTO, playerRS);
-            playersRS.add(playerRS);
-        }
-
-        return playersRS;
-
-    }
+//    public List<CompanyPlayerRS> companyPlayerId(Long companyId, Long skyuserId) {
+//
+//        List<CompanyPlayerTO> playersTO = notificationNQ.companyPlayerId(companyId, skyuserId);
+//        List<CompanyPlayerRS> playersRS = new ArrayList<>();
+//
+//        for (CompanyPlayerTO playerTO : playersTO) {
+//            CompanyPlayerRS playerRS = new CompanyPlayerRS();
+//            BeanUtils.copyProperties(playerTO, playerRS);
+//            playersRS.add(playerRS);
+//        }
+//
+//        return playersRS;
+//
+//    }
 
 
     /**
@@ -84,6 +82,29 @@ public class NotificationBean {
         }
 
         return playersRS;
+
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Set string replace
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Return String
+     */
+    public String scriptStringReplace(String subject, HashMap<String, Object> dataScript) {
+
+        dataScript.put(NotificationConstant.FULL_NAME, dataScript.get("fullname"));
+        dataScript.put(NotificationConstant.DATE_TIME, new Date().toString());
+
+        for (Map.Entry<String, String> data : NotificationConstant.STRING_REPLACE.entrySet()) {
+            if (subject.contains(data.getValue())) {
+                subject = subject.replace(data.getValue(), dataScript.get(data.getKey()).toString());
+            }
+        }
+
+        return subject;
 
     }
 

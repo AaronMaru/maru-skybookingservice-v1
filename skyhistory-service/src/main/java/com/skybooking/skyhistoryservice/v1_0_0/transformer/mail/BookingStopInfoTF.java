@@ -9,7 +9,6 @@ import java.util.Date;
 public class BookingStopInfoTF {
 
     private Integer elapsedTime;
-    private String elapsedHourMinute;
     private String locationCode;
     private String airportName;
     private String city;
@@ -19,5 +18,6 @@ public class BookingStopInfoTF {
     private Date departureDate;
     private Date arrivalDate;
     private Integer duration;
+    private String durationHourMinute;
 
 }

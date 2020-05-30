@@ -23,7 +23,6 @@ public class LocaleControllerW {
     private LocalizationBean localization;
 
 
-
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * get module translation by locale id

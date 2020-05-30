@@ -257,25 +257,54 @@ public class TransformSabre {
      * @param passenger
      */
     private void setBaggageDetail(BaggageDetail baggageDetail, PassengerInformation passenger) {
-        var baggageRef = passenger
+        passenger
             .getBaggageInformation()
             .stream()
             .findFirst()
-            .get();
+            .ifPresentOrElse(it -> {
 
-        var baggageAllowanceCached = baggageAllowancesCached.get(baggageRef.getAllowance().getId().toString());
+                var baggageAllowanceCached = baggageAllowancesCached.get(it.getAllowance().getId().toString());
 
-        var baggage = new Baggage();
-        baggage.setType(passenger.getPassengerType());
-        baggage.setPieces(baggageAllowanceCached.getPieces());
-        baggage.setPiece(baggageAllowanceCached.isPiece());
-        baggage.setUnit(baggageAllowanceCached.getUnit());
-        baggage.setWeights(baggageAllowanceCached.getWeights());
-        baggage.setNonRefundable(passenger.getNonRefundable());
+                var baggage = new Baggage();
 
-        baggageDetail.getDetails().add(baggage);
+                baggage.setType(passenger.getPassengerType());
+                baggage.setPieces(baggageAllowanceCached.getPieces());
+                baggage.setPiece(baggageAllowanceCached.isPiece());
+                baggage.setUnit(baggageAllowanceCached.getUnit());
 
-        baggages.put(baggageDetail.getId(), baggageDetail);
+                baggage.setWeights(baggageAllowanceCached.getWeights());
+                if (baggageAllowanceCached.isPiece() && baggageAllowanceCached.getPieces() > 0) {
+                    if (passenger.getPassengerType().equals("INF")) {
+                        baggage.setWeights(10);
+                    }
+                }
+
+                baggage.setNonRefundable(passenger.getNonRefundable());
+
+                baggageDetail.getDetails().add(baggage);
+
+                baggages.put(baggageDetail.getId(), baggageDetail);
+            }, () -> {
+
+                var baggageAllowanceCached = new BaggageAllowance();
+                baggageAllowanceCached.setPiece(false);
+                baggageAllowanceCached.setPieces(0);
+                baggageAllowanceCached.setUnit("kg");
+                baggageAllowanceCached.setWeights(0);
+
+                var baggage = new Baggage();
+                baggage.setType(passenger.getPassengerType());
+                baggage.setPieces(baggageAllowanceCached.getPieces());
+                baggage.setPiece(baggageAllowanceCached.isPiece());
+                baggage.setUnit(baggageAllowanceCached.getUnit());
+                baggage.setNonRefundable(passenger.getNonRefundable());
+
+                baggageDetail.getDetails().add(baggage);
+                baggages.put(baggageDetail.getId(), baggageDetail);
+
+            });
+
+
     }
 
 
@@ -367,10 +396,15 @@ public class TransformSabre {
      * @param baggageAllowance
      */
     private void setBaggageAllowanceCached(com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.response.bargainfinder.baggage.allowance.BaggageAllowance baggageAllowance) {
+
         var isPiece = Optional.ofNullable(baggageAllowance.getPieceCount()).isPresent();
         var piece = Optional.ofNullable(baggageAllowance.getPieceCount()).orElse(0);
         var unit = Optional.ofNullable(baggageAllowance.getUnit()).orElse("kg");
         var weight = Optional.ofNullable(baggageAllowance.getWeight()).orElse(20);
+
+        if(isPiece && piece == 0) {
+            weight = 0;
+        }
 
         var baggage = new BaggageAllowance();
 
@@ -427,7 +461,8 @@ public class TransformSabre {
 
         var duration = DateUtility.getMinuteDurations(departureDateTime, arrivalDateTime);
 
-        var adjustmentDates = segmentDetails.summarizeInt(LegSegmentDetail::getDateAdjustment).getSum();
+//        var adjustmentDates = segmentDetails.summarizeInt(LegSegmentDetail::getDateAdjustment).getSum();
+        var adjustmentDates = segmentDetails.get(segmentSize - 1).getDateAdjustment();
         var layoverDuration = segmentDetails.summarizeLong(LegSegmentDetail::getLayoverDuration).getSum();
 
         var legId = new StringBuilder()
@@ -532,7 +567,7 @@ public class TransformSabre {
                 var previousDetail = legSegmentDetails.get(idx - 1);
                 var previousSegment = segments.get(previousDetail.getSegment());
 
-                var previousDateAdjustment = Math.addExact(previousDetail.getDateAdjustment(), previousDetail.getPreviousDateAdjustment());
+                var previousDateAdjustment = 0; //Math.addExact(previousDetail.getDateAdjustment(), previousDetail.getPreviousDateAdjustment());
                 var arrivalDateTime = DateUtility.plusDays(previousSegment.getArrivalTime(), previousDateAdjustment);
 
                 var currentDateAdjustment = Math.addExact(legSegmentDetail.getDateAdjustment(), previousDateAdjustment);
@@ -773,11 +808,15 @@ public class TransformSabre {
 
         var carrier = scheduleComponent.getCarrier();
         var airline = new Airline();
-
         airline.setCode(carrier.getMarketing());
         airline.setName(carrier.getMarketing());
 
+        var operatingAirline = new Airline();
+        operatingAirline.setCode(carrier.getOperating());
+        operatingAirline.setName(carrier.getOperating());
+
         airlines.putIfAbsent(airline.getCode(), airline);
+        airlines.putIfAbsent(operatingAirline.getCode(), operatingAirline);
 
     }
 

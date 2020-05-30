@@ -54,11 +54,11 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
 
     }
 
+
     public void vldRegisterWeb(FieldError fieldError, BindingResult result, Map<String, Object> body) {
 
         String url = requests.getRequestURL().toString();
-        String[] splitUrl = url.split("/");
-        if (splitUrl[3].equals("wv1.0.0") && splitUrl[4].equals("auth") && splitUrl[5].equals("register")){
+        if (url.contains("wv1.0.0/auth/register")) {
             if (fieldError.getCode().equals("UsernameUnique")) {
                 if (result.getFieldValue("typeSky") != null && result.getFieldValue("typeSky").equals("bussiness")) {
                     UserEntity user = userRepository.findByEmailOrPhone(result.getFieldValue("username").toString(), result.getFieldValue("code").toString());
@@ -73,6 +73,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
                 }
             }
         }
+
 
     }
 

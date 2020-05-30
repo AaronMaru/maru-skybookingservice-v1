@@ -50,8 +50,15 @@ public class UserDetailsIP implements UserDetailsService {
             user = userRepository.findByEmailOrProviderId(username, request.getParameter("provider_id"));
         }
 
+        /**
+         * This for refresh token
+         */
+        if (request.getParameter("refresh") != null) {
+            user = userRepository.findUserForRefreshToken(username);
+        }
+
         if (user == null) {
-            throw new UsernameNotFoundException("Invalid Username or password", null);
+            throw new UsernameNotFoundException("acc_inc", null);
         }
 
         logger.activities(ActivityLoggingBean.Action.LOGIN, user);

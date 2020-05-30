@@ -130,6 +130,12 @@
             <systemPath>${basedir}/lib/spring-native-query-1.0.0.jar</systemPath>
         </dependency>
 
+<!--        <dependency>-->
+<!--            <groupId>com.skybooking.api</groupId>-->
+<!--            <artifactId>spring-native-query</artifactId>-->
+<!--            <version>1.0.1</version>-->
+<!--        </dependency>-->
+
         <dependency>
             <groupId>commons-validator</groupId>
             <artifactId>commons-validator</artifactId>

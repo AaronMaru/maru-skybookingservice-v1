@@ -1,15 +1,12 @@
 package com.skybooking.stakeholderservice.v1_0_0.transformer;
 
+import lombok.Data;
+
+@Data
 public class TokenTF {
 
+    private Long userId;
     private String access_token;
-
-    public String getAccess_token() {
-        return access_token;
-    }
-
-    public void setAccess_token(String access_token) {
-        this.access_token = access_token;
-    }
+    private String refresh_token;
 
 }

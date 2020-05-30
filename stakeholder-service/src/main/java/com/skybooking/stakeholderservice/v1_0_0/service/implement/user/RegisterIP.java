@@ -24,7 +24,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -102,6 +101,7 @@ public class RegisterIP implements RegisterSV {
             userBean.storeTokenRedis(user, password);
         } else {
             userDetails = userBean.userDetailByLogin(user, username, password);
+            userBean.storeUserTokenLastLogin(userDetails.getToken(), user);
         }
 
         return userDetails;
@@ -184,7 +184,6 @@ public class RegisterIP implements RegisterSV {
         userEntity.setStakeHolderUser(skyuser);
         skyuser.setUserEntity(userEntity);
 
-
         apiBean.addContact(registerRQ.getUsername(), registerRQ.getCode(), skyuser, null);
 
         regMobile(registerRQ, userEntity, skyuser, plateform);
@@ -223,8 +222,9 @@ public class RegisterIP implements RegisterSV {
 
         int code = apiBean.createVerifyCode(user, 1, null);
         String fullName = skyuserRQ.getFirstName() + " " + skyuserRQ.getLastName();
+        String receiver = userBean.getUsername(skyuserRQ.getUsername(), skyuserRQ.getCode());
 
-        Map<String, Object> mailData = emailBean.mailData(skyuserRQ.getUsername(), fullName, code, ACCOUNT_VERIFICATION_CODE);
+        Map<String, Object> mailData = emailBean.mailData(receiver, fullName, code, ACCOUNT_VERIFICATION_CODE);
         emailBean.sendEmailSMS("send-login", mailData);
 
         return code;

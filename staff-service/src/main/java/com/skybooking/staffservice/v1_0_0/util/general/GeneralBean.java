@@ -10,6 +10,8 @@ import com.skybooking.staffservice.v1_0_0.util.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class GeneralBean {
 
@@ -24,27 +26,6 @@ public class GeneralBean {
 
     @Autowired
     private HttpServletRequest request;
-
-
-    /**
-     * -----------------------------------------------------------------------------------------------------------------
-     * Find a companyConstant
-     * -----------------------------------------------------------------------------------------------------------------
-     *
-     * @Param companyId
-     * @Param skyuserId
-     */
-    public void addStaff(Long companyId, Long skyuserId, String role) {
-
-        StakeholderUserHasCompanyEntity companyHasUser = new StakeholderUserHasCompanyEntity();
-        companyHasUser.setStakeholderCompanyId(companyId);
-        companyHasUser.setStakeholderUserId(skyuserId);
-        companyHasUser.setSkyuserRole(role);
-        companyHasUser.setStatus(2);
-
-        companyHasUserRP.save(companyHasUser);
-
-    }
 
 
     /**
@@ -67,7 +48,7 @@ public class GeneralBean {
             exits = invitationRP.findByInviteToAndStakeholderCompanyId(invTo, companyId);
         }
         if (exits != null) {
-            throw new ConflictException("The user already invited", null);
+            throw new ConflictException("inv_ald", null);
         }
 
         StakeholderUserInvitationEntity invitation = new StakeholderUserInvitationEntity();
@@ -83,6 +64,5 @@ public class GeneralBean {
         return invitation;
 
     }
-
 
 }

@@ -1,6 +1,7 @@
 SELECT
 	up.id,
-	up.player_id AS playerId
+	up.player_id AS playerId,
+	up.stakeholder_user_id AS skyuserId
 FROM user_player up
 WHERE up.stakeholder_user_id = :skyuserId
 AND up.stakeholder_company_id IS NULL

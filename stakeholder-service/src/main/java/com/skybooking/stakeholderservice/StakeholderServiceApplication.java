@@ -3,8 +3,8 @@ package com.skybooking.stakeholderservice;
 import com.skybooking.stakeholderservice.v1_0_0.util.email.EmailBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.datetime.DateTimeBean;
+import com.skybooking.stakeholderservice.v1_0_0.util.general.AwsPartBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
-import com.skybooking.stakeholderservice.v1_0_0.util.general.SmsMessage;
 import com.skybooking.stakeholderservice.v1_0_0.util.header.HeaderBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.localization.LocalizationBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.notification.NotificationBean;
@@ -12,9 +12,11 @@ import com.skybooking.stakeholderservice.v1_0_0.util.notification.PushNotificati
 import com.skybooking.stakeholderservice.v1_0_0.util.skyowner.SkyownerBean;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
 import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication
+@EnableEurekaClient
 public class StakeholderServiceApplication {
 
     public static void main(String[] args) {
@@ -67,7 +69,7 @@ public class StakeholderServiceApplication {
     }
 
     @Bean
-    SmsMessage smsMessage() {
-        return new SmsMessage();
+    AwsPartBean awsPartBean() {
+        return new AwsPartBean();
     }
 }

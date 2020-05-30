@@ -11,4 +11,5 @@ public interface BookingPaymentTransactionRP extends JpaRepository<BookingPaymen
     @Query(value = "SELECT transaction_id FROM booking_payment_transactions ORDER BY id DESC LIMIT 1", nativeQuery = true)
     String getLatestRow();
 
+    BookingPaymentTransactionEntity findByBookingIdAndStatus(int bookingId, int status);
 }

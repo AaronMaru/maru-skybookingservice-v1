@@ -37,9 +37,6 @@ public class HelpCenterIP implements HelpCenterSV {
     @Autowired
     private HeaderBean headerBean;
 
-    @Autowired
-    private HttpServletRequest request;
-
 
     public List<CategoryRS> getCategories() {
 

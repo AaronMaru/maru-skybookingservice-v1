@@ -2,7 +2,6 @@ package com.skybooking.skyflightservice.v1_0_0.service.implement.payment;
 
 import com.skybooking.skyflightservice.constant.BookingConstant;
 import com.skybooking.skyflightservice.constant.PaymentConstant;
-import com.skybooking.skyflightservice.v1_0_0.client.skyhistory.request.SendBookingPDFRQ;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.booking.BookingEntity;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.booking.BookingPaymentTransactionEntity;
 import com.skybooking.skyflightservice.v1_0_0.io.repository.booking.BookingPaymentTransactionRP;
@@ -11,7 +10,6 @@ import com.skybooking.skyflightservice.v1_0_0.service.interfaces.payment.Payment
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.payment.PaymentMandatoryRQ;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.payment.PaymentTransactionRQ;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.response.payment.PaymentMandatoryRS;
-import com.skybooking.skyflightservice.v1_0_0.ui.model.response.payment.PaymentSucceedRS;
 import com.skybooking.skyflightservice.v1_0_0.util.GeneratorUtils;
 import com.skybooking.skyflightservice.v1_0_0.util.activitylog.ActivityLoggingBean;
 import com.skybooking.skyflightservice.v1_0_0.util.booking.BookingUtility;
@@ -38,16 +36,14 @@ public class PaymentIP implements PaymentSV {
     @Autowired
     private BookingUtility bookingUtility;
 
-
     @Autowired
     private PushNotificationOptions pushNotification;
 
     @Autowired
-    private ActivityLoggingBean activityLog;
-
+    private JmsTemplate jmsTemplate;
 
     @Autowired
-    private JmsTemplate jmsTemplate;
+    private ActivityLoggingBean activityLog;
 
     @Override
     public PaymentMandatoryRS updateDiscountPaymentMethod(PaymentMandatoryRQ paymentMandatoryRQ) {
@@ -72,7 +68,7 @@ public class PaymentIP implements PaymentSV {
         var bookingUpdated = bookingRP.save(booking);
         var paymentMandatoryData = new PaymentMandatoryRS();
 
-        paymentMandatoryData.setAmount(priceInfo.getFinalAmount());
+        paymentMandatoryData.setAmount(priceInfo.getPaidAmount());
         paymentMandatoryData.setDescription("Flight Description");
         paymentMandatoryData.setName(bookingUpdated.getCustName());
         paymentMandatoryData.setPhoneNumber(bookingUpdated.getContPhone());
@@ -121,47 +117,7 @@ public class PaymentIP implements PaymentSV {
     @Transactional
     public void updatePaymentSucceed(PaymentTransactionRQ paymentSucceedRQ) {
 
-        BookingPaymentTransactionEntity bookingPaymentTransactionEntity = new BookingPaymentTransactionEntity();
-        var booking = bookingRP.getBookingByBookingCode(paymentSucceedRQ.getBookingCode());
-
-        bookingPaymentTransactionEntity.setBookingId(booking.getId());
-        bookingPaymentTransactionEntity.setTransactionId(GeneratorUtils.transactionCode(bookingPaymentTransactionRP.getLatestRow()));
-        bookingPaymentTransactionEntity.setAmount(paymentSucceedRQ.getAmount());
-        bookingPaymentTransactionEntity.setHolderName(paymentSucceedRQ.getHolderName());
-        bookingPaymentTransactionEntity.setCardNumber(paymentSucceedRQ.getCardNumber());
-        bookingPaymentTransactionEntity.setCvv(paymentSucceedRQ.getCvv());
-        bookingPaymentTransactionEntity.setCardType(paymentSucceedRQ.getCardType());
-        bookingPaymentTransactionEntity.setBankName(paymentSucceedRQ.getBankName());
-        bookingPaymentTransactionEntity.setDescription(paymentSucceedRQ.getDescription());
-        bookingPaymentTransactionEntity.setMethod(paymentSucceedRQ.getMethod());
-        bookingPaymentTransactionEntity.setAmount(paymentSucceedRQ.getAmount());
-        bookingPaymentTransactionEntity.setStatus(paymentSucceedRQ.getStatus());
-        bookingPaymentTransactionEntity.setPipayStatus(paymentSucceedRQ.getPipiyStatus());
-        bookingPaymentTransactionEntity.setTransId(paymentSucceedRQ.getTransId());
-        bookingPaymentTransactionEntity.setOrderId(paymentSucceedRQ.getOrderId());
-        bookingPaymentTransactionEntity.setProcessorId(paymentSucceedRQ.getProcessorId());
-        bookingPaymentTransactionEntity.setDigest(paymentSucceedRQ.getDigest());
-        bookingPaymentTransactionEntity.setPaymentCode(paymentSucceedRQ.getPaymentCode());
-        bookingPaymentTransactionEntity.setCurrency(paymentSucceedRQ.getCurrency());
-        bookingPaymentTransactionEntity.setIpay88Status(paymentSucceedRQ.getIpay88Status());
-        bookingPaymentTransactionEntity.setAuthCode(paymentSucceedRQ.getAuthCode());
-        bookingPaymentTransactionEntity.setSignature(paymentSucceedRQ.getSignature());
-        bookingPaymentTransactionEntity.setIpay88PaymentId(paymentSucceedRQ.getIpay88PaymentId());
-
-        bookingPaymentTransactionRP.save(bookingPaymentTransactionEntity);
-
-        booking.setStatus(PaymentConstant.PAYMENT_SUCCEED);
-        bookingRP.save(booking);
-
-        pushNotification.sendMessageToUsers("user_booked_flight_and_paid_success", booking.getId(), booking.getStakeholderUserId().longValue());
-
-        // hit payment skyHistory
-        SendBookingPDFRQ sendBookingPDFRQ = new SendBookingPDFRQ(booking.getBookingCode(), paymentSucceedRQ.getEmail(), paymentSucceedRQ.getSkyuserId(), paymentSucceedRQ.getCompanyId());
-
-        jmsTemplate.convertAndSend(SKY_FLIGHT_PAYMENT, sendBookingPDFRQ);
-
-        var user = activityLog.getUser(booking.getStakeholderUserId());
-        activityLog.activities(ActivityLoggingBean.Action.INDEX_TICKETING_PAYMENT, user, booking);
+        jmsTemplate.convertAndSend(SKY_FLIGHT_PAYMENT, paymentSucceedRQ);
 
     }
 
@@ -181,8 +137,60 @@ public class PaymentIP implements PaymentSV {
 
         bookingEntity.setStatus(PaymentConstant.PAYMENT_FAIL);
 
-        pushNotification.sendMessageToUsers("user_booked_flight_and_paid_success", null, null);
+        pushNotification.sendMessageToUsers("user_booked_flight_failed", bookingEntity.getId(), bookingEntity.getStakeholderUserId().longValue());
 
         bookingRP.save(bookingEntity);
     }
+
+    @Override
+    public BookingEntity saveBookingPayment(PaymentTransactionRQ paymentSucceedRQ) {
+
+        var booking = bookingRP.getBookingByBookingCode(paymentSucceedRQ.getBookingCode());
+
+        BookingPaymentTransactionEntity bookingPaymentTransaction =
+                bookingPaymentTransactionRP.findByBookingIdAndStatus(booking.getId(), paymentSucceedRQ.getStatus());
+
+        if (bookingPaymentTransaction == null) {
+
+            BookingPaymentTransactionEntity bookingPaymentTransactionEntity = new BookingPaymentTransactionEntity();
+            bookingPaymentTransactionEntity.setBookingId(booking.getId());
+            bookingPaymentTransactionEntity.setTransactionId(GeneratorUtils.transactionCode(bookingPaymentTransactionRP.getLatestRow()));
+            bookingPaymentTransactionEntity.setAmount(paymentSucceedRQ.getAmount());
+            bookingPaymentTransactionEntity.setHolderName(paymentSucceedRQ.getHolderName());
+            bookingPaymentTransactionEntity.setCardNumber(paymentSucceedRQ.getCardNumber());
+            bookingPaymentTransactionEntity.setCvv(paymentSucceedRQ.getCvv());
+            bookingPaymentTransactionEntity.setCardType(paymentSucceedRQ.getCardType());
+            bookingPaymentTransactionEntity.setBankName(paymentSucceedRQ.getBankName());
+            bookingPaymentTransactionEntity.setDescription(paymentSucceedRQ.getDescription());
+            bookingPaymentTransactionEntity.setMethod(paymentSucceedRQ.getMethod());
+            bookingPaymentTransactionEntity.setAmount(paymentSucceedRQ.getAmount());
+            bookingPaymentTransactionEntity.setStatus(paymentSucceedRQ.getStatus());
+            bookingPaymentTransactionEntity.setPipayStatus(paymentSucceedRQ.getPipiyStatus());
+            bookingPaymentTransactionEntity.setTransId(paymentSucceedRQ.getTransId());
+            bookingPaymentTransactionEntity.setOrderId(paymentSucceedRQ.getOrderId());
+            bookingPaymentTransactionEntity.setProcessorId(paymentSucceedRQ.getProcessorId());
+            bookingPaymentTransactionEntity.setDigest(paymentSucceedRQ.getDigest());
+            bookingPaymentTransactionEntity.setPaymentCode(paymentSucceedRQ.getPaymentCode());
+            bookingPaymentTransactionEntity.setCurrency(paymentSucceedRQ.getCurrency());
+            bookingPaymentTransactionEntity.setIpay88Status(paymentSucceedRQ.getIpay88Status());
+            bookingPaymentTransactionEntity.setAuthCode(paymentSucceedRQ.getAuthCode());
+            bookingPaymentTransactionEntity.setSignature(paymentSucceedRQ.getSignature());
+            bookingPaymentTransactionEntity.setIpay88PaymentId(paymentSucceedRQ.getIpay88PaymentId());
+
+            bookingPaymentTransactionRP.save(bookingPaymentTransactionEntity);
+
+            booking.setStatus(PaymentConstant.PAYMENT_SUCCEED);
+            bookingRP.save(booking);
+
+            pushNotification.sendMessageToUsers("user_booked_flight_and_paid_success", booking.getId(), booking.getStakeholderUserId().longValue());
+
+            var user = activityLog.getUser(booking.getStakeholderUserId());
+            activityLog.activities(ActivityLoggingBean.Action.INDEX_TICKETING_PAYMENT, user, booking);
+        }
+
+        return booking;
+
+    }
+
+
 }

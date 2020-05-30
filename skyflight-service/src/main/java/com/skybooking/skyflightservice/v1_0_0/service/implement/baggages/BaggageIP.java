@@ -130,10 +130,14 @@ public class BaggageIP implements BaggageSV {
             if (isPiece) {
 
                 if (baggage.getPieces() != 0) {
-                    if (baggage.getType().equals(PassengerCode.ADULT) || baggage.getType().equals(PassengerCode.CHILD)) {
-                        bookingBaggageAllowance.setWeight(20);
+                    if (baggage.getWeights() > 0) {
+                        bookingBaggageAllowance.setWeight(baggage.getWeights());
                     } else {
-                        bookingBaggageAllowance.setWeight(10);
+                        if (baggage.getType().equals(PassengerCode.ADULT) || baggage.getType().equals(PassengerCode.CHILD)) {
+                            bookingBaggageAllowance.setWeight(20);
+                        } else {
+                            bookingBaggageAllowance.setWeight(10);
+                        }
                     }
                 } else {
                     bookingBaggageAllowance.setWeight(0);

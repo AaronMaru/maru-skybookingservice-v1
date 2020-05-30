@@ -35,27 +35,4 @@ public class Passenger {
         return type;
     }
 
-
-//    /**
-//     * -----------------------------------------------------------------------------------------------------------------
-//     * get passenger type for insert into database
-//     * -----------------------------------------------------------------------------------------------------------------
-//     *
-//     * @param type
-//     * @return String
-//     */
-//    public String getPassengerType(String type) {
-//
-//        var passengerType = switch (type.toUpperCase()) {
-//            case PassengerCodeConstant.ADULT -> "Adult";
-//            case PassengerCodeConstant.CHILD -> "Child";
-//            case PassengerCodeConstant.INFANT -> "Infant";
-//            default -> throw new IllegalArgumentException("Invalid passenger type: " + type);
-//        };
-//
-//
-//        return passengerType;
-//
-//    }
-
 }

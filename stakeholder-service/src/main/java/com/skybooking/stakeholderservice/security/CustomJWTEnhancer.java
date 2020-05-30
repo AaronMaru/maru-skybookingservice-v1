@@ -46,6 +46,9 @@ public class CustomJWTEnhancer implements TokenEnhancer {
         var company = companyHasUserRP.findByStakeholderUserId(user.getStakeHolderUser().getId());
         additionalInfo.put("userId", user.getId());
         additionalInfo.put("stakeholderId", user.getStakeHolderUser().getId());
+        additionalInfo.put("fullName", user.getStakeHolderUser().getLastName() + " " + user.getStakeHolderUser().getFirstName());
+//        additionalInfo.put("username", user.getUsername());
+
         if (company != null) {
 
             var companyDetail = companyRP.findById(company.getStakeholderCompanyId());
@@ -59,7 +62,7 @@ public class CustomJWTEnhancer implements TokenEnhancer {
             String profileItenery = (profileItenaryEntity.size() == 0) ? "default.png" : profileItenaryEntity.get(0).getFileName();
 
             additionalInfo.put("profile", environment.getProperty("spring.awsImageUrl.companyProfile") + "medium/" + profile);
-            additionalInfo.put("profileItenery", environment.getProperty("spring.awsImageUrl.companyProfile") + "origin/" + profileItenery);
+            additionalInfo.put("profileItinerary", environment.getProperty("spring.awsImageUrl.companyProfile") + "origin/" + profileItenery);
 
         }
 

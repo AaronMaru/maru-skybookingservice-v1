@@ -17,10 +17,10 @@ public interface SaveFlightNQ extends NativeQuery {
                                    @NativeQueryParam(value = "companyId") Long companyId,
                                    @NativeQueryParam(value = "action") String action,
                                    @NativeQueryParam(value = "keyword") String keyword,
-                                   @NativeQueryParam(value = "role") String role,
+//                                   @NativeQueryParam(value = "role") String role,
                                    @NativeQueryParam(value = "stake") String stake,
                                    Pageable pageable);
 
-    List<SaveFlightODTO> saveFlightSegments(@NativeQueryParam(value = "sFlightId") Long sFlightId);
+    List<SaveFlightODTO> saveFlightSegments(@NativeQueryParam(value = "sFlightId") Long sFlightId, @NativeQueryParam(value = "localeId") Long localeId);
 
 }

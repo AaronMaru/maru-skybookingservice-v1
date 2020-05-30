@@ -45,6 +45,12 @@ public class SkyownerBean {
     @Autowired
     private BussinessTypeRP bussinessTypeRP;
 
+    @Autowired
+    private BussinessTypeLocaleRP bussinessTypeLocaleRP;
+
+    @Autowired
+    private BussinessDocLocaleRP bussinessDocLocaleRP;
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -67,8 +73,8 @@ public class SkyownerBean {
         String companyCode = generalBean.stakeUniqueCode("SKYO", (lastCode != null) ? lastCode.getCompanyCode() : null, "2");
         stkCompany.setCompanyCode(companyCode);
 
-        Optional<BussinessTypeEntity> bizType = bussinessTypeRP.findById(skyownerRQ.getBusinessTypeId());
-        if (bizType.get().getName().equals(BussinessConstant.GOVERMENT)) {
+        var bizTypeLocale = bussinessTypeLocaleRP.findByBusinessTypeIdAndLocaleId(skyownerRQ.getBusinessTypeId(), (long) 1);
+        if (bizTypeLocale.getName().equalsIgnoreCase(BussinessConstant.GOVERMENT)) {
             stkCompany.setContactPerson(skyownerRQ.getContactPerson());
             stkCompany.setContactPosition(skyownerRQ.getContactPosition());
         }
@@ -144,16 +150,13 @@ public class SkyownerBean {
             String nameFile = userBean.uploadLicense(file, "/company_license", null);
 
             companyDoc.setFileName(nameFile);
-            companyDoc.setDocName(bizDoc.getName());
             companyDoc.setIsRequired(bizDoc.getIsRequired());
 
             companyDocs.add(companyDoc);
 
+            companyDoc.setStakeholderCompany(company);
+            storeCompanyDocsLocale(companyDoc, bizDoc, skyownerRQ);
         });
-
-        for (StakeholderCompanyDocsEntity doc: companyDocs) {
-            doc.setStakeholderCompany(company);
-        }
 
         if (action == "update") {
             company.setStakeholderCompanyDocsSet(companyDocs);
@@ -161,6 +164,28 @@ public class SkyownerBean {
             company.setStakeholderCompanyDocPut(companyDocs);
         }
 
+    }
+    private void storeCompanyDocsLocale(StakeholderCompanyDocsEntity doc, BussinessDocEntity bizDoc, SkyownerRegisterRQ skyownerRQ) {
+
+        List<BussinessDocLocaleEntity> bizDocLocale = bussinessDocLocaleRP.findByBusinessDocId(bizDoc.getId());
+
+        List<StakeholderCompanyDocsLocaleEntity> docLocales = new ArrayList<>();
+        bizDocLocale.forEach(item -> {
+
+            BussinessTypeLocaleEntity bizLocale = bussinessTypeLocaleRP.findByBusinessTypeIdAndLocaleId(skyownerRQ.getBusinessTypeId(), item.getLocaleId());
+
+            var docLocale = new StakeholderCompanyDocsLocaleEntity();
+            docLocale.setLocaleId(item.getLocaleId());
+            docLocale.setCompanyDocs(doc);
+            docLocale.setDocName(item.getName());
+            docLocale.setType(bizLocale != null ? bizLocale.getName() : "");
+
+            docLocales.add(docLocale);
+
+
+        });
+
+        doc.setCompanyDocsLocale(docLocales);
     }
 
 
@@ -199,11 +224,9 @@ public class SkyownerBean {
     public StakeholderCompanyEntity findCompany(UserEntity user, Long id) {
 
         Optional<StakeholderCompanyEntity> company = user.getStakeHolderUser().getStakeholderCompanies().stream().filter(p -> p.getId() == id).findFirst();
-
         if (company.isEmpty()) {
-            throw new UnauthorizedException("User doesn't has permission to update ", null);
+            throw new UnauthorizedException("usr_no_pms", null);
         }
-
         return company.get();
 
     }
@@ -245,7 +268,7 @@ public class SkyownerBean {
             generalBean.errorMultipart(v);
             BussinessDocEntity existLc = bussinessDocRP.findFirstById(k);
             if (existLc == null) {
-                throw new BadRequestException("Your license is not correct ", null);
+                throw new BadRequestException("lc_inc", null);
             }
         });
 
@@ -255,16 +278,17 @@ public class SkyownerBean {
             throw new BadRequestException("sth_w_w", null);
         }
         if(bizType.get().getBussinessDocs().size() == 0 && licenses != null) {
-            throw new BadRequestException("Please dont provide the license", null);
+            throw new BadRequestException("lc_no_need", null);
         }
 
         for(BussinessDocEntity doc : bizType.get().getBussinessDocs()) {
             if (doc.getIsRequired() == 1) {
                 if(licenses.get(doc.getId()) == null) {
-                    throw new BadRequestException("Please provide the license " + doc.getId(), null);
+                    throw new BadRequestException("lc_need" + doc.getId(), null);
                 }
             }
         }
+
 
     }
 

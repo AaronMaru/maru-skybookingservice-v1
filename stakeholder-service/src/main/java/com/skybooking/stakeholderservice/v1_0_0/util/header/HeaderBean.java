@@ -1,6 +1,5 @@
 package com.skybooking.stakeholderservice.v1_0_0.util.header;
 
-import com.skybooking.stakeholderservice.exception.httpstatus.BadRequestException;
 import com.skybooking.stakeholderservice.exception.httpstatus.UnauthorizedException;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -132,7 +131,7 @@ public class HeaderBean {
 
         if (platform.equals("mobile")) {
             if (!deviceAppList.contains(userAgent)) {
-                throw new UnauthorizedException("Please provide a specific user agent", null);
+                throw new UnauthorizedException("usr_agent", null);
             }
         }
 

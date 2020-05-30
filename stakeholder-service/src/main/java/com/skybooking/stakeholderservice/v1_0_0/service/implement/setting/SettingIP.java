@@ -14,7 +14,6 @@ import org.apache.commons.lang.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -58,7 +57,7 @@ public class SettingIP implements SettingSV {
         var socialLink = new HashMap<String, String>();
         var seo = new HashMap<String, String>();
         var contact = new HashMap<String, String>();
-        settingRS.setAwsUrl(environment.getProperty("spring.awsImageUrl.banner") + "uploads/");
+        settingRS.setAwsUrl(environment.getProperty("spring.awsImageUrl.banner"));
 
         for (FrontendConfigEntity setting : settings) {
 
@@ -107,7 +106,7 @@ public class SettingIP implements SettingSV {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * get setting notifications by stakeholder and company
+     * Get setting notifications by stakeholder and company
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @param stakeholder

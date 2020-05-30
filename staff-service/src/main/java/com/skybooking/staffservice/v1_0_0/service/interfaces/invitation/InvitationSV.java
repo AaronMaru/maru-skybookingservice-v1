@@ -6,7 +6,6 @@ import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.ResendPend
 import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.SkyuserIdStaffRQ;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.invitation.PendingEmailStaffRS;
 import com.skybooking.staffservice.v1_0_0.ui.model.response.invitation.SkyuserDetailsRS;
-
 import org.springframework.stereotype.Service;
 
 import java.io.UnsupportedEncodingException;
@@ -28,6 +27,6 @@ public interface InvitationSV {
 
     void resendPendingEmail(ResendPendingEmailRQ resendPendingEmail) throws UnsupportedEncodingException;
 
-    HashMap<String, Boolean> checkExpired(InvitationExpireRQ invitationExpireRQ) throws UnsupportedEncodingException;
+    HashMap<String, Object> checkExpired(InvitationExpireRQ invitationExpireRQ) throws UnsupportedEncodingException;
 
 }

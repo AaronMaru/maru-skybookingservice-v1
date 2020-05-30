@@ -11,6 +11,7 @@ public class UserTokenEntity {
     @Id
     private Long userId;
     private String token;
+    private String refreshToken;
 
     public Long getUserId() {
         return userId;

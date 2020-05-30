@@ -2,9 +2,9 @@ package com.skybooking.stakeholderservice.v1_0_0.io.enitity.company;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
 import javax.persistence.*;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Table(name = "stakeholder_company_docs")
@@ -17,6 +17,9 @@ public class StakeholderCompanyDocsEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "stcompany_id", nullable = false)
     private StakeholderCompanyEntity stakeholderCompany;
+
+    @OneToMany(mappedBy = "companyDocs", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<StakeholderCompanyDocsLocaleEntity> companyDocsLocale;
 
     @Column(name = "file_name")
     @Lob
@@ -119,4 +122,13 @@ public class StakeholderCompanyDocsEntity {
     public StakeholderCompanyEntity getStakeholderCompany() {
         return stakeholderCompany;
     }
+
+    public List<StakeholderCompanyDocsLocaleEntity> getCompanyDocsLocale() {
+        return companyDocsLocale;
+    }
+
+    public void setCompanyDocsLocale(List<StakeholderCompanyDocsLocaleEntity> companyDocsLocale) {
+        this.companyDocsLocale = companyDocsLocale;
+    }
+
 }

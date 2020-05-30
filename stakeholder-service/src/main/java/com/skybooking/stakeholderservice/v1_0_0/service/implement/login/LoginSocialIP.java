@@ -6,7 +6,7 @@ import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.StakeHolderUserRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserRepository;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.login.LoginSocialSV;
-import com.skybooking.stakeholderservice.v1_0_0.transformer.TokenTF;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.TokenRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.login.LoginSocialRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.activitylog.ActivityLoggingBean;
@@ -22,7 +22,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.HashMap;
-
 
 @Service
 public class LoginSocialIP implements LoginSocialSV {
@@ -55,7 +54,6 @@ public class LoginSocialIP implements LoginSocialSV {
     private HeaderBean headerBean;
 
 
-
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Login Social
@@ -81,11 +79,11 @@ public class LoginSocialIP implements LoginSocialSV {
             throw new BadRequestException("fail_reg", null);
         }
 
-        TokenTF data = userBean.getCredential(user.getEmail(), password, credential, null, loginSocialRQ.getProvider());
+        TokenRS token = userBean.getCredential(user.getEmail(), password, credential, null, loginSocialRQ.getProvider());
 
         UserDetailsTokenRS userDetailsTokenRS = new UserDetailsTokenRS();
 
-        BeanUtils.copyProperties(userBean.userFields(user, data.getAccess_token()), userDetailsTokenRS);
+        BeanUtils.copyProperties(userBean.userFields(user, token), userDetailsTokenRS);
         userDetailsTokenRS.setTypeSky(loginSocialRQ.getTypeSky());
 
         userBean.registerPlayer(user);

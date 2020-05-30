@@ -121,7 +121,7 @@ public class DSTokenHolder {
 
         //TODO: something went wrong here
         var current = new Date().getTime();
-        var expiresIn = (entity.getExpiresIn() * 1000) + entity.getCreatedAt().getTime();
+        var expiresIn = (entity.getExpiresIn()  * 1000) + entity.getCreatedAt().getTime();
 
         if (current > expiresIn) return null;
 

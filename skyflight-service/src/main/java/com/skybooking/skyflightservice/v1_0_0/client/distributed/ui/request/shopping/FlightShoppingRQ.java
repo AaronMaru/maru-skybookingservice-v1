@@ -38,4 +38,6 @@ public class FlightShoppingRQ {
     @Valid
     private List<FlightLegRQ> legs = new ArrayList<>();
 
+    private List<String> airlines = new ArrayList<>();
+
 }

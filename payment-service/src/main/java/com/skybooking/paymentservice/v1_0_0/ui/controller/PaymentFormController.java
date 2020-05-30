@@ -7,13 +7,16 @@ import com.skybooking.paymentservice.v1_0_0.service.interfaces.ProviderSV;
 import com.skybooking.paymentservice.v1_0_0.util.activitylog.ActivityLoggingBean;
 import com.skybooking.paymentservice.v1_0_0.util.integration.Payments;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.net.URI;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -48,9 +51,12 @@ public class PaymentFormController {
     public String pipayForm(@RequestParam Map<String, String> request, Model model) {
 
         var dataToken = payments.upadatePayment(request);
+
         var booking = bookingRP.getBooking(dataToken.getBookingCode());
         booking.setStatus(BookingStatusConstant.PAYMENT_CREATED);
+
         bookingRP.save(booking);
+
         activityLog.activities(ActivityLoggingBean.Action.INDEX_CREATE_PAYMENT, activityLog.getUser(booking.getStakeholderUserId()), booking);
 
         if (dataToken.getRender() == 1) {
@@ -78,8 +84,10 @@ public class PaymentFormController {
     public String ipay88Form(@RequestParam Map<String, String> request, Model model) {
 
         var dataToken = payments.upadatePayment(request);
+
         var booking = bookingRP.getBooking(dataToken.getBookingCode());
         booking.setStatus(BookingStatusConstant.PAYMENT_CREATED);
+
         bookingRP.save(booking);
 
         activityLog.activities(ActivityLoggingBean.Action.INDEX_CREATE_PAYMENT, activityLog.getUser(booking.getStakeholderUserId()), booking);
@@ -90,6 +98,7 @@ public class PaymentFormController {
 
         payments.updateUrlToken(payments.upadatePayment(request).getId());
         payments.ipay88Payload(payments.getPaymentInfo(dataToken, flightAction.getMandatoryData(dataToken.getBookingCode())), model);
+
         return "ipay88/form";
 
     }
@@ -103,19 +112,25 @@ public class PaymentFormController {
      * @return
      */
     @PostMapping(value = "/ipay88/response", consumes = {MediaType.ALL_VALUE})
-    public String ipay88Response(@RequestParam Map<String, Object> request) {
+    public ResponseEntity<Void> ipay88Response(@RequestParam Map<String, Object> request) {
 
         var params = request.entrySet().stream().map(item -> item.getKey().concat("=").concat(item.getValue().toString())).collect(Collectors.joining("&"));
         String bookingCode = (String) request.get("RefNo");
+
         var booking = bookingRP.getBooking(bookingCode);
         booking.setLogPaymentRes(params);
         booking.setStatus(BookingStatusConstant.PAYMENT_PROCESSING);
+
         bookingRP.save(booking);
+
         var action = request.get("Status").equals("1") ? ActivityLoggingBean.Action.INDEX_TICKETING_PROCESSING_PAYMENT : ActivityLoggingBean.Action.FAIL_IPAY88;
 
         activityLog.activities(action, activityLog.getUser(booking.getStakeholderUserId()), booking);
 
-        return "redirect:" + providerSV.getIpay88Response(request);
+        return ResponseEntity
+                .status(HttpStatus.FOUND)
+                .location(URI.create(providerSV.getIpay88Response(request)))
+                .build();
 
     }
 
@@ -129,18 +144,24 @@ public class PaymentFormController {
      * @return
      */
     @GetMapping("/pipay/success")
-    public String pipaySucceed(@RequestParam Map<String, Object> request) {
+    public ResponseEntity<Void> pipaySucceed(@RequestParam Map<String, Object> request) {
 
         String bookingCode = (String) request.get("orderID");
-        var booking = bookingRP.getBooking(bookingCode);
+
         var params = request.entrySet().stream().map(item -> item.getKey().concat("=").concat(item.getValue().toString())).collect(Collectors.joining("&"));
+
+        var booking = bookingRP.getBooking(bookingCode);
         booking.setLogPaymentRes(params);
         booking.setStatus(BookingStatusConstant.PAYMENT_PROCESSING);
+
         bookingRP.save(booking);
 
         activityLog.activities(ActivityLoggingBean.Action.INDEX_TICKETING_PROCESSING_PAYMENT, activityLog.getUser(booking.getStakeholderUserId()), booking);
 
-        return "redirect:" + providerSV.getPipaySucceedResponse(request);
+        return ResponseEntity
+                .status(HttpStatus.FOUND)
+                .location(URI.create(providerSV.getPipaySucceedResponse(request)))
+                .build();
 
     }
 
@@ -154,21 +175,27 @@ public class PaymentFormController {
      * @return
      */
     @GetMapping("/pipay/fail")
-    public String pipayFail(@RequestParam Map<String, Object> request) {
+    public ResponseEntity<Void> pipayFail(@RequestParam Map<String, Object> request) {
 
         var params = request.entrySet().stream().map(item -> item.getKey().concat("=").concat(item.getValue().toString())).collect(Collectors.joining("&"));
+
         String bookingCode = (String) request.get("orderID");
+
         var booking = bookingRP.getBooking(bookingCode);
         var user = activityLog.getUser(booking.getStakeholderUserId());
         booking.setStatus(BookingStatusConstant.PAYMENT_PROCESSING);
         booking.setLogPaymentRes(params);
+
         bookingRP.save(booking);
+
         var action = request.get("status").equals("0200") ? ActivityLoggingBean.Action.CANCELLATION_PIPAY : ActivityLoggingBean.Action.FAIL_PIPAY;
 
         activityLog.activities(action, user, booking);
 
-        return "redirect:" + providerSV.getPipayFailResponse(request);
-
+        return ResponseEntity
+                .status(HttpStatus.FOUND)
+                .location(URI.create(providerSV.getPipayFailResponse(request)))
+                .build();
     }
 
 }

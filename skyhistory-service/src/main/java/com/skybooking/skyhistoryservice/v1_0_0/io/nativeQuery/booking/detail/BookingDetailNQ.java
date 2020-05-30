@@ -21,6 +21,7 @@ public interface BookingDetailNQ extends NativeQuery {
                                   @NativeQueryParam(value = "UPCOMING") String UPCOMING,
                                   @NativeQueryParam(value = "CANCELLED") String CANCELLED,
                                   @NativeQueryParam(value = "FAILED") String FAILED,
+                                  @NativeQueryParam(value = "PENDING") String PENDING,
                                   @NativeQueryParam(value = "ONEWAY") String ONEWAY,
                                   @NativeQueryParam(value = "ROUND") String ROUND,
                                   @NativeQueryParam(value = "MULTICITY") String MULTICITY,

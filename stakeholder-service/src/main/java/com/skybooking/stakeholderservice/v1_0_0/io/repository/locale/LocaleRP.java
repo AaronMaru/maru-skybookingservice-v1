@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface LocaleRP extends JpaRepository<LocaleEntity, Long> {
 
@@ -21,4 +23,6 @@ public interface LocaleRP extends JpaRepository<LocaleEntity, Long> {
      * @return LocaleEntity
      */
     LocaleEntity findLocaleByLocale(String locale);
+
+    List<LocaleEntity> findByStatus(Integer status);
 }

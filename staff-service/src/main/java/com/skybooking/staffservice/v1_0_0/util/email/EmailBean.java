@@ -40,9 +40,6 @@ public class EmailBean {
     private HeaderBean headerBean;
 
     @Autowired
-    private LocaleRP localeRP;
-
-    @Autowired
     private MultiLanguageNQ multiLanguageNQ;
 
     /**

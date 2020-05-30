@@ -10,17 +10,13 @@ import org.springframework.jms.support.converter.MappingJackson2MessageConverter
 import org.springframework.jms.support.converter.MessageConverter;
 import org.springframework.jms.support.converter.MessageType;
 
-/**
- * Created by : maru
- * Date  : 1/22/2020
- * Time  : 4:42 PM
- */
 @EnableJms
 @Configuration
 public class ActiveMQConfig {
 
     public static final String STAKE_HOLDER_EMAIL = "stake_holder_email";
     public static final String STAKE_HOLDER_SMS = "stake_holder_sms";
+    public static final String NOTIFICATION = "notification";
 
     @Bean
     public MessageConverter messageConverter() {

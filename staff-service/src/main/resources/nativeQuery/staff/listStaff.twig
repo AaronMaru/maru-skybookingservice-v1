@@ -45,22 +45,13 @@ INNER JOIN
                      WHEN :joinStatus = 'ALL' THEN suc.`join_status` IN (0, 1, 2)
 	            END
 
-	        AND CASE WHEN :joinDate != 'ALL' THEN Date(suc.created_at) = :joinDate ELSE suc.`join_status` IN (0, 1, 2) END
-	        AND (
-                    (   SELECT SUM(b.total_amount + b.markup_amount + b.markup_pay_amount)
-                        FROM bookings b
-                        WHERE b.stakeholder_company_id = suc.stakeholder_company_id
-                        AND b.stakeholder_user_id = suc.stakeholder_user_id
-                    ) >= :startPRange
-                        AND
-                    (
-                        SELECT SUM(b.total_amount + b.markup_amount + b.markup_pay_amount)
-                        FROM bookings b
-                        WHERE b.stakeholder_company_id = suc.stakeholder_company_id
-                        AND b.stakeholder_user_id = suc.stakeholder_user_id
-                    ) <= :endPRange
+	        AND CASE WHEN :joinDate <> 'ALL' THEN DATE(suc.created_at) = DATE(:joinDate) ELSE suc.`join_status` IN (0, 1, 2) END
+	        AND ( SELECT SUM(b.total_amount + b.markup_amount + b.markup_pay_amount)
+                   FROM bookings b
+                   WHERE b.stakeholder_company_id = suc.stakeholder_company_id
+                   AND b.stakeholder_user_id = suc.stakeholder_user_id
+               ) BETWEEN :startPRange AND :endPRange
 
-                )
 	    END
 
 ) suc ON suc.stakeholder_company_id = sc.id
@@ -117,7 +108,7 @@ INNER JOIN
                     WHEN :keyword = 'banned' THEN suc.`join_status` = 2
                 END
              ELSE
-	            suc.`join_status` IN (0, 1, 2)
+	            suc.`join_status` NOT IN (0, 1, 2)
 	         END
 
 ) suc ON suc.stakeholder_company_id = sc.id
@@ -182,7 +173,7 @@ INNER JOIN
                 OR su.user_code LIKE '%' :keyword '%'
                 )
 	         ELSE
-	            su.`status` = 1
+	            su.`status` <> 1
 	         END
 
 ) su ON su.id = suc.stakeholder_user_id

@@ -1,7 +1,5 @@
 package com.skybooking.skyhistoryservice.v1_0_0.transformer.mail;
 
-import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.booking.detail.BookingStopInfoRS;
-import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.booking.detail.destination.ArrivalRS;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -11,7 +9,6 @@ import java.util.List;
 public class ItineraryODSegmentTF {
 
     private Integer elapsedTime;
-    private String elapsedHourMinute;
     private String airlineCode;
     private String airlineName;
     private String airlineLogo;
@@ -22,6 +19,7 @@ public class ItineraryODSegmentTF {
     private String mealName;
     private Integer stopQty;
     private Integer layover;
+    private String layoverHourMinute;
     private String airlineRef;
     private String operatedByAirline;
     private Integer adjustmentDate;

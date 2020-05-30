@@ -13,4 +13,6 @@ public interface BussinessTypeLocaleRP extends JpaRepository<BussinessTypeLocale
     @Query(value = "SELECT * FROM business_type_locale WHERE business_type_id = ?1 AND locale_id = ?2 LIMIT 1", nativeQuery = true)
     BussinessTypeLocaleEntity findByBusinessTypeIdAndLocaleId(Long bzId, Long localeId);
 
+    List<BussinessTypeLocaleEntity> findByBusinessTypeId(Long id);
+
 }

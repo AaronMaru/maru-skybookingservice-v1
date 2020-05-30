@@ -8,6 +8,7 @@ import com.skybooking.skyflightservice.v1_0_0.util.datetime.DatetimeFormat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 @Service
@@ -15,6 +16,9 @@ public class PassengerIP implements PassengerSV {
 
     @Autowired
     private PassengerAction passengerAction;
+
+    @Autowired
+    private HttpServletRequest httpServletRequest;
 
     @Override
     public void create(List<BookingPassengerRQ> passengers) {
@@ -31,7 +35,10 @@ public class PassengerIP implements PassengerSV {
             passengerSRQ.setIdNumber(passenger.getIdNumber());
             passengerSRQ.setExpireDate(DatetimeFormat.parse("yyyy-MM-dd", passenger.getExpireDate()));
 
+
             passengerAction.create(passengerSRQ).subscribe();
+
+
         });
     }
 

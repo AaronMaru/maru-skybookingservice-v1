@@ -125,6 +125,7 @@ public class BookingIP implements BookingSV {
                 filterRQ.getRound(),
                 filterRQ.getMulticity(),
                 headerBean.getCompanyId(filterRQ.getCompanyId()),
+                filterRQ.getPending(),
                 PageRequest.of(filterRQ.getPage(), filterRQ.getSize()));
 
         List<BookingRS> bookingRSList = new ArrayList<>();

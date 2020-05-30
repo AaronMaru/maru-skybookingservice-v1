@@ -17,6 +17,10 @@ public class NotificationDetailTO {
     private String title;
     private String description;
     private String notiIcon;
+    private Integer skyuserId;
+    private Integer companyId;
+    private String replaceOne;
+    private String replaceTwo;
     private Date createdAt;
 
 }

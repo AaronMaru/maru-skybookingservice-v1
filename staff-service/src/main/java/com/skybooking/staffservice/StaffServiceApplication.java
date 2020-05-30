@@ -6,7 +6,6 @@ import com.skybooking.staffservice.v1_0_0.util.general.ApiBean;
 import com.skybooking.staffservice.v1_0_0.util.general.GeneralBean;
 import com.skybooking.staffservice.v1_0_0.util.header.HeaderBean;
 import com.skybooking.staffservice.v1_0_0.util.localization.LocalizationBean;
-import com.skybooking.staffservice.v1_0_0.util.notification.NotificationBean;
 import com.skybooking.staffservice.v1_0_0.util.notification.PushNotificationOptions;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -38,9 +37,6 @@ public class StaffServiceApplication {
     GeneralBean generalBean() {
         return new GeneralBean();
     }
-
-    @Bean
-    NotificationBean notificationBean() { return new NotificationBean(); }
 
     @Bean
     EmailBean email() {

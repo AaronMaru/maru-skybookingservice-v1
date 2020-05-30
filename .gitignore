@@ -16,3 +16,4 @@ git-localconfig/
 */package-lock.json
 *.gz
 *.zip
+bootstrap.yml

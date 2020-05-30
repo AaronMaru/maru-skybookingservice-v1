@@ -1,6 +1,7 @@
 package com.skybooking.paymentservice.v1_0_0.service.implement;
 
 import com.skybooking.paymentservice.config.AppConfig;
+import com.skybooking.paymentservice.constant.BookingStatusConstant;
 import com.skybooking.paymentservice.constant.PaymentCodeConstant;
 import com.skybooking.paymentservice.constant.PaymentStatusConstant;
 import com.skybooking.paymentservice.constant.ProductTypeConstant;
@@ -10,17 +11,21 @@ import com.skybooking.paymentservice.v1_0_0.client.flight.ui.request.FlightPayme
 import com.skybooking.paymentservice.v1_0_0.client.flight.ui.response.FlightMandatoryDataRS;
 import com.skybooking.paymentservice.v1_0_0.client.pipay.action.PipayAction;
 import com.skybooking.paymentservice.v1_0_0.client.stakeholder.action.SkyHistoryAction;
+import com.skybooking.paymentservice.v1_0_0.io.enitity.redis.BookingLanguageCached;
 import com.skybooking.paymentservice.v1_0_0.io.nativeQuery.paymentMethod.PaymentMethodTO;
 import com.skybooking.paymentservice.v1_0_0.io.nativeQuery.paymentMethod.PaymentNQ;
 import com.skybooking.paymentservice.v1_0_0.io.repository.booking.BookingRP;
+import com.skybooking.paymentservice.v1_0_0.io.repository.redis.BookingLanguageRedisRP;
 import com.skybooking.paymentservice.v1_0_0.service.interfaces.ProviderSV;
 import com.skybooking.paymentservice.v1_0_0.ui.model.request.PaymentRQ;
 import com.skybooking.paymentservice.v1_0_0.ui.model.response.PaymentMethodRS;
 import com.skybooking.paymentservice.v1_0_0.ui.model.response.PriceDetailRS;
 import com.skybooking.paymentservice.v1_0_0.ui.model.response.UrlPaymentRS;
+import com.skybooking.paymentservice.v1_0_0.util.activitylog.ActivityLoggingBean;
 import com.skybooking.paymentservice.v1_0_0.util.classse.CardInfo;
 import com.skybooking.paymentservice.v1_0_0.util.generator.CardUtility;
 import com.skybooking.paymentservice.v1_0_0.util.generator.GeneralUtility;
+import com.skybooking.paymentservice.v1_0_0.util.header.HeaderBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -56,8 +61,28 @@ public class ProviderIP implements ProviderSV {
     @Autowired
     private BookingRP bookingRP;
 
+    @Autowired
+    private ActivityLoggingBean activityLog;
+
+    @Autowired
+    private HeaderBean headerBean;
+
+    @Autowired
+    BookingLanguageRedisRP bookingLanguageRedisRP;
+
     @Override
     public UrlPaymentRS getRequestUrl(PaymentRQ paymentRQ) {
+
+        var booking = bookingRP.getBooking(paymentRQ.getBookingCode());
+        booking.setStatus(BookingStatusConstant.PAYMENT_SELECTED);
+        bookingRP.save(booking);
+        activityLog.activities(ActivityLoggingBean.Action.INDEX_PAYMNET_METHOD_SELECT, activityLog.getUser(), booking);
+
+        //Save Language to redis for email template
+        BookingLanguageCached bookingLanguageCached = new BookingLanguageCached();
+        bookingLanguageCached.setBookingCode(booking.getBookingCode());
+        bookingLanguageCached.setLanguage(headerBean.getLocalization());
+        bookingLanguageRedisRP.save(bookingLanguageCached);
 
         if (paymentRQ.getProductType().equals(ProductTypeConstant.FLIGHT)) {
 
@@ -95,8 +120,12 @@ public class ProviderIP implements ProviderSV {
         paymentMethodTOS.forEach(item -> {
 
             var totalAmount = booking.getTotalAmount().add(booking.getMarkupAmount().add(booking.getMarkupPayAmount()));
+            var commission = booking.getCommissionAmount();
+
+            totalAmount = totalAmount.subtract(commission);
             var discount = GeneralUtility.trimAmount(totalAmount.multiply(item.getPercentage().divide(new BigDecimal(100))));
-            discount = discount.add(booking.getCommissionAmount());
+            discount = discount.add(commission);
+
             var paidAmount = totalAmount.subtract(discount);
 
             paymentMethodRS.add(

@@ -33,6 +33,12 @@ public class NotificationEntity {
 
     private Integer readable;
 
+    @Column(name = "replace_one")
+    private String replaceOne;
+
+    @Column(name = "replace_two")
+    private String replaceTwo;
+
     @CreationTimestamp
     @Column(name = "created_at")
     @Temporal(TemporalType.TIMESTAMP)

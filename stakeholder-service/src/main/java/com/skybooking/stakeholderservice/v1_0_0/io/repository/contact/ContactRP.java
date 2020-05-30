@@ -4,7 +4,6 @@ import com.skybooking.stakeholderservice.v1_0_0.io.enitity.contact.ContactEntity
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-
 import javax.transaction.Transactional;
 import java.util.List;
 
@@ -30,9 +29,8 @@ public interface ContactRP extends JpaRepository<ContactEntity, Long> {
     /**
      * contactable_id
      * Check contacts exists
-     *
      */
-    @Query(value = "SELECT CASE WHEN COUNT(value) > 0 THEN 'true' ELSE 'false' END FROM contacts WHERE type IN ('p', 'e') AND value = ?1 AND (CASE WHEN ?2 THEN contactable_id NOT IN (?2) ELSE contactable_id IS NOT NULL END)", nativeQuery = true)
+    @Query(value = "SELECT CASE WHEN COUNT(value) > 0 THEN 'true' ELSE 'false' END FROM contacts WHERE type IN ('p', 'e') AND value = ?1 AND (CASE WHEN ?2 THEN contactable_id NOT IN (?2) ELSE contactable_id IS NOT NULL END) AND value != ''", nativeQuery = true)
     String existsContact(String value, Long id);
 
 }

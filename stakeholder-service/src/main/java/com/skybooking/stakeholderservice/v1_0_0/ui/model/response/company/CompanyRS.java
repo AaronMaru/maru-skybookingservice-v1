@@ -26,7 +26,7 @@ public class CompanyRS {
     private String city = "";
     private BigInteger totalBooking;
     private String reason = "";
-    private String profileItenary = "";
+    private String profileItinerary = "";
 
     public Long getId() {
         return id;
@@ -191,12 +191,12 @@ public class CompanyRS {
         this.reason = reason;
     }
 
-    public String getProfileItenary() {
-        return profileItenary;
+    public String getProfileItinerary() {
+        return profileItinerary;
     }
 
-    public void setProfileItenary(String profileItenary) {
-        this.profileItenary = profileItenary;
+    public void setProfileItinerary(String profileItinerary) {
+        this.profileItinerary = profileItinerary;
     }
 
 }

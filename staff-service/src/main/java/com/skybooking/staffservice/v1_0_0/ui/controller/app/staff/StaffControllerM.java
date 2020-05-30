@@ -15,7 +15,6 @@ import javax.servlet.http.HttpServletRequest;
 @RequestMapping("/mv1.0.0")
 public class StaffControllerM {
 
-
     @Autowired
     private StaffSV staffSV;
 
@@ -47,6 +46,11 @@ public class StaffControllerM {
     @GetMapping("/staff-profile/{id}")
     public ResRS staffProfile(@PathVariable Long id) {
         Object staffProfile = staffSV.staffProfile(id);
+        return localization.resAPI(HttpStatus.OK,"res_succ", staffProfile);
+    }
+    @GetMapping("/staff-profile")
+    public ResRS staffProfile() {
+        Object staffProfile = staffSV.staffProfile(null);
         return localization.resAPI(HttpStatus.OK,"res_succ", staffProfile);
     }
 

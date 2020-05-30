@@ -1,15 +1,68 @@
 SELECT
 	fsaveOD.elapsed_time AS elapsedTime,
 	fsaveOD.airline_code AS airlineCode,
-	fsaveOD.airline_name AS airlineName,
+	fi.airline_name AS airlineName,
 	fsaveOD.airline_logo_45 AS airlineLogo45,
 	fsaveOD.airline_logo_90 AS airlineLogo90,
 	fsaveOD.d_date_time AS dDateTime,
 	fsaveOD.a_date_time AS aDateTime,
 	fsaveOD.o_location AS oLocation,
 	fsaveOD.d_location AS dLocation,
-	fsaveOD.o_location_name AS oLocationName,
-	fsaveOD.d_location_name AS dLocationName,
+	departureInfo.dep_city AS oLocationName,
+	arrivalInfo.dep_city AS dLocationName,
 	fsaveOD.stop
+
 FROM flight_save_origin_destinations fsaveOD
+
+-- The start of airline
+LEFT JOIN
+(
+	SELECT
+		fi.airline_code,
+		( SELECT fil.business_name
+			FROM flight_info_locale AS fil
+			WHERE fil.locale_id = :localeId
+			AND fil.flight_id = fi.id
+			LIMIT 1
+		) AS airline_name
+	FROM  flight_info AS fi
+) fi ON fi.airline_code = fsaveOD.airline_code
+
+-- The start of departure
+LEFT JOIN
+(
+    SELECT departureInfo.`code`, cc_city.dep_city
+    FROM airport_info AS departureInfo
+    INNER JOIN
+	 ( SELECT
+      cc_city.id,
+      ( SELECT cc_lcity.`name`
+          FROM country_city_locale cc_lcity
+          WHERE cc_lcity.locale_id = :localeId
+          AND cc_lcity.country_city_id = cc_city.id
+      ) AS dep_city
+      FROM country_city AS cc_city
+    ) cc_city ON cc_city.id = departureInfo.country_city_id
+) departureInfo ON departureInfo.`code` = fsaveOD.o_location
+-- The end of departure
+
+-- The start of arrival
+LEFT JOIN
+(
+    SELECT arrivalInfo.`code`, cc_city.dep_city
+    FROM airport_info AS arrivalInfo
+    INNER JOIN
+	 ( SELECT
+      cc_city.id,
+      ( SELECT cc_lcity.`name`
+          FROM country_city_locale cc_lcity
+          WHERE cc_lcity.locale_id = :localeId
+          AND cc_lcity.country_city_id = cc_city.id
+      ) AS dep_city
+      FROM country_city AS cc_city
+    ) cc_city ON cc_city.id = arrivalInfo.country_city_id
+
+) arrivalInfo ON arrivalInfo.`code` = fsaveOD.d_location
+-- The end of arrival
+
 WHERE fsaveOD.flight_save_Id = :sFlightId

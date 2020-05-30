@@ -7,26 +7,31 @@ import com.skybooking.stakeholderservice.v1_0_0.io.enitity.company.StakeholderCo
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.StakeHolderUserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.StakeholderUserInvitationEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserEntity;
+import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserLanguageEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.verify.VerifyUserEntity;
+import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.notification.NotificationNQ;
+import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.notification.ScriptingTO;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyHasUserRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.country.CountryRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.OauthUserRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.StakeholderUserInvitationRP;
+import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserLanguageRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserRepository;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.verify.VerifyUserRP;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.user.UserSV;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.FilterRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company.CompanyRQ;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.login.LoginRefreshRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user.*;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.CompanyRS;
-import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.InvitationRS;
-import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsRS;
-import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserDetailsTokenRS;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.*;
 import com.skybooking.stakeholderservice.v1_0_0.util.JwtUtils;
 import com.skybooking.stakeholderservice.v1_0_0.util.activitylog.ActivityLoggingBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.email.EmailBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.ApiBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.GeneralBean;
+import com.skybooking.stakeholderservice.v1_0_0.util.header.HeaderBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.notification.PushNotificationOptions;
 import com.skybooking.stakeholderservice.v1_0_0.util.skyowner.SkyownerBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.skyuser.UserBean;
@@ -39,9 +44,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.*;
 
 import static com.skybooking.stakeholderservice.constant.MailStatusConstant.*;
 
@@ -105,6 +110,17 @@ public class UserIP implements UserSV {
     @Autowired
     private PushNotificationOptions notification;
 
+    @Autowired
+    private NotificationNQ notificationNQ;
+
+    @Autowired
+    private HeaderBean headerBean;
+
+    @Autowired
+    private UserLanguageRP userLanguageRP;
+
+    @Autowired
+    private HttpServletRequest httpServletRequest;
 
 
     /**
@@ -119,7 +135,8 @@ public class UserIP implements UserSV {
         UserEntity user = userBean.getUserPrincipal();
 
         UserDetailsRS userDetailRS = new UserDetailsRS();
-        BeanUtils.copyProperties(userBean.userFields(user, null), userDetailRS);
+        TokenRS token = new TokenRS();
+        BeanUtils.copyProperties(userBean.userFields(user, token), userDetailRS);
 
         return userDetailRS;
 
@@ -149,7 +166,7 @@ public class UserIP implements UserSV {
         }
         if (profileRQ.getNationality() != null) {
             if (countryRP.existsIso(profileRQ.getNationality()) == null) {
-                throw new BadRequestException("Nationality not found", null);
+                throw new BadRequestException("not_found", null);
             }
             stkHolder.setNationality(profileRQ.getNationality());
         }
@@ -174,7 +191,8 @@ public class UserIP implements UserSV {
         userRepository.save(user);
 
         UserDetailsRS userDetailsRS = new UserDetailsRS();
-        BeanUtils.copyProperties(userBean.userFields(user, null), userDetailsRS);
+        TokenRS token = new TokenRS();
+        BeanUtils.copyProperties(userBean.userFields(user, token), userDetailsRS);
 
         logger.activities(ActivityLoggingBean.Action.UPDATE_STAKE_USER, user);
 
@@ -206,7 +224,8 @@ public class UserIP implements UserSV {
         user.setPassword(pwdEncoder.encode(passwordRQ.getNewPassword()));
         userRepository.save(user);
 
-        notification.sendMessageToUsers("skyuser_change_new_password", null, null);
+        userBean.senNotify(user.getStakeHolderUser().getId(), "skyuser_change_new_password");
+
         logger.activities(ActivityLoggingBean.Action.CHANGE_PASSWORD, user);
 
     }
@@ -221,11 +240,7 @@ public class UserIP implements UserSV {
      */
     public UserDetailsTokenRS resetPassword(ResetPasswordRQ passwordRQ, HttpHeaders httpHeaders) {
 
-        String receiver = passwordRQ.getUsername();
-
-        if (NumberUtils.isNumber(passwordRQ.getUsername())) {
-            receiver = passwordRQ.getCode() + passwordRQ.getUsername();
-        }
+        String receiver = userBean.getUsername(passwordRQ.getUsername(), passwordRQ.getCode());
 
         UserEntity user = userRepository.findByEmailOrPhone(passwordRQ.getUsername(), passwordRQ.getCode().replaceAll(" ", ""));
 
@@ -237,7 +252,7 @@ public class UserIP implements UserSV {
         String fullName = skyuser.getFirstName() + " " + skyuser.getLastName();
 
         VerifyUserEntity verifyUserEntity = verifyRepository.findByTokenAndStatus(passwordRQ.getToken(),
-                Integer.parseInt(environment.getProperty("spring.verifyStatus.forgotPassword")));
+            Integer.parseInt(environment.getProperty("spring.verifyStatus.forgotPassword")));
         generalBean.expiredInvalidToken(verifyUserEntity, passwordRQ.getToken());
 
         user.setPassword(pwdEncoder.encode(passwordRQ.getNewPassword()));
@@ -248,9 +263,11 @@ public class UserIP implements UserSV {
         Map<String, Object> mailData = emailBean.mailData(receiver, fullName, 0, PASSWORD_RESET_SUCCESSFULLY);
 
         emailBean.sendEmailSMS("success-reset-password", mailData);
-        notification.sendMessageToUsers("skyuser_forget_and_create_new_password", null, user.getStakeHolderUser().getId());
+        userBean.senNotify(user.getStakeHolderUser().getId(), "skyuser_forget_and_create_new_password");
 
         UserDetailsTokenRS userDetailsTokenRS = userBean.userDetailByLogin(user, passwordRQ.getUsername(), passwordRQ.getNewPassword());
+        userBean.forceDeviceLogout(user.getId());
+        userBean.storeUserTokenLastLogin(userDetailsTokenRS.getToken(), user);
 
         return userDetailsTokenRS;
 
@@ -266,22 +283,16 @@ public class UserIP implements UserSV {
      */
     public UserDetailsTokenRS resetPasswordMobile(ResetPasswordMobileRQ resetPasswordMobileRQ) {
 
-        String receiver = "";
+        String username = userBean.getUsername(resetPasswordMobileRQ.getUsername(), resetPasswordMobileRQ.getCode());
 
-        if (NumberUtils.isNumber(resetPasswordMobileRQ.getUsername())) {
-            receiver = resetPasswordMobileRQ.getCode() + "" + resetPasswordMobileRQ.getUsername().replaceFirst("^0+(?!$)", "");
-        } else {
-            receiver = resetPasswordMobileRQ.getUsername();
-        }
-
-        var verify = verifyRP.findByUsernameAndVerifiedAndStatus(receiver, 1, Integer.parseInt(environment.getProperty("spring.verifyStatus.verifyUserAppReset")));
+        var verify = verifyRP.findByUsernameAndVerifiedAndStatus(username, 1, Integer.parseInt(environment.getProperty("spring.verifyStatus.verifyUserAppReset")));
         if (verify == null) {
             throw new BadRequestException("sth_w_w", null);
         }
 
         UserEntity user = userRepository.findByEmailOrPhone(resetPasswordMobileRQ.getUsername(), resetPasswordMobileRQ.getCode());
         if (user == null) {
-            throw new UnauthorizedException("Unauthorized", null);
+            throw new UnauthorizedException("unauthorized", null);
         }
 
         user.setPassword(pwdEncoder.encode(resetPasswordMobileRQ.getNewPassword()));
@@ -295,6 +306,10 @@ public class UserIP implements UserSV {
         }
 
         UserDetailsTokenRS userDetailsTokenRS = userBean.userDetailByLogin(user, resetPasswordMobileRQ.getUsername(), resetPasswordMobileRQ.getNewPassword());
+
+        userBean.forceDeviceLogout(user.getId());
+        userBean.storeUserTokenLastLogin(userDetailsTokenRS.getToken(), user);
+        userBean.senNotify(user.getStakeHolderUser().getId(), "skyuser_forget_and_create_new_password");
 
         return userDetailsTokenRS;
 
@@ -313,7 +328,7 @@ public class UserIP implements UserSV {
         UserEntity user = userBean.getUserPrincipal();
 
         VerifyUserEntity verifyUserEntity = verifyRepository.findByTokenAndStatus(contactRQ.getToken().replaceAll(" ", ""),
-                Integer.parseInt(environment.getProperty("spring.verifyStatus.updateContact")));
+            Integer.parseInt(environment.getProperty("spring.verifyStatus.updateContact")));
         generalBean.expiredInvalidToken(verifyUserEntity, contactRQ.getToken().replaceAll(" ", ""));
 
         if (NumberUtils.isNumber(contactRQ.getUsername())) {
@@ -326,7 +341,7 @@ public class UserIP implements UserSV {
             user.setEmail(contactRQ.getUsername());
             apiBean.updateContact(contactRQ.getUsername(), contactRQ.getCode(), user.getStakeHolderUser(), "e", null);
         } else {
-            throw new BadRequestException("Invalid data", contactRQ.getUsername());
+            throw new BadRequestException("data_invalid", contactRQ.getUsername());
         }
 
         userRepository.save(user);
@@ -370,11 +385,11 @@ public class UserIP implements UserSV {
         generalBean.expireRequest(user, Integer.parseInt(environment.getProperty("spring.verifyStatus.updateContact")));
 
         int code = apiBean.createVerifyCode(user,
-                Integer.parseInt(environment.getProperty("spring.verifyStatus.updateContact")), null);
+            Integer.parseInt(environment.getProperty("spring.verifyStatus.updateContact")), null);
         String fullName = user.getStakeHolderUser().getFirstName() + " " + user.getStakeHolderUser().getLastName();
         String receiver = NumberUtils.isNumber(contactRQ.getUsername())
-                ? contactRQ.getCode() + contactRQ.getUsername().replaceFirst("^0+(?!$)", "")
-                : contactRQ.getUsername();
+            ? contactRQ.getCode() + contactRQ.getUsername().replaceFirst("^0+(?!$)", "")
+            : contactRQ.getUsername();
 
         userRepository.save(user);
 
@@ -407,7 +422,7 @@ public class UserIP implements UserSV {
         userRepository.save(user);
 
         apiBean.storeUserStatus(user, Integer.parseInt(environment.getProperty("spring.stakeUser.inactive")),
-                "User was deactive account");
+            "had_deact");
 
         String receiver = (user.getEmail() != null) ? user.getEmail() : user.getCode() + user.getPhone();
 
@@ -419,6 +434,28 @@ public class UserIP implements UserSV {
         Map<String, Object> mailData = emailBean.mailData(receiver, fullName, 0, ACCOUNT_DEACTIVATED_SUCCESSFULLY);
         emailBean.sendEmailSMS("deactive-account", mailData);
 
+    }
+
+
+    public void changeLanguage(ChangeLanguageRQ changeLanguageRQ) {
+
+        UserEntity user = userBean.getUserPrincipal();
+        FilterRQ filterRQ = new FilterRQ(httpServletRequest, jwtUtils.getUserToken());
+
+        var userLanguage = userLanguageRP.findBySkyuserIdAndDeviceIdAndCompanyIdIsNull(user.getStakeHolderUser().getId(), changeLanguageRQ.getDeviceId());
+        if (filterRQ.getCompanyHeaderId() != null) {
+            userLanguage = userLanguageRP.findBySkyuserIdAndCompanyIdAndDeviceId(user.getStakeHolderUser().getId(), filterRQ.getCompanyHeaderId(), changeLanguageRQ.getDeviceId());
+        }
+        if (userLanguage == null) {
+            userLanguage = new UserLanguageEntity();
+        }
+
+        userLanguage.setLocaleKey(headerBean.getLocalization());
+        userLanguage.setCompanyId(filterRQ.getCompanyHeaderId());
+        userLanguage.setDeviceId(changeLanguageRQ.getDeviceId());
+        userLanguage.setSkyuserId(user.getStakeHolderUser().getId());
+
+        userLanguageRP.save(userLanguage);
     }
 
 
@@ -445,7 +482,8 @@ public class UserIP implements UserSV {
             throw new BadRequestException("sth_w_w", null);
         }
 
-        notification.sendMessageToUsers("skyowner_welcome_message", null, null);
+
+        userBean.senNotify(user.getStakeHolderUser().getId(), "skyowner_welcome_message");
 
         SkyownerRegisterRQ skyownerRQ = new SkyownerRegisterRQ();
         BeanUtils.copyProperties(companyRQ, skyownerRQ);
@@ -470,7 +508,7 @@ public class UserIP implements UserSV {
 
         List<InvitationRS> invitationRSES = new ArrayList<>();
 
-        for(StakeholderUserInvitationEntity invitation : invitations) {
+        for (StakeholderUserInvitationEntity invitation : invitations) {
 
             InvitationRS invitationRS = new InvitationRS();
 
@@ -516,8 +554,40 @@ public class UserIP implements UserSV {
         invitation.setStatus(optionStaffRQ.getStatus());
         invitationsRP.save(invitation);
 
-        skyownerBean.addStaff(invitation, user.getStakeHolderUser().getId());
+        String scriptKey = optionStaffRQ.getStatus().equals(1) ? "staff_accept" : "staff_reject";
 
+        if (optionStaffRQ.getStatus().equals(1)) {
+            skyownerBean.addStaff(invitation, user.getStakeHolderUser().getId());
+        }
+
+        sendNotifyToallStaff(invitation.getStakeholderCompanyId(), scriptKey);
+
+    }
+
+    private void sendNotifyToallStaff(Long companyId, String script) {
+
+        var players = notificationNQ.companyPlayerId(companyId, "admin");
+        LinkedHashSet<InviteNotifyRS> storeNotify = new LinkedHashSet<>();
+
+        players.forEach(data -> {
+            InviteNotifyRS inviteNotifyRS = new InviteNotifyRS();
+            HashMap<String, Object> scriptData = new HashMap<>();
+            scriptData.put("playerId", data.getPlayerId());
+            scriptData.put("noInsert", "");
+            scriptData.put("scriptKey", script);
+            scriptData.put("companyId", companyId);
+            notification.sendMessageToUsers(scriptData);
+
+            ScriptingTO scriptingTO = notificationNQ.scripting( headerBean.getLocalizationId(), script );
+
+            inviteNotifyRS.setSkyuserId((long) data.getSkyuserId());
+            inviteNotifyRS.setScriptId(scriptingTO.getScriptId());
+            storeNotify.add(inviteNotifyRS);
+        });
+
+        storeNotify.forEach(data -> {
+            notification.addNotificationHisitory(null, data.getScriptId(), data.getSkyuserId(), companyId);
+        });
     }
 
 
@@ -536,8 +606,8 @@ public class UserIP implements UserSV {
 
         if (authorization != null && authorization.contains("Bearer")) {
 
-            var accessToken = authorization.substring("Bearer".length()+1);
-            var jti = jwtUtils.getClaim(accessToken,"jti", String.class);
+            var accessToken = authorization.substring("Bearer".length() + 1);
+            var jti = jwtUtils.getClaim(accessToken, "jti", String.class);
             var oauthUser = oauthUserRP.getFirst(jti, 1);
 
             if (oauthUser == null) {
@@ -551,6 +621,18 @@ public class UserIP implements UserSV {
         }
 
         return false;
+    }
+
+
+    @Override
+    public TokenRS refreshToken(HttpHeaders httpHeaders, LoginRefreshRQ loginRQ) {
+        String credential = userBean.oauth2Credential(httpHeaders);
+        var data = userBean.getRefreshToken(loginRQ.getRefreshToken(), credential);
+        UserEntity user = userRepository.findById(data.getUserId());
+
+        userBean.storeUserTokenLastLogin(data.getToken(), user);
+
+        return data;
     }
 
 

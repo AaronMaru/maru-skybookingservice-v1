@@ -8,7 +8,11 @@ SELECT
 	unh.booking_id AS bookingId,
 	IFNULL((SELECT b.trip_type FROM bookings b WHERE b.id = unh.booking_id), '' ) AS tripType,
 	UPPER(unh.type) AS notiType,
-	unh.created_at AS createdAt
+	unh.created_at AS createdAt,
+	unh.stakeholder_user_id AS skyuserId,
+    unh.stakeholder_company_id AS companyId,
+    unh.replace_one AS replaceOne,
+    unh.replace_two AS replaceTwo
 
 FROM user_notification_history unh
 
