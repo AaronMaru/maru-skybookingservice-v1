@@ -5,6 +5,7 @@ import com.netflix.zuul.context.RequestContext;
 import com.netflix.zuul.exception.ZuulException;
 import com.skybooking.skygatewayservice.constant.AuthConstant;
 import com.skybooking.skygatewayservice.service.AuthService;
+import com.skybooking.skygatewayservice.utils.JwtUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,9 @@ public class PreFilter extends ZuulFilter {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private JwtUtils jwtUtils;
 
     private static Logger log = LoggerFactory.getLogger(PreFilter.class);
 
@@ -45,11 +49,16 @@ public class PreFilter extends ZuulFilter {
 
         var authorization = request.getHeader("Authorization");
 
+        if (isShoppingOriginal(request)) {
+
+            this.setFailedRequest(HttpStatus.NOT_FOUND, "{\"status\": 404,\"message\": \"Not found\",\"error\": null}");
+
+        }
 
         /**
          * Check each of endpoint that they need user access token
          */
-        if (authorization != null && authorization.contains("Bearer")) {
+        if (authorization != null && authorization.contains("Bearer") && !isNotRequiredAuthorization(request)) {
 
             var auth = authService.checkToken(authorization);
 
@@ -60,7 +69,7 @@ public class PreFilter extends ZuulFilter {
             if (auth == AuthConstant.PERMISSION_CHANGED) { // user permission have changed by someone
                 this.setFailedRequest(HttpStatus.FORBIDDEN, "{\"status\": 403,\"message\": \"Forbidden\",\"error\": null}");
             }
-
+            this.checkRoleUser(request);
             this.validationCompanyId(request, authorization);
 
         }
@@ -113,6 +122,107 @@ public class PreFilter extends ZuulFilter {
             }
         }
 
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * check if shopping original endpoint
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param request
+     * @return
+     */
+    private boolean isShoppingOriginal(HttpServletRequest request) {
+
+        var url = new String(request.getRequestURL());
+
+        if (url.matches("http://apiv2.skybooking.net/flight/v1.0.0/shopping/search(.*)") && request.getMethod().equals("GET")) {
+
+            return true;
+
+        }
+
+        return false;
+
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * check each endpoints not required user authentication
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param request
+     * @return
+     */
+    private boolean isNotRequiredAuthorization(HttpServletRequest request) {
+
+        var uri = new String(request.getRequestURI());
+
+        if (uri.matches("/stakeholder/(.*)v1.0.0/auth(.*)")
+                || uri.matches("/stakeholder/(.*)v1.0.0/utils(.*)")
+                || uri.matches("/staff/(.*)v1.0.0/auth(.*)")
+                || uri.matches("/staff/(.*)v1.0.0/utils(.*)")
+                || uri.matches("/flight/v1.0.0/shopping/flight/test-revalidate(.*)")
+                || uri.matches("/flight/v1.0.0/shopping/flight/detail(.*)")
+                || uri.matches("/flight/v1.0.0/shopping/search(.*)")
+                || uri.matches("/flight/v1.0.0/sb(.*)")
+                || uri.matches("/flight/v1.0.0/payment(.*)")
+                || uri.matches("/flight/v1.0.0/ticketing(.*)")
+                || uri.matches("/payment/ipay88/response(.*)")
+                || uri.matches("/payment/pipay/success(.*)")
+                || uri.matches("/payment/pipay/fail(.*)")
+                || uri.matches("/payment/pipay/form(.*)")
+                || uri.matches("/payment/ipay88/form(.*)")
+                || uri.matches("/skyhistory/wv1.0.0/payment-success/no-auth(.*)")
+                || uri.matches("/skyhistory/wv1.0.0/receipt-itinerary(.*)")) {
+
+            return true;
+
+        }
+
+        return false;
+    }
+
+    public void checkRoleUser(HttpServletRequest request) {
+        if (staffAuthorizationRoute(request)) {
+            String userType = jwtUtils.getClaim("userType", String.class);
+            String userRole = jwtUtils.getClaim("userRole", String.class);
+            if (userType.equals("skyuser")) {
+                this.setFailedRequest(HttpStatus.UNAUTHORIZED, "{\"status\": 401,\"message\": \"Unauthorized\",\"error\": null}");
+            }
+            if (userType.equals("skystaff") && !userRole.equals("admin")) {
+                this.setFailedRequest(HttpStatus.UNAUTHORIZED, "{\"status\": 401,\"message\": \"Unauthorized\",\"error\": null}");
+            }
+        }
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * check each endpoints not required user authentication
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param request
+     * @return
+     */
+    private boolean staffAuthorizationRoute(HttpServletRequest request) {
+
+        var uri = new String(request.getRequestURI());
+
+        if (uri.matches("/staff/(.*)v1.0.0/find-skyuser")
+            || uri.matches("/staff/(.*)v1.0.0/invite-skyuser")
+            || uri.matches("/staff/(.*)v1.0.0/invite-skyuser-no-acc")
+            || uri.matches("/staff/(.*)v1.0.0/list-pending-email")
+            || uri.matches("/staff/(.*)v1.0.0/list-pending-email(.*)")
+            || uri.matches("/staff/(.*)v1.0.0/list-pending-email/resend")) {
+
+            return true;
+
+        }
+
+        return false;
     }
 
 }

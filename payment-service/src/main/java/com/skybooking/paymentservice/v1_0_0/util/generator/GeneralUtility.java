@@ -1,11 +1,15 @@
 package com.skybooking.paymentservice.v1_0_0.util.generator;
 
 import com.skybooking.paymentservice.config.AppConfig;
+import com.skybooking.paymentservice.constant.HotelBookingStatusConstant;
+import com.skybooking.paymentservice.v1_0_0.io.enitity.booking.HotelBookingEntity;
+import com.skybooking.paymentservice.v1_0_0.io.repository.booking.HotelBookingRP;
+import com.skybooking.paymentservice.v1_0_0.ui.model.request.PaymentHotelRQ;
+import com.skybooking.paymentservice.v1_0_0.ui.model.request.PaymentPointRQ;
 import com.skybooking.paymentservice.v1_0_0.ui.model.request.PaymentRQ;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.security.MessageDigest;
@@ -18,6 +22,9 @@ public class GeneralUtility {
 
     @Autowired
     private AppConfig appConfig;
+
+    @Autowired
+    private HotelBookingRP hotelBookingRP;
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -110,6 +117,49 @@ public class GeneralUtility {
 
     public static BigDecimal trimAmount(BigDecimal amount) {
         return amount.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Encode for booking code
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param paymentRQ
+     * @return
+     */
+    public String paymentEncodePoint(PaymentPointRQ paymentRQ) {
+        return paymentRQ.getBookingCode() + "_@8#-" + UUID.randomUUID();
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Encode for booking code
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param paymentRQ
+     * @return
+     */
+    public String paymentEncodeHotel(PaymentHotelRQ paymentRQ) {
+        return paymentRQ.getBookingCode() + "_@8#-" + UUID.randomUUID();
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Update booking payment process status
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param booking
+     * @Param status
+     * @Return HotelBookingEntity
+     */
+    public HotelBookingEntity updatePaymentBookingStatus(String bookingCode, String status) {
+
+        HotelBookingEntity booking = hotelBookingRP.getBooking(bookingCode);
+
+        booking.setStatus(status);
+        var hotelBooking = hotelBookingRP.save(booking);
+
+        return hotelBooking;
     }
 
 }

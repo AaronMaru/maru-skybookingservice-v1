@@ -5,6 +5,8 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.github.jhonnymertz.wkhtmltopdf.wrapper.Pdf;
+import com.github.jhonnymertz.wkhtmltopdf.wrapper.params.Param;
+import com.skybooking.skyhistoryservice.config.TwilioConfig;
 import com.skybooking.skyhistoryservice.v1_0_0.io.enitity.booking.BookingEntity;
 import com.skybooking.skyhistoryservice.v1_0_0.io.enitity.locale.LocaleEntity;
 import com.skybooking.skyhistoryservice.v1_0_0.io.enitity.locale.TranslationEntity;
@@ -16,6 +18,9 @@ import com.skybooking.skyhistoryservice.v1_0_0.io.repository.locale.LocaleRP;
 import com.skybooking.skyhistoryservice.v1_0_0.io.repository.locale.TranslationRP;
 import com.skybooking.skyhistoryservice.v1_0_0.util.general.ApiBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.header.HeaderBean;
+import com.twilio.Twilio;
+import com.twilio.rest.api.v2010.account.Message;
+import com.twilio.type.PhoneNumber;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -24,16 +29,10 @@ import org.apache.commons.validator.routines.EmailValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 
+import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -77,6 +76,14 @@ public class EmailBean {
     @Autowired
     private BookingRP bookingRP;
 
+    @Autowired
+    private TwilioConfig twilioConfig;
+
+    @PostConstruct
+    public void init() {
+        Twilio.init(twilioConfig.getAccountSID(), twilioConfig.getAuthToken());
+    }
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Send email and sms
@@ -98,7 +105,9 @@ public class EmailBean {
             jmsTemplate.convertAndSend(SKY_HISTORY_EMAIL, mailTemplateData);
             return true;
         }
+
         return false;
+
     }
 
     /**
@@ -114,7 +123,7 @@ public class EmailBean {
         Map<String, Object> pdfData = (Map<String, Object>) mailTemplateData.get("pdfData");
 
         Map<String, String> mailProperty = new HashMap<>();
-        
+
         mailProperty.put("SMTP_SERVER_HOST", environment.getProperty("spring.email.host"));
         mailProperty.put("SMTP_SERVER_PORT", environment.getProperty("spring.email.port"));
         mailProperty.put("SUBJECT", "Skybooking");
@@ -129,6 +138,7 @@ public class EmailBean {
 
         if (pdfData != null) {
             pdfData.put("mailUrl", environment.getProperty("spring.awsImageUrl.mailTemplate"));
+            pdfData.put("pdfLang", mailTemplateData.get("pdfLang"));
         }
 
         List<String> sendData = null;
@@ -186,23 +196,13 @@ public class EmailBean {
      */
     public void sms(Map<String, Object> data) {
 
-        RestTemplate restAPi = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        PhoneNumber receiver = new PhoneNumber("+" + data.get("receiver").toString());
 
-        MultiValueMap<String, String> map = new LinkedMultiValueMap<String, String>();
-        map.add("username", environment.getProperty("spring.sms.username"));
-        map.add("pass", environment.getProperty("spring.sms.pass"));
-        map.add("sender", environment.getProperty("spring.sms.sender"));
-        map.add("cd", environment.getProperty("spring.sms.cd"));
-        map.add("smstext", data.get("message").toString());
-        map.add("isflash", environment.getProperty("spring.sms.isflash"));
-        map.add("gsm", data.get("receiver").toString());
-        map.add("int", environment.getProperty("spring.sms.int"));
+        PhoneNumber sender = new PhoneNumber(twilioConfig.getPhoneNumber());
 
-        HttpEntity<MultiValueMap<String, String>> requestSMS = new HttpEntity<>(map, headers);
-        restAPi.exchange(environment.getProperty("spring.sms.url"), HttpMethod.POST, requestSMS, String.class)
-                .getBody();
+        String body = data.get("message").toString();
+
+        Message message = Message.creator(receiver, sender, body).create();
 
     }
 
@@ -272,14 +272,16 @@ public class EmailBean {
     }
 
     public File pdfRender(Configuration configuration, Map<String, Object> pdfData, String keyword)
-            throws IOException, InterruptedException {
+        throws IOException, InterruptedException {
         Map<String, Object> receiptMap = (Map<String, Object>) pdfData.get("label_" + keyword);
         receiptMap.put("data", pdfData.get("data_" + keyword));
+        receiptMap.put("pdfLang", pdfData.get("pdfLang"));
 
         if (keyword.equals("itinerary")) {
             receiptMap.put("logoPdf", pdfData.get("logoPdf"));
         }
         Pdf pdf = new Pdf();
+        pdf.addParam(new Param("--encoding", "UTF-8"));
 
         ClassPathResource resource = new ClassPathResource(receiptMap.get("templateName") + ".pdf");
         File file = new File(resource.getPath());
@@ -307,15 +309,15 @@ public class EmailBean {
      */
     private Map<String, String> uploadFileTos3bucket(File file, String item) {
         LocalDateTime now = LocalDateTime.now();
-        String yearMonth = "/" + now.getYear() + "/" + now.getMonthValue();
-        String path = item + yearMonth;
+        String yearMonth = now.getYear() + "/" + now.getMonthValue();
+        String path = item + "/" + yearMonth;
 
         String generateFileName = apiBean.generateFileName(null) + ".pdf";
         Map<String, String> uploaded = new HashMap<>();
         try {
             s3client.putObject(new PutObjectRequest(environment.getProperty("spring.awsImage.bucket")
-                    + environment.getProperty("spring.awsImage.pdfUrl") + path, generateFileName, file)
-                    .withCannedAcl(CannedAccessControlList.PublicRead));
+                + environment.getProperty("spring.awsImage.pdfUrl") + path, generateFileName, file)
+                .withCannedAcl(CannedAccessControlList.PublicRead));
         } catch (AmazonServiceException e) {
             uploaded.put("error", "uploadFileTos3bucket().Uploading failed :" + e.getMessage());
             return uploaded;

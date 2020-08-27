@@ -12,8 +12,13 @@ public class ResourceServiceConfig extends ResourceServerConfigurerAdapter {
     @Override
     public void configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeRequests()
-                .antMatchers("/**v1.0.0/auth/**", "/**v1.0.0/utils/**", "/oauth/check_token").permitAll()
-                .antMatchers("/**").authenticated();
+            .antMatchers("/**v1.0.0/auth/**",
+                "/**v1.0.0/utils/**",
+                "/oauth/check_token",
+                "/oauth/token/**",
+                "/v1.0.0/back-office/oauth/token/**")
+            .permitAll()
+            .antMatchers("/**").authenticated();
     }
 
 }

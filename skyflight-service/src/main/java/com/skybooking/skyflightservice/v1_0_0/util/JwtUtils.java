@@ -3,7 +3,6 @@ package com.skybooking.skyflightservice.v1_0_0.util;
 
 import com.skybooking.skyflightservice.v1_0_0.util.auth.UserToken;
 import org.apache.commons.beanutils.ConvertUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.json.JsonParser;
 import org.springframework.boot.json.JsonParserFactory;
 import org.springframework.security.jwt.JwtHelper;
@@ -15,8 +14,11 @@ import java.util.Map;
 @Component
 public class JwtUtils {
 
-    @Autowired
-    HttpServletRequest request;
+    private final HttpServletRequest request;
+
+    public JwtUtils(HttpServletRequest request) {
+        this.request = request;
+    }
 
     /**
      * -----------------------------------------------------------------------------------------------------------------

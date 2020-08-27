@@ -28,7 +28,6 @@ public class BookingControllerM {
     private LocalizationBean localization;
 
 
-
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Get bookings company

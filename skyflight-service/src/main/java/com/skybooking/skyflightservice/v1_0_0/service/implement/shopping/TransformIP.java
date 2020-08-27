@@ -23,6 +23,7 @@ import com.skybooking.skyflightservice.v1_0_0.ui.model.request.shopping.FlightSh
 import com.skybooking.skyflightservice.v1_0_0.util.calculator.CalculatorUtils;
 import com.skybooking.skyflightservice.v1_0_0.util.calculator.NumberFormatter;
 import com.skybooking.skyflightservice.v1_0_0.util.shopping.ShoppingUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -39,45 +40,24 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class TransformIP implements TransformSV {
 
     public static final String TRANSFORM_CACHED_NAME = "shopping-transform";
     public static final String CLASS_OF_SERVICE_CACHED_NAME = "class-of-service";
     public static final String FARE_BASIS_CACHED_NAME = "fare-basis";
 
-    @Autowired
-    private HazelcastInstance instance;
-
-    @Autowired
-    private FlightLocationNQ flightLocationNQ;
-
-    @Autowired
-    private AirlineNQ airlineNQ;
-
-    @Autowired
-    private AircraftNQ aircraftNQ;
-
-    @Autowired
-    private AppConfig appConfig;
-
-    @Autowired
-    private BookmarkSV bookmarkSV;
-
-    @Autowired
-    private CurrencySV currencySV;
-
-    @Autowired
-    private CabinRP cabinRP;
-
-    @Autowired
-    private MealRP mealRP;
-
-    @Autowired
-    private ShoppingUtils shoppingUtils;
-
-    @Autowired
-    private MarkupNQ markupNQ;
-
+    private final HazelcastInstance instance;
+    private final FlightLocationNQ flightLocationNQ;
+    private final AirlineNQ airlineNQ;
+    private final AircraftNQ aircraftNQ;
+    private final AppConfig appConfig;
+    private final BookmarkSV bookmarkSV;
+    private final CurrencySV currencySV;
+    private final CabinRP cabinRP;
+    private final MealRP mealRP;
+    private final ShoppingUtils shoppingUtils;
+    private final MarkupNQ markupNQ;
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -224,7 +204,7 @@ public class TransformIP implements TransformSV {
 
         for (Aircraft aircraft : aircrafts) {
 
-            var aircraftTO = aircraftNQ.getAircraftInformation(aircraft.getCode(), locale);
+            var aircraftTO = aircraftNQ.getAircraftInformation(aircraft.getCode(), 1);
 
             if (aircraftTO != null) {
                 aircraft.setName(aircraftTO.getAircraft());

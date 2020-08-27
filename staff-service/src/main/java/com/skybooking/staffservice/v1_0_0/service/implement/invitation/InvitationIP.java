@@ -3,8 +3,8 @@ package com.skybooking.staffservice.v1_0_0.service.implement.invitation;
 import com.skybooking.staffservice.constant.NotificationConstant;
 import com.skybooking.staffservice.exception.httpstatus.BadRequestException;
 import com.skybooking.staffservice.exception.httpstatus.ConflictException;
-import com.skybooking.staffservice.exception.httpstatus.UnauthorizedException;
 import com.skybooking.staffservice.v1_0_0.io.enitity.user.StakeholderUserInvitationEntity;
+import com.skybooking.staffservice.v1_0_0.io.enitity.user.UserEntity;
 import com.skybooking.staffservice.v1_0_0.io.nativeQuery.notification.CompanyPlayerTO;
 import com.skybooking.staffservice.v1_0_0.io.nativeQuery.notification.NotificationNQ;
 import com.skybooking.staffservice.v1_0_0.io.nativeQuery.notification.ScriptingTO;
@@ -15,6 +15,7 @@ import com.skybooking.staffservice.v1_0_0.io.nativeQuery.staff.StaffNQ;
 import com.skybooking.staffservice.v1_0_0.io.repository.company.CompanyHasUserRP;
 import com.skybooking.staffservice.v1_0_0.io.repository.users.StakeHolderUserRP;
 import com.skybooking.staffservice.v1_0_0.io.repository.users.StakeholderUserInvitationRP;
+import com.skybooking.staffservice.v1_0_0.io.repository.users.UserRepository;
 import com.skybooking.staffservice.v1_0_0.service.interfaces.invitation.InvitationSV;
 import com.skybooking.staffservice.v1_0_0.ui.model.request.FilterRQ;
 import com.skybooking.staffservice.v1_0_0.ui.model.request.invitation.InvitationExpireRQ;
@@ -47,7 +48,6 @@ import java.util.*;
 
 import static com.skybooking.staffservice.constant.MailStatusConstant.ADD_SKYUSER_TO_STAFF;
 import static com.skybooking.staffservice.constant.MailStatusConstant.INVITATION_IS_WAITING_FOR_YOUR_CONFIRMATION;
-
 
 @Service
 public class InvitationIP implements InvitationSV {
@@ -97,6 +97,9 @@ public class InvitationIP implements InvitationSV {
     @Autowired
     private HeaderBean headerBean;
 
+    @Autowired
+    private UserRepository userRP;
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -106,12 +109,6 @@ public class InvitationIP implements InvitationSV {
      * @Return List
      */
     public List<SkyuserDetailsRS> findSkyUsers() {
-
-        String userType = jwtUtils.getClaim("userType", String.class);
-        if (userType.equals("skyuser")) {
-            throw new UnauthorizedException("sth_w_w", null);
-        }
-
         List<SkyuserSearchTO> skyUsers = invitationNQ.listSkyuserByEmailOrPhone(request.getParameter("keyword") != null && !request.getParameter("keyword").equals("") ? request.getParameter("keyword") : "all");
         List<SkyuserDetailsRS> skyUsersRS = new ArrayList<>();
 
@@ -136,14 +133,8 @@ public class InvitationIP implements InvitationSV {
      * @Return
      */
     public void inviteSkyUser(SkyuserIdStaffRQ inviteStaff) {
-
         FilterRQ filterRQ = new FilterRQ(request, jwtUtils.getUserToken());
         ValidationCompanyId(filterRQ.getCompanyId());
-
-        String userType = jwtUtils.getClaim("userType", String.class);
-        if (userType.equals("skyuser")) {
-            throw new UnauthorizedException("sth_w_w", null);
-        }
 
         var skyuser = stakeHolderUserRP.findById(inviteStaff.getUserId());
 
@@ -177,14 +168,8 @@ public class InvitationIP implements InvitationSV {
      * @Param inviteStaffNoAccRQ
      */
     public void inviteSkyUserNotExistsAcc(InviteStaffNoAccRQ inviteStaffNoAccRQ) throws UnsupportedEncodingException {
-
         FilterRQ filterRQ = new FilterRQ(request, jwtUtils.getUserToken());
         ValidationCompanyId(filterRQ.getCompanyId());
-
-        String userType = jwtUtils.getClaim("userType", String.class);
-        if (userType.equals("skyuser")) {
-            throw new UnauthorizedException("sth_w_w", null);
-        }
 
         List<RoleTO> roleTO = invitationNQ.listOrFindRole("byRole", inviteStaffNoAccRQ.getSkyuserRole());
         if (roleTO.size() == 0) {
@@ -213,6 +198,12 @@ public class InvitationIP implements InvitationSV {
      * @Param inviteStaffNoAccRQ
      */
     public void checkExistInv(InviteStaffNoAccRQ inviteStaffNoAccRQ) {
+
+        UserEntity user = userRP.findByEmail(inviteStaffNoAccRQ.getUsername());
+
+        if (user != null) {
+            throw new BadRequestException("fail_reg", null);
+        }
 
         StakeholderUserInvitationEntity userInv = userInvRP.findFirstByInviteTo(inviteStaffNoAccRQ.getUsername());
         if (userInv != null) {
@@ -253,20 +244,16 @@ public class InvitationIP implements InvitationSV {
         return emailsRS;
 
     }
-    private String checkSearchOrFilter() {
-
-        if (request.getParameter("startDate") != null || request.getParameter("endDate") != null
-        ) {
-
+    private String checkSearchOrFilter()
+    {
+        if (request.getParameter("startDate") != null || request.getParameter("endDate") != null )
+        {
             return "FILTER";
-
-        } else if(request.getParameter("keyword") != null && !request.getParameter("keyword").equals("")) {
-
+        } else if(request.getParameter("keyword") != null && !request.getParameter("keyword").equals(""))
+        {
             return "SEARCH";
-
         }
-
-        return "SEARCH";
+        return "ALL";
     }
 
 
@@ -438,8 +425,6 @@ public class InvitationIP implements InvitationSV {
         return inviterName;
     }
 
-    //This method just temporary
-    //Validation
     public String ValidationCompanyId(Long cId) {
 
         if ((request.getHeader("X-CompanyId") == null || request.getHeader("X-CompanyId").isEmpty())) {
@@ -506,6 +491,8 @@ public class InvitationIP implements InvitationSV {
         }
         return inviteNotifyRS;
     }
+
+
 
 
 }

@@ -55,6 +55,7 @@ public class PaymentIP implements PaymentSV {
                 PaymentConstant.PAYMENT_CREATED,
                 PaymentConstant.PAYMENT_PROCESSING
         );
+
         PriceInfo priceInfo = bookingUtility.getPriceInfo(booking, paymentMandatoryRQ);
 
         /**
@@ -112,6 +113,11 @@ public class PaymentIP implements PaymentSV {
         return paymentMandatoryRS;
     }
 
+    @Override
+    public PaymentMandatoryRS getPointMandatoryData(String bookingCode) {
+        return null;
+    }
+
 
     @Override
     @Transactional
@@ -165,7 +171,7 @@ public class PaymentIP implements PaymentSV {
             bookingPaymentTransactionEntity.setMethod(paymentSucceedRQ.getMethod());
             bookingPaymentTransactionEntity.setAmount(paymentSucceedRQ.getAmount());
             bookingPaymentTransactionEntity.setStatus(paymentSucceedRQ.getStatus());
-            bookingPaymentTransactionEntity.setPipayStatus(paymentSucceedRQ.getPipiyStatus());
+            bookingPaymentTransactionEntity.setPipayStatus(paymentSucceedRQ.getPipayStatus());
             bookingPaymentTransactionEntity.setTransId(paymentSucceedRQ.getTransId());
             bookingPaymentTransactionEntity.setOrderId(paymentSucceedRQ.getOrderId());
             bookingPaymentTransactionEntity.setProcessorId(paymentSucceedRQ.getProcessorId());

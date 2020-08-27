@@ -11,14 +11,25 @@ import com.skybooking.skyhistoryservice.v1_0_0.util.localization.LocalizationBea
 import com.skybooking.skyhistoryservice.v1_0_0.util.notification.NotificationBean;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.client.RestTemplate;
 
+import javax.annotation.PostConstruct;
+import java.util.TimeZone;
+
 @SpringBootApplication
+@EnableConfigurationProperties
 public class SkyhistoryServiceApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(SkyhistoryServiceApplication.class, args);
+    }
+
+    @PostConstruct
+    public void init()
+    {
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
     }
 
     @Bean

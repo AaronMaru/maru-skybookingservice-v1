@@ -15,7 +15,7 @@ public class ProductPaymentTransactionRQ {
     private String cardType;
     private String bankName;
     private String description;
-    private String pipiyStatus;
+    private String pipayStatus;
     private String transId;
     private String orderId;
     private String processorId;

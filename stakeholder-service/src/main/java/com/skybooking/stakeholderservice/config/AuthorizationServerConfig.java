@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -61,12 +62,26 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
         clients.inMemory()
-                .withClient(environment.getProperty("spring.oauth2.client-id")).secret(bCryptPasswordEncoder.encode(environment.getProperty("spring.oauth2.client-secret")))
-                .authorizedGrantTypes("password", "authorization_code", "refresh_token", "implicit")
-                .scopes("read", "write")
-                .resourceIds("oauth2-resource", "skybooking-resource")
-                .accessTokenValiditySeconds(60 * 60 * 24 * 7)
-                .refreshTokenValiditySeconds(60 * 60 * 48 * 7);
+            .withClient(environment.getProperty("spring.oauth2.client-id"))
+            .secret(bCryptPasswordEncoder.encode(environment.getProperty("spring.oauth2.client-secret")))
+            .authorizedGrantTypes("password", "refresh_token")
+            .scopes("read", "write")
+            .resourceIds("oauth2-resource", "skybooking-resource")
+            .accessTokenValiditySeconds(604800)         // 7 days
+            .refreshTokenValiditySeconds(604800 * 2)    // 14 days
+            .and()
+            .withClient(environment.getProperty("spring.back-office.client-id"))
+            .secret(bCryptPasswordEncoder.encode(environment.getProperty("spring.back-office.client-secret")))
+            .authorizedGrantTypes("client_credentials", "refresh_token")
+            .scopes("create-additional-service-skyflight",
+                "update-additional-service-skyflight",
+                "delete-additional-service-skyflight",
+                "list-additional-service-skyflight",
+                "check-offline-booking-skyflight",
+                "create-offline-booking-skyflight")
+            .resourceIds("oauth2-resource", "skybooking-resource")
+            .accessTokenValiditySeconds(604800)     // 7 days
+            .refreshTokenValiditySeconds(2592000);  // 30 days
     }
 
     @Override
@@ -75,7 +90,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
         enhancerChain.setTokenEnhancers(Arrays.asList(customJWTEnhancer, accessTokenConverter()));
         endpoints
                 .tokenStore(tokenStore())
-                .accessTokenConverter(accessTokenConverter())
+//                .accessTokenConverter(accessTokenConverter())
                 .tokenEnhancer(enhancerChain)
                 .authenticationManager(authenticationManager).userDetailsService(userDetailsIP);
     }

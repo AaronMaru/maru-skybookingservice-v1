@@ -6,7 +6,11 @@
     <h6 style="font-size:15px;font-weight: 500;margin:10px 0;">${itinerary??? then(itinerary, 'NO LABEL YET')}</h6>
     <div class="pull-right" style="float:right;font-size:13.5px;font-weight:500;color:#606060;">
         <span>${booking_on??? then(booking_on, 'NO LABEL YET')}:</span>
-        <b style="font-weight:500;">${data.bookingInfo.bookingDate?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["dd MMM YYYY"]}</b>
+        <#if pdfLang == "zh">
+            <b style="font-weight:500;" id="bookingOn">${data.bookingInfo.bookingDate?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["YYYY-MM-dd"]}</b>
+        <#else>
+            <b style="font-weight:500;" id="bookingOn">${data.bookingInfo.bookingDate?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["dd MMM YYYY"]}</b>
+        </#if>
     </div>
     <h4 style="font-size:13.5px;margin:10px 0;font-weight:500;color:#606060;">${booking_reference??? then(booking_reference, 'NO LABEL YET')}:
         <b style="font-weight:600;color:#222;">${data.bookingInfo.pnrCode}</b>
@@ -26,7 +30,11 @@
                 </li>
                 <li style="display:inline-block;text-align: center;">
                     <img style="width:91px;text-align:center;display:block;margin:0 15px 10px;" src="https://skybooking.s3.amazonaws.com/uploads/mail/images/flight_itenary.png"/>
-                    <small style="display:block; font-size: 12px;color: #606060;">${(itemItineraryInfo.stop != 0) ? then('${itemItineraryInfo.stop} Stop ${itemItineraryInfo.elapsedHourMinute}' , 'Non Stop')}</small>
+                    <#if itemItineraryInfo.stop != 0>
+                        <small style="display:block; font-size: 12px;color: #606060;">${itemItineraryInfo.stop} ${stop??? then(stop, 'NO LABEL YET')} ${itemItineraryInfo.elapsedHourMinute}</small>
+                    <#else>
+                        <small style="display:block; font-size: 12px;color: #606060;">${non_stop??? then(non_stop, 'NO LABEL YET')}</small>
+                    </#if>
                 </li>
                 <li style="width:25%;display:inline-block;text-align:center;color:#606060;">
                     <small>${itinerarySegmentLast.arrivalInfo.date?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["d MMM | HH:mm"]}</small>
@@ -63,12 +71,24 @@
                     <td style="padding: 7px 11px;border: 0px solid;font-weight: 500;color: #606060;font-size: 14px; text-transform:uppercase;">
                         ${item.lastName} / ${item.firstName}
                     </td>
-                    <td style=" padding: 7px 11px;border: 0px solid;font-weight: 500;color: #606060;font-size: 14px; text-transform:uppercase;">
-                        ${item.passType}
-                    </td>
-                    <td style=" padding: 7px 11px;border: 0px solid;font-weight: 500;color: #606060;font-size: 14px;">
-                        ${data.bookingInfo.cabinName}
-                    </td>
+                    <#if item.passType == "ADT">
+                         <td style=" padding: 7px 11px;border: 0px solid;font-weight: 500;color: #606060;font-size: 14px; text-transform:uppercase;">${adult??? then(adult, 'NO LABEL YET')}</td>
+                    <#elseif item.passType == "CNN">
+                         <td style=" padding: 7px 11px;border: 0px solid;font-weight: 500;color: #606060;font-size: 14px; text-transform:uppercase;">${child??? then(child, 'NO LABEL YET')}</td>
+                    <#elseif item.passType == "INF">
+                         <td style=" padding: 7px 11px;border: 0px solid;font-weight: 500;color: #606060;font-size: 14px; text-transform:uppercase;">${infant??? then(infant, 'NO LABEL YET')}</td>
+                    <#else>
+                        <td>NO LABEL YET</td>
+                    </#if>
+                    <#if data.bookingInfo.cabinName == "Economy">
+                        <td>${economy??? then(economy, 'NO LABEL YET')}</td>
+                    <#elseif data.bookingInfo.cabinName == "Business">
+                        <td>${business??? then(business, 'NO LABEL YET')}</td>
+                    <#elseif data.bookingInfo.cabinName == "First">
+                        <td>${first??? then(first, 'NO LABEL YET')}</td>
+                    <#else>
+                        <td>NO LABEL YET</td>
+                    </#if>
                 </tr>
             </#list>
         </tbody>

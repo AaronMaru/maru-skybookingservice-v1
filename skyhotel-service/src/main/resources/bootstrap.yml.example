@@ -1,0 +1,17 @@
+
+spring:
+    application:
+        name: skyhotel-service
+
+    cloud:
+        config:
+            uri: http://192.168.2.4:8888
+    service:
+        distributed:
+            url: http://192.168.2.4:8001
+            auth:
+                clientId: PaThFinDer01
+                clientSecret: admin12345
+
+native-query:
+    package-scan: com.skybooking.skyhotelservice

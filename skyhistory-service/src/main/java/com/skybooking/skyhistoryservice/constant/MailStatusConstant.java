@@ -11,5 +11,7 @@ public class MailStatusConstant {
     public static final String YOUR_FLIGHT_TICKET = "your_flight_ticket";
     public static final String FORWARD_FLIGHT_TICKET = "forward_flight_ticket";
     public static final String FORWARD_E_RECEIPT = "forward_e-receipt";
+    public static final String API_PAYMENT_SUCCESS = "api_payment_succ";
+    public static final String PAYMENT_SUCCESS = "payment-success";
 
 }

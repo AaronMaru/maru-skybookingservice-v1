@@ -1,6 +1,5 @@
 package com.skybooking.staffservice.v1_0_0.ui.model.request;
 
-import com.skybooking.core.validators.annotations.IsIn;
 import com.skybooking.staffservice.constant.StaffStatusConstant;
 import com.skybooking.staffservice.v1_0_0.util.auth.UserToken;
 import lombok.Data;

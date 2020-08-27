@@ -59,7 +59,7 @@ public interface FlightSaveRP extends JpaRepository<FlightSaveEntity, Long> {
      */
     FlightSaveEntity findFirstByIdAndUserId(long id, Integer userId);
     FlightSaveEntity findFirstByIdAndUserIdAndCompanyId(long id, Integer userId, Integer companyId);
-
+    FlightSaveEntity findFirstByIdAndCompanyId(long id, Integer companyId);
 
     /**
      * -----------------------------------------------------------------------------------------------------------------

@@ -1,0 +1,24 @@
+SELECT
+	CONCAT(su.first_name, " ", su.last_name ) AS fullName,
+	ce.email,
+	cp.phone
+FROM `stakeholder_users` su
+LEFT JOIN
+(
+	SELECT
+		ce.contactable_id,
+		ce.contactable_type,
+		ce.`value` AS email
+	FROM contacts ce
+	WHERE ce.`type` = 'e'
+) ce ON ce.contactable_id = su.id AND ce.contactable_type = "skyuser"
+LEFT JOIN
+(
+	SELECT
+		cp.contactable_id,
+		cp.contactable_type,
+		cp.`value` AS phone
+	FROM contacts cp
+	WHERE cp.`type` = 'p'
+) cp ON cp.contactable_id = su.id AND cp.contactable_type = "skyuser"
+WHERE su.id = :skyuserId

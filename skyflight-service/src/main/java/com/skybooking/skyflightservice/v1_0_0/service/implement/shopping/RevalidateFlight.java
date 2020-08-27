@@ -72,19 +72,32 @@ public class RevalidateFlight {
         var classOfServiceId = requestId;
         for (String leg : bookingRQ.getLegIds()) {
             classOfServiceId = classOfServiceId + leg;
+            cachedId = cachedId + leg;
         }
 
         List<String> classOfServices = transformSV.getNewClassOfService(classOfServiceId);
         var indexClassOfService = 0;
+        var segmentNumbers = 0;
+
+        for (String legId : bookingRQ.getLegIds()) {
+
+            Leg legDetail = detailSV.getLegDetail(requestId, legId);
+            for (var i = 0; i < legDetail.getSegments().size(); i++) {
+                segmentNumbers++;
+            }
+
+        }
+
+        var isClassOfService = classOfServices.size() == segmentNumbers;
+
         for (String leg : bookingRQ.getLegIds()) {
 
-            cachedId = cachedId + leg;
             List<BookingSegmentDRQ> segments = new ArrayList<>();
             Leg legDetail = detailSV.getLegDetail(requestId, leg);
             for (LegSegmentDetail legSegment : legDetail.getSegments()) {
 
                 var classOfService = legSegment.getBookingCode();
-                if (classOfServices.size() > 0) {
+                if (isClassOfService) {
                     classOfService = classOfServices.get(indexClassOfService);
                 }
                 segments.add(
@@ -128,9 +141,13 @@ public class RevalidateFlight {
 
             var passengerInfo = passengerList.stream().filter(psg -> psg.getPassengerInfo().getPassengerType().equals(passengerPrice.getType())).findFirst();
 
+            log.info("@@@@@@@@@@@@@ CACHED BASE FARE: {}", passengerPrice.getBaseCurrencyBaseFare());
+            log.info("@@@@@@@@@@@@@ REVALIDATE BASE FARE: {}", passengerInfo.get().getPassengerInfo().getPassengerTotalFare().getEquivalentAmount());
             if (!passengerPrice.getBaseCurrencyBaseFare().equals(passengerInfo.get().getPassengerInfo().getPassengerTotalFare().getEquivalentAmount())) {
                 return new RevalidateM(RevalidateConstant.PRICE_CHANGED, MessageConstant.PRICE_CHANGED);
             }
+            log.info("@@@@@@@@@@@@@ CACHED TOTAL TAXES: {}", passengerPrice.getBaseCurrencyTax());
+            log.info("@@@@@@@@@@@@@ REVALIDATE TOTAL TAXES: {}", passengerInfo.get().getPassengerInfo().getPassengerTotalFare().getTotalTaxAmount());
             if (!passengerPrice.getBaseCurrencyTax().equals(passengerInfo.get().getPassengerInfo().getPassengerTotalFare().getTotalTaxAmount())) {
                 return new RevalidateM(RevalidateConstant.PRICE_CHANGED, MessageConstant.PRICE_CHANGED);
             }

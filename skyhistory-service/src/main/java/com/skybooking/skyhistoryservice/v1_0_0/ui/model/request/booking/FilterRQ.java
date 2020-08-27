@@ -68,5 +68,29 @@ public class FilterRQ {
         this.skyuserId = userToken.getStakeholderId();
         this.companyId = userToken.getCompanyId();
 
+        this.className = this.getCabinName(this.className);
+
+    }
+
+
+    /**
+     * --------------------------------------------------------------------------------------- 
+     * convert cabin code to full name
+     * --------------------------------------------------------------------------------------- 
+     * @param cabin
+     * @return String
+     */
+    private String getCabinName(String cabin) {
+        
+        if (cabin.equalsIgnoreCase("Y"))
+            return "ECONOMY";
+        
+        if (cabin.equalsIgnoreCase("F"))
+            return "FIRST";
+        
+        if (cabin.equalsIgnoreCase("C"))
+            return "BUSINESS";
+
+        return cabin;
     }
 }

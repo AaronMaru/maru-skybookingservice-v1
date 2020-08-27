@@ -1,0 +1,6 @@
+SELECT
+	su.id AS stakeholderUserId,
+	su.user_code AS referenceCode,
+	CONCAT("skyuser") AS type
+FROM `stakeholder_users` su
+WHERE su.id = :skyuserId

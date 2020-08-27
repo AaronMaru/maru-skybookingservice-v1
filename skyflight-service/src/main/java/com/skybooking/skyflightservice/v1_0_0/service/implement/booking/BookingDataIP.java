@@ -4,9 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.skybooking.skyflightservice.constant.BookingConstant;
 import com.skybooking.skyflightservice.constant.CompanyConstant;
 import com.skybooking.skyflightservice.constant.TicketConstant;
-import com.skybooking.skyflightservice.constant.passenger.PassengerCode;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.booking.*;
-import com.skybooking.skyflightservice.v1_0_0.io.entity.shopping.Baggage;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.shopping.HiddenStop;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.shopping.LegSegmentDetail;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.FlightLocationNQ;
@@ -108,18 +106,18 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
         var generalMarkupPayment = markupNQ.getGeneralMarkupPayment();
 
         var locationCode = pnrRS.get("CreatePassengerNameRecordRS")
-            .get("TravelItineraryRead")
-            .get("TravelItinerary")
-            .get("CustomerInfo")
-            .get("ContactNumbers")
-            .get("ContactNumber")
-            .get(0).get("LocationCode").textValue();
+                .get("TravelItineraryRead")
+                .get("TravelItinerary")
+                .get("CustomerInfo")
+                .get("ContactNumbers")
+                .get("ContactNumber")
+                .get(0).get("LocationCode").textValue();
         var travelItineraries = pnrRS.get("CreatePassengerNameRecordRS")
-            .get("AirPrice")
-            .get(0)
-            .get("PriceQuote")
-            .get("PricedItinerary")
-            .get("AirItineraryPricingInfo");
+                .get("AirPrice")
+                .get(0)
+                .get("PriceQuote")
+                .get("PricedItinerary")
+                .get("AirItineraryPricingInfo");
 
         var itemMarkup = CalculatorUtils.getBookingMarkup(travelItineraries, new BigDecimal(metadataTA.getMarkupPercentage()), generalMarkupPayment.getMarkup());
 
@@ -159,16 +157,19 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
         booking.setCommissionAmount(metadataTA.getTotalCommissionAmount());
 
         booking.setVatPercentage(frontendConfigRP.getVatPercentage().doubleValue());
-        booking.setIsCheck(0);
         booking.setStatus(BookingConstant.PNR_CREATED);
         booking.setCreatedBy(metadataTA.getUser().getUserId().toString()); // user's logged in id
 
         var commissionTotalAmount = booking.getTotalAmount()
-            .add(booking.getMarkupAmount())
-            .add(booking.getMarkupPayAmount())
-            .subtract(booking.getCommissionAmount());
+                .add(booking.getMarkupAmount())
+                .add(booking.getMarkupPayAmount())
+                .subtract(booking.getCommissionAmount());
 
         booking.setCommissionTotalAmount(commissionTotalAmount);
+
+        booking.setIsCheck(0);
+        booking.setIsOfflineBooking(0);
+        booking.setIsAdditional(0);
 
         return bookingRP.save(booking);
 
@@ -290,24 +291,35 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
     @Override
     public void insertBookingSpecialService(Integer bookingId, JsonNode pnrRS) {
 
-        for (JsonNode specialService : pnrRS.get("CreatePassengerNameRecordRS").get("TravelItineraryRead").get("TravelItinerary").get("SpecialServiceInfo")) {
+        JsonNode specialServices = pnrRS
+                .path("CreatePassengerNameRecordRS")
+                .path("TravelItineraryRead")
+                .path("TravelItinerary")
+                .path("SpecialServiceInfoItemTA");
 
-            BookingSpecialServiceEntity bookingSSR = new BookingSpecialServiceEntity();
-            var remark = "";
+        if (!specialServices.isMissingNode()) {
 
-            bookingSSR.setBookingId(bookingId);
-            bookingSSR.setRph(Integer.parseInt(specialService.get("RPH").textValue()));
-            bookingSSR.setType(specialService.get("Type").textValue());
-            bookingSSR.setSsrCode(specialService.get("Service").get("SSR_Code").textValue());
-            bookingSSR.setAirlineCode(specialService.get("Service").get("Airline").get("Code").textValue());
+            for (JsonNode specialService : specialServices) {
 
-            for (JsonNode text : specialService.get("Service").get("Text")) {
-                remark += text.textValue();
+                BookingSpecialServiceEntity bookingSSR = new BookingSpecialServiceEntity();
+
+                StringBuilder remark = new StringBuilder();
+
+                bookingSSR.setBookingId(bookingId);
+                bookingSSR.setRph(Integer.parseInt(specialService.get("RPH").textValue()));
+                bookingSSR.setType(specialService.get("Type").textValue());
+                bookingSSR.setSsrCode(specialService.get("Service").get("SSR_Code").textValue());
+                bookingSSR.setAirlineCode(specialService.get("Service").get("Airline").get("Code").textValue());
+
+                for (JsonNode text : specialService.get("Service").get("Text")) {
+                    remark.append(text.textValue());
+                }
+
+                bookingSSR.setRemark(remark.toString());
+
+                bookingSpecialServiceRP.save(bookingSSR);
+
             }
-
-            bookingSSR.setRemark(remark);
-
-            bookingSpecialServiceRP.save(bookingSSR);
 
         }
 
@@ -317,71 +329,81 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
     @Override
     public List<TravelItineraryTA> insertBookingTravelItinerary(Integer bookingId, JsonNode pnrRS, BookingCreateRQ request) {
 
-        var travelItineraries = pnrRS.get("CreatePassengerNameRecordRS").get("AirPrice").get(0).get("PriceQuote").get("PricedItinerary").get("AirItineraryPricingInfo");
         List<TravelItineraryTA> travelItineraryTAS = new ArrayList<>();
 
-        for (JsonNode travelItin : travelItineraries) {
+        var travelItineraries = pnrRS
+                .path("CreatePassengerNameRecordRS")
+                .path("AirPrice")
+                .path(0)
+                .path("PriceQuote")
+                .path("PricedItinerary")
+                .path("AirItineraryPricingInfo");
 
-            var bookingTI = new BookingTravelItineraryEntity();
-            var travelItineraryTA = new TravelItineraryTA();
+        if (!travelItineraries.isMissingNode()) {
 
-            bookingTI.setBookingId(bookingId);
-            bookingTI.setPassType(travelItin.get("PassengerTypeQuantity").get("Code").textValue());
-            bookingTI.setPassQty(Integer.valueOf(travelItin.get("PassengerTypeQuantity").get("Quantity").textValue()));
+            for (JsonNode travelItin : travelItineraries) {
 
-            if (travelItin.get("ItinTotalFare").has("PrivateFare")) {
-                bookingTI.setPrivateFare(travelItin.get("ItinTotalFare").get("PrivateFare").get("Ind").textValue());
-            }
+                var bookingTI = new BookingTravelItineraryEntity();
+                var travelItineraryTA = new TravelItineraryTA();
 
-            bookingTI.setBaseFare(new BigDecimal(travelItin.get("ItinTotalFare").get("BaseFare").get("Amount").textValue()));
-            bookingTI.setCurrencyCode(travelItin.get("ItinTotalFare").get("BaseFare").get("CurrencyCode").textValue());
+                bookingTI.setBookingId(bookingId);
+                bookingTI.setPassType(travelItin.get("PassengerTypeQuantity").get("Code").textValue());
+                bookingTI.setPassQty(Integer.valueOf(travelItin.get("PassengerTypeQuantity").get("Quantity").textValue()));
 
-            if (travelItin.get("ItinTotalFare").hasNonNull("EquivFare")) {
-                bookingTI.setBaseFare(new BigDecimal(travelItin.get("ItinTotalFare").get("EquivFare").get("Amount").textValue()));
-                bookingTI.setCurrencyCode(travelItin.get("ItinTotalFare").get("EquivFare").get("CurrencyCode").textValue());
-            }
-
-            bookingTI.setTotalAmount(new BigDecimal(travelItin.get("ItinTotalFare").get("TotalFare").get("Amount").textValue()));
-            bookingTI.setTotalTax(new BigDecimal(travelItin.get("ItinTotalFare").get("Taxes").get("TotalAmount").textValue()));
-
-            if (travelItin.get("ItinTotalFare").has("NonRefundableInd")) {
-                bookingTI.setNonRefundableInd(travelItin.get("ItinTotalFare").get("NonRefundableInd").textValue().equals("N"));
-            }
-
-            if (travelItin.get("ItinTotalFare").has("BaggageInfo")) {
-                if (travelItin.get("ItinTotalFare").get("BaggageInfo").has("NonUS_DOT_Disclosure")) {
-                    bookingTI.setBaggageInfo(travelItin.get("ItinTotalFare").get("BaggageInfo").get("NonUS_DOT_Disclosure").withArray("Text").textValue());
+                if (travelItin.get("ItinTotalFare").has("PrivateFare")) {
+                    bookingTI.setPrivateFare(travelItin.get("ItinTotalFare").get("PrivateFare").get("Ind").textValue());
                 }
+
+                bookingTI.setBaseFare(new BigDecimal(travelItin.get("ItinTotalFare").get("BaseFare").get("Amount").textValue()));
+                bookingTI.setCurrencyCode(travelItin.get("ItinTotalFare").get("BaseFare").get("CurrencyCode").textValue());
+
+                if (travelItin.get("ItinTotalFare").hasNonNull("EquivFare")) {
+                    bookingTI.setBaseFare(new BigDecimal(travelItin.get("ItinTotalFare").get("EquivFare").get("Amount").textValue()));
+                    bookingTI.setCurrencyCode(travelItin.get("ItinTotalFare").get("EquivFare").get("CurrencyCode").textValue());
+                }
+
+                bookingTI.setTotalAmount(new BigDecimal(travelItin.get("ItinTotalFare").get("TotalFare").get("Amount").textValue()));
+                bookingTI.setTotalTax(new BigDecimal(travelItin.get("ItinTotalFare").get("Taxes").get("TotalAmount").textValue()));
+
+                if (travelItin.get("ItinTotalFare").has("NonRefundableInd")) {
+                    bookingTI.setNonRefundableInd(travelItin.get("ItinTotalFare").get("NonRefundableInd").textValue().equals("N"));
+                }
+
+                if (travelItin.get("ItinTotalFare").has("BaggageInfo")) {
+                    if (travelItin.get("ItinTotalFare").get("BaggageInfo").has("NonUS_DOT_Disclosure")) {
+                        bookingTI.setBaggageInfo(travelItin.get("ItinTotalFare").get("BaggageInfo").get("NonUS_DOT_Disclosure").withArray("Text").textValue());
+                    }
+                }
+
+                bookingTI.setFareCalculation(travelItin.get("FareCalculation").get("Text").textValue());
+
+                if (travelItin.get("ItinTotalFare").has("Endorsements")) {
+                    bookingTI.setEndorsements(travelItin.get("ItinTotalFare").get("Endorsements").get("Text").textValue());
+                }
+
+                if (travelItin.get("ItinTotalFare").has("Warnings")) {
+                    bookingTI.setNoted(travelItin.get("ItinTotalFare").get("Warnings").get("Warning").textValue());
+                }
+
+                bookingTI.setPieceStatus(1);
+                bookingTI.setBagAirline("");
+                bookingTI.setBagPiece(1);
+                bookingTI.setBagWeight(20);
+                bookingTI.setBagUnit("");
+                bookingTI.setComPercentage(BigDecimal.ZERO);
+                bookingTI.setComAmount(BigDecimal.ZERO);
+                bookingTI.setComMkamount(BigDecimal.ZERO);
+
+                travelItineraryTA.setAmount(bookingTI.getTotalAmount());
+                travelItineraryTA.setCurrencyCode(bookingTI.getCurrencyCode());
+                travelItineraryTA.setPassengerType(bookingTI.getPassType());
+
+                travelItineraryTAS.add(travelItineraryTA);
+
+                BookingTravelItineraryEntity bookingTravelItineraryEntity = bookingTravelItineraryRP.save(bookingTI);
+                this.insertFareBreakdown(bookingTravelItineraryEntity, travelItin.get("PTC_FareBreakdown"));
+
             }
-
-            bookingTI.setFareCalculation(travelItin.get("FareCalculation").get("Text").textValue());
-
-            if (travelItin.get("ItinTotalFare").has("Endorsements")){
-                bookingTI.setEndorsements(travelItin.get("ItinTotalFare").get("Endorsements").get("Text").textValue());
-            }
-
-            if (travelItin.get("ItinTotalFare").has("Warnings")) {
-                bookingTI.setNoted(travelItin.get("ItinTotalFare").get("Warnings").get("Warning").textValue());
-            }
-
-            bookingTI.setPieceStatus(1);
-            bookingTI.setBagAirline("");
-            bookingTI.setBagPiece(1);
-            bookingTI.setBagWeight(20);
-            bookingTI.setBagUnit("");
-            bookingTI.setComPercentage(BigDecimal.ZERO);
-            bookingTI.setComAmount(BigDecimal.ZERO);
-            bookingTI.setComMkamount(BigDecimal.ZERO);
-
-            travelItineraryTA.setAmount(bookingTI.getTotalAmount());
-            travelItineraryTA.setCurrencyCode(bookingTI.getCurrencyCode());
-            travelItineraryTA.setPassengerType(bookingTI.getPassType());
-
-            travelItineraryTAS.add(travelItineraryTA);
-
-            BookingTravelItineraryEntity bookingTravelItineraryEntity = bookingTravelItineraryRP.save(bookingTI);
-            this.insertFareBreakdown(bookingTravelItineraryEntity, travelItin.get("PTC_FareBreakdown"));
-
         }
 
         return travelItineraryTAS;
@@ -427,8 +449,8 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
             var travel = travelItineraryTAS.stream().filter(e -> e.getPassengerType().equals(passengerType)).findFirst().get();
 
             bookingAirTicketEntity.setBookingId(bookingId);
-            bookingAirTicketEntity.setFirstName(bookingPassengerRQ.getFirstName());
-            bookingAirTicketEntity.setLastName(bookingPassengerRQ.getLastName());
+            bookingAirTicketEntity.setFirstName(bookingPassengerRQ.getFirstName().trim());
+            bookingAirTicketEntity.setLastName(bookingPassengerRQ.getLastName().trim());
             bookingAirTicketEntity.setAmount(travel.getAmount());
             bookingAirTicketEntity.setCurrency(travel.getCurrencyCode());
             bookingAirTicketEntity.setDecimalPlace("2");
@@ -451,46 +473,65 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
         var tickets = bookingAirTicketRP.getTickets(booking.getId());
         var numberTicket = ticketInfo.get("AirTicketRS").get("Summary");
 
+        log.info("");
+        log.info("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+        log.info("BOOKING : {}", booking);
+        log.info("BOOKING AIR TICKET FROM SABRE : {}", numberTicket);
+        log.info("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+        log.info("");
+
         numberTicket.forEach(item -> {
 
             tickets
-                .stream()
-                .filter(ticket -> ticket.getFirstName().equalsIgnoreCase(item.get("FirstName").textValue()) && ticket.getLastName().equalsIgnoreCase(item.get("LastName").textValue()))
-                .findFirst()
-                .ifPresent(ticket -> {
+                    .stream()
+                    .filter(ticket -> ticket.getFirstName().equalsIgnoreCase(item.get("FirstName").textValue()) && ticket.getLastName().equalsIgnoreCase(item.get("LastName").textValue()))
+                    .findFirst()
+                    .ifPresent(ticket -> {
 
-                    var passengersList = tickets.stream().filter(ticketItem -> ticketItem.getFirstName().equalsIgnoreCase(item.get("FirstName").textValue()) && ticketItem.getLastName().equalsIgnoreCase(item.get("LastName").textValue()));
+                        var passengersList = tickets.stream().filter(ticketItem -> ticketItem.getFirstName().equalsIgnoreCase(item.get("FirstName").textValue()) && ticketItem.getLastName().equalsIgnoreCase(item.get("LastName").textValue()));
 
-                    /**
-                     * check passenger have the same name or not
-                     * if passengersList == 1 mean passenger do not have the same name
-                     */
-                    if (passengersList.count() == 1) {
+                        /**
+                         * check passenger have the same name or not
+                         * if passengersList == 1 mean passenger do not have the same name
+                         */
+                        if (passengersList.count() == 1) {
 
-                        ticket.setTicketNumber(item.get("DocumentNumber").textValue());
-                        ticket.setStatus(1);
-                        bookingAirTicketRP.save(ticket);
+                            ticket.setTicketNumber(item.get("DocumentNumber").textValue());
+                            ticket.setStatus(1);
+                            BookingAirTicketEntity airTicketEntity = bookingAirTicketRP.save(ticket);
+                            log.info("ONE PASSENGER");
+                            log.info("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+                            log.info("BOOKING AIR TICKET : {}", airTicketEntity);
+                            log.info("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+                            log.info("");
 
-                    } else {
+                        } else {
 
-                        var index = 0;
+                            var index = 0;
 
-                        for (BookingAirTicketEntity ticketEntity : tickets) {
+                            log.info("MULTIPLE PASSENGERS");
 
-                            if (ticketEntity.getFirstName().equalsIgnoreCase(numberTicket.get(index).get("FirstName").textValue()) && ticketEntity.getLastName().equalsIgnoreCase(numberTicket.get(index).get("LastName").textValue())) {
+                            for (BookingAirTicketEntity ticketEntity : tickets) {
 
-                                ticketEntity.setTicketNumber(numberTicket.get(index).get("DocumentNumber").textValue());
-                                ticketEntity.setStatus(1);
-                                bookingAirTicketRP.save(ticketEntity);
+                                if (ticketEntity.getFirstName().equalsIgnoreCase(numberTicket.get(index).get("FirstName").textValue()) && ticketEntity.getLastName().equalsIgnoreCase(numberTicket.get(index).get("LastName").textValue())) {
+
+                                    ticketEntity.setTicketNumber(numberTicket.get(index).get("DocumentNumber").textValue());
+                                    ticketEntity.setStatus(1);
+                                    BookingAirTicketEntity airTicketEntity = bookingAirTicketRP.save(ticketEntity);
+
+                                    log.info("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+                                    log.info("BOOKING AIR TICKET : {}", airTicketEntity);
+                                    log.info("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+                                    log.info("");
+                                }
+
+                                index++;
+
                             }
-
-                            index++;
 
                         }
 
-                    }
-
-                });
+                    });
 
         });
 

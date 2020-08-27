@@ -11,6 +11,7 @@ public class NotificationPagingRS {
     private Integer size;
     private Integer page;
     private Long totals;
+    private Integer unRead;
 
     private List<NotificationRS> data;
 

@@ -42,6 +42,40 @@ public class DateUtility {
 
     }
 
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * minus minutes of zone date time
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param dateTime
+     * @param minutes
+     * @return String
+     */
+    public static String minusMinutesZonedDateTime(String dateTime, long minutes) {
+
+        if (minutes == 0) return dateTime;
+        return ZonedDateTime.parse(dateTime).minusMinutes(minutes).format(DateTimeFormatter.ISO_ZONED_DATE_TIME);
+
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get departure window from zone date time
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param dateTime
+     * @param minutes
+     * @return String
+     */
+    public static String getDepartureWindow(String dateTime, long minutes) {
+
+        var formatter = DateTimeFormatter.ofPattern("HHmm");
+        var arrivalTime = ZonedDateTime.parse(dateTime).format(formatter);
+        var departureTime = ZonedDateTime.parse(DateUtility.minusMinutesZonedDateTime(dateTime, minutes)).format(formatter);
+
+        return departureTime + arrivalTime;
+    }
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -107,6 +141,27 @@ public class DateUtility {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
+     * convert date time string to date
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param dateTime
+     * @param format
+     * @return Date
+     */
+    public static Date convertDateTimeToDate(String dateTime, String format) {
+
+        try {
+            return new SimpleDateFormat(format).parse(dateTime);
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+
+        return null;
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
      * get zoned id number from zoned date time string
      * -----------------------------------------------------------------------------------------------------------------
      *
@@ -116,7 +171,12 @@ public class DateUtility {
     public static Integer getZonedDateTimeId(String zonedDateTime) {
 
         try {
-            return Integer.valueOf(ZonedDateTime.parse(zonedDateTime).format(DateTimeFormatter.ofPattern("X")));
+
+            String zoneId = ZonedDateTime.parse(zonedDateTime).format(DateTimeFormatter.ofPattern("X"));
+
+            if (zoneId.equalsIgnoreCase("Z")) return 0;
+            return Integer.valueOf(zoneId);
+
         } catch (Exception ex) {
             ex.printStackTrace();
         }

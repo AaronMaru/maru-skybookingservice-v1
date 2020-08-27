@@ -12,8 +12,7 @@ SELECT
 	fsave.decimal_places AS decimalPlaces
 
 FROM flight_saves AS fsave
-WHERE fsave.user_id = :skyuserId
-AND fsave.status = 0
+WHERE fsave.status = 0
 AND CASE WHEN :action = 'search' THEN
         (
         	fsave.trip_type LIKE '%' :keyword '%'

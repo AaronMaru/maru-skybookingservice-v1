@@ -9,4 +9,5 @@ import java.util.stream.Stream;
 @Repository
 public interface FlightSavesRP extends JpaRepository<FlightSavesEntity, Integer> {
     Stream<FlightSavesEntity> findAllByUserId(Integer userId);
+    Stream<FlightSavesEntity> findAllByCompanyId(Integer companyId);
 }

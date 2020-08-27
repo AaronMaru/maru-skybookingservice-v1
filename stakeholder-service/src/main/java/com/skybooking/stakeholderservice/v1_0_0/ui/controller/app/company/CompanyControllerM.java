@@ -1,7 +1,6 @@
 package com.skybooking.stakeholderservice.v1_0_0.ui.controller.app.company;
 
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.company.CompanySV;
-import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company.CompanyRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company.CompanyUpdateRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.CompanyRS;
@@ -10,6 +9,7 @@ import com.skybooking.stakeholderservice.v1_0_0.util.localization.LocalizationBe
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,7 +29,6 @@ public class CompanyControllerM {
     private LocalizationBean localization;
 
 
-
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Update user profile
@@ -42,7 +41,7 @@ public class CompanyControllerM {
     public Object updateCompany(@ModelAttribute("companyRQ") @Valid CompanyUpdateRQ companyRQ, Errors errors, @PathVariable Long id) {
 
         if(errors.hasErrors()) {
-            return generalBean.errors(errors);
+            return new ResponseEntity<>(generalBean.errors(errors), HttpStatus.BAD_REQUEST);
         }
 
         CompanyRS companyRS = companySV.updateCompany(companyRQ, id);

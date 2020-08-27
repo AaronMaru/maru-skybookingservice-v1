@@ -74,15 +74,12 @@ public class BookingRequestBody {
             fareBasisId = fareBasisId + leg;
         }
         List<String> classOfServices = transformSV.getNewClassOfService(classOfServiceId);
-        List<String> fareBasisCached = transformSV.getFareBasis(fareBasisId + "-fare-basis").stream().map(String::toString).distinct().collect(Collectors.toList());
+        List<String> fareBasisCached = transformSV.getFareBasis(fareBasisId + "-fare-basis");
         List<BookingFareComponentRQ> fareComponentRQs = new ArrayList<>();
 
         for (String fareBasisCode: fareBasisCached) {
             BookingFareComponentRQ fareComponentRQ = new BookingFareComponentRQ();
-            FareBasisRQ fareBasis = new FareBasisRQ();
-
-            fareBasis.setCode(fareBasisCode);
-            fareComponentRQ.setFareBasis(fareBasis);
+            fareComponentRQ.setFareBasis(new FareBasisRQ(fareBasisCode));
             fareComponentRQs.add(fareComponentRQ);
         }
 
@@ -93,7 +90,7 @@ public class BookingRequestBody {
             for (LegSegmentDetail legSegment : legDetail.getSegments()) {
 
                 var classOfService = legSegment.getBookingCode();
-                if (classOfServices.size() > 0) {
+                if (detailSV.getShoppingDetail(requestId).getSegments().size() == classOfServices.size()) {
                     classOfService = classOfServices.get(indexClassOfServices);
                 }
 

@@ -22,7 +22,7 @@ SELECT
     (
         SELECT ail.name
         FROM aircraft_locale ail
-        WHERE ail.locale_id = :localeId
+        WHERE ail.locale_id = 1
         AND ail.aircraft_id = (
                 SELECT aci.id
                 FROM aircrafts_info AS aci
@@ -63,24 +63,52 @@ SELECT
     bod_seg.arr_terminal AS arrivalTerminal,
     bod_seg.arr_date AS arrivalDate,
     CASE WHEN ( ( DATE(
+                -- Flight depature datetime and convert to UTC
+                CONVERT_TZ(bod_seg.dep_date, CONCAT( CASE WHEN bod_seg.dep_timezone >= 0 THEN
+
+                                          CASE WHEN LENGTH(bod_seg.dep_timezone) >= 3 THEN
+                                              CONCAT('+', SUBSTRING(bod_seg.dep_timezone,1,1), ':', SUBSTRING(bod_seg.dep_timezone,2,2))
+                                          ELSE
+                                              CONCAT('+', bod_seg.dep_timezone,':00')
+                                          END
+
+                                    ELSE CONCAT(bod_seg.dep_timezone,':00') END ), '+00:00')
+            ) >= DATE(
+                -- User locale current time zone and convert to UTC
+                CONVERT_TZ(CURRENT_TIMESTAMP, CONCAT( CASE WHEN bod_seg.dep_timezone >= 0 THEN
+                                            CASE WHEN LENGTH(bod_seg.dep_timezone) >= 3 THEN
+                                              CONCAT('+', SUBSTRING(bod_seg.dep_timezone, 1, 1), ':', SUBSTRING(bod_seg.dep_timezone,2,2))
+                                            ELSE
+                                              CONCAT('+', bod_seg.dep_timezone,':00')
+                                           END
+                      ELSE CONCAT(bod_seg.dep_timezone,':00') END ), '+00:00')
+            ) ) > 0
+
+        ) THEN :UPCOMING
+
+    WHEN ( ( DATE(
                     -- Flight depature datetime and convert to UTC
-                    CONVERT_TZ(bod_seg.dep_date, CONCAT( CASE WHEN bod_seg.dep_timezone >= 0 THEN CONCAT('+', bod_seg.dep_timezone,':00') ELSE CONCAT(bod_seg.dep_timezone,':00') END ), '+00:00')
-                ) >= DATE(
+                    CONVERT_TZ(bod_seg.dep_date, CONCAT( CASE WHEN bod_seg.dep_timezone >= 0 THEN
+
+                                          CASE WHEN LENGTH(bod_seg.dep_timezone) >= 3 THEN
+                                              CONCAT('+', SUBSTRING(bod_seg.dep_timezone,1,1), ':', SUBSTRING(bod_seg.dep_timezone,2,2))
+                                          ELSE
+                                              CONCAT('+', bod_seg.dep_timezone,':00')
+                                          END
+
+                            ELSE CONCAT(bod_seg.dep_timezone,':00') END ), '+00:00')
+                ) < DATE(
                     -- User locale current time zone and convert to UTC
-                    CONVERT_TZ(CURRENT_TIMESTAMP, CONCAT( CASE WHEN bod_seg.dep_timezone >= 0 THEN CONCAT('+', bod_seg.dep_timezone,':00') ELSE CONCAT(bod_seg.dep_timezone,':00') END ), '+00:00')
+                    CONVERT_TZ(CURRENT_TIMESTAMP, CONCAT( CASE WHEN bod_seg.dep_timezone >= 0 THEN
+                                CASE WHEN LENGTH(bod_seg.dep_timezone) >= 3 THEN
+                                              CONCAT('+', SUBSTRING(bod_seg.dep_timezone,1,1), ':', SUBSTRING(bod_seg.dep_timezone,2,2))
+                                          ELSE
+                                              CONCAT('+', bod_seg.dep_timezone,':00')
+                                          END
+                            ELSE CONCAT(bod_seg.dep_timezone,':00') END ), '+00:00')
                 ) ) > 0
 
-            ) THEN :UPCOMING
-
-        WHEN ( ( DATE(
-                        -- Flight depature datetime and convert to UTC
-                        CONVERT_TZ(bod_seg.dep_date, CONCAT( CASE WHEN bod_seg.dep_timezone >= 0 THEN CONCAT('+', bod_seg.dep_timezone,':00') ELSE CONCAT(bod_seg.dep_timezone,':00') END ), '+00:00')
-                    ) < DATE(
-                        -- User locale current time zone and convert to UTC
-                        CONVERT_TZ(CURRENT_TIMESTAMP, CONCAT( CASE WHEN bod_seg.dep_timezone >= 0 THEN CONCAT('+', bod_seg.dep_timezone,':00') ELSE CONCAT(bod_seg.dep_timezone,':00') END ), '+00:00')
-                    ) ) > 0
-
-            ) THEN :COMPLETED
+        ) THEN :COMPLETED
 
     END AS status
 

@@ -20,6 +20,7 @@ public class NotificationTO {
     private Integer companyId;
     private String replaceOne;
     private String replaceTwo;
+    private int readable;
     private Date createdAt;
 
 }

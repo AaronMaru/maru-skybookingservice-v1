@@ -10,6 +10,7 @@ public class FilterRQ {
 
     private int size;
     private int page;
+    private Boolean readAll;
     private Long skyuserId;
     private Long companyHeaderId;
     private String role;
@@ -18,6 +19,8 @@ public class FilterRQ {
 
         this.page = request.getParameter("page") != null && !request.getParameter("page").isEmpty() ? ( Integer.valueOf(request.getParameter("page") ) - 1 ) : 0;
         this.size = request.getParameter("size") != null && !request.getParameter("size").isEmpty() ? Integer.valueOf(request.getParameter("size")) : 10;
+
+        this.readAll = request.getParameter("readAll") != null && !request.getParameter("readAll").isEmpty() ? Boolean.valueOf(request.getParameter("readAll")) : false;
 
         this.role = userToken.getUserRole();
         this.skyuserId = userToken.getStakeholderId();

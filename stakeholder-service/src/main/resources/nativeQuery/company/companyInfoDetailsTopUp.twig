@@ -1,0 +1,38 @@
+SELECT
+	suhc.stakeholder_user_id AS stakeholderUserId,
+	sc.id as stakeholderCompanyId,
+	sc.company_name AS companyName,
+	sc.company_code AS companyCode,
+	sc.profile_img AS thumbnail,
+	c.email,
+	cp.phone
+
+FROM `stakeholder_companies` sc
+LEFT JOIN
+(
+	SELECT
+		c.contactable_id,
+		c.contactable_type,
+		c.`value` AS email
+	FROM contacts c
+	WHERE c.`type` = 'e'
+) c ON c.contactable_id = sc.id AND c.contactable_type = "company"
+LEFT JOIN
+(
+	SELECT
+		cp.contactable_id,
+		cp.contactable_type,
+		cp.`value` AS phone
+	FROM contacts cp
+	WHERE cp.`type` = 'p'
+) cp ON cp.contactable_id = sc.id AND cp.contactable_type = "company"
+LEFT JOIN
+(
+	SELECT
+		suhc.stakeholder_user_id,
+		suhc.status,
+		suhc.stakeholder_company_id
+	FROM stakeholder_user_has_companies suhc
+) suhc ON suhc.stakeholder_company_id = sc.id AND suhc.status = 1
+WHERE sc.`company_code` = :companyCode
+GROUP BY sc.company_code, c.email

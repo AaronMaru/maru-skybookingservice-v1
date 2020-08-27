@@ -12,15 +12,25 @@ import com.skybooking.stakeholderservice.v1_0_0.util.notification.PushNotificati
 import com.skybooking.stakeholderservice.v1_0_0.util.skyowner.SkyownerBean;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
 import org.springframework.context.annotation.Bean;
 
+import javax.annotation.PostConstruct;
+import java.util.TimeZone;
+
 @SpringBootApplication
 @EnableEurekaClient
+@EnableConfigurationProperties
 public class StakeholderServiceApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(StakeholderServiceApplication.class, args);
+    }
+
+    @PostConstruct
+    public void init() {
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
     }
 
     @Bean

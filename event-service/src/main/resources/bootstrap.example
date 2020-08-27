@@ -1,0 +1,56 @@
+spring:
+    application:
+        name: event-service
+
+    cloud:
+        config:
+            uri: http://192.168.2.4:8888
+
+    email:
+        host: mail.smtp2go.com
+        username: developer@skybooking.info
+        password: bnFnYTRyNG5sOHQw
+        port: 587
+        driver: smtp
+        encryption: tls
+        from-address: developer@skybooking.info
+        from-name: Skybooking
+        properties.mail.smtp:
+            auth: true
+            starttls.enable: true
+            ssl.trust: smtp.gmail.
+
+
+    awsImage:
+        url: s3.amazonaws.com
+        region: us-east-1
+        bucket: skybooking
+        key: AKIAJEC5JZZKMU7GNCFQ
+        secret: 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
+        visibility: public
+
+    awsImageUrl:
+        mailTemplate: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/mail/images/
+
+    aws:
+        url: s3.amazonaws.com
+        region: us-east-1
+        bucket: dev-skypoint-v1
+        bucketUpload: dev-skypoint-v1
+        key: AKIARX6S32NWQ3RHNMPW
+        secret: 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
+        visibility: public
+
+        awsUrl:
+            upload: https://${spring.aws.bucket}.s3.amazonaws.com/uploads/
+
+    onesignal:
+            apiKey: NDc3M2ViODAtZWJlMy00ZDJiLTk3NmUtMzI2NGJjNDVhODZi
+            appId: 75290ec7-3c5a-435d-b1e9-4b13d5e632b5
+            url : https://onesignal.com/api/v1/notifications
+    #        appId: ed29332e-d5ca-4920-a17b-f502aaed2c98
+
+native-query:
+    package-scan: com.skybooking.eventservice
+    file:
+        sufix: sql

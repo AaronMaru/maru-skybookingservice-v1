@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+
 /**
  * ---------------------------------------------------------------------------------------------------------------------
  * INTERNAL PROCESS AND COMMUNICATION BETWEEN PAYMENT SERVICE WITH FLIGHT SERVICE
@@ -54,6 +55,20 @@ public class PaymentController {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
+     * Get mandatory data payment
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param bookingCode
+     * @return
+     */
+    @GetMapping("point/mandatory-data/{bookingCode}")
+    public ResponseEntity getPaymentPointMandatory(@PathVariable String bookingCode) {
+        return new ResponseEntity<>(paymentSV.getPointMandatoryData(bookingCode), HttpStatus.OK);
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
      * Update payment succeed and going to issued air ticket
      * -----------------------------------------------------------------------------------------------------------------
      *
@@ -62,6 +77,7 @@ public class PaymentController {
      */
     @PostMapping("succeed")
     public void paymentSuccess(@RequestBody PaymentTransactionRQ paymentTransactionRQ) {
+        System.out.println("halo world");
         paymentSV.updatePaymentSucceed(paymentTransactionRQ);
     }
 

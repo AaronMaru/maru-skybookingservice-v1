@@ -3,6 +3,7 @@ package com.skybooking.stakeholderservice.v1_0_0.ui.controller.common.user;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.user.UserSV;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.login.LoginRefreshRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.ResRS;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.user.UserReferenceRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.localization.LocalizationBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -22,6 +23,15 @@ public class UserController {
     @Autowired
     private LocalizationBean localization;
 
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Logout
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param httpHeaders
+     * @Return ResRS
+     */
     @PostMapping("/logout")
     public ResponseEntity<ResRS> login(@RequestHeader HttpHeaders httpHeaders) {
 
@@ -32,7 +42,6 @@ public class UserController {
         return new ResponseEntity<>(new ResRS(HttpStatus.UNAUTHORIZED.value()), HttpStatus.UNAUTHORIZED);
 
     }
-
 
 
     /**
@@ -50,5 +59,32 @@ public class UserController {
         return localization.resAPI(HttpStatus.OK, "res_succ", data);
     }
 
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Getting a user reference
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param httpHeaders
+     * @Param loginRQ
+     * @Return ResRS
+     */
+    @GetMapping("/auth/user-reference/{skyuserId}")
+    public ResRS userReference(@PathVariable Long skyuserId) {
+        UserReferenceRS userReference = userSV.userReference(skyuserId);
+        return localization.resAPI(HttpStatus.OK,"res_succ", userReference);
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Getting a user reference
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Return skyUserId
+     */
+    /*@GetMapping("/auth/user-reference/payment/{skyUserId}")
+    public ResRS paymentUserReference(@PathVariable Long skyUserId) {
+        return localization.resAPI(HttpStatus.OK,"res_succ", userSV.paymentUserReference(skyUserId));
+    }*/
 
 }

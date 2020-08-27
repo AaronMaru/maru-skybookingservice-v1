@@ -169,7 +169,6 @@ public class UserBean {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserEntity user = userRepository.findByUsername(authentication.getName());
-
         if (user == null) {
             throw new UnauthorizedException("Unauthorized", null);
         }
@@ -735,7 +734,7 @@ public class UserBean {
     private String uploadFileTos3bucket(String fileName, File file, String path) {
 
         try {
-            s3client.putObject(new PutObjectRequest(environment.getProperty("spring.awsImage.bucket") + path, fileName, file).withCannedAcl(CannedAccessControlList.PublicRead));
+            s3client.putObject(new PutObjectRequest(environment.getProperty("spring.awsImage.bucketUpload") + path, fileName, file).withCannedAcl(CannedAccessControlList.PublicRead));
         } catch (AmazonServiceException e) {
             return "uploadFileTos3bucket().Uploading failed :" + e.getMessage();
         }

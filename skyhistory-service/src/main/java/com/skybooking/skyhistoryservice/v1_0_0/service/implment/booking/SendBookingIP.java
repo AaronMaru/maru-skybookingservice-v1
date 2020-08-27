@@ -17,11 +17,13 @@ import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.booking.detail.
 import com.skybooking.skyhistoryservice.v1_0_0.util.JwtUtils;
 import com.skybooking.skyhistoryservice.v1_0_0.util.datetime.DateTimeBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.email.EmailBean;
+import com.skybooking.skyhistoryservice.v1_0_0.util.header.HeaderBean;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
 import static com.skybooking.skyhistoryservice.constant.MailStatusConstant.*;
@@ -53,12 +55,20 @@ public class SendBookingIP implements SendBookingSV {
     @Autowired
     private StakeHolderUserRP stakeHolderUserRP;
 
+    @Autowired
+    private HeaderBean headerBean;
+
+    @Autowired
+    private HttpServletRequest request;
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Send mail receipt
      * -----------------------------------------------------------------------------------------------------------------
      */
     public void sendBookingInfo(SendBookingPDFRQ sendBookingPDFRQ, String pdfTemplate, String Label) {
+
+        String locale = headerBean.getLocalization();
 
         BookingEntity booking = bookingRP.findByBookingCode(sendBookingPDFRQ.getBookingCode());
 
@@ -78,15 +88,21 @@ public class SendBookingIP implements SendBookingSV {
         BookingDetailTF mailBookingDetail = this.mailBookingDetail(bookingEmailDetailRS);
 
         Map<String, Object> mailData = emailBean.mailData(sendBookingPDFRQ.getEmail(), "Customer", 0,
-            template, "booking-info", "api_receipt");
+                template, "booking-info", "api_receipt");
         mailData.put("data", mailBookingDetail);
+
+        // apply locale
+        mailData.put("pdfLang", locale);
 
         Map<String, Object> pdfData = new HashMap<>();
         pdfData.put("label_" + pdfTemplate, emailBean.dataPdfTemplate(pdfTemplate, Label));
         pdfData.put("data_" + pdfTemplate, mailBookingDetail);
 
         // apply logo
-        pdfData.put("logoPdf", this.embedLogo());
+        Integer companyId = request.getHeader("X-CompanyId") != null &&
+                !request.getHeader("X-CompanyId").isEmpty() ?
+                Integer.valueOf(request.getHeader("X-CompanyId")): 0;
+        pdfData.put("logoPdf", this.embedLogo(companyId));
 
         List<String> sendData = Arrays.asList(pdfTemplate);
         pdfData.put("sendData", sendData);
@@ -100,6 +116,7 @@ public class SendBookingIP implements SendBookingSV {
      * -----------------------------------------------------------------------------------------------------------------
      */
     public void sendBookingInfo(SendBookingNoAuthRQ sendBookingNoAuthRQ) {
+        String locale = headerBean.getLocalization();
 
         BookingEntity booking = bookingRP.findByBookingCode(sendBookingNoAuthRQ.getBookingCode());
 
@@ -108,17 +125,24 @@ public class SendBookingIP implements SendBookingSV {
         }
 
         StakeHolderUserEntity stakeHolderUserEntity = stakeHolderUserRP
-            .findById(sendBookingNoAuthRQ.getSkyuserId().longValue()).orElse(null);
-        String fullName = stakeHolderUserEntity.getFirstName() + " " + stakeHolderUserEntity.getLastName();
+                .findById(sendBookingNoAuthRQ.getSkyuserId().longValue()).orElse(null);
+
+        String fullName = "";
+
+        if (stakeHolderUserEntity != null) {
+            fullName = stakeHolderUserEntity.getFirstName() + " " + stakeHolderUserEntity.getLastName();
+        }
 
         BookingDetailRS bookingEmailDetailRS = bookingDetailSV.getBookingDetail(booking.getBookingCode(),
-            sendBookingNoAuthRQ);
+                sendBookingNoAuthRQ);
 
         BookingDetailTF mailBookingDetail = this.mailBookingDetail(bookingEmailDetailRS);
 
         Map<String, Object> mailData = emailBean.mailData(sendBookingNoAuthRQ.getEmail(), fullName, 0,
-            YOUR_FLIGHT_TICKET, "booking-info", "api_receipt");
+                YOUR_FLIGHT_TICKET, "booking-info", "api_receipt");
         mailData.put("data", mailBookingDetail);
+        // apply locale
+        mailData.put("pdfLang", locale);
 
         Map<String, Object> pdfData = new HashMap<>();
         pdfData.put("label_receipt", emailBean.dataPdfTemplate("receipt", "api_receipt_pdf"));
@@ -128,7 +152,7 @@ public class SendBookingIP implements SendBookingSV {
         pdfData.put("data_itinerary", mailBookingDetail);
 
         // apply logo
-        pdfData.put("logoPdf", this.embedLogoNoAuth(sendBookingNoAuthRQ.getCompanyId()));
+        pdfData.put("logoPdf", this.embedLogo(sendBookingNoAuthRQ.getCompanyId()));
 
         List<String> sendData = Arrays.asList("receipt", "itinerary");
         pdfData.put("sendData", sendData);
@@ -142,6 +166,7 @@ public class SendBookingIP implements SendBookingSV {
      * -----------------------------------------------------------------------------------------------------------------
      */
     public void sendPayment(SendBookingPDFRQ sendBookingPDFRQ) {
+        String locale = headerBean.getLocalization();
 
         BookingEntity booking = bookingRP.findByBookingCode(sendBookingPDFRQ.getBookingCode());
         if (booking == null) {
@@ -153,9 +178,12 @@ public class SendBookingIP implements SendBookingSV {
         BookingDetailTF mailBookingDetail = this.mailBookingDetail(bookingEmailDetailRS);
 
         Map<String, Object> mailData = emailBean.mailData(sendBookingPDFRQ.getEmail(), "Customer", 0,
-            FLIGHT_BOOKING_SUCCESSFUL, "payment-success", "api_payment_succ");
+                FLIGHT_BOOKING_SUCCESSFUL, "payment-success", "api_payment_succ");
 
         mailData.put("data", mailBookingDetail);
+
+        // apply locale
+        mailData.put("pdfLang", locale);
 
         emailBean.sendEmailSMS("send-payment", mailData, null);
 
@@ -168,54 +196,45 @@ public class SendBookingIP implements SendBookingSV {
      */
     public void sendPaymentWithoutAuth(SendBookingNoAuthRQ sendBookingNoAuthRQ) {
 
+        String locale = headerBean.getLocalization();
+
+        StakeHolderUserEntity stakeHolderUserEntity = stakeHolderUserRP
+                .findById(sendBookingNoAuthRQ.getSkyuserId().longValue()).orElse(null);
+
+        String fullName = "";
+        if (stakeHolderUserEntity != null) {
+            fullName = stakeHolderUserEntity.getFirstName() + " " + stakeHolderUserEntity.getLastName();
+        }
+
         BookingEntity booking = bookingRP.findByBookingCode(sendBookingNoAuthRQ.getBookingCode());
 
         if (booking == null) {
             throw new BadRequestException("no_bk", null);
         }
 
-        StakeHolderUserEntity stakeHolderUserEntity = stakeHolderUserRP
-            .findById(sendBookingNoAuthRQ.getSkyuserId().longValue()).orElse(null);
-        String fullName = stakeHolderUserEntity.getFirstName() + " " + stakeHolderUserEntity.getLastName();
-
         BookingDetailRS bookingEmailDetailRS = bookingDetailSV.getBookingDetail(booking.getBookingCode(),
-            sendBookingNoAuthRQ);
+                sendBookingNoAuthRQ);
 
         BookingDetailTF mailBookingDetail = this.mailBookingDetail(bookingEmailDetailRS);
 
         Map<String, Object> mailData = emailBean.mailData(sendBookingNoAuthRQ.getEmail(), fullName, 0,
-            FLIGHT_BOOKING_SUCCESSFUL, "payment-success", "api_payment_succ");
+                FLIGHT_BOOKING_SUCCESSFUL, PAYMENT_SUCCESS, API_PAYMENT_SUCCESS);
 
         mailData.put("data", mailBookingDetail);
+        // apply locale
+        mailData.put("pdfLang", locale);
 
         emailBean.sendEmailSMS("send-payment", mailData, null);
 
     }
 
-    private String embedLogo() {
-        String userType = jwtUtils.getClaim("userType", String.class);
 
-        if (userType.equals("skyuser")) {
-            return "https://s3.amazonaws.com/skybooking/uploads/mail/images/logo.png";
-        }
-
-        Integer companyId = jwtUtils.getClaim("companyId", Integer.class);
-        StakeholderCompanyDocsEntity stakeholderCompanyDocsEntity = companyDocsRP.getItineraryProfile(companyId);
-
-        if (stakeholderCompanyDocsEntity != null) {
-            return environment.getProperty("spring.awsImageUrl.companyProfile") + stakeholderCompanyDocsEntity.getFileName();
-        } else {
-            return environment.getProperty("spring.awsImageUrl.companyProfile") + "default.png";
-        }
-
-    }
-
-    private String embedLogoNoAuth(Integer companyId) {
+    private String embedLogo(Integer companyId) {
 
         companyId = companyId == null ? 0 : companyId;
 
         if (companyId == 0) {
-            return "https://s3.amazonaws.com/skybooking/uploads/mail/images/logo.png";
+            return environment.getProperty("spring.awsImageUrl.skyUserLogo");
         }
 
         StakeholderCompanyDocsEntity stakeholderCompanyDocsEntity = companyDocsRP.getItineraryProfile(companyId);
@@ -251,7 +270,7 @@ public class SendBookingIP implements SendBookingSV {
         BookingInfoTF bookingInfoTF = new BookingInfoTF();
         BeanUtils.copyProperties(bookingEmailDetailRS.getBookingInfo(), bookingInfoTF);
         bookingInfoTF
-            .setBookingDate(dateTimeBean.convertDateTime(bookingEmailDetailRS.getBookingInfo().getBookingDate()));
+                .setBookingDate(dateTimeBean.convertDateTime(bookingEmailDetailRS.getBookingInfo().getBookingDate()));
 
         List<ItineraryODInfoTF> itineraryODInfoTFList = new ArrayList<>();
 
@@ -278,7 +297,7 @@ public class SendBookingIP implements SendBookingSV {
                     BookingStopInfoTF bookingStopInfoTF = new BookingStopInfoTF();
                     BeanUtils.copyProperties(itemStopInfo, bookingStopInfoTF);
                     bookingStopInfoTF
-                        .setDurationHourMinute(dateTimeBean.convertNumberToHour(bookingStopInfoTF.getDuration()));
+                            .setDurationHourMinute(dateTimeBean.convertNumberToHour(bookingStopInfoTF.getDuration()));
 
                     bookingStopInfoTFList.add(bookingStopInfoTF);
                 });
@@ -288,7 +307,7 @@ public class SendBookingIP implements SendBookingSV {
                 itineraryODSegmentTF.setDepartureInfo(departureTF);
                 itineraryODSegmentTF.setArrivalInfo(arrivalTF);
                 itineraryODSegmentTF
-                    .setLayoverHourMinute(dateTimeBean.convertNumberToHour(itineraryODSegmentTF.getLayover()));
+                        .setLayoverHourMinute(dateTimeBean.convertNumberToHour(itineraryODSegmentTF.getLayover()));
                 itineraryODSegmentTF.setStopInfo(bookingStopInfoTFList);
                 itineraryODSegmentTFList.add(itineraryODSegmentTF);
             });

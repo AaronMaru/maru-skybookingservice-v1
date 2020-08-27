@@ -39,6 +39,7 @@ spring:
     visibility: public
 
   awsImageUrl:
+    skyUserLogo: https://s3.amazonaws.com/skybooking/uploads/mail/images/logo.png
     mailTemplate: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/mail/images/
     companyProfile: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/company_profiles/origin/
     airLine: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/airlines/airline_logos/

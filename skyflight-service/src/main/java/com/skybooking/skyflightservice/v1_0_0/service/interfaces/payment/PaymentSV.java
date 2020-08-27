@@ -32,6 +32,15 @@ public interface PaymentSV {
      */
     PaymentMandatoryRS getMandatoryData(String bookingCod);
 
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Get mandatory data from booking
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param bookingCode
+     * @return
+     */
+    PaymentMandatoryRS getPointMandatoryData(String bookingCode);
 
     /**
      * -----------------------------------------------------------------------------------------------------------------

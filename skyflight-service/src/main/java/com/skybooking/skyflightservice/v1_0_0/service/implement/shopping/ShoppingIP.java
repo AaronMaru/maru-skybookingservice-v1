@@ -21,6 +21,7 @@ import com.skybooking.skyflightservice.v1_0_0.ui.model.request.booking.BookingCr
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.shopping.FlightDetailRQ;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.shopping.FlightShoppingRQ;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.response.shopping.*;
+import com.skybooking.skyflightservice.v1_0_0.util.DateUtility;
 import com.skybooking.skyflightservice.v1_0_0.util.header.HeaderBean;
 import com.skybooking.skyflightservice.v1_0_0.util.shopping.ShoppingUtils;
 import lombok.SneakyThrows;
@@ -33,6 +34,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -201,7 +203,6 @@ public class ShoppingIP implements ShoppingSV {
         /** new shopping full match trip type */
         if (!query.getTripType().equals(TripTypeEnum.ONEWAY)) {
 
-            List<String> airlinesRQ = new ArrayList<>();
             List<FlightLegShoppingRevalidateRQ> legRQS = new ArrayList<>();
             FlightShoppingRevalidateRQ flightShoppingRQ = new FlightShoppingRevalidateRQ();
 
@@ -220,13 +221,12 @@ public class ShoppingIP implements ShoppingSV {
                 legRQ.setOrigin(legDetail.getDeparture());
                 legRQ.setDestination(legDetail.getArrival());
                 legRQ.setDepartureDateTime(legDetail.getDepartureTime().substring(0, 19));
-
+                legRQ.setDepartureWindow(DateUtility.getDepartureWindow(legDetail.getDepartureTime(), 5));
+                legRQ.setAirlines(legDetail.getAirlines().stream().map(LegAirline::getAirline).distinct().collect(Collectors.toList()));
                 legRQS.add(legRQ);
-                airlinesRQ.addAll(legDetail.getAirlines().stream().map(LegAirline::getAirline).distinct().collect(Collectors.toList()));
 
             }
 
-            flightShoppingRQ.setAirlines(airlinesRQ);
             flightShoppingRQ.setLegs(legRQS);
 
             flightShopping = shoppingAction.getShoppingRevalidate(flightShoppingRQ);
@@ -250,6 +250,7 @@ public class ShoppingIP implements ShoppingSV {
 
         /** set request for revalidate flight */
         var indexClassOfService = 0;
+
         for (String leg : flightDetailRQ.getLegIds()) {
             shoppingDetailId = shoppingDetailId + leg;
             fareBasisId = fareBasisId + leg;
@@ -259,7 +260,9 @@ public class ShoppingIP implements ShoppingSV {
             for (LegSegmentDetail legSegment : legDetail.getSegments()) {
 
                 var classOfService = legSegment.getBookingCode();
-                if (!query.getTripType().equals(TripTypeEnum.ONEWAY) && flightShopping.getItineraryResponse().getStatistics().getItineraryCount() == 1) {
+                if (!query.getTripType().equals(TripTypeEnum.ONEWAY)
+                        && flightShopping.getItineraryResponse().getStatistics().getItineraryCount() == 1
+                        && flightShopping.getItineraryResponse().getScheduleComponents().size() == transformSV.getNewClassOfService(classOfServicesId).size()) {
                     classOfService = transformSV.getNewClassOfService(classOfServicesId).get(indexClassOfService);
                 }
                 segments.add(
@@ -301,10 +304,25 @@ public class ShoppingIP implements ShoppingSV {
         List<String> fareBasis = new ArrayList<>();
 
         for (FareComponent fareComponent: pairCity.getItineraryResponse().getFareComponents()) {
-            fareBasis.add(fareComponent.getBasisCode());
+
+            var codeRaw = fareComponent.getBasisCode();
+            var code = fareComponent.getBasisCode();
+            System.out.println("==========" + code);
+
+            if (codeRaw.contains("/CH")) {
+                var codeArr = codeRaw.split("/CH");
+                code = codeArr[0];
+            } else if (codeRaw.contains("/IN")) {
+                var codeArr = codeRaw.split("/IN");
+                code = codeArr[0];
+            }
+
+            fareBasis.add(code);
         }
 
-        transformSV.setFareBasis(fareBasisId + "-fare-basis", fareBasis);
+        System.out.println(fareBasis);
+
+        transformSV.setFareBasis(fareBasisId + "-fare-basis", new ArrayList<>(new HashSet<>(fareBasis)));
 
         var passengerFareList = pairCity.getItineraryResponse().getItineraryGroups().get(0).getItineraries().get(0).getPricingInformation().get(0).getFare().getPassengerInfoList();
 

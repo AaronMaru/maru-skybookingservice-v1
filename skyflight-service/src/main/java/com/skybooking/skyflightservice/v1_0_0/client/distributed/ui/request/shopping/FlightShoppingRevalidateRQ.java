@@ -23,6 +23,4 @@ public class FlightShoppingRevalidateRQ {
 
     private List<FlightLegShoppingRevalidateRQ> legs = new ArrayList<>();
 
-    private List<String> airlines = new ArrayList<>();
-
 }

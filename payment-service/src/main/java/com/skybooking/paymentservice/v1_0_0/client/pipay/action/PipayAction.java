@@ -39,7 +39,7 @@ public class PipayAction {
                     .bodyToMono(PipayVerifyRS.class)
                     .block();
 
-            if (pipayVerifyRS.getResultCode().equals("0000") && amount == pipayVerifyRS.getData().getAmount()) {
+            if (pipayVerifyRS.getResultCode().equals("0000") && amount.equals(pipayVerifyRS.getData().getAmount())) {
                 return true;
             }
 

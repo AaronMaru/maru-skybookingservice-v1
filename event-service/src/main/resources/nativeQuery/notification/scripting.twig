@@ -1,0 +1,9 @@
+SELECT sslo.send_script_id AS scriptId, sslo.subject AS `subject`
+FROM sending_script_locale sslo
+WHERE sslo.locale_id = :locale
+AND sslo.send_script_id = (
+                        SELECT ss.id
+                        FROM sending_script ss
+                        WHERE ss.url_key = :urlKey
+				    )
+LIMIT 1

@@ -4,6 +4,7 @@ SELECT
 	su.photo,
 	ss.noti_icon AS notiIcon,
 	IFNULL(ss.title, '' ) AS title,
+    (CASE WHEN unh.readable IS NULL OR unh.readable = 0 THEN false ELSE true END) AS readable,
 	ss.description,
 	unh.booking_id AS bookingId,
 	IFNULL((SELECT b.trip_type FROM bookings b WHERE b.id = unh.booking_id), '' ) AS tripType,

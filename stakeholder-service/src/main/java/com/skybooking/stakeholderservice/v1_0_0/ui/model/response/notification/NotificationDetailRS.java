@@ -15,6 +15,7 @@ public class NotificationDetailRS {
     private String tripType;
     private String title = "";
     private String description;
+    private Boolean readable;
     private String notiIcon = "";
     private Date createdAt;
     private String subject;

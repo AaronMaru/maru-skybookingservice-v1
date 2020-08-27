@@ -16,6 +16,12 @@ public class AppConfig {
     @Value("${spring.service.flight.version}")
     private String flightVersion;
 
+    @Value("${spring.service.hotel.url}")
+    private String hotelUrl;
+
+    @Value("${spring.service.hotel.version}")
+    private String hotelVersion;
+
     @Value("${spring.website.payment}")
     private String paymentPage;
 
@@ -33,4 +39,10 @@ public class AppConfig {
 
     @Value("${spring.serverAddress}")
     private String paymentUrl;
+
+    @Value("${spring.service.point.url}")
+    private String pointUrl;
+
+    @Value("${spring.service.point.version}")
+    private String pointVersion;
 }

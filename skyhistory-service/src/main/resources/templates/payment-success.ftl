@@ -37,7 +37,15 @@
                 <tbody style="width: 25%;">
                 <#list data.ticketInfo as item>
                     <tr style="font-weight:300">
-                        <td>${item.passType}</td>
+                        <#if item.passType == "ADT">
+                            <td style="text-transform: uppercase;">${adult??? then(adult, 'NO LABEL YET')}</td>
+                        <#elseif item.passType == "CNN">
+                            <td style="text-transform: uppercase;">${child??? then(child, 'NO LABEL YET')}</td>
+                        <#elseif item.passType == "INF">
+                            <td style="text-transform: uppercase;">${infant??? then(infant, 'NO LABEL YET')}</td>
+                        <#else>
+                            <td style="text-transform: uppercase;"></td>
+                        </#if>
                         <td style="color: black; text-transform:uppercase;">${item.lastName} / ${item.firstName}</td>
                     </tr>
                 </#list>
@@ -63,11 +71,13 @@
                 <#list data.priceInfo.priceBreakdown as item>
                     <tr style="font-weight: 300;">
                         <#if item.passType == "ADT">
-                            <td style="padding-left: 0px;">ADULT</td>
+                            <td style="padding-left: 0px;">${adult??? then(adult, 'NO LABEL YET')}</td>
                         <#elseif item.passType == "CNN">
-                            <td style="padding-left: 0px;">CHILD</td>
+                            <td style="padding-left: 0px;">${child??? then(child, 'NO LABEL YET')}</td>
+                        <#elseif item.passType == "INF">
+                            <td style="padding-left: 0px;">${infant??? then(infant, 'NO LABEL YET')}</td>
                         <#else>
-                            <td style="padding-left: 0px;">INFANT</td>
+                            <td style="padding-left: 0px;"></td>
                         </#if>
                         <td>USD ${item.baseFare }</td>
                         <td>USD ${item.totalTax}</td>

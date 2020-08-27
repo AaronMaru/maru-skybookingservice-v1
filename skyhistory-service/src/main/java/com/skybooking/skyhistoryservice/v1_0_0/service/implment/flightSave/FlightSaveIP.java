@@ -126,7 +126,7 @@ public class FlightSaveIP implements FlightSaveSV {
         FlightSaveEntity entity = flightSaveRP.findFirstByIdAndUserId(id, Integer.parseInt(skyuserId.toString()));
 
         if (stake.equals("company")) {
-            entity = flightSaveRP.findFirstByIdAndUserIdAndCompanyId(id, Integer.parseInt(skyuserId.toString()), companyId.intValue());
+            entity = flightSaveRP.findFirstByIdAndCompanyId(id, companyId.intValue());
         }
 
         if (entity == null) {

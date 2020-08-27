@@ -5,6 +5,7 @@ import com.skybooking.skygatewayservice.filters.PostFilter;
 import com.skybooking.skygatewayservice.filters.PreFilter;
 import com.skybooking.skygatewayservice.filters.RouteFilter;
 import com.skybooking.skygatewayservice.provider.fallback.*;
+import com.skybooking.skygatewayservice.utils.JwtUtils;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.netflix.eureka.EnableEurekaClient;

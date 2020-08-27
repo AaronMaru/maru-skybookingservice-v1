@@ -24,14 +24,13 @@ FROM stakeholder_user_invitations sui
 
 WHERE sui.stakeholder_company_id = :companyId
 
-AND (CASE WHEN :action = 'SEARCH' THEN
+AND CASE WHEN :action = 'SEARCH' THEN
 		sui.invite_to LIKE '%' :keyword '%'
+	WHEN :action = 'FILTER' THEN
+		( Date(sui.created_at) >= :startDate AND Date(sui.created_at) <= :endDate )
+	ELSE
+		sui.stakeholder_company_id = :companyId
 	END
-	OR
-	CASE WHEN :action = 'FILTER' THEN
-		sui.created_at >= :startDate OR sui.created_at >= :endDate
-	END
-)
 
 AND (
         sui.`status` = 0
@@ -41,6 +40,8 @@ AND (
                 AND suin.invite_stakeholder_user_id = sui.invite_stakeholder_user_id
             ) > 1
 	)
+
+
 
 AND NOT EXISTS (SELECT * FROM users u where u.email = sui.invite_from)
 ORDER BY sui.created_at DESC

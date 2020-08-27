@@ -39,6 +39,9 @@ public class CustomJWTEnhancer implements TokenEnhancer {
     @Override
     public OAuth2AccessToken enhance(OAuth2AccessToken accessToken, OAuth2Authentication authentication) {
 
+        if (authentication.getName().equals(environment.getProperty("spring.back-office.client-id")))
+            return accessToken;
+
         Map<String, Object> additionalInfo = new HashMap<>();
 
         var userPrinciple = (UserPrinciple) authentication.getPrincipal();
@@ -47,7 +50,7 @@ public class CustomJWTEnhancer implements TokenEnhancer {
         additionalInfo.put("userId", user.getId());
         additionalInfo.put("stakeholderId", user.getStakeHolderUser().getId());
         additionalInfo.put("fullName", user.getStakeHolderUser().getLastName() + " " + user.getStakeHolderUser().getFirstName());
-//        additionalInfo.put("username", user.getUsername());
+        additionalInfo.put("userType", "skyuser");
 
         if (company != null) {
 
@@ -63,10 +66,10 @@ public class CustomJWTEnhancer implements TokenEnhancer {
 
             additionalInfo.put("profile", environment.getProperty("spring.awsImageUrl.companyProfile") + "medium/" + profile);
             additionalInfo.put("profileItinerary", environment.getProperty("spring.awsImageUrl.companyProfile") + "origin/" + profileItenery);
-
+            additionalInfo.put("userType", company.getStatus() == 1 ? "skyowner" : "skystaff");
         }
 
-        additionalInfo.put("userType", user.getStakeHolderUser().getIsSkyowner() == 0 ? "skyuser" : "skyowner");
+
 
         ((DefaultOAuth2AccessToken) accessToken).setAdditionalInformation(additionalInfo);
         return accessToken;

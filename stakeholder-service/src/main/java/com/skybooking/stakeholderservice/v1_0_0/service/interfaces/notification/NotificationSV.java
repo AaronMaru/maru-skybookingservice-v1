@@ -11,6 +11,7 @@ import java.util.List;
 public interface NotificationSV {
 
     void removeNF(Long id);
+    NotificationDetailRS readable(Long id);
     NotificationPagingRS getNotifications();
     NotificationDetailRS detailNotification(Long id);
 

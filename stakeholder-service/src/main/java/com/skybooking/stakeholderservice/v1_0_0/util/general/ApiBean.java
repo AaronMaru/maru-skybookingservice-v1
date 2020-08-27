@@ -295,8 +295,7 @@ public class ApiBean {
      */
     public String getPlatform() {
         String url = requests.getRequestURL().toString();
-        String[] splitUrl = url.split("/");
-        if (splitUrl[3].substring(0,2).equals("wv")) {
+        if (url.contains("/wv")) {
             return "web";
         }
         return "mobile";

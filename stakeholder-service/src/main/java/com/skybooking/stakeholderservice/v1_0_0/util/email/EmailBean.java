@@ -1,10 +1,14 @@
 package com.skybooking.stakeholderservice.v1_0_0.util.email;
 
+import com.skybooking.stakeholderservice.config.TwilioConfig;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.mail.MailScriptLocaleTO;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.mail.MultiLanguageNQ;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.mail.MultiLanguageTO;
 import com.skybooking.stakeholderservice.v1_0_0.util.header.HeaderBean;
 import com.skybooking.stakeholderservice.v1_0_0.util.localization.LocalizationBean;
+import com.twilio.Twilio;
+import com.twilio.rest.api.v2010.account.Message;
+import com.twilio.type.PhoneNumber;
 import freemarker.template.Configuration;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.validator.routines.EmailValidator;
@@ -19,6 +23,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import javax.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,6 +50,14 @@ public class EmailBean {
     @Autowired
     private LocalizationBean localizationBean;
 
+    @Autowired
+    private TwilioConfig twilioConfig;
+
+    @PostConstruct
+    public void init() {
+        Twilio.init(twilioConfig.getAccountSID(), twilioConfig.getAuthToken());
+    }
+
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Send email and sms
@@ -57,6 +70,7 @@ public class EmailBean {
 
 
         boolean validEmail = EmailValidator.getInstance().isValid(mailTemplateData.get("receiver").toString());
+
         if (NumberUtils.isNumber(mailTemplateData.get("receiver").toString().replaceAll("[+]", ""))) {
 
             String link = "";
@@ -65,8 +79,11 @@ public class EmailBean {
             }
 
             mailTemplateData.put("message", sendSMS(message, Integer.parseInt(mailTemplateData.get("code").toString()), link));
+
             jmsTemplate.convertAndSend(STAKE_HOLDER_SMS, mailTemplateData);
+
             return true;
+
         } else if (validEmail) {
             jmsTemplate.convertAndSend(STAKE_HOLDER_EMAIL, mailTemplateData);
             return true;
@@ -116,23 +133,15 @@ public class EmailBean {
      */
     public void sms(Map<String, Object> data) {
 
-        RestTemplate restAPi = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-        MultiValueMap<String, String> map = new LinkedMultiValueMap<String, String>();
-        map.add("username", environment.getProperty("spring.sms.username"));
-        map.add("pass", environment.getProperty("spring.sms.pass"));
-        map.add("sender", environment.getProperty("spring.sms.sender"));
-        map.add("cd", environment.getProperty("spring.sms.cd"));
-        map.add("smstext", data.get("message").toString());
-        map.add("isflash", environment.getProperty("spring.sms.isflash"));
-        map.add("gsm", data.get("receiver").toString());
-        map.add("int", environment.getProperty("spring.sms.int"));
+        PhoneNumber receiver = new PhoneNumber("+" + data.get("receiver").toString());
 
-        HttpEntity<MultiValueMap<String, String>> requestSMS = new HttpEntity<>(map, headers);
-        restAPi.exchange(environment.getProperty("spring.sms.url"), HttpMethod.POST, requestSMS, String.class)
-                .getBody();
+        PhoneNumber sender = new PhoneNumber(twilioConfig.getPhoneNumber());
+
+        String body = data.get("message").toString();
+
+        Message message = Message.creator(receiver, sender, body).create();
+
 
     }
 

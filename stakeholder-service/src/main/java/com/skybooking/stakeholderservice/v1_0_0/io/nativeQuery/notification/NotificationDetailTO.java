@@ -16,6 +16,7 @@ public class NotificationDetailTO {
     private String tripType;
     private String title;
     private String description;
+    private int readable;
     private String notiIcon;
     private Integer skyuserId;
     private Integer companyId;

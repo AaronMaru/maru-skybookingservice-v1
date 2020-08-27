@@ -1,22 +1,15 @@
 package com.skybooking.staffservice.v1_0_0.util.general;
 
 import com.skybooking.staffservice.exception.httpstatus.ConflictException;
-import com.skybooking.staffservice.v1_0_0.io.enitity.company.StakeholderUserHasCompanyEntity;
 import com.skybooking.staffservice.v1_0_0.io.enitity.user.StakeholderUserInvitationEntity;
-import com.skybooking.staffservice.v1_0_0.io.repository.company.CompanyHasUserRP;
 import com.skybooking.staffservice.v1_0_0.io.repository.users.StakeholderUserInvitationRP;
 import com.skybooking.staffservice.v1_0_0.ui.model.request.FilterRQ;
 import com.skybooking.staffservice.v1_0_0.util.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class GeneralBean {
-
-    @Autowired
-    private CompanyHasUserRP companyHasUserRP;
 
     @Autowired
     private StakeholderUserInvitationRP invitationRP;

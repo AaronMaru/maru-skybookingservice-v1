@@ -11,6 +11,9 @@ import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserLanguageEnti
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.verify.VerifyUserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.notification.NotificationNQ;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.notification.ScriptingTO;
+import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.user.PaymentUserInfoTO;
+import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.user.UserNQ;
+import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.user.UserReferenceTO;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyHasUserRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.country.CountryRP;
@@ -114,13 +117,16 @@ public class UserIP implements UserSV {
     private NotificationNQ notificationNQ;
 
     @Autowired
+    private UserNQ userNQ;
+
+    @Autowired
     private HeaderBean headerBean;
 
     @Autowired
     private UserLanguageRP userLanguageRP;
 
     @Autowired
-    private HttpServletRequest httpServletRequest;
+    private HttpServletRequest request;
 
 
     /**
@@ -440,7 +446,7 @@ public class UserIP implements UserSV {
     public void changeLanguage(ChangeLanguageRQ changeLanguageRQ) {
 
         UserEntity user = userBean.getUserPrincipal();
-        FilterRQ filterRQ = new FilterRQ(httpServletRequest, jwtUtils.getUserToken());
+        FilterRQ filterRQ = new FilterRQ(request, jwtUtils.getUserToken());
 
         var userLanguage = userLanguageRP.findBySkyuserIdAndDeviceIdAndCompanyIdIsNull(user.getStakeHolderUser().getId(), changeLanguageRQ.getDeviceId());
         if (filterRQ.getCompanyHeaderId() != null) {
@@ -551,15 +557,16 @@ public class UserIP implements UserSV {
             throw new BadRequestException("sth_w_w", null);
         }
 
-        invitation.setStatus(optionStaffRQ.getStatus());
-        invitationsRP.save(invitation);
-
-        String scriptKey = optionStaffRQ.getStatus().equals(1) ? "staff_accept" : "staff_reject";
-
         if (optionStaffRQ.getStatus().equals(1)) {
+            invitation.setStatus(optionStaffRQ.getStatus());
+            invitationsRP.save(invitation);
             skyownerBean.addStaff(invitation, user.getStakeHolderUser().getId());
         }
+        if (optionStaffRQ.getStatus().equals(2)) {
+            invitationsRP.delete(invitation);
+        }
 
+        String scriptKey = optionStaffRQ.getStatus().equals(1) ? "staff_accept" : "staff_reject";
         sendNotifyToallStaff(invitation.getStakeholderCompanyId(), scriptKey);
 
     }
@@ -574,6 +581,7 @@ public class UserIP implements UserSV {
             HashMap<String, Object> scriptData = new HashMap<>();
             scriptData.put("playerId", data.getPlayerId());
             scriptData.put("noInsert", "");
+            scriptData.put("skyuserId", data.getSkyuserId().longValue());
             scriptData.put("scriptKey", script);
             scriptData.put("companyId", companyId);
             notification.sendMessageToUsers(scriptData);
@@ -588,6 +596,39 @@ public class UserIP implements UserSV {
         storeNotify.forEach(data -> {
             notification.addNotificationHisitory(null, data.getScriptId(), data.getSkyuserId(), companyId);
         });
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Getting a user reference
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param userReferenceRQ
+     * @Return UserReferenceRS
+     */
+    public UserReferenceRS userReference(Long skyuserId) {
+
+        UserReferenceTO userReferenceTO = userNQ.stakeholderInfo(skyuserId);
+
+        String companyId = request.getHeader("X-CompanyId");
+
+        if (companyId!= null && !companyId.isEmpty()) {
+            userReferenceTO = userNQ.companyInfo(skyuserId, Long.valueOf(companyId));
+        }
+
+        UserReferenceRS userReference = new UserReferenceRS();
+        if (userReferenceTO != null) {
+            BeanUtils.copyProperties(userReferenceTO, userReference);
+        }
+
+        return userReference;
+    }
+
+    @Override
+    public PaymentUserInfoTO paymentUserReference(Long skyUserId) {
+
+        return userNQ.paymentUserInfo(skyUserId);
+
     }
 
 
@@ -634,25 +675,6 @@ public class UserIP implements UserSV {
 
         return data;
     }
-
-
-    /**
-     * -----------------------------------------------------------------------------------------------------------------
-     * Delete user
-     * -----------------------------------------------------------------------------------------------------------------
-     *
-     * @Param username
-     */
-//    public void deleteUser(String username, String code) {
-//
-//        var user = userRepository.findByEmailOrPhone(username, code);
-//        if (user == null) {
-//            throw new BadRequestException("The user dose not exists", null);
-//        }
-//
-//        var skyuser = Sta
-//
-//    }
 
 
 }

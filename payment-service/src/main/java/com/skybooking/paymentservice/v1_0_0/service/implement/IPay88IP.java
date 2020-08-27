@@ -3,6 +3,8 @@ package com.skybooking.paymentservice.v1_0_0.service.implement;
 import com.skybooking.paymentservice.v1_0_0.client.flight.action.FlightAction;
 import com.skybooking.paymentservice.v1_0_0.client.flight.ui.request.FlightPaymentFailureRQ;
 import com.skybooking.paymentservice.v1_0_0.io.nativeQuery.paymentMethod.PaymentNQ;
+import com.skybooking.paymentservice.v1_0_0.ui.model.request.PaymentHotelRQ;
+import com.skybooking.paymentservice.v1_0_0.ui.model.request.PaymentPointRQ;
 import com.skybooking.paymentservice.v1_0_0.ui.model.request.PaymentRQ;
 import com.skybooking.paymentservice.v1_0_0.ui.model.response.UrlPaymentRS;
 import com.skybooking.paymentservice.v1_0_0.util.classse.CardInfo;
@@ -40,7 +42,6 @@ public class IPay88IP {
         return payments.getPaymentUrl(paymentRQ, "ipay88/form");
     }
 
-
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * IPay88 verification
@@ -52,11 +53,11 @@ public class IPay88IP {
      */
     protected Boolean verifyPayment(Map<String, Object> request, BigDecimal amount) {
 
-        if ( !(request.containsKey("Signature")
+        if (!(request.containsKey("Signature")
                 && request.containsKey("Status")
                 && request.containsKey("Amount")
                 && request.containsKey("RefNo")
-                && request.containsKey("PaymentId")) ) {
+                && request.containsKey("PaymentId"))) {
 
             return false;
         }
@@ -110,4 +111,16 @@ public class IPay88IP {
 
     }
 
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Generate payment url for IPAY88
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param paymentRQ
+     * @return
+     */
+    protected UrlPaymentRS getRequestUrlPoint(PaymentPointRQ paymentRQ) {
+        return payments.getPaymentUrlPoint(paymentRQ, "ipay88/form");
+    }
 }

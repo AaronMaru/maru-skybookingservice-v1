@@ -38,6 +38,32 @@ spring:
         port: 6379
         password:
 
+    awsImage:
+            url: s3.amazonaws.com
+            region: us-east-1
+            bucket: skybooking
+            pdfUrl: /uploads/development/booking/
+            key: AKIAJEC5JZZKMU7GNCFQ
+            secret: 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
+            visibility: public
+
+    awsImageUrl:
+        mailTemplate: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/mail/images/
+
+    email:
+        host: mail.smtp2go.com
+        username: developer@skybooking.info
+        password: bnFnYTRyNG5sOHQw
+        port: 587
+        driver: smtp
+        encryption: tls
+        from-address: developer@skybooking.info
+        from-name: Skybooking
+        properties.mail.smtp:
+            auth: true
+            starttls.enable: true
+            ssl.trust: smtp.gmail.
+
 native-query:
     package-scan: com.skybooking.skyflightservice
 

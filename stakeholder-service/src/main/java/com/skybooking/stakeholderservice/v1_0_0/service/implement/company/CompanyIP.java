@@ -5,6 +5,9 @@ import com.skybooking.stakeholderservice.exception.httpstatus.BadRequestExceptio
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.company.*;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.contact.ContactEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserEntity;
+import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.company.CompanyDetailsTO;
+import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.company.CompanyNQ;
+import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.company.CompanyTO;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.*;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.contact.ContactRP;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.company.CompanySV;
@@ -21,7 +24,10 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CompanyIP implements CompanySV {
@@ -59,6 +65,8 @@ public class CompanyIP implements CompanySV {
     @Autowired
     private HeaderBean headerBean;
 
+    @Autowired
+    private CompanyNQ companyNQ;
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -156,34 +164,34 @@ public class CompanyIP implements CompanySV {
     public List<ContactEntity> updateContacts(StakeholderCompanyEntity company, CompanyUpdateRQ companyRQ) {
 
         List<ContactEntity> contacts = contactRP.getContactCM(company.getId());
-        for (ContactEntity contact: contacts) {
+        for (ContactEntity contact : contacts) {
             switch (contact.getType()) {
-                case "p" :
+                case "p":
                     if (companyRQ.getPhone() != null && !companyRQ.getPhone().equals("")) {
                         contact.setValue(companyRQ.getCode() + "-" + companyRQ.getPhone());
                     }
                     break;
-                case "a" :
+                case "a":
                     if (companyRQ.getAddress() != null && !companyRQ.getAddress().equals("")) {
                         contact.setValue(companyRQ.getAddress());
                     }
                     break;
-                case "e" :
+                case "e":
                     if (companyRQ.getEmail() != null && !companyRQ.getEmail().equals("")) {
                         contact.setValue(companyRQ.getEmail());
                     }
                     break;
-                case "w" :
+                case "w":
                     if (companyRQ.getWebsite() != null && !companyRQ.getWebsite().equals("")) {
                         contact.setValue(companyRQ.getWebsite());
                     }
                     break;
-                case "z" :
+                case "z":
                     if (companyRQ.getPostalOrZipCode() != null && !companyRQ.getPostalOrZipCode().equals("")) {
                         contact.setValue(companyRQ.getPostalOrZipCode());
                     }
                     break;
-                case "c" :
+                case "c":
                     if (companyRQ.getCity() != null && !companyRQ.getCity().equals("")) {
                         contact.setValue(companyRQ.getCity());
                     }
@@ -305,6 +313,34 @@ public class CompanyIP implements CompanySV {
         }
 
         return BussinessDocsRS;
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Get Company Info for Top Up offline
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param keyword
+     * @Return List<CompanyTO>
+     */
+    @Override
+    public List<CompanyTO> listCompany(String keyword) {
+
+        return companyNQ.companyInfoTopUp(keyword);
+
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Get Company details Info for Top Up offline
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param keyword
+     * @Return CompanyDetailsTO
+     */
+    @Override
+    public CompanyDetailsTO companyDetail(String companyCode) {
+        return companyNQ.companyInfoDetailsTopUp(companyCode);
     }
 
 

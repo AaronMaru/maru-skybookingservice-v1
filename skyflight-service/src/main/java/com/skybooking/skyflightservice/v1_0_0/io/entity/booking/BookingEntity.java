@@ -147,6 +147,15 @@ public class BookingEntity {
     @Column(name = "status")
     private Integer status;
 
+    @Column(name = "is_additional")
+    private Integer isAdditional;
+
+    @Column(name = "is_offline_booking")
+    private Integer isOfflineBooking;
+
+    @Column(name = "reference_code")
+    private String referenceCode;
+
     @Column(name = "created_by")
     private String createdBy;
 

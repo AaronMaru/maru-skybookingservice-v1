@@ -6,49 +6,6 @@ spring:
     config:
       uri: http://192.168.2.4:8888
 
-
-  sms:
-    url: https://api.mekongsms.com/api/postsms.aspx
-    username: pathfinder_otp@mekongnet
-    pass: 98b7d5e059b3814ef3bdcfff750061bd
-    sender: skybooking
-    cd: 203.189.151.167
-    isflash: 0
-    int: 1
-
-  email:
-    host: email-smtp.us-east-1.amazonaws.com
-    username: AKIARX6S32NWTESX6HPL
-    password: BCcrVRjYcQW+EQcGv5c82wniS82SqxGW8SgC8Cls1PSv
-    port: 587
-    driver: smtp
-    encryption: tls
-    from-address: no-reply@skybooking.info
-    from-name: Skybooking
-    code: sky-booking
-    properties.mail.smtp:
-      auth: true
-      starttls.enable: true
-      ssl.trust: smtp.gmail.
-
-  awsImage:
-    url: s3.amazonaws.com
-    region: us-east-1
-    bucket: skybooking
-    key: AKIAJEC5JZZKMU7GNCFQ
-    secret: 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
-    visibility: public
-  awsImageUrl:
-    mailTemplate: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/mail/images/
-
-
 native-query:
   package-scan: com.skybooking.staffservice
 
-security:
-  oauth2:
-    resource:
-      jwt:
-        key-value: as466gfsuntaaaak
-link:
-  expire: 60

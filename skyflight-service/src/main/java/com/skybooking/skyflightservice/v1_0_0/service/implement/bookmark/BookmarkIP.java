@@ -5,7 +5,6 @@ import com.skybooking.skyflightservice.constant.UserConstant;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.bookmark.FlightSaveOriginDestinationEntity;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.bookmark.FlightSavesEntity;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.shopping.Leg;
-import com.skybooking.skyflightservice.v1_0_0.io.entity.shopping.LegSegmentDetail;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.AirlineNQ;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.FlightLocationNQ;
 import com.skybooking.skyflightservice.v1_0_0.io.nativeQuery.shopping.MarkupNQ;
@@ -29,7 +28,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
@@ -86,19 +84,50 @@ public class BookmarkIP implements BookmarkSV {
         var query = querySV.flightShoppingById(bookmarkCreateRQ.getRequest()).getQuery();
 
         var directions = query
-            .getLegs()
-            .stream()
-            .map(flightLeg -> flightLeg.getOrigin().concat("-").concat(flightLeg.getDestination()))
-            .collect(Collectors.joining("~"));
+                .getLegs()
+                .stream()
+                .map(flightLeg -> flightLeg.getOrigin().concat("-").concat(flightLeg.getDestination()))
+                .collect(Collectors.joining("~"));
 
         var flightDepartureDate = query
-            .getLegs()
-            .stream()
-            .map(flightLeg -> flightLeg.getDate().format(DateTimeFormatter.ofPattern("yyMMdd")))
-            .findFirst()
-            .get();
+                .getLegs()
+                .stream()
+                .map(flightLeg -> flightLeg.getDate().format(DateTimeFormatter.ofPattern("yyMMdd")))
+                .findFirst()
+                .get();
 
-        try (Stream<FlightSavesEntity> foundBookmarkFlights = flightSavesRP.findAllByUserId(authenticationMetaTA.getStakeholderId())) {
+        var companyId = authenticationMetaTA.getCompanyId();
+        var userId = authenticationMetaTA.getStakeholderId();
+
+        // filter by company id
+        if (companyId != null && companyId != 0) {
+
+            try (Stream<FlightSavesEntity> foundBookmarkFlights = flightSavesRP.findAllByCompanyId(companyId)) {
+                return foundBookmarkFlights.filter(flightSavesEntity -> {
+                    var tagDirection = flightSavesEntity.getTagId().split("@")[1];
+                    var departureDate = flightSavesEntity.getTagId().split(":")[3];
+                    var operatedAirline = flightSavesEntity.getTagId().split("@")[2];
+                    var operatedFlightTypeAirline = flightSavesEntity.getTagId().split(":")[0];
+
+                    var bookmarkedAirline = bookmarkCreateRQ.getItinerary().split("@")[2];
+                    var flightTypeAirline = bookmarkCreateRQ.getItinerary().split(":")[0];
+
+                    boolean isBookmarkFlightDirectionAndType = directions.equalsIgnoreCase(tagDirection) && operatedFlightTypeAirline.equalsIgnoreCase(flightTypeAirline) && departureDate.equals(flightDepartureDate);
+
+                    if (flightSavesEntity.getTripType().equalsIgnoreCase(query.getTripType().toString()) && flightSavesEntity.getClassCode().equalsIgnoreCase(query.getClassType()) && flightSavesEntity.getCompanyId().equals(authenticationMetaTA.getCompanyId())) {
+                        if (isBookmarkFlightDirectionAndType) {
+                            return operatedAirline.equalsIgnoreCase(bookmarkedAirline);
+                        }
+                    }
+
+                    return false;
+
+                }).collect(Collectors.toList());
+            }
+        }
+
+        // filter by user id
+        try (Stream<FlightSavesEntity> foundBookmarkFlights = flightSavesRP.findAllByUserId(userId)) {
 
             return foundBookmarkFlights.filter(flightSavesEntity -> {
 
@@ -112,30 +141,19 @@ public class BookmarkIP implements BookmarkSV {
 
                 boolean isBookmarkFlightDirectionAndType = directions.equalsIgnoreCase(tagDirection) && operatedFlightTypeAirline.equalsIgnoreCase(flightTypeAirline) && departureDate.equals(flightDepartureDate);
 
-                if (authenticationMetaTA.getCompanyId() != null) {
-
-                    if (flightSavesEntity.getTripType().equalsIgnoreCase(query.getTripType().toString()) && flightSavesEntity.getClassCode().equalsIgnoreCase(query.getClassType()) && flightSavesEntity.getCompanyId().equals(authenticationMetaTA.getCompanyId())) {
+                if (flightSavesEntity.getCompanyId().equals(0)) {
+                    if (flightSavesEntity.getTripType().equalsIgnoreCase(query.getTripType().toString()) && flightSavesEntity.getClassCode().equalsIgnoreCase(query.getClassType())) {
                         if (isBookmarkFlightDirectionAndType) {
                             return operatedAirline.equalsIgnoreCase(bookmarkedAirline);
                         }
                     }
-
-                } else {
-
-                    if (flightSavesEntity.getCompanyId().equals(0)) {
-                        if (flightSavesEntity.getTripType().equalsIgnoreCase(query.getTripType().toString()) && flightSavesEntity.getClassCode().equalsIgnoreCase(query.getClassType())) {
-                            if (isBookmarkFlightDirectionAndType) {
-                                return operatedAirline.equalsIgnoreCase(bookmarkedAirline);
-                            }
-                        }
-                    }
-
                 }
 
                 return false;
 
             }).collect(Collectors.toList());
         }
+
 
     }
 
@@ -153,15 +171,15 @@ public class BookmarkIP implements BookmarkSV {
     public BookmarkCreateRS delete(String itinerary, List<FlightSavesEntity> bookmarks) {
 
         bookmarks
-            .stream()
-            .map(FlightSavesEntity::getId)
-            .forEach(bookmarkId -> {
+                .stream()
+                .map(FlightSavesEntity::getId)
+                .forEach(bookmarkId -> {
 
-                flightSaveOriginDestinationRP.deleteInBatch(flightSaveOriginDestinationRP.findAllByFlightSaveId(bookmarkId).collect(Collectors.toList()));
+                    flightSaveOriginDestinationRP.deleteInBatch(flightSaveOriginDestinationRP.findAllByFlightSaveId(bookmarkId).collect(Collectors.toList()));
 
-                flightSavesRP.deleteById(bookmarkId);
+                    flightSavesRP.deleteById(bookmarkId);
 
-            });
+                });
 
         return new BookmarkCreateRS(itinerary, "DELETED");
 
@@ -196,10 +214,10 @@ public class BookmarkIP implements BookmarkSV {
 
             // toggle to create
             var legs = itinerary
-                .getLowest()
-                .stream()
-                .map(leg -> detailSV.getLegDetail(bookmark.getRequest(), leg))
-                .collect(Collectors.toList());
+                    .getLowest()
+                    .stream()
+                    .map(leg -> detailSV.getLegDetail(bookmark.getRequest(), leg))
+                    .collect(Collectors.toList());
 
             var multiAirline = legs.stream().anyMatch(Leg::isMultiAir);
             var multiAirlineLogo = appConfig.getAIRLINE_LOGO_PATH() + "/air_multiple.png";
@@ -257,43 +275,43 @@ public class BookmarkIP implements BookmarkSV {
 
             // insert data into flight saved origin destination tables
             legs
-                .forEach(leg -> {
+                    .forEach(leg -> {
 
-                    var segments = FastList.newList(leg.getSegments());
+                        var segments = FastList.newList(leg.getSegments());
 
-                    var stop = leg.getStops();
+                        var stop = leg.getStops();
 
-                    var firstSegmentDetail = segments.getFirst();
-                    var firstSegment = detailSV.getSegmentDetail(bookmark.getRequest(), firstSegmentDetail.getSegment());
-                    var firstAirline = airlineNQ.getAirlineInformation(firstSegment.getAirline(), 1);
+                        var firstSegmentDetail = segments.getFirst();
+                        var firstSegment = detailSV.getSegmentDetail(bookmark.getRequest(), firstSegmentDetail.getSegment());
+                        var firstAirline = airlineNQ.getAirlineInformation(firstSegment.getAirline(), 1);
 
-                    var departure = flightLocationNQ.getFlightLocationInformation(leg.getDeparture(), 1);
-                    var arrival = flightLocationNQ.getFlightLocationInformation(leg.getArrival(), 1);
+                        var departure = flightLocationNQ.getFlightLocationInformation(leg.getDeparture(), 1);
+                        var arrival = flightLocationNQ.getFlightLocationInformation(leg.getArrival(), 1);
 
-                    var odEntity = new FlightSaveOriginDestinationEntity();
+                        var odEntity = new FlightSaveOriginDestinationEntity();
 
-                    odEntity.setOLocation(departure.getCode());
-                    odEntity.setOLocationName(departure.getCity());
-                    odEntity.setDDateTime(DateUtility.convertZonedDateTimeToDateTime(leg.getDepartureTime()));
+                        odEntity.setOLocation(departure.getCode());
+                        odEntity.setOLocationName(departure.getCity());
+                        odEntity.setDDateTime(DateUtility.convertZonedDateTimeToDateTime(leg.getDepartureTime()));
 
-                    odEntity.setDLocation(arrival.getCode());
-                    odEntity.setDLocationName(arrival.getCity());
-                    odEntity.setADateTime(DateUtility.convertZonedDateTimeToDateTime(leg.getArrivalTime()));
+                        odEntity.setDLocation(arrival.getCode());
+                        odEntity.setDLocationName(arrival.getCity());
+                        odEntity.setADateTime(DateUtility.convertZonedDateTimeToDateTime(leg.getArrivalTime()));
 
-                    odEntity.setAirlineCode(firstAirline.getCode());
-                    odEntity.setAirlineName(firstAirline.getAirbus());
-                    odEntity.setAirlineLogo45(appConfig.getAIRLINE_LOGO_PATH() + "/45/" + firstAirline.getLogo());
-                    odEntity.setAirlineLogo90(appConfig.getAIRLINE_LOGO_PATH() + "/90/" + firstAirline.getLogo());
+                        odEntity.setAirlineCode(firstAirline.getCode());
+                        odEntity.setAirlineName(firstAirline.getAirbus());
+                        odEntity.setAirlineLogo45(appConfig.getAIRLINE_LOGO_PATH() + "/45/" + firstAirline.getLogo());
+                        odEntity.setAirlineLogo90(appConfig.getAIRLINE_LOGO_PATH() + "/90/" + firstAirline.getLogo());
 
-                    odEntity.setElapsedTime(Long.valueOf(leg.getDuration()).intValue());
+                        odEntity.setElapsedTime(Long.valueOf(leg.getDuration()).intValue());
 
-                    odEntity.setFlightSaveId(bookmarkedFlight.getId());
-                    odEntity.setUserId(metadata.getUserId());
-                    odEntity.setStop(Long.valueOf(stop).intValue());
+                        odEntity.setFlightSaveId(bookmarkedFlight.getId());
+                        odEntity.setUserId(metadata.getUserId());
+                        odEntity.setStop(Long.valueOf(stop).intValue());
 
-                    flightSaveOriginDestinationRP.save(odEntity);
+                        flightSaveOriginDestinationRP.save(odEntity);
 
-                });
+                    });
 
             return new BookmarkCreateRS(bookmark.getItinerary(), "CREATED");
 
@@ -320,16 +338,16 @@ public class BookmarkIP implements BookmarkSV {
         try (Stream<FlightSavesEntity> foundBookmarkStream = flightSavesRP.findAllByUserId(userAuthenticationMetadata.getStakeholderId())) {
 
             var airlines = foundBookmarkStream
-                .filter(requestHasBookmarked(flightShoppingRQ, userAuthenticationMetadata.getCompanyId()))
-                .map(flightSavesEntity -> {
+                    .filter(requestHasBookmarked(flightShoppingRQ, userAuthenticationMetadata.getCompanyId()))
+                    .map(flightSavesEntity -> {
 
-                    var itineraryType = flightSavesEntity.getTagId().split(":")[0].equalsIgnoreCase("1");
-                    var airline = flightSavesEntity.getTagId().split("@")[2];
-                    return new BookmarkAirline(airline, itineraryType);
+                        var itineraryType = flightSavesEntity.getTagId().split(":")[0].equalsIgnoreCase("1");
+                        var airline = flightSavesEntity.getTagId().split("@")[2];
+                        return new BookmarkAirline(airline, itineraryType);
 
-                })
-                .distinct()
-                .collect(Collectors.toList());
+                    })
+                    .distinct()
+                    .collect(Collectors.toList());
 
             if (!airlines.isEmpty()) {
                 return airlines;
@@ -355,11 +373,11 @@ public class BookmarkIP implements BookmarkSV {
         return bookmark -> {
 
             var flightSchedules = shoppingRQ
-                .getLegs()
-                .stream()
-                .map(leg -> leg.getDate().format(DateTimeFormatter.ofPattern("yyMMdd")))
-                .findFirst()
-                .get();
+                    .getLegs()
+                    .stream()
+                    .map(leg -> leg.getDate().format(DateTimeFormatter.ofPattern("yyMMdd")))
+                    .findFirst()
+                    .get();
 
             if (companyId != null) {
 

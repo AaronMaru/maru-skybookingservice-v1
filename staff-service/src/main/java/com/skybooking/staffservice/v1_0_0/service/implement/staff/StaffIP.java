@@ -102,16 +102,12 @@ public class StaffIP implements StaffSV {
                 request.getParameter("endPRange") != null || request.getParameter("joinDate") != null ||
                 request.getParameter("joinStatus") != null
         ) {
-
             return "FILTER";
-
         } else if(request.getParameter("keyword") != null && !request.getParameter("keyword").equals("")) {
-
             return "SEARCH";
-
         }
-
         return "SEARCH";
+
     }
 
 

@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.27.0/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.27.0/moment-with-locales.min.js"></script>
     <style type="text/css">
         h1, h2, h3, h4, h5, h6, p, a, li {
             font-family: Muli,Roboto,RobotoDraft,Helvetica,Arial,sans-serif;
@@ -176,6 +179,10 @@
             margin-right: 5px;
         }
 
+        .rec-date span .bookingOn {
+            display: inline-block;
+        }
+
         @media print {
             .fight-details table th {
                 background: #EBEFF6 !important;
@@ -187,6 +194,7 @@
 </head>
 
 <body>
+<input type="hidden" id="pdfLang" name="pdfLang" value="${pdfLang}">
 <div class="container-fluid">
     <div class="logo-sec">
         <div class="back-logo">
@@ -220,7 +228,11 @@
                     </li>
                     <li>
                         <b>${booking_date??? then(booking_date, 'NO LABEL YET')}</b>
-                        <span>:&nbsp; ${data.bookingInfo.bookingDate?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["dd MMM YYYY"]}</span>
+                        <#if pdfLang == "zh">
+                            <span id="bookingOn" class="bookingOn">${data.bookingInfo.bookingDate?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["YYYY-MM-dd"]}</span>
+                        <#else>
+                            <span id="bookingOn" class="bookingOn">:&nbsp; ${data.bookingInfo.bookingDate?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["dd MMM YYYY"]}</span>
+                        </#if>
                     </li>
                 </ul>
             </div>
@@ -239,7 +251,11 @@
                         <#assign itinerarySegmentLast = itemItineraryInfo.itinerarySegment?last/>
                     <tr>
                         <td>${itinerarySegmentFirst.airlineCode}${itinerarySegmentFirst.flightNumber}${itinerarySegmentFirst.airlineRef??? then(' / ' + itinerarySegmentFirst.airlineRef, '')}</td>
-                        <td>${itinerarySegmentFirst.departureInfo.date?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["EEE, dd MMM YYYY"]}</td>
+                        <#if pdfLang == "zh">
+                            <td id="flightDetailDepartOn" class="flightDetailDepartOn">${itinerarySegmentFirst.departureInfo.date?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["yyyy-MM-dd"]}</td>
+                         <#else>
+                            <td id="flightDetailDepartOn" class="flightDetailDepartOn">${itinerarySegmentFirst.departureInfo.date?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["EEE, dd MMM YYYY"]}</td>
+                        </#if>
                         <td>${itinerarySegmentFirst.departureInfo.city}(${itinerarySegmentFirst.departureInfo.locationCode}) --- ${itinerarySegmentLast.arrivalInfo.city}(${itinerarySegmentLast.arrivalInfo.locationCode})</td>
                     </tr>
                 </#list>
@@ -260,8 +276,24 @@
                     <tr>
                         <td>${item.ticketNumber}</td>
                         <td>${item.lastName} / ${item.firstName}</td>
-                        <td>${item.passType}</td>
-                        <td>${data.bookingInfo.cabinName}</td>
+                        <#if item.passType == "ADT">
+                            <td style="text-transform: uppercase;">${adult??? then(adult, 'NO LABEL YET')}</td>
+                        <#elseif item.passType == "CNN">
+                            <td style="text-transform: uppercase;">${child??? then(child, 'NO LABEL YET')}</td>
+                        <#elseif item.passType == "INF">
+                            <td style="text-transform: uppercase;">${infant??? then(infant, 'NO LABEL YET')}</td>
+                        <#else>
+                            <td>NO LABEL YET</td>
+                        </#if>
+                        <#if data.bookingInfo.cabinName == "Economy">
+                            <td>${economy??? then(economy, 'NO LABEL YET')}</td>
+                        <#elseif data.bookingInfo.cabinName == "Business">
+                            <td>${business??? then(business, 'NO LABEL YET')}</td>
+                        <#elseif data.bookingInfo.cabinName == "First">
+                            <td>${first??? then(first, 'NO LABEL YET')}</td>
+                        <#else>
+                            <td>NO LABEL YET</td>
+                        </#if>
                     </tr>
                 </#list>
                 </tbody>
@@ -281,11 +313,11 @@
                 <#list data.priceInfo.priceBreakdown as item>
                     <tr>
                         <#if item.passType == "ADT">
-                            <td>ADULT</td>
+                            <td style="text-transform: uppercase;">${adult??? then(adult, 'NO LABEL YET')}</td>
                         <#elseif item.passType == "CNN">
-                            <td>CHILD</td>
-                        <#else>
-                            <td>INFANT</td>
+                            <td style="text-transform: uppercase;">${child??? then(child, 'NO LABEL YET')}</td>
+                        <#elseif item.passType == "INF">
+                            <td style="text-transform: uppercase;">${infant??? then(infant, 'NO LABEL YET')}</td>
                         </#if>
                         <td>USD ${item.baseFare}</td>
                         <td>USD ${item.totalTax}</td>
@@ -316,7 +348,11 @@
             </table>
         </div>
         <div class="rec-date">
-            <span><b>${e_receipt_issued_date??? then(e_receipt_issued_date, 'NO LABEL YET')} : </b> ${data.bookingInfo.bookingDate?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["dd MMM YYYY"]}</span>
+            <#if pdfLang == "zh">
+                <span><b>${e_receipt_issued_date??? then(e_receipt_issued_date, 'NO LABEL YET')}</b><span id="bookingOn" class="bookingOn">${data.bookingInfo.bookingDate?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["YYYY-MM-dd"]}</span></span>
+            <#else>
+                <span><b>${e_receipt_issued_date??? then(e_receipt_issued_date, 'NO LABEL YET')}: </b> <div id="bookingOn" class="bookingOn">${data.bookingInfo.bookingDate?datetime("yyyy-MM-dd'T'HH:mm:ssXXX")?string["dd MMM YYYY"]}</div></span>
+            </#if>
             <p>${e_receipt_issued_date_desc??? then(e_receipt_issued_date_desc, 'NO LABEL YET')}</p>
         </div>
         <div class="term-info">
@@ -331,5 +367,23 @@
         </div>
     </div>
 </div>
+<script>
+    $(document).ready(function(){
+
+        if ($('#pdfLang').val()=== "zh") {
+            moment.locale(moment.locale("zh-cn"));
+            $(".bookingOn").each(function() {
+                $(this).text(": " + moment($(this).text()).format('LL'));
+            });
+
+            $(".flightDetailDepartOn").each(function() {
+                $(this).text(moment($(this).text()).format('dddd, LL'));
+            });
+
+        }
+
+    });
+
+</script>
 </body>
 </html>

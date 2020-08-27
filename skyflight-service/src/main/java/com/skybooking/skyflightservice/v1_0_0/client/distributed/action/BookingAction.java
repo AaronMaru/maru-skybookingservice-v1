@@ -118,4 +118,21 @@ public class BookingAction {
         .bodyToMono(JsonNode.class)
         .block();
   }
+
+    public JsonNode getItinerary(String pnrCode) {
+        return client
+            .mutate()
+            .build()
+            .get()
+            .uri(
+                appConfig.getDISTRIBUTED_URI()
+                    + "/flight/"
+                    + appConfig.getDISTRIBUTED_VERSION()
+                    + "/booking/itinerary/"
+                    + pnrCode)
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
+            .retrieve()
+            .bodyToMono(JsonNode.class)
+            .block();
+    }
 }

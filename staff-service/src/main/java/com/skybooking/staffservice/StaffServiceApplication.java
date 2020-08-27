@@ -9,13 +9,23 @@ import com.skybooking.staffservice.v1_0_0.util.localization.LocalizationBean;
 import com.skybooking.staffservice.v1_0_0.util.notification.PushNotificationOptions;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 
+import javax.annotation.PostConstruct;
+import java.util.TimeZone;
+
 @SpringBootApplication
+@EnableConfigurationProperties
 public class StaffServiceApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(StaffServiceApplication.class, args);
+    }
+
+    @PostConstruct
+    public void init() {
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
     }
 
     @Bean

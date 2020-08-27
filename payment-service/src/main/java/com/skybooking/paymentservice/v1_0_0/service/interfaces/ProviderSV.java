@@ -1,6 +1,8 @@
 package com.skybooking.paymentservice.v1_0_0.service.interfaces;
 
+import com.skybooking.paymentservice.v1_0_0.ui.model.request.PaymentPointRQ;
 import com.skybooking.paymentservice.v1_0_0.ui.model.request.PaymentRQ;
+import com.skybooking.paymentservice.v1_0_0.ui.model.response.PaymentMethodAvailableRS;
 import com.skybooking.paymentservice.v1_0_0.ui.model.response.PaymentMethodRS;
 import com.skybooking.paymentservice.v1_0_0.ui.model.response.UrlPaymentRS;
 import org.springframework.stereotype.Service;
@@ -20,7 +22,6 @@ public interface ProviderSV {
      * @return
      */
     UrlPaymentRS getRequestUrl(PaymentRQ paymentRQ);
-
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -64,4 +65,31 @@ public interface ProviderSV {
      */
     String getPipayFailResponse(Map<String, Object> request);
 
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Get available payment methods available
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @return
+     */
+    List<PaymentMethodAvailableRS> getPaymentMethodsAvailable();
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Get available payment methods available by code
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @return
+     */
+    PaymentMethodAvailableRS getPaymentMethodsAvailableByCode(String code);
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Get request URL
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param paymentRQ
+     * @return
+     */
+    UrlPaymentRS getPointRequestUrl(PaymentPointRQ paymentRQ);
 }

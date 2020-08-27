@@ -10,6 +10,15 @@ spring:
     flight:
       url: http://127.0.0.1:7005
       version: /v1.0.0
+    point:
+      url: http://127.0.0.1:7007
+      version: /v1.0.0
+    hotel:
+      url: http://127.0.0.1:7006
+      version: /v1.0.0
+
+
+
   redis:
     host: 3.229.56.17
     port: 6379

@@ -22,7 +22,6 @@ public class BookingCodeValidator implements ConstraintValidator<BookingCodeVali
 
     @Override
     public boolean isValid(String bookingCode, ConstraintValidatorContext context) {
-
         context
             .buildConstraintViolationWithTemplate(this.message)
             .addConstraintViolation()

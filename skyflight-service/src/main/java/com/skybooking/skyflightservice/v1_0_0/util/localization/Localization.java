@@ -2,8 +2,10 @@ package com.skybooking.skyflightservice.v1_0_0.util.localization;
 
 import com.skybooking.skyflightservice.v1_0_0.io.entity.locale.TranslationEntity;
 import com.skybooking.skyflightservice.v1_0_0.io.repository.locale.TranslationRP;
+import com.skybooking.skyflightservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.skyflightservice.v1_0_0.util.header.HeaderBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 
 public class Localization {
 
@@ -48,9 +50,9 @@ public class Localization {
      * @Param data
      * @Return String
      */
-//    public ResRS resAPI(HttpStatus status, String message, Object data) {
-//        ResRS resAPI = new ResRS(status.value(), multiLanguageRes(message), data);
-//        return resAPI;
-//    }
+    public ResRS resAPI(HttpStatus status, String message, Object data) {
+        ResRS resAPI = new ResRS(status.value(), multiLanguageRes(message), data);
+        return resAPI;
+    }
 
 }

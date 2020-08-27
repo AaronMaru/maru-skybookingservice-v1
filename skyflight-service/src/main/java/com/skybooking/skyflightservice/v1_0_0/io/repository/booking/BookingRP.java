@@ -29,4 +29,10 @@ public interface BookingRP extends JpaRepository<BookingEntity, Integer> {
     List<BookingEntity> getBookingToCancelOwnerCron();
 
     BookingEntity findByBookingCode(String code);
+
+    @Query(value = "SELECT * FROM bookings WHERE reference_code = ?", nativeQuery = true)
+    BookingEntity getBookingByReferenceCode(String referenceCode);
+
+    @Query(value = "SELECT * FROM bookings WHERE itinerary_ref = ?", nativeQuery = true)
+    BookingEntity getBookingByItineraryRef(String itineraryRef);
 }

@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: skypoint-service
+
+  cloud:
+    config:
+      uri: http://192.168.2.4:8888
+
+  aws:
+    url: s3.amazonaws.com
+    region: us-east-1
+    bucket: dev-skypoint-v1
+    bucketUpload: dev-skypoint-v1
+    key: AKIARX6S32NWQ3RHNMPW
+    secret: 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
+    visibility: public
+
+    awsUrl:
+      upload: https://${spring.aws.bucket}.s3.amazonaws.com/uploads/
+
+
+  service:
+    payment:
+      url: http://192.168.2.4:7000/payment
+      version: /v1.0.0
+      new-version: /v1.0.1
+
+    stakeholder:
+      url: http://192.168.2.4:7000/stakeholder
+      version: /v1.0.0
+    event:
+      url: http://192.168.2.4:7000/event
+      version: /v1.0.0
+
+  onesignal:
+    apiKey: NDc3M2ViODAtZWJlMy00ZDJiLTk3NmUtMzI2NGJjNDVhODZi
+    appId: ed29332e-d5ca-4920-a17b-f502aaed2c98
+
+native-query:
+  package-scan: com.skybooking.skypointservice
+  file:
+    sufix: sql

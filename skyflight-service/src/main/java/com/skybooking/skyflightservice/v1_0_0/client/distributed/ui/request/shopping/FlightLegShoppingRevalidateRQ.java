@@ -2,6 +2,9 @@ package com.skybooking.skyflightservice.v1_0_0.client.distributed.ui.request.sho
 
 import lombok.Data;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Data
 public class FlightLegShoppingRevalidateRQ {
 
@@ -10,4 +13,8 @@ public class FlightLegShoppingRevalidateRQ {
     private String destination;
 
     private String departureDateTime;
+
+    private String departureWindow;
+
+    private List<String> airlines = new ArrayList<>();
 }

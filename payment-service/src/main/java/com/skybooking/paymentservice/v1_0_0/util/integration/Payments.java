@@ -2,9 +2,12 @@ package com.skybooking.paymentservice.v1_0_0.util.integration;
 
 
 import com.skybooking.paymentservice.v1_0_0.client.flight.ui.response.FlightMandatoryDataRS;
+import com.skybooking.paymentservice.v1_0_0.client.hotel.ui.response.HotelMandatoryDataRS;
 import com.skybooking.paymentservice.v1_0_0.io.enitity.PaymentEnitity;
 import com.skybooking.paymentservice.v1_0_0.io.repository.PaymentInfoRP;
 import com.skybooking.paymentservice.v1_0_0.io.repository.PaymentRP;
+import com.skybooking.paymentservice.v1_0_0.ui.model.request.PaymentHotelRQ;
+import com.skybooking.paymentservice.v1_0_0.ui.model.request.PaymentPointRQ;
 import com.skybooking.paymentservice.v1_0_0.ui.model.request.PaymentRQ;
 import com.skybooking.paymentservice.v1_0_0.ui.model.response.PaymentInfoRS;
 import com.skybooking.paymentservice.v1_0_0.ui.model.response.PaymentRS;
@@ -56,6 +59,27 @@ public class Payments {
         return urlPaymentRS;
 
     }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Get payment url
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param paymentRQ
+     * @param path
+     * @return
+     */
+    public UrlPaymentRS getPaymentUrl(PaymentHotelRQ paymentRQ, String path) {
+
+        paymentRQ.setToken(generalUtility.paymentEncodeHotel(paymentRQ));
+        var url_token = generalUtility.getBaseUrl() + path + "?token=" + generalUtility.tokenEncodeBase64(addUrlTokenHotel(paymentRQ).getToken());
+        UrlPaymentRS urlPaymentRS = new UrlPaymentRS();
+        urlPaymentRS.setUrlPayment(url_token);
+
+        return urlPaymentRS;
+
+    }
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -299,6 +323,31 @@ public class Payments {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
+     * Get payment information for input hidden
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param paymentRS
+     * @return
+     */
+    public PaymentRS getPaymentInfoHotel(PaymentRS paymentRS, FlightMandatoryDataRS mandatoryDataRS) {
+
+        var paymentInfo = getPaymentInfo(paymentRS.getPaymentCode());
+
+        paymentRS.setAmount(mandatoryDataRS.getAmount());
+        paymentRS.setDescription(mandatoryDataRS.getDescription());
+        paymentRS.setPaymentId(paymentInfo.getPaymentId());
+        paymentRS.setUserName(mandatoryDataRS.getName());
+        paymentRS.setUserEmail(mandatoryDataRS.getEmail());
+        paymentRS.setUserContact(mandatoryDataRS.getPhoneNumber());
+        paymentRS.setPlayerPhone(mandatoryDataRS.getPhoneNumber());
+
+        return paymentRS;
+
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
      * Get Payment method information
      * -----------------------------------------------------------------------------------------------------------------
      *
@@ -310,6 +359,80 @@ public class Payments {
         PaymentInfoRS paymentInfoRS = new PaymentInfoRS();
         BeanUtils.copyProperties(paymentInfoRP.getPaymentInfo(paymentCode), paymentInfoRS);
         return paymentInfoRS;
+
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Get payment url
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param paymentRQ
+     * @param path
+     * @return
+     */
+    public UrlPaymentRS getPaymentUrlPoint(PaymentPointRQ paymentRQ, String path) {
+
+        paymentRQ.setToken(generalUtility.paymentEncodePoint(paymentRQ));
+        var url_token = generalUtility.getBaseUrl() + path + "?token=" + generalUtility.tokenEncodeBase64(addUrlTokenPoint(paymentRQ).getToken());
+        UrlPaymentRS urlPaymentRS = new UrlPaymentRS();
+        urlPaymentRS.setUrlPayment(url_token);
+
+        return urlPaymentRS;
+
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Add payment information
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param paymentRQ
+     * @return
+     */
+    public PaymentRS addUrlTokenPoint(PaymentPointRQ paymentRQ) {
+
+        PaymentEnitity pay = new PaymentEnitity();
+
+        pay.setToken(paymentRQ.getToken());
+        pay.setBookingCode(paymentRQ.getBookingCode());
+        pay.setCallbackUrl(paymentRQ.getCallbackUrl());
+        pay.setRender(0);
+        pay.setPlatform(paymentRQ.getPlatform());
+        pay.setPaymentCode(paymentRQ.getPaymentCode());
+        pay.setProvider(paymentRQ.getProviderType());
+
+        PaymentRS paymentRS = new PaymentRS();
+        BeanUtils.copyProperties(paymentRP.save(pay), paymentRS);
+
+        return paymentRS;
+
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Add payment information
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param paymentRQ
+     * @return
+     */
+    public PaymentRS addUrlTokenHotel(PaymentHotelRQ paymentRQ) {
+
+        PaymentEnitity pay = new PaymentEnitity();
+
+        pay.setToken(paymentRQ.getToken());
+        pay.setBookingCode(paymentRQ.getBookingCode());
+        pay.setCallbackUrl(paymentRQ.getCallbackUrl());
+        pay.setRender(0);
+        pay.setPlatform(paymentRQ.getPlatform());
+        pay.setPaymentCode(paymentRQ.getPaymentCode());
+        pay.setProvider(paymentRQ.getProviderType());
+
+        PaymentRS paymentRS = new PaymentRS();
+        BeanUtils.copyProperties(paymentRP.save(pay), paymentRS);
+
+        return paymentRS;
 
     }
 

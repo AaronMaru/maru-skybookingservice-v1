@@ -20,4 +20,9 @@ public interface UserNQ extends NativeQuery {
     NationalityTO getNationality(@NativeQueryParam(value = "isoCountry") String isoCountry,
                                  @NativeQueryParam(value = "localId") Long localId);
 
+    UserReferenceTO stakeholderInfo(@NativeQueryParam(value = "skyuserId") Long skyuserId);
+    UserReferenceTO companyInfo(@NativeQueryParam(value = "skyuserId") Long skyuserId,
+                                @NativeQueryParam(value = "companyId") Long companyId);
+
+    PaymentUserInfoTO paymentUserInfo(@NativeQueryParam(value = "skyuserId") Long skyuserId);
 }

@@ -48,12 +48,12 @@ public class StaffControllerM {
         Object staffProfile = staffSV.staffProfile(id);
         return localization.resAPI(HttpStatus.OK,"res_succ", staffProfile);
     }
+
     @GetMapping("/staff-profile")
     public ResRS staffProfile() {
         Object staffProfile = staffSV.staffProfile(null);
         return localization.resAPI(HttpStatus.OK,"res_succ", staffProfile);
     }
-
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
