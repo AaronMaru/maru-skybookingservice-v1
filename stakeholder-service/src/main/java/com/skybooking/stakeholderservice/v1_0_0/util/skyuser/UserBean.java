@@ -5,6 +5,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.skybooking.stakeholderservice.constant.AwsPartConstant;
+import com.skybooking.stakeholderservice.constant.GrantTypeConstant;
 import com.skybooking.stakeholderservice.exception.httpstatus.BadRequestException;
 import com.skybooking.stakeholderservice.exception.httpstatus.InternalServerError;
 import com.skybooking.stakeholderservice.exception.httpstatus.UnauthorizedException;
@@ -208,7 +209,23 @@ public class UserBean {
         map.add("password", password);
         map.add("code", code);
         map.add("provider", provider);
-        map.add("grant_type", "password");
+        map.add("grant_type", GrantTypeConstant.PASSWORD);
+
+        TokenRS data = requestToken(map, credential);
+
+        return data;
+
+    }
+
+    public TokenRS getCredential(String username, String credential, String code, String provider) {
+
+        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+
+        map.add("username", username);
+        map.add("password", "");
+        map.add("provider", provider);
+        map.add("code", code);
+        map.add("grant_type", GrantTypeConstant.CLIENT_CREDENTIALS);
 
         TokenRS data = requestToken(map, credential);
 

@@ -2,19 +2,25 @@ package com.skybooking.skypointservice.v1_0_0.service.transaction;
 
 import com.skybooking.skypointservice.constant.ResponseConstant;
 import com.skybooking.skypointservice.httpstatus.BadRequestException;
-import com.skybooking.skypointservice.v1_0_0.client.stakeholder.model.response.BasicAccountInfoRS;
+import com.skybooking.skypointservice.httpstatus.InternalServerError;
+import com.skybooking.skypointservice.util.HeaderDataUtil;
+import com.skybooking.skypointservice.v1_0_0.client.stakeholder.model.response.BasicCompanyAccountInfoRS;
 import com.skybooking.skypointservice.v1_0_0.helper.AccountHelper;
+import com.skybooking.skypointservice.v1_0_0.helper.TopUpHelper;
 import com.skybooking.skypointservice.v1_0_0.io.entity.account.AccountEntity;
+import com.skybooking.skypointservice.v1_0_0.io.entity.config.ConfigUpgradeLevelEntity;
 import com.skybooking.skypointservice.v1_0_0.io.entity.transaction.TransactionContactInfoEntity;
 import com.skybooking.skypointservice.v1_0_0.io.entity.transaction.TransactionEntity;
-import com.skybooking.skypointservice.v1_0_0.io.nativeQuery.transaction.OfflineTopUpTransactionDetailTO;
-import com.skybooking.skypointservice.v1_0_0.io.nativeQuery.transaction.OnlineTopUpTransactionDetailTO;
-import com.skybooking.skypointservice.v1_0_0.io.nativeQuery.transaction.TransactionNQ;
+import com.skybooking.skypointservice.v1_0_0.io.entity.transaction.TransactionValueEntity;
+import com.skybooking.skypointservice.v1_0_0.io.nativeQuery.transaction.*;
 import com.skybooking.skypointservice.v1_0_0.io.repository.account.AccountRP;
+import com.skybooking.skypointservice.v1_0_0.io.repository.config.ConfigUpgradeLevelRP;
 import com.skybooking.skypointservice.v1_0_0.io.repository.transaction.TransactionContactInfoRP;
 import com.skybooking.skypointservice.v1_0_0.io.repository.transaction.TransactionRP;
+import com.skybooking.skypointservice.v1_0_0.io.repository.transaction.TransactionValueRP;
 import com.skybooking.skypointservice.v1_0_0.service.BaseServiceIP;
 import com.skybooking.skypointservice.v1_0_0.ui.model.request.transaction.TransactionRQ;
+import com.skybooking.skypointservice.v1_0_0.ui.model.response.PagingRS;
 import com.skybooking.skypointservice.v1_0_0.ui.model.response.StructureRS;
 import com.skybooking.skypointservice.v1_0_0.ui.model.response.transaction.*;
 import org.springframework.beans.BeanUtils;
@@ -42,16 +48,34 @@ public class TransactionIP extends BaseServiceIP implements TransactionSV {
     @Autowired
     private TransactionContactInfoRP transactionContactInfoRP;
 
+    @Autowired
+    private TransactionValueRP transactionValueRP;
+
+    @Autowired
+    private ConfigUpgradeLevelRP configUpgradeLevelRP;
+
+    @Autowired
+    private HeaderDataUtil headerDataUtil;
+
+    @Autowired
+    private TopUpHelper topUpHelper;
+
     @Override
     public StructureRS getTransactionDetail(TransactionRQ transactionRQ) {
         try {
-            TransactionEntity transaction = transactionRP.findByCode(transactionRQ.getCode());
-            if (transaction == null) {
-                throw new BadRequestException("Transaction code not found", null);
+            TransactionValueEntity transactionValue = transactionValueRP.findByCode(transactionRQ.getCode());
+            if (transactionValue == null) {
+                throw new BadRequestException("transaction_not_found", null);
             }
+
+            //========== Get transaction
+            TransactionEntity transaction = transactionRP.getOne(transactionValue.getTransactionId());
 
             //========= Get transaction contact info
             TransactionContactInfoEntity transactionContactInfo = transactionContactInfoRP.findByTransactionId(transaction.getId());
+            if (transactionContactInfo == null) {
+                throw new BadRequestException("transaction_contactInfo_not_found", null);
+            }
 
             TransactionRS transactionRS = new TransactionRS();
             BeanUtils.copyProperties(transaction, transactionRS);
@@ -67,7 +91,7 @@ public class TransactionIP extends BaseServiceIP implements TransactionSV {
             throw new BadRequestException(e.getMessage(), null);
         } catch (Exception e) {
             e.printStackTrace();
-            throw new BadRequestException("Unexpected error.", null);
+            throw new InternalServerError("unexpected_error", null);
         }
     }
 
@@ -83,29 +107,70 @@ public class TransactionIP extends BaseServiceIP implements TransactionSV {
             throw new BadRequestException(e.getMessage(), null);
         } catch (Exception e) {
             e.printStackTrace();
-            throw new BadRequestException("Unexpected error.", null);
+            throw new InternalServerError("unexpected_error", null);
         }
     }
 
     @Override
-    public StructureRS getOfflineTopUpTransactionDetail(HttpServletRequest httpServletRequest, TransactionRQ transactionRQ) {
+    public StructureRS getRecentTransaction(HttpServletRequest httpServletRequest, String userCode, Integer limit, Integer page) {
         try {
-            TransactionEntity transaction = transactionRP.findByCode(transactionRQ.getCode());
-            if (transaction == null) {
-                throw new BadRequestException("Transaction code not found", null);
+            String languageCode = headerDataUtil.languageCode(httpServletRequest);
+            List<AccountTransactionTO> recentTransactionList;
+            PagingRS pagesRS = new PagingRS();
+            if (limit != 0) {
+                Integer offset = (page - 1) * limit;
+                recentTransactionList = transactionNQ.getRecentTransactionByAccount(userCode, languageCode, limit, offset);
+
+                Long total = (long) transactionNQ.getAllRecentTransactionByAccount(userCode, languageCode).size();
+
+                Integer pages = (int) Math.ceil(total / Double.valueOf(limit));
+                pagesRS.setPage(page);
+                pagesRS.setSize(pages);
+                pagesRS.setTotals(total);
+
+            } else {
+                recentTransactionList = transactionNQ.getAllRecentTransactionByAccount(userCode, languageCode);
             }
 
+            return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, recentTransactionList, pagesRS);
+        } catch (BadRequestException e) {
+            e.printStackTrace();
+            throw new BadRequestException(e.getMessage(), null);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new InternalServerError("unexpected_error", null);
+        }
+    }
+
+    @Override
+    public StructureRS getOfflineTopUpTransactionDetail(HttpServletRequest httpServletRequest, String transactionCode) {
+        try {
+            String languageCode = headerDataUtil.languageCode(httpServletRequest);
+            TransactionValueEntity transactionValue = transactionValueRP.findByCode(transactionCode);
+            if (transactionValue == null) {
+                throw new BadRequestException("transaction_not_found", null);
+            }
+
+            //========== Get transaction
+            TransactionEntity transaction = transactionRP.getOne(transactionValue.getTransactionId());
             AccountEntity account = accountRP.getOne(transaction.getAccountId());
 
             //======= Hit api to get basic account info
-            BasicAccountInfoRS basicAccountInfo = accountHelper.getBasicAccountInfo(account.getUserCode(), httpServletRequest);
+            BasicCompanyAccountInfoRS basicAccountInfo = accountHelper.getBasicCompanyAccountInfo(
+                    account.getUserCode());
 
             AccountInfo accountInfo = new AccountInfo();
             BeanUtils.copyProperties(account, accountInfo);
+            //====== Get config level upgrade
+            ConfigUpgradeLevelEntity configUpgradeLevel = configUpgradeLevelRP.getRecordByFromValueAndToValueAndTypeAndLanguageCode(
+                    account.getSavedPoint(),
+                    account.getType(),
+                    languageCode
+            );
+            accountInfo.setLevelName(configUpgradeLevel.getLevelName());
 
-            TopUpInfo topUpInfo = new TopUpInfo();
-            BeanUtils.copyProperties(transaction, topUpInfo);
-            topUpInfo.setTransactionCode(transaction.getCode());
+            //======== Set topUpInfo response
+            TopUpInfo topUpInfo = topUpHelper.topUpInfo(transaction, transactionValue);
 
             OfflineTopUpTransactionDetailRS offlineTopUpTransactionDetailRS = new OfflineTopUpTransactionDetailRS();
             offlineTopUpTransactionDetailRS.setBasicAccountInfo(basicAccountInfo);
@@ -118,7 +183,7 @@ public class TransactionIP extends BaseServiceIP implements TransactionSV {
             throw new BadRequestException(e.getMessage(), null);
         } catch (Exception e) {
             e.printStackTrace();
-            throw new BadRequestException("Unexpected error.", null);
+            throw new InternalServerError("unexpected_error", null);
         }
     }
 
@@ -128,21 +193,27 @@ public class TransactionIP extends BaseServiceIP implements TransactionSV {
             List<OfflineTopUpTransactionDetailTO> topUpTransactionDetailTOList =
                     transactionNQ.searchOfflineTopUpTransaction(searchValue);
 
-            return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, topUpTransactionDetailTOList);
+            SearchOfflineTopUpTransactionRS searchOfflineTopUpTransactionRS = new SearchOfflineTopUpTransactionRS();
+            searchOfflineTopUpTransactionRS.setOfflineTopUpTransactionList(topUpTransactionDetailTOList);
+            return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, searchOfflineTopUpTransactionRS);
         } catch (BadRequestException e) {
             e.printStackTrace();
             throw new BadRequestException(e.getMessage(), null);
         } catch (Exception e) {
             e.printStackTrace();
-            throw new BadRequestException("Unexpected error.", null);
+            throw new InternalServerError("unexpected_error", null);
         }
     }
 
     @Override
-    public StructureRS getOnlineTopUpTransactionDetail(TransactionRQ transactionRQ) {
+    public StructureRS getOnlineTopUpTransactionDetail(String transactionCode) {
         try {
             OnlineTopUpTransactionDetailTO onlineTopUpTransactionDetailTO = transactionNQ.
-                    getOnlineTopUpTransactionDetail(transactionRQ.getCode());
+                    getOnlineTopUpTransactionDetail(transactionCode).orElse(null);
+
+            if (onlineTopUpTransactionDetailTO == null) {
+                throw new BadRequestException("transaction_not_found", null);
+            }
 
             OnlineTopUpTransactionDetailRS onlineTopUpTransactionDetailRS = new OnlineTopUpTransactionDetailRS();
             BeanUtils.copyProperties(onlineTopUpTransactionDetailTO, onlineTopUpTransactionDetailRS);
@@ -154,7 +225,34 @@ public class TransactionIP extends BaseServiceIP implements TransactionSV {
             throw new BadRequestException(e.getMessage(), null);
         } catch (Exception e) {
             e.printStackTrace();
-            throw new BadRequestException("Unexpected error.", null);
+            throw new InternalServerError("unexpected_error", null);
+        }
+    }
+
+    @Override
+    public StructureRS getPendingOfflineTopUpList(Integer page, Integer limit) {
+        try {
+            Integer offset = (page - 1) * limit;
+            List<PendingOfflineTopUpTransactionTO> pendingOfflineTransactionList = transactionNQ
+                    .getPendingOfflineTopUpList(limit, offset);
+
+            Long total = (long) transactionNQ.countAllPendingOfflineTopUpTransaction().size();
+
+            Integer pages = (int) Math.ceil(total / Double.valueOf(limit));
+            PagingRS pagingRS = new PagingRS();
+            pagingRS.setPage(page);
+            pagingRS.setSize(pages);
+            pagingRS.setTotals(total);
+
+            PendingOfflineTopUpTransactionRS pendingOfflineTopUpTransactionRS = new PendingOfflineTopUpTransactionRS();
+            pendingOfflineTopUpTransactionRS.setPendingOfflineTransactionList(pendingOfflineTransactionList);
+            return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, pendingOfflineTopUpTransactionRS, pagingRS);
+        } catch (BadRequestException e) {
+            e.printStackTrace();
+            throw new BadRequestException(e.getMessage(), null);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new InternalServerError("unexpected_error", null);
         }
     }
 

@@ -1,5 +1,5 @@
 SELECT
-	SUM(t.amount) AS amount,
+	IFNULL(SUM(t.amount), 0) AS amount,
 	t.account_id AS accountId
 FROM
 	transactions t

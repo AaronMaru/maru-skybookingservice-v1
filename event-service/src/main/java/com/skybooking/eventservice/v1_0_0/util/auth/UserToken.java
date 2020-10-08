@@ -8,4 +8,5 @@ public class UserToken {
     private Long stakeholderId;
     private Long companyId;
     private String userRole;
+    private String fullname;
 }

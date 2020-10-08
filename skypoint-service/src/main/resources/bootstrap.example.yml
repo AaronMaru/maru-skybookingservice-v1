@@ -16,7 +16,8 @@ spring:
     visibility: public
 
     awsUrl:
-      upload: https://${spring.aws.bucket}.s3.amazonaws.com/uploads/
+      upload: https://${spring.aws.bucket}.s3.amazonaws.com/uploads/offline-topup-file/
+      topUp: https://${spring.aws.bucket}.s3.amazonaws.com/uploads/topup-receipt/
 
 
   service:
@@ -35,6 +36,11 @@ spring:
   onesignal:
     apiKey: NDc3M2ViODAtZWJlMy00ZDJiLTk3NmUtMzI2NGJjNDVhODZi
     appId: ed29332e-d5ca-4920-a17b-f502aaed2c98
+
+  redis:
+    host: 172.17.0.2
+    port: 6379
+    password:
 
 native-query:
   package-scan: com.skybooking.skypointservice

@@ -1,12 +1,12 @@
 SELECT
-    t.code AS transactionCode,
-    t.amount,
+    tv.code AS transactionCode,
+    IFNULL(t.amount, 0) AS amount,
     t.created_at AS createdAt,
     t.created_by AS createdBy
 FROM
-    transactions t
+    transaction_values tv
 INNER JOIN
-    transaction_values tv ON tv.transaction_id  = t.id
+    transactions t ON t.id = tv.transaction_id
 WHERE
     t.status  = 'SUCCESS'
 AND
@@ -14,5 +14,5 @@ AND
 AND
     tv.transaction_type_code = 'TOP_UP'
 AND
-    t.code LIKE '%' :valueSearch '%'
+    tv.code LIKE '%' :valueSearch '%'
 ORDER BY t.id DESC

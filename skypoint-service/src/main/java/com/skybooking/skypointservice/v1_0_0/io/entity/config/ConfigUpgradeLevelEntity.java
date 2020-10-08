@@ -38,6 +38,9 @@ public class ConfigUpgradeLevelEntity {
     @Column(name = "verified")
     private Boolean verified;
 
+    @Column(name = "language_code")
+    private String languageCode;
+
     @Column(name = "created_by")
     private String createdBy;
 

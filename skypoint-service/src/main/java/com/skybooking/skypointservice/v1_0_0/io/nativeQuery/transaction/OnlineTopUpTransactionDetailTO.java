@@ -6,11 +6,12 @@ import java.math.BigDecimal;
 
 @Data
 public class OnlineTopUpTransactionDetailTO {
-    private String transactionCode;
-    private String transactionDate;
-    private BigDecimal pointAmount;
-    private BigDecimal totalPrice;
-    private BigDecimal paidPrice;
-    private BigDecimal earningExtra;
-    private String status;
+    protected String transactionCode;
+    protected String transactionDate;
+    protected BigDecimal topUpPoint;
+    protected BigDecimal earnedPoint;
+    protected BigDecimal totalPoint;
+    protected BigDecimal totalPrice;
+    protected BigDecimal paidPrice;
+    protected String status = "Successfully";
 }

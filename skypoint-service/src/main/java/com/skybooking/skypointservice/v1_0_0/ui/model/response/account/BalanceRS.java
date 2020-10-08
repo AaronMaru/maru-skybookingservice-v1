@@ -6,14 +6,14 @@ import java.math.BigDecimal;
 
 @Data
 public class BalanceRS {
-
     protected BigDecimal topup;
     protected BigDecimal withdrawal;
     protected BigDecimal earning;
     protected BigDecimal earningExtra;
     protected BigDecimal refund;
     protected BigDecimal balance;
+    protected BigDecimal savedPoint;
     protected String levelName;
-    protected String status;
+    protected String levelCode;
 
 }

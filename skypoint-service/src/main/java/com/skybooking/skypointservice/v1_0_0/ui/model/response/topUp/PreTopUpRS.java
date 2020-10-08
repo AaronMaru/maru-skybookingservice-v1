@@ -9,4 +9,5 @@ public class PreTopUpRS {
     private BigDecimal topUpSkyPoint;
     private BigDecimal earnSkyPoint;
     private BigDecimal totalSkyPoint;
+    private BigDecimal amountPayable;
 }

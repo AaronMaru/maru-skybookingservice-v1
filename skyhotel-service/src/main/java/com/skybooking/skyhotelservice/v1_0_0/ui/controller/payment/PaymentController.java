@@ -2,6 +2,7 @@ package com.skybooking.skyhotelservice.v1_0_0.ui.controller.payment;
 
 import com.skybooking.skyhotelservice.v1_0_0.service.payment.PaymentSV;
 import com.skybooking.skyhotelservice.v1_0_0.ui.controller.BaseController;
+import com.skybooking.skyhotelservice.v1_0_0.ui.model.request.payment.PaymentMailRQ;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.request.payment.PaymentMandatoryRQ;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.payment.PaymentMandatoryRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.payment.PaymentTransactionRQ;
@@ -49,6 +50,16 @@ public class PaymentController extends BaseController {
     @PostMapping("succeed")
     public void paymentSuccess(@RequestBody PaymentTransactionRQ paymentTransactionRQ) {
         paymentSV.updatePaymentSucceed(paymentTransactionRQ);
+    }
+
+    @PostMapping("payment-success")
+    public void mailPaymentSuccess(@RequestBody PaymentMailRQ paymentMailRQ) {
+        paymentSV.sendMailPaymentSuccess(paymentMailRQ);
+    }
+
+    @PostMapping("payment-info")
+    public void mailPaymentInfo(@RequestBody PaymentMailRQ paymentMailRQ) {
+        paymentSV.sendMailPaymentInfo(paymentMailRQ);
     }
 
 }

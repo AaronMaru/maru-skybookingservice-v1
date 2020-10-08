@@ -6,9 +6,10 @@ import java.math.BigDecimal;
 
 @Data
 public class AccountInfo {
-    private String levelName = "Blue";
-    private BigDecimal earning = BigDecimal.valueOf(0);
-    private BigDecimal earningExtra = BigDecimal.valueOf(0);
-    private BigDecimal savedPoint = BigDecimal.valueOf(0);
-    private BigDecimal balance = BigDecimal.valueOf(0);
+    protected String levelCode = "LEVEL1";
+    protected String levelName;
+    protected BigDecimal earning = BigDecimal.valueOf(0);
+    protected BigDecimal earningExtra = BigDecimal.valueOf(0);
+    protected BigDecimal savedPoint = BigDecimal.valueOf(0);
+    protected BigDecimal balance = BigDecimal.valueOf(0);
 }

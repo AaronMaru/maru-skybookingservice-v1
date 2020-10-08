@@ -8,13 +8,16 @@ import java.math.BigInteger;
 @Data
 public class TransactionHistoryDetailTO {
     protected BigInteger id;
-    protected String transactionId;
+    protected String transactionCode;
+    protected String transactionTypeCode;
     protected String transactionTypeName;
     protected String bookingId;
-    protected BigDecimal pointAmount;
-    protected BigDecimal earning;
-    protected BigDecimal amount;
+    protected BigDecimal topUpPoint;
+    protected BigDecimal earnedPoint;
+    protected BigDecimal totalPoint;
+    protected BigDecimal redeemedPoint;
     protected BigDecimal totalPrice;
-    protected String status;
+    protected BigDecimal paidPrice;
+    protected String status = "Successfully";
     protected String createdAt;
 }

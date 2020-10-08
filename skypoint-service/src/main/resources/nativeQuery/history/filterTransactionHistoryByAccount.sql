@@ -1,32 +1,38 @@
 SELECT
-    tv.id as id,
-	t.code AS transactionCode,
+    tv.id AS id,
+	tv.code AS transactionCode,
+	tv.transaction_type_code AS transactionTypeCode,
+	tt.name AS transactionTypeName,
 	CASE
-		WHEN tv.transaction_type_code = 'TOP_UP' THEN 'Top-Up Skypoint'
-		WHEN tv.transaction_type_code = 'EARNING_EXTRA' THEN 'Earning Skypoint from Top-Up'
-		WHEN tv.transaction_type_code = 'EARNING' THEN 'Earning Skypoint'
-		WHEN tv.transaction_type_code = 'WITHDRAWAL' AND t.transaction_for = 'FLIGHT' THEN 'Redeemed Flight Booking'
-		WHEN tv.transaction_type_code = 'WITHDRAWAL' AND t.transaction_for = 'HOTEL' THEN 'Redeemed Hotel Booking'
-		WHEN tv.transaction_type_code = 'EARNING' THEN 'Earning Skypoint from Booking'
-	END AS transactionTypeName,
-	CASE
-		WHEN tv.transaction_type_code = 'EARNING_EXTRA' || tv.transaction_type_code = 'EARNING' THEN tv.earning_amount
-		WHEN tv.transaction_type_code = 'WITHDRAWAL' THEN tv.amount * (-1)
+		WHEN tv.transaction_type_code IN ('EARNED_HOTEL', 'EARNED_FLIGHT') THEN tv.earning_amount
+		WHEN tv.transaction_type_code IN ('REDEEMED_FLIGHT', 'REDEEMED_HOTEL') THEN tv.amount * (-1)
+	    WHEN tv.transaction_type_code = 'TOP_UP' THEN (tv.amount + (tv.amount * tv.extra_rate))
 	    ELSE tv.amount
-	END AS amount,
+	END AS totalPoint,
 	DATE_FORMAT(t.created_at, "%e %M %Y at %H:%m") as createdAt
 FROM
-	skypoint_db.transaction_values tv
+	transaction_values tv
 INNER JOIN
-	skypoint_db.transactions t ON t.id = tv.transaction_id
+	transactions t ON t.id = tv.transaction_id
 INNER JOIN
-	skypoint_db.account a on a.id = t.account_id
+	account a ON a.id = t.account_id
+INNER JOIN
+    transaction_types tt ON tt.code = tv.transaction_type_code
 WHERE
 	a.user_code = :userCode
 AND
     t.status = 'SUCCESS'
 AND
-	DATE(t.created_at) >= :startDate
+    tt.language_code = :languageCode
 AND
-	DATE(t.created_at) <= :endDate
+    CASE
+        WHEN :transactionTypeCode != 'all' THEN tv.transaction_type_code = :transactionTypeCode
+	    ELSE tv.transaction_type_code IN (SELECT code FROM transaction_types WHERE language_code = 'en' AND code != 'EARNED_EXTRA')
+	END
+AND
+	DATE(t.created_at) >= DATE(:startDate)
+AND
+	DATE(t.created_at) <= DATE(:endDate)
 ORDER BY t.id DESC
+LIMIT :limit
+OFFSET :offset

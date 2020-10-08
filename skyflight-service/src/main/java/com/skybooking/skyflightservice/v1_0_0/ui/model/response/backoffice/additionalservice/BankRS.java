@@ -7,6 +7,9 @@ import java.util.Date;
 
 @Data
 public class BankRS extends AdditionalItemRS {
+
     @JsonFormat(pattern="yyyy-MM-dd")
     private Date receivedDate;
+
+    private String number;
 }

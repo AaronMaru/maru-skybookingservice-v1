@@ -10,11 +10,13 @@
 					<img style="height: 60px;" src="${mailUrl}logo.png">
 				</div>
 
-
 				<div class="cnt-outer" style="display:block;font-size: 14px;text-align: justify;">
 					<p style="">${script??? then(script.subject, 'No template yet')}</p>
 				</div>
 
+				<#if hasTemplate?? >
+					<#include "${templateName}.ftl">
+				</#if>
 
 				<div class="logo-sec" style="background:#fff; clear:both; display:block;width: auto;margin: 0 auto;max-width:700px;padding:10px 20px;">
 					<div class="sec-cont" style="width:100%;box-shadow:0px 0px 15px #f5f5f5;margin:0 auto;background:#fff;">

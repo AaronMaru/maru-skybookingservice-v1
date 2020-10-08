@@ -11,4 +11,6 @@ public class Segment implements Serializable {
     private Air air;
     private int sequence;
     private int id;
+    @JsonProperty("Product")
+    private SegmentProduct product;
 }

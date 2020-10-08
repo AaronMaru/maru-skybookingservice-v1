@@ -10,5 +10,6 @@ public class RedeemPointRS {
     private BigDecimal redeem;
     private BigDecimal balance;
     private BigDecimal savedPoint;
+    private String levelCode;
     private String levelName;
 }

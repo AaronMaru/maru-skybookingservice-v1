@@ -45,7 +45,9 @@ public class GatewayConfig extends ResourceServerConfigurerAdapter {
                 "/back-office-point/v1.0.0/**/**/**",
                 "/event/v1.0.0/email/no-auth/**",
                 "/event/v1.0.0/notification/no-auth/**",
+                "/event/v1.0.0/email/**",
                 "/skypoint/v1.0.0/top-up/online/post/**",
+                "/skypoint/v1.0.0/transaction/detail",
                 "/stakeholder/v1.0.0/back-office/oauth/token/**"
             ).permitAll()
             .antMatchers(

@@ -6,6 +6,7 @@ import java.util.Date;
 
 @Data
 public class FilterTransactionHistoryRQ {
+    private String transactionTypeCode;
     private Date startDate;
     private Date endDate;
 }

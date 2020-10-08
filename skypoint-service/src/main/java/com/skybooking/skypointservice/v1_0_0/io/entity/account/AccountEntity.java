@@ -44,8 +44,8 @@ public class AccountEntity {
     @Column(name = "saved_point")
     private BigDecimal savedPoint = BigDecimal.ZERO;
 
-    @Column(name = "level_name")
-    private String levelName;
+    @Column(name = "level_code")
+    private String levelCode;
 
     @Column(name = "status")
     private String status = "active";
@@ -60,8 +60,8 @@ public class AccountEntity {
     @Temporal(TemporalType.TIMESTAMP)
     private Date updatedAt;
 
-    public AccountEntity(String levelName) {
-        this.levelName = levelName;
+    public AccountEntity(String levelCode) {
+        this.levelCode = levelCode;
     }
 
     public AccountEntity() {

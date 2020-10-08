@@ -48,25 +48,48 @@ public class LoginIP implements LoginSV {
     @Override
     public UserDetailsTokenRS login(HttpHeaders httpHeaders, LoginRQ loginRQ) {
 
-        String credential = userBean.oauth2Credential(httpHeaders);
-
-        String password = loginRQ.getPassword();
-
         UserEntity user = userRepository.findByPhoneOrEmail(loginRQ.getUsername(), loginRQ.getCode());
+        return login(httpHeaders, loginRQ, user);
+
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Login user v1.1.0
+     * for this version, user login with social v1.1.0 they also can login manual with this version
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param httpHeaders HttpHeaders
+     * @param loginRQ LoginRQ
+     * @return UserDetailsTokenRS
+     */
+    @Override
+    public UserDetailsTokenRS loginV110(HttpHeaders httpHeaders, LoginRQ loginRQ) {
+
+        UserEntity user = userRepository.findByPhoneOrEmailV100(loginRQ.getUsername(), loginRQ.getCode());
+        return login(httpHeaders, loginRQ, user);
+
+    }
+
+    private UserDetailsTokenRS login(HttpHeaders httpHeaders, LoginRQ loginRQ, UserEntity user) {
 
         String emailOrPhone = NumberUtils.isNumber(loginRQ.getUsername()) ? "phone" : "email";
 
-        if (user == null) {
+        if (user == null)
             throw new UnauthorizedException(String.format(localizationBean.multiLanguageRes("acc_inc"), emailOrPhone), null);
-        }
 
-        if (!pwdEncode.matches(loginRQ.getPassword(), user.getPassword())) {
+        if (!pwdEncode.matches(loginRQ.getPassword(), user.getPassword()))
             throw new UnauthorizedException(String.format(localizationBean.multiLanguageRes("acc_inc"), emailOrPhone), null);
-        }
 
-        checkUserStatus(user, password);
+        checkUserStatus(user, loginRQ.getPassword());
 
-        TokenRS token = userBean.getCredential(loginRQ.getUsername(),loginRQ.getPassword(), credential, loginRQ.getCode(), null);
+        String credential = userBean.oauth2Credential(httpHeaders);
+        TokenRS token;
+        if (user.getProvider() != null)
+            token = userBean.getCredential(loginRQ.getUsername(), credential, loginRQ.getCode(), null);
+        else
+            token = userBean.getCredential(loginRQ.getUsername(), loginRQ.getPassword(), credential, loginRQ.getCode(), null);
+
 
         userBean.registerPlayer(user);
 

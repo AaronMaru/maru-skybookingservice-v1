@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -19,7 +20,7 @@ public class Air implements Serializable {
     @JsonProperty("ActionCode")
     public String actionCode;
     @JsonProperty("HiddenStop")
-    public List<HiddenStop> hiddenStop;
+    public List<HiddenStop> hiddenStop = new ArrayList<>();
     @JsonProperty("Informational")
     public boolean informational;
     @JsonProperty("MarketingAirlineCode")
@@ -62,7 +63,7 @@ public class Air implements Serializable {
     @JsonProperty("Seats")
     public String seats;
     @JsonProperty("Meal")
-    public Meal meal = new Meal();
+    public List<Meal> meal = new ArrayList<>();
     @JsonProperty("OperatingAirlineCode")
     public String operatingAirlineCode;
     @JsonProperty("CodeShare")

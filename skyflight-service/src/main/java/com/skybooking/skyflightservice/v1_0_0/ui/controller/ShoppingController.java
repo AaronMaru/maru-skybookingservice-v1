@@ -49,7 +49,7 @@ public class ShoppingController {
      */
     @PostMapping("/search")
     public ResponseEntity<SearchRS> search(@Valid @RequestBody FlightShoppingRQ request) {
-        return ResponseEntity.status(HttpStatus.OK).body(new SearchRS(HttpStatus.OK, shoppingSV.shoppingTransformMarkup(request, metadataSV.getUserAuthenticationMetadata(), headerBean.getCurrencyCode(), headerBean.getLocalizationId())));
+        return ResponseEntity.status(HttpStatus.OK).body(new SearchRS(HttpStatus.OK, "res_succ", shoppingSV.shoppingTransformMarkup(request, metadataSV.getUserAuthenticationMetadata(), headerBean.getCurrencyCode(), headerBean.getLocalizationId())));
     }
 
 
@@ -63,7 +63,7 @@ public class ShoppingController {
      */
     @GetMapping("/search/{id}")
     public ResponseEntity<SearchRS> searchById(@PathVariable String id) {
-        return ResponseEntity.status(HttpStatus.OK).body(new SearchRS(HttpStatus.OK, responseSV.flightShoppingById(id)));
+        return ResponseEntity.status(HttpStatus.OK).body(new SearchRS(HttpStatus.OK, "res_succ", responseSV.flightShoppingById(id)));
     }
 
 
@@ -84,6 +84,6 @@ public class ShoppingController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new BaseRS(HttpStatus.BAD_REQUEST, "NO COMBINABLE FARES FOR CLASS USED", null));
         }
 
-        return ResponseEntity.status(HttpStatus.OK).body(new BaseRS(HttpStatus.OK, response));
+        return ResponseEntity.status(HttpStatus.OK).body(new BaseRS(HttpStatus.OK, "res_succ", response));
     }
 }

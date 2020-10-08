@@ -1,5 +1,6 @@
 package com.skybooking.stakeholderservice.config;
 
+import com.skybooking.stakeholderservice.constant.GrantTypeConstant;
 import com.skybooking.stakeholderservice.security.CustomAccessTokenConverter;
 import com.skybooking.stakeholderservice.security.CustomJWTEnhancer;
 import com.skybooking.stakeholderservice.v1_0_0.service.implement.login.UserDetailsIP;
@@ -64,7 +65,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
         clients.inMemory()
             .withClient(environment.getProperty("spring.oauth2.client-id"))
             .secret(bCryptPasswordEncoder.encode(environment.getProperty("spring.oauth2.client-secret")))
-            .authorizedGrantTypes("password", "refresh_token")
+            .authorizedGrantTypes(GrantTypeConstant.PASSWORD, GrantTypeConstant.CLIENT_CREDENTIALS, GrantTypeConstant.REFRESH_TOKEN)
             .scopes("read", "write")
             .resourceIds("oauth2-resource", "skybooking-resource")
             .accessTokenValiditySeconds(604800)         // 7 days
@@ -72,13 +73,31 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
             .and()
             .withClient(environment.getProperty("spring.back-office.client-id"))
             .secret(bCryptPasswordEncoder.encode(environment.getProperty("spring.back-office.client-secret")))
-            .authorizedGrantTypes("client_credentials", "refresh_token")
+            .authorizedGrantTypes(GrantTypeConstant.CLIENT_CREDENTIALS, GrantTypeConstant.REFRESH_TOKEN)
             .scopes("create-additional-service-skyflight",
                 "update-additional-service-skyflight",
                 "delete-additional-service-skyflight",
                 "list-additional-service-skyflight",
                 "check-offline-booking-skyflight",
-                "create-offline-booking-skyflight")
+                "create-offline-booking-skyflight",
+                "offline-topup-skypoint",
+                "get-recent-offline-topup-skypoint",
+                "get-recent-transaction-skypoint",
+                "get-offline-topup-detail-skypoint",
+                "search-offline-topup-skypoint",
+                "transaction-summary-report-skypoint",
+                "backend-dashboard-report-skypoint",
+                "backend-account-info-report-skypoint",
+                "topup-point-summary-report-skypoint",
+                "topup-point-detail-report-skypoint",
+                "spent-point-summary-report-skypoint",
+                "spent-point-detail-report-skypoint",
+                "earned-point-summary-report-skypoint",
+                "earned-point-detail-report-skypoint",
+                "refunded-point-summary-report-skypoint",
+                "refunded-point-detail-report-skypoint",
+                "upgraded-level-summary-report-skypoint",
+                "summary-transaction-list-report-skypoint")
             .resourceIds("oauth2-resource", "skybooking-resource")
             .accessTokenValiditySeconds(604800)     // 7 days
             .refreshTokenValiditySeconds(2592000);  // 30 days

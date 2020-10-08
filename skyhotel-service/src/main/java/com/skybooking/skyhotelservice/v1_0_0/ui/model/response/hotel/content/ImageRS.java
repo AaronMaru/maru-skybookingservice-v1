@@ -8,6 +8,7 @@ public class ImageRS {
     private String thumbnail;
     private String thumbnailUrl;
     private String typeCode;
+    private String typeName;
     private Integer sortOrder;
     private String roomCode;
     private String roomType;

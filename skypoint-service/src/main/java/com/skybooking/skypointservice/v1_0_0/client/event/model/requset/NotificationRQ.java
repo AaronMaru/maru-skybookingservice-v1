@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class NotificationRQ {
-    private Integer bookingId;
+    private String bookingId;
     private String type;
 }

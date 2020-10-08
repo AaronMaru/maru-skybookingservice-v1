@@ -5,5 +5,7 @@ import lombok.Data;
 @Data
 public class CancellationPolicyRSDS {
     private String amount;
+    private Number percent;
     private String from;
+    private Number numberOfNights;
 }

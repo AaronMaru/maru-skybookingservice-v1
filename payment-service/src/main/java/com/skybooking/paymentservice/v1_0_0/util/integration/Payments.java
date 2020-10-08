@@ -332,7 +332,6 @@ public class Payments {
     public PaymentRS getPaymentInfoHotel(PaymentRS paymentRS, FlightMandatoryDataRS mandatoryDataRS) {
 
         var paymentInfo = getPaymentInfo(paymentRS.getPaymentCode());
-
         paymentRS.setAmount(mandatoryDataRS.getAmount());
         paymentRS.setDescription(mandatoryDataRS.getDescription());
         paymentRS.setPaymentId(paymentInfo.getPaymentId());

@@ -8,6 +8,7 @@ import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.StructureRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.search.RecentSearchRS;
 import com.skybooking.skyhotelservice.v1_0_0.util.JwtUtils;
 import com.skybooking.skyhotelservice.v1_0_0.util.datetime.DatetimeUtil;
+import com.skybooking.skyhotelservice.v1_0_0.util.header.HeaderCM;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,14 +27,17 @@ public class RecentSearchIP extends BaseServiceIP implements RecentSearchSV {
     private JwtUtils jwtUtils;
 
     @Autowired
+    private HeaderCM headerCM;
+
+    @Autowired
     HttpServletRequest httpServletRequest;
 
     public StructureRS listing()
     {
-        int userId = jwtUtils.getClaim("stakeholderId", Integer.class);
-        Integer companyId = (Integer) ConvertUtils.convert(httpServletRequest.getHeader("X-CompanyId"), Integer.class);
+        Long skyuserId = jwtUtils.userToken().getSkyuserId();
+        Long companyId = headerCM.getCompanyIdZ();
 
-        List<RecentSearchEntity> recentSearchEntities = recentSearchRP.listRecentSearch(userId, companyId);
+        List<RecentSearchEntity> recentSearchEntities = recentSearchRP.listRecentSearch(skyuserId, companyId);
         List<RecentSearchRS> recentSearches = recentSearchEntities
             .stream()
             .map(RecentSearchRS::new)
@@ -44,32 +48,31 @@ public class RecentSearchIP extends BaseServiceIP implements RecentSearchSV {
 
     public StructureRS delete()
     {
-        int userId = jwtUtils.getClaim("stakeholderId", Integer.class);
-        Integer companyId = (Integer) ConvertUtils.convert(httpServletRequest.getHeader("X-CompanyId"), Integer.class);
-        recentSearchRP.clearRecentSearch(userId, companyId);
+        Long skyuserId = jwtUtils.userToken().getSkyuserId();
+        Long companyId = headerCM.getCompanyIdZ();
+
+        recentSearchRP.clearRecentSearch(skyuserId, companyId);
         return responseBodyWithSuccessMessage();
     }
 
     public void saveOrUpdate(AvailabilityRQ availabilityRQ)
     {
-        /* check have access token */
+        /* Check have access token */
         if (httpServletRequest.getHeader("Authorization") == null) return;
 
-        Integer userId = jwtUtils.getClaim("stakeholderId", Integer.class);
-        Integer companyId = (Integer) ConvertUtils.convert(httpServletRequest.getHeader("X-CompanyId"), Integer.class);
+        Long skyuserId = jwtUtils.userToken().getSkyuserId();
+        Long companyId = headerCM.getCompanyIdZ();
 
-        /* check if user not log in */
-        if (userId == null) return;
+        /* Check if user not log in */
+        if (skyuserId == null) return;
 
         String destinationCode = availabilityRQ.getDestination().getCode();
-        RecentSearchEntity recentSearchEntity = recentSearchRP.existsRecentSearch(destinationCode, userId, companyId);
 
-        if (recentSearchEntity == null) {
-            recentSearchEntity = new RecentSearchEntity();
-            recentSearchEntity.setSearchedCount(0);
-        }
+        RecentSearchEntity recentSearchEntity = recentSearchRP
+                .existsRecentSearch(skyuserId, companyId, destinationCode)
+                .orElse(new RecentSearchEntity());
 
-        recentSearchEntity.setStakeholderUserId(userId);
+        recentSearchEntity.setStakeholderUserId(skyuserId);
         recentSearchEntity.setStakeholderCompanyId(companyId);
         recentSearchEntity.setCheckIn(DatetimeUtil.toDate(availabilityRQ.getCheckIn()));
         recentSearchEntity.setCheckOut(DatetimeUtil.toDate(availabilityRQ.getCheckOut()));
@@ -78,6 +81,8 @@ public class RecentSearchIP extends BaseServiceIP implements RecentSearchSV {
         recentSearchEntity.setAdult(availabilityRQ.getAdult());
         recentSearchEntity.setChildren(availabilityRQ.getChildren().size());
         recentSearchEntity.setSearchedCount(recentSearchEntity.getSearchedCount() + 1);
+        recentSearchEntity.setGroupDestination(availabilityRQ.getDestination().getGroup());
+        recentSearchEntity.setCountry(null);//Keep
 
         recentSearchRP.save(recentSearchEntity);
     }

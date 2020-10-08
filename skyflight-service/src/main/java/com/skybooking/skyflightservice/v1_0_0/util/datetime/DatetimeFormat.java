@@ -45,4 +45,17 @@ public class DatetimeFormat {
 
         return Period.between(localDate, now);
     }
+
+    public static int getMinutesBetweenTwoDatetime(String dateString1, String dateString2) {
+        try {
+            Date date1 =new SimpleDateFormat("yyyy-MM-dd HH:mm").parse(dateString1.replace("T", ""));
+            Date date2 =new SimpleDateFormat("yyyy-MM-dd HH:mm").parse(dateString2.replace("T", ""));
+            long value = date2.getTime() - date1.getTime();
+            long minutes = value / 60000; // convert millisecond to minutes
+            return Math.toIntExact(minutes);
+        } catch (Exception e) {
+            System.out.println(":::::::::::::::::::::::::::: CATCH ::::::::::::::::::::::::::::::");
+            return 0;
+        }
+    }
 }

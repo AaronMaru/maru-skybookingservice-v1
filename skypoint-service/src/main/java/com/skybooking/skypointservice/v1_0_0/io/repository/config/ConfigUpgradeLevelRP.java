@@ -11,5 +11,11 @@ import java.math.BigDecimal;
 public interface ConfigUpgradeLevelRP extends JpaRepository<ConfigUpgradeLevelEntity, Integer> {
 
     @Query(value = "SELECT * FROM config_upgrade_levels WHERE `from_value` <= :value AND `to_value` > :value AND status = true AND `type` = :userType LIMIT 1", nativeQuery = true)
-    ConfigUpgradeLevelEntity getRecordByFromValueAndToValue(BigDecimal value, String userType);
+    ConfigUpgradeLevelEntity getRecordByFromValueAndTypeAndToValue(BigDecimal value, String userType);
+
+    @Query(value = "SELECT * FROM config_upgrade_levels WHERE `from_value` <= :value AND `to_value` > :value AND status = true  AND language_code = :languageCode" +
+            " AND `type` = :userType LIMIT 1", nativeQuery = true)
+    ConfigUpgradeLevelEntity getRecordByFromValueAndToValueAndTypeAndLanguageCode(BigDecimal value, String userType, String languageCode);
+
+    ConfigUpgradeLevelEntity findByCodeAndTypeAndLanguageCode(String code, String userType, String languageCode);
 }

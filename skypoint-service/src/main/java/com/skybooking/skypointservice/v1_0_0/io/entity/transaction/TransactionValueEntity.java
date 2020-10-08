@@ -19,6 +19,9 @@ public class TransactionValueEntity {
     @Column(name = "transaction_id")
     private Integer transactionId;
 
+    @Column(name = "code")
+    private String code;
+
     @Column(name = "amount")
     private BigDecimal amount;
 

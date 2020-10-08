@@ -11,15 +11,14 @@ import java.util.Date;
 public class RecentSearchEntity {
 
     @Id
-    @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @Column(name = "stakeholder_user_id")
-    private Integer stakeholderUserId;
+    private Long stakeholderUserId;
 
     @Column(name = "stakeholder_company_id")
-    private Integer stakeholderCompanyId;
+    private Long stakeholderCompanyId;
 
     @Column(name = "destination_code")
     private String destinationCode;
@@ -31,7 +30,12 @@ public class RecentSearchEntity {
     private int children;
     private int infant;
 
+    @Column(name = "group_destination")
+    private String groupDestination;
+
+    private String country;
+
     @Column(name = "searched_count")
-    private Integer searchedCount;
+    private Integer searchedCount = 0;
 
 }

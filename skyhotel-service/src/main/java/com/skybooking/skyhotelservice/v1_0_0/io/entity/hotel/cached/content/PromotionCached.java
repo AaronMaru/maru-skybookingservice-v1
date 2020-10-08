@@ -7,4 +7,6 @@ import java.io.Serializable;
 @Data
 public class PromotionCached implements Serializable {
     private String code;
+    private String name;
+    private String remark;
 }

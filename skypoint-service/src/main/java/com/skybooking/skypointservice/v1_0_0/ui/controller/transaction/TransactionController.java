@@ -4,6 +4,7 @@ import com.skybooking.skypointservice.v1_0_0.service.transaction.TransactionSV;
 import com.skybooking.skypointservice.v1_0_0.ui.model.request.transaction.TransactionRQ;
 import com.skybooking.skypointservice.v1_0_0.ui.model.response.StructureRS;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -19,24 +20,42 @@ public class TransactionController {
         return transactionSV.getTransactionDetail(transactionRQ);
     }
 
-    @RequestMapping(value = "/recent/offline/topup", method = RequestMethod.GET)
+    @PreAuthorize("#oauth2.hasScope('get-recent-offline-topup-skypoint')")
+    @RequestMapping(value = "/recent/offline/top-up", method = RequestMethod.GET)
     public StructureRS getRecentOfflineTopUp() {
         return transactionSV.getRecentOfflineTopUp();
     }
 
-    @RequestMapping(value = "/offline/detail", method = RequestMethod.POST)
-    public StructureRS getOfflineTopUpTransactionDetail(HttpServletRequest httpServletRequest,
-                                                        @RequestBody TransactionRQ transactionRQ) {
-        return transactionSV.getOfflineTopUpTransactionDetail(httpServletRequest, transactionRQ);
+    @PreAuthorize("#oauth2.hasScope('get-recent-transaction-skypoint')")
+    @RequestMapping(value = "/recent", method = RequestMethod.GET)
+    public StructureRS getRecentTransaction(HttpServletRequest httpServletRequest,
+                                            @RequestParam String userCode,
+                                            @RequestParam(name = "limit", defaultValue = "0") Integer limit,
+                                            @RequestParam(name = "page", defaultValue = "1") Integer page) {
+        return transactionSV.getRecentTransaction(httpServletRequest, userCode, limit, page);
     }
 
-    @RequestMapping(value = "/offline/search", method = RequestMethod.GET)
+    @PreAuthorize("#oauth2.hasScope('get-offline-topup-detail-skypoint')")
+    @RequestMapping(value = "/offline/top-up/detail/{transactionCode}", method = RequestMethod.POST)
+    public StructureRS getOfflineTopUpTransactionDetail(HttpServletRequest httpServletRequest,
+                                                        @PathVariable(name = "transactionCode") String transactionCode) {
+        return transactionSV.getOfflineTopUpTransactionDetail(httpServletRequest, transactionCode);
+    }
+
+    @PreAuthorize("#oauth2.hasScope('search-offline-topup-skypoint')")
+    @RequestMapping(value = "/offline/top-up/search", method = RequestMethod.GET)
     public StructureRS searchOfflineTopUpTransaction(@RequestParam String searchValue) {
         return transactionSV.searchOfflineTransaction(searchValue);
     }
 
-    @RequestMapping(value = "/online/detail", method = RequestMethod.POST)
-    public StructureRS getTopUpOnlineTransactionDetail(@RequestBody TransactionRQ transactionRQ) {
-        return transactionSV.getOnlineTopUpTransactionDetail(transactionRQ);
+    @RequestMapping(value = "/online/top-up/detail/{transactionCode}", method = RequestMethod.POST)
+    public StructureRS getTopUpOnlineTransactionDetail(@PathVariable(name = "transactionCode") String transactionCode) {
+        return transactionSV.getOnlineTopUpTransactionDetail(transactionCode);
+    }
+
+    @RequestMapping(value = "/pending/offline/top-up", method = RequestMethod.GET)
+    public StructureRS getPendingOfflineTopUpTransaction(@RequestParam(name = "page", defaultValue = "1") Integer page,
+                                                         @RequestParam(name = "limit", defaultValue = "50") Integer limit) {
+        return transactionSV.getPendingOfflineTopUpList(page, limit);
     }
 }

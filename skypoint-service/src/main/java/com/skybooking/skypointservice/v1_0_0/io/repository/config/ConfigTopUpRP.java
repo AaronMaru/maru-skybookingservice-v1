@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ConfigTopUpRP extends JpaRepository<ConfigTopUpEntity, Integer> {
-    ConfigTopUpEntity findByTypeAndTopupKeyAndStatus(String type, String topupKey, Boolean status);
+    ConfigTopUpEntity findByTypeAndTopUpKeyAndStatus(String type, String topupKey, Boolean status);
 }

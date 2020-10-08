@@ -6,6 +6,7 @@ import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.HotelRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.sort.SortListRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.sort.SortRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.sort.SortValueRS;
+import com.skybooking.skyhotelservice.v1_0_0.util.mapper.HotelMapper;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,51 +17,29 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.skybooking.skyhotelservice.constant.SortTypeConstant.*;
+
 @Service
 public class HotelSortIP implements HotelSortSV {
 
     @Autowired
     private ModelMapper modelMapper;
 
+    @Autowired
+    private HotelMapper mapper;
+
     @Override
     public SortRS sortInfo(SortTypeConstant type)
     {
-        int recommendStatus = 0;
-        int priceStatus = 0;
-        int priceLowHighStatus = 0;
-        int priceHighLowStatus = 0;
-        int starStatus = 0;
-        int starLowHighStatus = 0;
-        int starHighLowStatus = 0;
-        int guestRatingStatus = 0;
-        int distanceStatus = 0;
-
-        switch (type) {
-            case SORT_RECOMMENDED:
-                recommendStatus = 1; break;
-            case SORT_PRICE_LOW_HIGH:
-                priceLowHighStatus = 1;
-                priceStatus = 1;
-                break;
-            case SORT_PRICE_HIGH_LOW:
-                priceHighLowStatus = 1;
-                priceStatus = 1;
-                break;
-            case SORT_STAR_LOW_HIGH:
-                starLowHighStatus = 1;
-                starStatus = 1;
-                break;
-            case SORT_STAR_HIGH_LOW:
-                starHighLowStatus = 1;
-                starStatus = 1;
-                break;
-            case SORT_GUEST_RATING:
-                guestRatingStatus = 1; break;
-            case SORT_DISTANCE:
-                distanceStatus = 1; break;
-            default:
-                recommendStatus = 1;
-        }
+        boolean recommendStatus = type == SORT_RECOMMENDED;
+        boolean priceStatus = type == SORT_PRICE_LOW_HIGH || type == SORT_PRICE_HIGH_LOW;
+        boolean priceLowHighStatus = type == SORT_PRICE_LOW_HIGH;
+        boolean priceHighLowStatus = type == SORT_PRICE_HIGH_LOW;
+        boolean starStatus = type == SORT_STAR_LOW_HIGH || type == SORT_STAR_HIGH_LOW;
+        boolean starLowHighStatus = type == SORT_STAR_LOW_HIGH;
+        boolean starHighLowStatus = type == SORT_STAR_HIGH_LOW;
+        boolean guestRatingStatus = type == SORT_GUEST_RATING;
+        boolean distanceStatus = type == SORT_DISTANCE;
 
         SortValueRS priceLowHigh = setSortValue("Low to High", priceLowHighStatus, SortTypeConstant.SORT_PRICE_LOW_HIGH);
         SortValueRS priceHighLow = setSortValue("High to Low", priceHighLowStatus, SortTypeConstant.SORT_PRICE_HIGH_LOW);
@@ -75,7 +54,7 @@ public class HotelSortIP implements HotelSortSV {
         starList.add(starHighLow);
 
         SortRS sortRS = new SortRS();
-        sortRS.setRecommended(setSortValue("Recommended", recommendStatus, SortTypeConstant.SORT_RECOMMENDED));
+        sortRS.setRecommended(setSortValue("Recommended", recommendStatus, SORT_RECOMMENDED));
         sortRS.setPrice(setSortList("Price", priceStatus, priceList));
         sortRS.setStar(setSortList("Star", starStatus, starList));
         sortRS.setGuestRating(setSortValue("Guest Rating", guestRatingStatus, SortTypeConstant.SORT_GUEST_RATING));
@@ -125,11 +104,11 @@ public class HotelSortIP implements HotelSortSV {
         return hotelCachedStream
             .collect(Collectors.toList())
             .stream()
-            .map(hotelCached -> modelMapper.map(hotelCached, HotelRS.class))
+            .map(mapper::toHotelRS)
             .collect(Collectors.toList());
     }
 
-    private SortValueRS setSortValue(String title, int status, SortTypeConstant value)
+    private SortValueRS setSortValue(String title, boolean status, SortTypeConstant value)
     {
         SortValueRS sortValueRS = new SortValueRS();
         sortValueRS.setTitle(title);
@@ -139,7 +118,7 @@ public class HotelSortIP implements HotelSortSV {
         return sortValueRS;
     }
 
-    private SortListRS setSortList(String title, int status, List<SortValueRS> list)
+    private SortListRS setSortList(String title, boolean status, List<SortValueRS> list)
     {
         SortListRS sortListRS = new SortListRS();
         sortListRS.setTitle(title);

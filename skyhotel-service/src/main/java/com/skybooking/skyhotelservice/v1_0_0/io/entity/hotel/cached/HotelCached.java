@@ -28,6 +28,7 @@ public class HotelCached implements Serializable {
     private HotelFacilityCached facility;
     private ScoreCached score;
     private PriceUnitCached priceUnit;
+    private CancellationDetailCached cancellation;
     private FilterInfoCached filterInfo;
 
 }

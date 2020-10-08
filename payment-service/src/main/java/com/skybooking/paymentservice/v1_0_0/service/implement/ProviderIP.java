@@ -11,10 +11,13 @@ import com.skybooking.paymentservice.v1_0_0.client.hotel.ui.request.HotelMandato
 import com.skybooking.paymentservice.v1_0_0.client.pipay.action.PipayAction;
 import com.skybooking.paymentservice.v1_0_0.client.point.action.PointAction;
 import com.skybooking.paymentservice.v1_0_0.client.point.ui.PostOnlineTopUpRQ;
+import com.skybooking.paymentservice.v1_0_0.io.enitity.booking.BookingEntity;
+import com.skybooking.paymentservice.v1_0_0.io.enitity.booking.HotelBookingEntity;
 import com.skybooking.paymentservice.v1_0_0.io.enitity.redis.BookingLanguageCached;
 import com.skybooking.paymentservice.v1_0_0.io.nativeQuery.paymentMethod.PaymentMethodTO;
 import com.skybooking.paymentservice.v1_0_0.io.nativeQuery.paymentMethod.PaymentNQ;
 import com.skybooking.paymentservice.v1_0_0.io.repository.booking.BookingRP;
+import com.skybooking.paymentservice.v1_0_0.io.repository.booking.HotelBookingRP;
 import com.skybooking.paymentservice.v1_0_0.io.repository.redis.BookingLanguageRedisRP;
 import com.skybooking.paymentservice.v1_0_0.service.interfaces.ProviderSV;
 import com.skybooking.paymentservice.v1_0_0.ui.model.request.PaymentPointRQ;
@@ -63,6 +66,9 @@ public class ProviderIP implements ProviderSV {
     private BookingRP bookingRP;
 
     @Autowired
+    private HotelBookingRP hotelBookingRP;
+
+    @Autowired
     private ActivityLoggingBean activityLog;
 
     @Autowired
@@ -83,6 +89,13 @@ public class ProviderIP implements ProviderSV {
 
     @Override
     public UrlPaymentRS getRequestUrl(PaymentRQ paymentRQ) {
+
+        //Save Language to redis for email template
+        BookingLanguageCached bookingLanguageCached = new BookingLanguageCached();
+        bookingLanguageCached.setBookingCode(paymentRQ.getBookingCode());
+        bookingLanguageCached.setLanguage(headerBean.getLocalization());
+        bookingLanguageRedisRP.save(bookingLanguageCached);
+
         if (paymentRQ.getProductType().equals(ProductTypeConstant.FLIGHT)) {
             return getFlightAction(paymentRQ);
         }
@@ -100,12 +113,6 @@ public class ProviderIP implements ProviderSV {
         booking.setStatus(BookingStatusConstant.PAYMENT_SELECTED);
         bookingRP.save(booking);
         activityLog.activities(ActivityLoggingBean.Action.INDEX_PAYMNET_METHOD_SELECT, activityLog.getUser(), booking);
-
-        //Save Language to redis for email template
-        BookingLanguageCached bookingLanguageCached = new BookingLanguageCached();
-        bookingLanguageCached.setBookingCode(booking.getBookingCode());
-        bookingLanguageCached.setLanguage(headerBean.getLocalization());
-        bookingLanguageRedisRP.save(bookingLanguageCached);
 
         PaymentMethodTO paymentMethodTO = paymentNQ.getPaymentMethod(paymentRQ.getPaymentCode());
         FlightMandatoryDataRQ mandatoryDataRQ = new FlightMandatoryDataRQ(
@@ -163,12 +170,34 @@ public class ProviderIP implements ProviderSV {
 
         List<PaymentMethodRS> paymentMethodRS = new ArrayList<>();
         List<PaymentMethodTO> paymentMethodTOS = paymentNQ.getListPaymentMethods();
-        var booking = bookingRP.getBooking(bookingCode);
+
+        var booking = new BookingEntity();
+        var hotelBooking = new HotelBookingEntity();
+
+        if (bookingCode.contains("SBFT")) {
+            booking = bookingRP.getBooking(bookingCode);
+        }
+        if (bookingCode.contains("SBHT")) {
+            hotelBooking = hotelBookingRP.getBooking(bookingCode);
+        }
+
+        BookingEntity finalBooking = booking;
+        HotelBookingEntity finalHotelBooking = hotelBooking;
 
         paymentMethodTOS.forEach(item -> {
 
-            var totalAmount = booking.getTotalAmount().add(booking.getMarkupAmount().add(booking.getMarkupPayAmount()));
-            var commission = booking.getCommissionAmount();
+            var totalAmount = BigDecimal.ZERO;
+            var commission = BigDecimal.ZERO;
+
+            if (bookingCode.contains("SBFT")) {
+                totalAmount = finalBooking.getTotalAmount().add(finalBooking.getMarkupAmount().add(finalBooking.getMarkupPayAmount()));
+                commission = finalBooking.getCommissionAmount();
+            }
+            if (bookingCode.contains("SBHT")) {
+                //To do
+                totalAmount = finalHotelBooking.getTotalAmount();
+                commission = finalHotelBooking.getCommisionAmount();
+            }
 
             totalAmount = totalAmount.subtract(commission);
             var discount = GeneralUtility.trimAmount(totalAmount.multiply(item.getPercentage().divide(new BigDecimal(100))));
@@ -233,7 +262,6 @@ public class ProviderIP implements ProviderSV {
             StructureRS structureRS = pointAction.paymentPointTopUpPost(postOnlineTopUpRQ);
 
         } else if (bookingCode.contains("SBHT")) {
-
             if (request.get("Status").equals("0")) {
                 iPay88IP.paymentFail(request);
                 return appConfig.getPaymentPage() + "?bookingCode=" + bookingCode + "&status=" + PaymentStatusConstant.PAYMENT_FAIL;
@@ -309,14 +337,13 @@ public class ProviderIP implements ProviderSV {
         }
 
         if (bookingCode.contains("SBHT")) {
-
+            general.updatePaymentBookingStatus(bookingCode, HotelBookingStatusConstant.PAYMENT_PROCESSING);
             FlightMandatoryDataRS mandatoryData = hotelAction.getMandatoryData(bookingCode);
             if (!pipayAction.verify(request, mandatoryData.getAmount())) {
                 return appConfig.getPaymentPage() + "?bookingCode=" + bookingCode + "&status=" + PaymentStatusConstant.PAYMENT_FAIL;
             }
             PaymentSucceedRQ paymentSucceedRQ = pipaySucceedRS(request, mandatoryData);
             hotelAction.updateHotelPaymentSucceed(paymentSucceedRQ);
-
         }
 
         return page + "?bookingCode=" + bookingCode + "&status=" + PaymentStatusConstant.PAYMENT_SUCCESS;

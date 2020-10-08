@@ -7,6 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 @RestController
 @RequestMapping("v1.0.0/recommend-hotel")
 public class RecommendController extends BaseController {
@@ -22,10 +26,9 @@ public class RecommendController extends BaseController {
      * @return
      */
     @GetMapping
-    public ResponseEntity<StructureRS> listing()
+    public ResponseEntity<StructureRS> listing(@RequestParam(value = "lat", defaultValue = "0") double lat, @RequestParam(value = "lng", defaultValue = "0") double lng)
     {
-        return response(recommendSV.listing());
+        return response(recommendSV.listing(lat, lng));
     }
-
 
 }

@@ -13,6 +13,6 @@ public interface RecommendSV {
      *
      * @return
      */
-    StructureRS listing();
+    StructureRS listing(double lat, double lng);
 
 }

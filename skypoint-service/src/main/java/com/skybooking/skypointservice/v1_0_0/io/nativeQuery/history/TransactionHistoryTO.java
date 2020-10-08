@@ -9,7 +9,8 @@ import java.math.BigInteger;
 public class TransactionHistoryTO {
     private BigInteger id;
     private String transactionCode;
+    private String transactionTypeCode;
     private String transactionTypeName;
-    private BigDecimal amount;
+    private BigDecimal totalPoint;
     private String createdAt;
 }

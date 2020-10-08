@@ -17,17 +17,11 @@ public class TransactionEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "code")
-    private String code;
-
     @Column(name = "account_id")
     private Integer accountId;
 
     @Column(name = "reference_code")
     private String referenceCode;
-
-    @Column(name = "transaction_for")
-    private String transactionFor;
 
     @Column(name = "proceed_by")
     private String proceedBy;

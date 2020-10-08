@@ -13,4 +13,7 @@ public interface HotelBookingRP extends JpaRepository<HotelBookingEntity, Long> 
 
     HotelBookingEntity findByCode(String code);
 
+    @Query(value = "SELECT * FROM hotel_booking ORDER BY id DESC LIMIT 1", nativeQuery = true)
+    HotelBookingEntity findFirstByOrderByIdDesc();
+
 }

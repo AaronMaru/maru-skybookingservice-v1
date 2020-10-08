@@ -3,7 +3,6 @@ package com.skybooking.stakeholderservice.exception.anotation;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.company.BussinessTypeEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.BussinessTypeRP;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import java.util.Optional;

@@ -20,8 +20,8 @@ public class UpgradeLevelHistoryEntity {
     @Column(name = "upgrade_level_id")
     private Integer upgradeLevelId;
 
-    @Column(name = "level_name")
-    private String levelName;
+    @Column(name = "level_code")
+    private String levelCode;
 
     @Column(name = "rate")
     private BigDecimal rate;

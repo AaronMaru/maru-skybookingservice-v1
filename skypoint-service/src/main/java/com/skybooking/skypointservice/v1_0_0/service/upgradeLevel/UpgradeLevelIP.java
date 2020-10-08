@@ -21,13 +21,15 @@ public class UpgradeLevelIP implements UpgradeLevelSV {
             upgradeLevelHistory = new UpgradeLevelHistoryEntity();
             upgradeLevelHistory.setAccountId(accountId);
             BeanUtils.copyProperties(configUpgradeLevelEntity, upgradeLevelHistory);
+            upgradeLevelHistory.setLevelCode(configUpgradeLevelEntity.getCode());
             upgradeLevelHistory.setUpgradeLevelId(upgradeLevelHistory.getId());
             upgradeLevelHistoryRP.save(upgradeLevelHistory);
-        } else if (!upgradeLevelHistory.getUpgradeLevelId().equals(configUpgradeLevelEntity.getId())) {
+        } else if (!upgradeLevelHistory.getLevelCode().equals(configUpgradeLevelEntity.getCode())) {
             upgradeLevelHistory = new UpgradeLevelHistoryEntity();
             upgradeLevelHistory.setAccountId(accountId);
             BeanUtils.copyProperties(configUpgradeLevelEntity, upgradeLevelHistory);
             upgradeLevelHistory.setUpgradeLevelId(configUpgradeLevelEntity.getId());
+            upgradeLevelHistory.setLevelCode(configUpgradeLevelEntity.getCode());
             upgradeLevelHistoryRP.save(upgradeLevelHistory);
         }
     }

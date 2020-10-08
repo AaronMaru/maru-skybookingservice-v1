@@ -8,13 +8,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @NativeQueryFolder("shopping")
 @Component
 public interface ShoppingNQ extends NativeQuery {
 
     @Transactional
-    HotelMarkupTO hotelMarkup(@NativeQueryParam(value = "hotelPrice") BigDecimal hotelPrice,
-                              @NativeQueryParam(value = "skyType") String skyType);
+    Optional<HotelMarkupTO> hotelMarkup(@NativeQueryParam(value = "hotelPrice") BigDecimal hotelPrice,
+                                        @NativeQueryParam(value = "skyType") String skyType);
 
 }

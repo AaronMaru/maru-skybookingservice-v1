@@ -48,6 +48,7 @@ public class JwtUtils {
         userToken.setCompanyId(this.getClaim("companyId", Long.class));
         userToken.setStakeholderId(this.getClaim("stakeholderId", Long.class));
         userToken.setUserRole((this.getClaim("userRole", String.class) != null) ? this.getClaim("userRole", String.class) : "");
+        userToken.setFullname((this.getClaim("fullName", String.class) != null) ? this.getClaim("fullName", String.class) : "User");
         return userToken;
     }
 

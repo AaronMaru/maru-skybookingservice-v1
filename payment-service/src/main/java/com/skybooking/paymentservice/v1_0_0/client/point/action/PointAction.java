@@ -1,10 +1,9 @@
 package com.skybooking.paymentservice.v1_0_0.client.point.action;
 
 import com.skybooking.paymentservice.config.AppConfig;
-import com.skybooking.paymentservice.v1_0_0.client.flight.ui.request.FlightMandatoryDataRQ;
-import com.skybooking.paymentservice.v1_0_0.client.flight.ui.response.FlightMandatoryDataRS;
 import com.skybooking.paymentservice.v1_0_0.client.point.ui.PostOnlineTopUpRQ;
 import com.skybooking.paymentservice.v1_0_0.client.point.ui.TransactionRQ;
+import com.skybooking.paymentservice.v1_0_0.io.repository.redis.BookingLanguageRedisRP;
 import com.skybooking.paymentservice.v1_0_0.util.auth.AuthUtility;
 import com.skybooking.paymentservice.v1_0_1.ui.model.response.StructureRS;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +22,10 @@ public class PointAction {
 
     @Autowired
     private AuthUtility authUtility;
+
+
+    @Autowired
+    private BookingLanguageRedisRP bookingLanguageRedisRP;
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -55,11 +58,13 @@ public class PointAction {
      */
     public StructureRS paymentPointTopUpPost(PostOnlineTopUpRQ postOnlineTopUpRQ) {
 
+        var bookingLanguageCached = bookingLanguageRedisRP.findById(postOnlineTopUpRQ.getTransactionCode());
+        System.out.println("=====================================" + bookingLanguageCached.get().getLanguage());
         return client.mutate()
                 .build()
                 .post()
                 .uri(appConfig.getPointUrl() + appConfig.getPointVersion() + "/top-up/online/post")
-                .header("X-localization", "en")
+                .header("X-localization", bookingLanguageCached.get().getLanguage())
                 .bodyValue(postOnlineTopUpRQ)
                 .retrieve()
                 .bodyToMono(StructureRS.class)

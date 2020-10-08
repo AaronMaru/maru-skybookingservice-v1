@@ -35,8 +35,5 @@ public class LoginSocialRQ {
     private String lastName;
 
     private String photoUrl;
-    private String password;
     private String typeSky;
-
-
 }

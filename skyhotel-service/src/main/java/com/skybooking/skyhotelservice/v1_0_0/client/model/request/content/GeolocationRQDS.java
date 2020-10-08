@@ -9,4 +9,10 @@ public class GeolocationRQDS {
     private double latitude;
     private double longitude;
     private int radius = 20;
+
+    public GeolocationRQDS() {}
+    public GeolocationRQDS(double latitude, double longitude) {
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
 }

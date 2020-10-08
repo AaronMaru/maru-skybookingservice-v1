@@ -10,6 +10,7 @@ import lombok.Data;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -25,13 +26,13 @@ public class AvailabilityRQ {
     private String checkOut;
 
     @Positive
-    private int room;
+    private int room = 1;
 
     @Positive
-    private int adult;
+    private int adult = 1;
 
     @Valid
-    private List<@NotNull PaxRQ> children;
+    private List<@NotNull PaxRQ> children = new ArrayList<>();
 
     @Valid
     private DestinationRQ destination;
@@ -44,6 +45,9 @@ public class AvailabilityRQ {
 
     private String sortBy = "SORT_RECOMMENDED";
 
+    @Valid
     private FilterRQ filter;
+
+    private MetaRQ meta;
 
 }

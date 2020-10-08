@@ -1,6 +1,7 @@
 package com.skybooking.skyflightservice.v1_0_0.ui.model.request.backoffice.additionalservice;
 
 import lombok.Data;
+import org.hibernate.validator.constraints.Length;
 import org.joda.time.DateTime;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -15,13 +16,14 @@ import java.util.Date;
 @Data
 public class BankRQ extends AdditionalItemRQ {
 
-    @NotNull(message = "The received date is required.")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     @Temporal(TemporalType.TIMESTAMP)
     private Date receivedDate;
 
-    @NotNull(message = "Bank fee is required")
-    @Min(value = 0, message = "Bank fee must be greater or equal 0")
-    @Max(value = 1000000, message = "Bank fee must be less than 1000000")
+    @Min(value = 0, message = "BANK_FEE_MIN_0")
+    @Max(value = 1000000, message = "BANK_FEE_MAX_1000000")
     private BigDecimal fee;
+
+    @Length(max = 30, message = "NUMBER_INVALID")
+    private String number;
 }

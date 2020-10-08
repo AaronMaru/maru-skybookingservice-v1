@@ -1,6 +1,8 @@
 package com.skybooking.skyflightservice.v1_0_0.service.implement.backoffice;
 
+import com.skybooking.skyflightservice.constant.CompanyConstant;
 import com.skybooking.skyflightservice.constant.TicketConstant;
+import com.skybooking.skyflightservice.constant.TripTypeEnum;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.baggages.BookingBaggageAllowanceEntity;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.baggages.BookingBaggageEntity;
 import com.skybooking.skyflightservice.v1_0_0.io.entity.booking.*;
@@ -16,11 +18,13 @@ import com.skybooking.skyflightservice.v1_0_0.ui.model.request.backoffice.offlin
 import com.skybooking.skyflightservice.v1_0_0.util.DateUtility;
 import com.skybooking.skyflightservice.v1_0_0.util.GeneratorUtils;
 import com.skybooking.skyflightservice.v1_0_0.util.booking.BookingUtility;
+import com.skybooking.skyflightservice.v1_0_0.util.datetime.DatetimeFormat;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -54,8 +58,8 @@ public class OfflineBooking {
      * @param itineraryRQ
      * @return Boolean
      */
-    @Transactional(rollbackFor = {Exception.class})
-    protected Boolean save(FullReservation fullReservation, OfflineItineraryRQ itineraryRQ) {
+    @Transactional
+    protected String save(FullReservation fullReservation, OfflineItineraryRQ itineraryRQ) {
 
         try {
 
@@ -66,10 +70,10 @@ public class OfflineBooking {
             airTicket(booking, fullReservation);
             baggage(booking.getId(), fullReservation.getItineraryDetail());
 
-            return true;
+            return booking.getBookingCode();
 
         } catch (Exception exception) {
-            return false;
+            return "";
         }
     }
 
@@ -85,14 +89,11 @@ public class OfflineBooking {
      */
     protected BookingEntity booking(Reservation itinerary, OfflineItineraryRQ itineraryRQ) {
 
-        //TODO: reference code must be exists.
-        BookingEntity oldBooking = bookingRP.findByBookingCode(itineraryRQ.getReferenceCode());
-
         BigDecimal totalAmount = itinerary
                 .getAccountingLines()
                 .getAccountingLine()
                 .stream()
-                .map(it -> it.getBaseFare().add(it.getCommissionAmount()).add(it.getTaxAmount()))
+                .map(it -> it.getBaseFare().add(it.getTaxAmount()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal commission = itinerary
@@ -103,39 +104,24 @@ public class OfflineBooking {
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         String departureDate = itinerary.getPassengerReservation().getSegments().getPoc().getDeparture();
-        double markupPercentage = itineraryRQ.getMarkupPercentage() / 100;
-        BigDecimal markupAmount = totalAmount.multiply(BigDecimal.valueOf(markupPercentage));
 
         BookingEntity booking = new BookingEntity();
-        booking.setStakeholderUserId(oldBooking.getStakeholderUserId());
-        booking.setStakeholderCompanyId(oldBooking.getStakeholderCompanyId());
-        booking.setCustName(oldBooking.getCustName());
-        booking.setCustAddress(oldBooking.getCustAddress());
-        booking.setCustCity(oldBooking.getCustCity());
-        booking.setCustZip(oldBooking.getCustZip());
-        booking.setContFullname(oldBooking.getContFullname());
-        booking.setContPhonecode(oldBooking.getContPhonecode());
-        booking.setContPhone(oldBooking.getContPhone());
-        booking.setContEmail(oldBooking.getContEmail());
-        booking.setContLocationCode(oldBooking.getContLocationCode());
+        CompanyConstant company = new CompanyConstant();
+
+        BigDecimal requestMarkupAmount = itineraryRQ.getMarkupAmount();
+        BigDecimal markupAmount = requestMarkupAmount.multiply(BigDecimal.valueOf(100)).divide(totalAmount);
+        BigDecimal markupPercentage = markupAmount.setScale(2, RoundingMode.UP);
+
         booking.setBookingCode(GeneratorUtils.bookingCode(bookingRP.getLatestRow()));
-        booking.setBookingType(oldBooking.getBookingType());
         booking.setItineraryRef(itineraryRQ.getPnrCode());
         booking.setDepDate(DateUtility.convertDateTimeToDate(departureDate, dateTimeFormatter));
-        booking.setTripType(oldBooking.getTripType());
         booking.setPq(bookingUtility.getPassengerQuantityCodeNumber(new ArrayList<>()));
         booking.setTotalAmount(totalAmount);
-        booking.setCurrencyConvert(oldBooking.getCurrencyConvert());
-        booking.setCurrencyCode(oldBooking.getCurrencyCode());
-        booking.setCurrencyConRate(oldBooking.getCurrencyConRate());
         booking.setMarkupAmount(markupAmount);
-        booking.setMarkupPercentage(Double.toString(markupPercentage));
+        booking.setMarkupPercentage(markupPercentage.toString());
         booking.setVatPercentage(0.0);
         booking.setIsCheck(0);
         booking.setIsAdditional(0);
-        booking.setIsOfflineBooking(1);
-        booking.setReferenceCode(oldBooking.getBookingCode());
-        booking.setStatus(TicketConstant.TICKET_ISSUED);
         booking.setCreatedBy(String.valueOf(itineraryRQ.getEmployeeId())); // employee created offline booking
         booking.setDisPayMetAmount(BigDecimal.ZERO);
         booking.setDisPayMetPercentage(BigDecimal.ZERO);
@@ -144,12 +130,40 @@ public class OfflineBooking {
         booking.setPayMetFeeAmount(BigDecimal.ZERO);
         booking.setPayMetFeePercentage(BigDecimal.ZERO);
         booking.setCommissionAmount(commission);
-        booking.setCommissionTotalAmount(totalAmount.add(markupAmount).subtract(commission));
+        booking.setCommissionTotalAmount(totalAmount.add(itineraryRQ.getMarkupAmount()));
+        booking.setCustName(company.getName());
+        booking.setCustAddress(company.getAddress());
+        booking.setCustCity(company.getCity());
+        booking.setCustZip(company.getPostalCode());
         booking.setIsOfflineBooking(1);
-        booking.setReferenceCode(itineraryRQ.getReferenceCode());
+        booking.setBookingType("flight");
+        booking.setContLocationCode(itinerary.getPassengerReservation().getSegments().getPoc().getAirport());
+        booking.setCurrencyConvert("USD");
+        booking.setCurrencyCode("USD");
+        booking.setCurrencyConRate(BigDecimal.valueOf(1));
+        booking.setLocalIssueDate(itinerary.getPassengerReservation().getTicketingInfo().getTicketDetails().get(0).getTimestamp());
 
-        oldBooking.setStatus(TicketConstant.TICKET_ISSUED_MANUAL);
-        bookingRP.save(oldBooking);
+        if (itineraryRQ.getBookingType().equals("FLIGHT_ISSUED_TICKET_FAIL")) {
+            BookingEntity oldBooking = bookingRP.findByBookingCode(itineraryRQ.getReferenceCode());
+
+            booking.setStatus(TicketConstant.TICKET_ISSUED);
+            booking.setContFullname(oldBooking.getContFullname());
+            booking.setContPhonecode(oldBooking.getContPhonecode());
+            booking.setContPhone(oldBooking.getContPhone());
+            booking.setContEmail(oldBooking.getContEmail());
+            booking.setStakeholderUserId(oldBooking.getStakeholderUserId());
+            booking.setStakeholderCompanyId(oldBooking.getStakeholderCompanyId());
+            booking.setReferenceCode(oldBooking.getBookingCode());
+
+            oldBooking.setStatus(TicketConstant.TICKET_ISSUED_MANUAL);
+            bookingRP.save(oldBooking);
+        } else {
+            booking.setContFullname(itineraryRQ.getContactPerson().getName());
+            booking.setContPhonecode(itineraryRQ.getContactPerson().getPhoneCode());
+            booking.setContPhone(itineraryRQ.getContactPerson().getPhoneNumber());
+            booking.setContEmail(itineraryRQ.getContactPerson().getEmail());
+            booking.setStatus(TicketConstant.TICKET_ISSUED_OFFLINE_BOOKING);
+        }
 
         return bookingRP.save(booking);
     }
@@ -169,85 +183,33 @@ public class OfflineBooking {
 
         int parentId = 0;
         int totalStop = 0;
+        int totalElapsedTime = 0;
 
         for (Segment segment : segments) {
 
             var directSegment = !segment.getAir().isInboundConnection() && !segment.getAir().isOutboundConnection();
-            var parentSegment = !segment.getAir().isInboundConnection() && segment.getAir().isOutboundConnection();
             var childSegment = segment.getAir().isInboundConnection() && segment.getAir().isOutboundConnection();
             var lastSegment = segment.getAir().isInboundConnection() && !segment.getAir().isOutboundConnection();
 
-            BookingOriginDestinationEntity bookingOriginDestination = new BookingOriginDestinationEntity();
+            ProductAir productAirSegment = segment.getProduct().getProductDetails().getAir();
 
-            bookingOriginDestination.setBookingId(bookingId);
-
-            if (directSegment) {
-
+            if (!childSegment && !lastSegment) {
+                BookingOriginDestinationEntity bookingOriginDestination = new BookingOriginDestinationEntity();
+                bookingOriginDestination.setBookingId(bookingId);
                 bookingOriginDestination.setGroupAirSegs("");
                 bookingOriginDestination.setArrageAirSegs("");
-                bookingOriginDestination.setElapsedTime(0);
-                bookingOriginDestination.setMultipleAirStatus(0);
-                bookingOriginDestination.setAdjustmentDate(0);
-                bookingOriginDestination.setSeatRemaining(0);
-                bookingOriginDestination.setStopQty(segment.getAir().getStopQuantity());
-                bookingOriginDestination.setStop(segment.getAir().getStopQuantity());
-                bookingOriginDestination.setAirlineCode(segment.getAir().getMarketingAirlineCode());
-                bookingOriginDestination.setAirlineName("");
-                bookingOriginDestination.setEquipType(segment.getAir().getEquipmentType());
-                bookingOriginDestination.setAirCraftName("");
-                bookingOriginDestination.setFlightNumber(segment.getAir().getFlightNumber());
-
-                bookingOriginDestination.setDepLocationCode(segment.getAir().getDepartureAirport());
-                bookingOriginDestination.setDepCity("");
-                bookingOriginDestination.setDepAirportName("");
-                bookingOriginDestination.setDepTerminal(segment.getAir().getDepartureTerminalCode());
-                bookingOriginDestination.setDepTimezone(0);
-                bookingOriginDestination.setDepDate(DateUtility.convertDateTimeToDate(segment.getAir().getDepartureDateTime(), dateTimeFormatter));
-                bookingOriginDestination.setDepLatitude("0");
-                bookingOriginDestination.setDepLongitude("0");
-
-                bookingOriginDestination.setArrLocationCode(segment.getAir().getArrivalAirport());
-                bookingOriginDestination.setArrCity("");
-                bookingOriginDestination.setArrAirportName("");
-                bookingOriginDestination.setArrTerminal(segment.getAir().getArrivalTerminalCode());
-                bookingOriginDestination.setArrTimezone(0);
-                bookingOriginDestination.setArrDate(DateUtility.convertDateTimeToDate(segment.getAir().getArrivalDateTime(), dateTimeFormatter));
-                bookingOriginDestination.setArrLatitude("0");
-                bookingOriginDestination.setDepLongitude("0");
-
-                bookingOriginDestination.setLayover(0);
-                bookingOriginDestination.setAdjustmentDate(0);
-                bookingOriginDestination.setAirlineRef(segment.getAir().getAirlineRefId());
-
-                bookingOriginDestination.setCabinCode(segment.getAir().getCabin().getCode());
-                bookingOriginDestination.setCabinName(segment.getAir().getCabin().getName());
-                bookingOriginDestination.setMeal(segment.getAir().getMeal().getCode());
-
-                //TODO: missing value
-                bookingOriginDestination.setBookingCode("");
-                bookingOriginDestination.setStop(0);
-
-                originDestinationRP.save(bookingOriginDestination);
-
-
-            }
-
-            if (parentSegment) {
-
-                bookingOriginDestination.setGroupAirSegs("");
-                bookingOriginDestination.setArrageAirSegs("");
-                bookingOriginDestination.setElapsedTime(0);
+                bookingOriginDestination.setElapsedTime(productAirSegment.getElapsedTime());
                 bookingOriginDestination.setMultipleAirStatus(0);
                 bookingOriginDestination.setAdjustmentDate(0);
 
                 parentId = originDestinationRP.save(bookingOriginDestination).getId();
-
             }
 
-            if (childSegment || lastSegment) {
-
+            if (childSegment || lastSegment || directSegment) {
+                BookingOriginDestinationEntity bookingOriginDestination = new BookingOriginDestinationEntity();
+                bookingOriginDestination.setBookingId(bookingId);
                 bookingOriginDestination.setParentId(parentId);
-                bookingOriginDestination.setElapsedTime(0);
+                bookingOriginDestination.setElapsedTime(productAirSegment.getElapsedTime());
                 bookingOriginDestination.setMultipleAirStatus(0);
                 bookingOriginDestination.setSeatRemaining(0);
                 bookingOriginDestination.setStopQty(segment.getAir().getStopQuantity());
@@ -282,12 +244,17 @@ public class OfflineBooking {
 
                 bookingOriginDestination.setCabinCode(segment.getAir().getCabin().getCode());
                 bookingOriginDestination.setCabinName(segment.getAir().getCabin().getName());
-                bookingOriginDestination.setMeal(segment.getAir().getMeal().getCode());
 
-                //TODO: missing value
-                bookingOriginDestination.setBookingCode("");
+                String meal = "";
+                if (segment.getAir().getMeal().size() > 0) {
+                    for (Meal item : segment.getAir().getMeal()) meal = meal + item.getCode();
+                }
+                bookingOriginDestination.setMeal(meal);
+
+                bookingOriginDestination.setBookingCode(segment.getAir().getResBookDesigCode());
 
                 totalStop = totalStop + segment.getAir().getStopQuantity() + 1;
+                totalElapsedTime += productAirSegment.getElapsedTime();
 
                 var child = originDestinationRP.save(bookingOriginDestination);
 
@@ -297,17 +264,30 @@ public class OfflineBooking {
                     this.stopAirport(child.getId(), hiddenSegments);
                 }
 
-                if (lastSegment) {
+                if (lastSegment || (directSegment && segment.getAir().getStopQuantity() > 0)) {
 
                     var parent = originDestinationRP.getOne(parentId);
                     parent.setStop(totalStop);
+                    parent.setElapsedTime(totalElapsedTime);
                     originDestinationRP.save(parent);
 
                     // reset
                     totalStop = 0;
                     parentId = 0;
+                    totalElapsedTime = 0;
                 }
             }
+        }
+
+        List<BookingOriginDestinationEntity> bookingODs = originDestinationRP.getOriginDestinationParent(bookingId);
+        if (bookingODs.size() > 0) {
+            BookingEntity booking = bookingRP.getOne(bookingId);
+
+            if (bookingODs.size() == 1) booking.setTripType(bookingUtility.getTripType(TripTypeEnum.ONEWAY));
+            else if (bookingODs.size() == 2) booking.setTripType(bookingUtility.getTripType(TripTypeEnum.ROUND));
+            else booking.setTripType(bookingUtility.getTripType(TripTypeEnum.MULTICITY));
+
+            bookingRP.save(booking);
         }
     }
 
@@ -331,8 +311,8 @@ public class OfflineBooking {
             stopAirport.setDepDate(DateUtility.convertDateTimeToDate(segment.getDepartureDateTime(), dateTimeFormatter));
             stopAirport.setLocationCode(segment.getAirport());
             stopAirport.setEquipment(segment.getEquipmentType());
-
-            // TODO: insert missing fields
+            stopAirport.setDuration(String.valueOf(DatetimeFormat.getMinutesBetweenTwoDatetime(segment.getArrivalDateTime(), segment.getDepartureDateTime())));
+            stopAirport.setElapsedTime(0);
 
             stopAirportRP.save(stopAirport);
         }

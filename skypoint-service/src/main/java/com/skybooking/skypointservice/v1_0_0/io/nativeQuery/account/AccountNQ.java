@@ -6,7 +6,6 @@ import io.github.gasparbarancelli.NativeQueryParam;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
 
 @NativeQueryFolder("account")
@@ -17,13 +16,5 @@ public interface AccountNQ extends NativeQuery {
     Optional<BalanceTO> getBalance(@NativeQueryParam(value = "userCode") String userCode,
                                    @NativeQueryParam(value = "userType") String userType);
 
-    @Transactional
-    AccountSummaryTO getAccountSummary();
-
-    @Transactional
-    List<TopBalanceTO> getTopBalance();
-
-    @Transactional
-    List<TopEarningTO> getTopEarning();
 
 }

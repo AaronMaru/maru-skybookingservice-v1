@@ -7,6 +7,7 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.github.jhonnymertz.wkhtmltopdf.wrapper.Pdf;
 import com.github.jhonnymertz.wkhtmltopdf.wrapper.params.Param;
 import com.skybooking.skyhistoryservice.config.TwilioConfig;
+import com.skybooking.skyhistoryservice.listener.Consumer;
 import com.skybooking.skyhistoryservice.v1_0_0.io.enitity.booking.BookingEntity;
 import com.skybooking.skyhistoryservice.v1_0_0.io.enitity.locale.LocaleEntity;
 import com.skybooking.skyhistoryservice.v1_0_0.io.enitity.locale.TranslationEntity;
@@ -26,6 +27,8 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.validator.routines.EmailValidator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ClassPathResource;
@@ -35,6 +38,7 @@ import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,8 +50,10 @@ import static com.skybooking.skyhistoryservice.config.ActiveMQConfig.SKY_HISTORY
 
 public class EmailBean {
 
+    private Logger logger = LoggerFactory.getLogger(EmailBean.class);
+
     @Autowired
-    Environment environment;
+    private Environment environment;
 
     @Autowired
     private Configuration configuration;
@@ -157,20 +163,8 @@ public class EmailBean {
             sendData.forEach(item -> {
                 try {
                     File file = pdfRender(configuration, pdfData, item);
-                    Map<String, String> uploaded = uploadFileTos3bucket(file, item);
-                    BookingEntity bookingEntity = bookingRP.findByBookingCode(bookingCode);
 
-                    if (item.equals("itinerary")) {
-                        bookingEntity.setItineraryFile(uploaded.get("fileName"));
-                        bookingEntity.setItineraryPath(uploaded.get("path"));
-                    }
-
-                    if (item.equals("receipt")) {
-                        bookingEntity.setRecieptFile(uploaded.get("fileName"));
-                        bookingEntity.setRecieptPath(uploaded.get("path"));
-                    }
-
-                    bookingRP.save(bookingEntity);
+                    this.uploadItineraryReceiptTos3bucket(file, item, bookingCode);
 
                     fileList.add(file);
                 } catch (IOException e) {
@@ -272,7 +266,7 @@ public class EmailBean {
     }
 
     public File pdfRender(Configuration configuration, Map<String, Object> pdfData, String keyword)
-        throws IOException, InterruptedException {
+            throws IOException, InterruptedException {
         Map<String, Object> receiptMap = (Map<String, Object>) pdfData.get("label_" + keyword);
         receiptMap.put("data", pdfData.get("data_" + keyword));
         receiptMap.put("pdfLang", pdfData.get("pdfLang"));
@@ -282,8 +276,8 @@ public class EmailBean {
         }
         Pdf pdf = new Pdf();
         pdf.addParam(new Param("--encoding", "UTF-8"));
-
-        ClassPathResource resource = new ClassPathResource(receiptMap.get("templateName") + ".pdf");
+        String fileName = receiptMap.get("templateName") + "-" + new Timestamp(System.currentTimeMillis()).getTime() + ".pdf";
+        ClassPathResource resource = new ClassPathResource(fileName);
         File file = new File(resource.getPath());
 
         try {
@@ -291,7 +285,8 @@ public class EmailBean {
             String htmlTemplate = FreeMarkerTemplateUtils.processTemplateIntoString(template, receiptMap);
 
             pdf.addPageFromString(htmlTemplate);
-            pdf.saveAs(receiptMap.get("templateName") + ".pdf");
+
+            pdf.saveAs(fileName);
         } catch (TemplateException e) {
             e.printStackTrace();
         }
@@ -307,26 +302,43 @@ public class EmailBean {
      * @Param filename
      * @Param file
      */
-    private Map<String, String> uploadFileTos3bucket(File file, String item) {
+//    @Async
+    public void uploadItineraryReceiptTos3bucket(File file, String item, String bookingCode) {
+
+        BookingEntity bookingEntity = bookingRP.findByBookingCode(bookingCode);
+
         LocalDateTime now = LocalDateTime.now();
         String yearMonth = now.getYear() + "/" + now.getMonthValue();
-        String path = item + "/" + yearMonth;
+        String path = item + "/" + (bookingEntity.getRecieptPath() != null ? bookingEntity.getRecieptPath() : yearMonth);
 
         String generateFileName = apiBean.generateFileName(null) + ".pdf";
-        Map<String, String> uploaded = new HashMap<>();
-        try {
-            s3client.putObject(new PutObjectRequest(environment.getProperty("spring.awsImage.bucket")
-                + environment.getProperty("spring.awsImage.pdfUrl") + path, generateFileName, file)
-                .withCannedAcl(CannedAccessControlList.PublicRead));
-        } catch (AmazonServiceException e) {
-            uploaded.put("error", "uploadFileTos3bucket().Uploading failed :" + e.getMessage());
-            return uploaded;
+
+        if (bookingEntity.getRecieptFile() != null && item.equals("receipt")) {
+            generateFileName = bookingEntity.getRecieptFile();
+        }
+        if (bookingEntity.getItineraryFile() != null && item.equals("itinerary")) {
+            generateFileName = bookingEntity.getItineraryFile();
         }
 
+        try {
+            s3client.putObject(new PutObjectRequest(environment.getProperty("spring.awsImage.bucket")
+                    + environment.getProperty("spring.awsImage.pdfUrl") + path, generateFileName, file)
+                    .withCannedAcl(CannedAccessControlList.PublicRead));
+        } catch (AmazonServiceException e) {
+            logger.error("Amazon Upload fail " + e);
+        }
 
-        uploaded.put("path", yearMonth);
-        uploaded.put("fileName", generateFileName);
+        if (bookingEntity.getItineraryFile() == null && item.equals("itinerary")) {
+            bookingEntity.setItineraryFile(generateFileName);
+            bookingEntity.setItineraryPath(yearMonth);
+            bookingRP.save(bookingEntity);
+        }
 
-        return uploaded;
+        if (bookingEntity.getRecieptFile() == null && item.equals("receipt")) {
+            bookingEntity.setRecieptFile(generateFileName);
+            bookingEntity.setRecieptPath(yearMonth);
+            bookingRP.save(bookingEntity);
+        }
+
     }
 }

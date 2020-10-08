@@ -12,6 +12,8 @@ import java.util.List;
 @Data
 public class RecentSearchRS {
 
+    private Long id;
+
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date checkIn;
 
@@ -22,6 +24,9 @@ public class RecentSearchRS {
     private int adult;
     private List<RecentSearchPax> children = new ArrayList<>();
     private RecentSearchDestination destination;
+
+    private String group;
+    private String country;
 
     public RecentSearchRS(RecentSearchEntity entity) {
         List<RecentSearchPax> recentSearchPaxes = new ArrayList<>();

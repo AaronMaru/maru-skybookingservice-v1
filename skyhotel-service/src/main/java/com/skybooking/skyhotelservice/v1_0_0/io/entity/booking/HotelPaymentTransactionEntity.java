@@ -10,7 +10,7 @@ import java.util.Date;
 
 @Data
 @Entity
-@Table(name = "hotel_payment_transaction")
+@Table(name = "payment_transaction")
 public class HotelPaymentTransactionEntity {
 
     @Id
@@ -81,6 +81,9 @@ public class HotelPaymentTransactionEntity {
     private String authCode;
 
     private String signature;
+
+    @Column(name = "booking_type")
+    private String bookingType = "HOTEL";
 
     @CreationTimestamp
     @Column(name = "created_at")

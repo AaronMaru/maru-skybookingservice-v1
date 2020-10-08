@@ -20,7 +20,7 @@ public class PTCFareBreakdown implements Serializable {
     @JsonProperty("PassengerTypeQuantity")
     private PassengerTypeQuantity passengerTypeQuantity;
     @JsonProperty("FareBasisCode")
-    private String fareBasisCode;
+    private List<String> fareBasisCode;
     @JsonProperty("PassengerTypeRequested")
     private PassengerTypeRequested passengerTypeRequested;
 

@@ -7,8 +7,8 @@ import java.util.Date;
 
 @Data
 public class OfflineTopUpTransactionDetailTO {
-    private String transactionCode;
-    private BigDecimal amount;
-    private String createdBy;
-    private Date createdAt;
+    protected String transactionCode;
+    protected BigDecimal amount;
+    protected String createdBy;
+    protected Date createdAt;
 }

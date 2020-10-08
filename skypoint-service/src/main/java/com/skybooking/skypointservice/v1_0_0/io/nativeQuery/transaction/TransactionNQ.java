@@ -24,8 +24,22 @@ public interface TransactionNQ extends NativeQuery {
                                                                                 String valueSearch);
 
     @Transactional
-    OnlineTopUpTransactionDetailTO getOnlineTopUpTransactionDetail(@NativeQueryParam(value = "transactionCode") String transactionCode);
+    Optional<OnlineTopUpTransactionDetailTO> getOnlineTopUpTransactionDetail(@NativeQueryParam(value = "transactionCode") String transactionCode);
 
     @Transactional
-    List<AccountTransactionTO> getAccountRecentTransactionByAccount(@NativeQueryParam(value = "userCode") String userCode);
+    List<AccountTransactionTO> getRecentTransactionByAccount(@NativeQueryParam(value = "userCode") String userCode,
+                                                             @NativeQueryParam(value = "languageCode") String languageCode,
+                                                             @NativeQueryParam(value = "limit") Integer limit,
+                                                             @NativeQueryParam(value = "offset") Integer offset);
+
+    @Transactional
+    List<AccountTransactionTO> getAllRecentTransactionByAccount(@NativeQueryParam(value = "userCode") String userCode,
+                                                                @NativeQueryParam(value = "languageCode") String languageCode);
+
+    @Transactional
+    List<PendingOfflineTopUpTransactionTO> getPendingOfflineTopUpList(@NativeQueryParam(value = "limit") Integer limit,
+                                                                      @NativeQueryParam(value = "offset") Integer offset);
+
+    @Transactional
+    List<PendingOfflineTopUpTransactionTO> countAllPendingOfflineTopUpTransaction();
 }

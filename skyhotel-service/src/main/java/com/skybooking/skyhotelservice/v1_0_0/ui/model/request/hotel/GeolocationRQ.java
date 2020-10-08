@@ -18,6 +18,14 @@ public class GeolocationRQ {
     private Double longitude;
 
     @Positive
-    @Max(200)
     private Integer radius = 20;
+
+    public void setRadius(Integer radius) {
+        if (radius > 200)
+            this.radius = 200;
+        else if (radius < 20)
+            this.radius = 20;
+        else
+            this.radius = radius;
+    }
 }

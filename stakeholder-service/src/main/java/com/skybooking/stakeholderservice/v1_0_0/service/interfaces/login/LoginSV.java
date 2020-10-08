@@ -8,4 +8,5 @@ import org.springframework.stereotype.Service;
 @Service
 public interface LoginSV {
     UserDetailsTokenRS login(HttpHeaders httpHeaders, LoginRQ loginRQ);
+    UserDetailsTokenRS loginV110(HttpHeaders httpHeaders, LoginRQ loginRQ);
 }

@@ -9,6 +9,7 @@ public class BasicRS {
     private String chainName;
     private String hotelName;
     private Integer ranking;
+    private String description;
     private String email;
     private String web;
     private Integer badge;

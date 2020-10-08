@@ -1,9 +1,20 @@
 package com.skybooking.skyhotelservice.constant;
 
 public enum CancellationTypeConstant {
-    FREE,
-    PARTIAL,
-    NON_REFUNDABLE;
+    FREE("Free cancellation"),
+    FREE_BEFORE("Free cancellation before {{datetime}}"),
+    PARTIAL("Partial cancellation fees"),
+    NON_REFUNDABLE("Non refundable");
+
+    String value;
+
+    CancellationTypeConstant(String value) {
+        this.value = value;
+    }
+
+    public String getValue() {
+        return value;
+    }
 
     public static CancellationTypeConstant getName(String name) {
         if (name.equals(FREE.name()))

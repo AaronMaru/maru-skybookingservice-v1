@@ -18,10 +18,10 @@ public class ConfigTopUpEntity {
     private String type;
 
     @Column(name = "topup_key")
-    private String topupKey;
+    private String topUpKey;
 
     @Column(name = "value")
-    private BigDecimal value;
+    private BigDecimal value = BigDecimal.valueOf(0);
 
     @Column(name = "status")
     private Boolean status;

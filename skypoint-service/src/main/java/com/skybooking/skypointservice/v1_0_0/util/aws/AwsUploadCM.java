@@ -52,9 +52,9 @@ public class AwsUploadCM {
             String fileNames = multipartFile.getOriginalFilename();
 
             imageEx = getExtensionByStringHandling(fileNames);
-            limitFileType(imageEx.get(), new String[]{"PNG", "JPG", "JPEG"});
+            limitFileType(imageEx.get(), new String[]{"PNG", "JPG", "JPEG", "PDF", "XLS", "XLSX", "DOC", "DOCX"});
 
-            uploadFileTos3bucket(fileName + "." + imageEx.get(), file, "/uploads");
+            uploadFileTos3bucket(fileName + "." + imageEx.get(), file, "/uploads/offline-topup-file");
 
             file.delete();
 

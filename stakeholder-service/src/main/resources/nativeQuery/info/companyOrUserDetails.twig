@@ -1,0 +1,86 @@
+SELECT
+    sc.id AS id,
+	sc.company_name AS name,
+	sc.company_code AS code,
+	sc.profile_img AS thumbnail,
+	c.email AS email,
+	cp.phone AS phone
+
+FROM `stakeholder_companies` sc
+LEFT JOIN
+(
+	SELECT
+		c.contactable_id,
+		c.contactable_type,
+		c.`value` AS email
+	FROM contacts c
+	WHERE c.`type` = 'e'
+) c ON c.contactable_id = sc.id AND c.contactable_type = "company"
+LEFT JOIN
+(
+	SELECT
+		cp.contactable_id,
+		cp.contactable_type,
+		cp.`value` AS phone
+	FROM contacts cp
+	WHERE cp.`type` = 'p'
+) cp ON cp.contactable_id = sc.id AND cp.contactable_type = "company"
+
+WHERE sc.`status` = 4
+AND sc.company_code = :companyCode
+
+UNION
+
+SELECT
+    sc.id AS id,
+	sc.company_name AS name,
+	sc.company_code AS code,
+	sc.profile_img AS thumbnail,
+	ce.email AS email,
+	cp.phone AS phone
+
+FROM contacts c
+
+INNER JOIN
+(
+	SELECT
+		sc.id,
+		sc.company_name,
+		sc.company_code,
+		sc.profile_img,
+		sc.status
+	FROM stakeholder_companies sc
+) sc ON sc.id = c.contactable_id AND sc.status = 4
+
+LEFT JOIN
+(
+	SELECT
+		ce.contactable_id,
+		ce.contactable_type,
+		ce.`value` AS email
+	FROM contacts ce
+	WHERE ce.`type` = 'e'
+) ce ON ce.contactable_id = sc.id AND ce.contactable_type = "company"
+
+LEFT JOIN
+(
+	SELECT
+		cp.contactable_id,
+		cp.contactable_type,
+		cp.`value` AS phone
+	FROM contacts cp
+	WHERE cp.`type` = 'p'
+) cp ON cp.contactable_id = sc.id AND cp.contactable_type = "company"
+where sc.company_code = :companyCode
+UNION
+
+SELECT
+    su.id AS id,
+	su.first_name AS name,
+	su.user_code AS code,
+	su.photo AS thumbnail,
+	u.email AS email,
+	u.phone AS phone
+FROM stakeholder_users su
+LEFT JOIN users u ON su.user_id = u.id
+where su.user_code = :companyCode

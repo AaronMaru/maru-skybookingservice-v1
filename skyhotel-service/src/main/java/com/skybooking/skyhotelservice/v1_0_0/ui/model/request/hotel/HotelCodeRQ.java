@@ -11,4 +11,6 @@ public class HotelCodeRQ {
     @Max(1000000)
     private Integer hotelCode;
 
+    private String requestId;
+
 }

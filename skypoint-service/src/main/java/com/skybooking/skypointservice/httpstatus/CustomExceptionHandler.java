@@ -1,12 +1,21 @@
 package com.skybooking.skypointservice.httpstatus;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @ControllerAdvice
 public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
@@ -15,6 +24,30 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
 //    @Autowired
 //    private LocalizationBean localization;
 
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
+                                                                  HttpHeaders headers,
+                                                                  HttpStatus status, WebRequest request) {
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", new Date());
+        body.put("status", status.value());
+
+        BindingResult result = ex.getBindingResult();
+
+        List<FieldError> fieldErrors = result.getFieldErrors();
+        String validation = "";
+
+        for (FieldError fieldError: fieldErrors) {
+            validation = fieldError.getDefaultMessage();
+        }
+
+        body.put("error", status.getReasonPhrase());
+        body.put("message", validation);
+
+        return new ResponseEntity<>(body, headers, status);
+
+    }
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -56,7 +89,7 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
      */
     @ExceptionHandler(InternalServerError.class)
     public ResponseEntity<CustomErrorResponse> handleInternalError(InternalServerError ex) {
-        CustomErrorResponse errors = this.setError(ex.getMessage(), ex.getData(), HttpStatus.TEMPORARY_REDIRECT.value());
+        CustomErrorResponse errors = this.setError(ex.getMessage(), ex.getData(), HttpStatus.INTERNAL_SERVER_ERROR.value());
         return new ResponseEntity<>(errors, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 

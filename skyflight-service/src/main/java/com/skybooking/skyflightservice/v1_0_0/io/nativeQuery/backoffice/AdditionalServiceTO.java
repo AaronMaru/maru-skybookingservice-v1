@@ -20,6 +20,7 @@ public class AdditionalServiceTO {
     private BigDecimal customerFee;
     private String customerDescription;
     private Date bankReceivedDate;
+    private String bankNo;
     private BigDecimal bankFee;
     private String bankDescription;
     private Boolean status;

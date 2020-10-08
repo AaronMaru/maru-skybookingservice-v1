@@ -1,38 +1,40 @@
 SELECT
-    tv.id as id,
-	t.code AS transactionId,
+    tv.id AS id,
+	tv.code AS transactionCode,
+	tt.code AS transactionTypeCode,
+	tt.name as transactionTypeName,
 	CASE
-		WHEN tv.transaction_type_code = 'TOP_UP' THEN 'Top-Up Skypoint'
-		WHEN tv.transaction_type_code = 'EARNING_EXTRA' THEN 'Earning Skypoint from Top-Up'
-		WHEN tv.transaction_type_code = 'EARNING' THEN 'Earning Skypoint'
-		WHEN tv.transaction_type_code = 'WITHDRAWAL' AND t.transaction_for = 'FLIGHT' THEN 'Redeemed Flight Booking'
-		WHEN tv.transaction_type_code = 'WITHDRAWAL' AND t.transaction_for = 'HOTEL' THEN 'Redeemed Hotel Booking'
-		WHEN tv.transaction_type_code = 'EARNING' THEN 'Earning Skypoint from Booking'
-	END AS transactionTypeName,
-	CASE
-		WHEN tv.transaction_type_code = 'EARNING_EXTRA' || tv.transaction_type_code = 'EARNING' THEN tv.earning_amount
-	    ELSE tv.amount
-	END AS pointAmount,
-	CASE
-		WHEN tv.transaction_type_code = 'EARNING_EXTRA' || tv.transaction_type_code = 'EARNING' THEN tv.earning_amount
-	    ELSE tv.amount
-	END AS amount,
-	CASE
-		WHEN tv.transaction_type_code = 'TOP_UP' THEN tv.amount
-	    ELSE 0.00
-	END AS totalPrice,
-	tv.earning_amount AS earning,
-	CASE
-		WHEN tv.transaction_type_code = 'WITHDRAWAL' || tv.transaction_type_code = 'EARNING' THEN t.reference_code
+		WHEN tv.transaction_type_code IN ('REDEEMED_FLIGHT', 'REDEEMED_HOTEL', 'EARNED_FLIGHT', 'EARNED_HOTEL') THEN t.reference_code
 	    ELSE ''
 	END AS bookingId,
-    concat('Successfully') AS status,
+	CASE
+		WHEN tv.transaction_type_code = 'TOP_UP' THEN (tv.amount)
+	    ELSE 0.00
+	END AS topUpPoint,
+	CASE
+		WHEN tv.transaction_type_code IN ('EARNED_HOTEL', 'EARNED_FLIGHT') THEN tv.earning_amount
+		WHEN tv.transaction_type_code = 'TOP_UP' THEN (tv.amount * tv.extra_rate)
+		ELSE 0.00
+	END as earnedPoint,
+	CASE
+		WHEN tv.transaction_type_code = 'TOP_UP' THEN (tv.amount + (tv.amount * tv.extra_rate))
+		WHEN tv.transaction_type_code IN ('EARNED_HOTEL', 'EARNED_FLIGHT') THEN tv.earning_amount
+	    ELSE tv.amount
+	END AS totalPoint,
+	CASE
+		WHEN tv.transaction_type_code IN ('REDEEMED_FLIGHT', 'REDEEMED_HOTEL') THEN tv.amount
+		ELSE 0.00
+	END as redeemedPoint,
+	t.amount AS totalPrice,
+	t.paid_amount AS paidPrice,
 	DATE_FORMAT(t.created_at, "%e-%M-%Y") AS createdAt
 FROM
-	skypoint_db.transaction_values tv
+	transaction_values tv
 INNER JOIN
-	skypoint_db.transactions t ON t.id = tv.transaction_id
+	transactions t ON t.id = tv.transaction_id
 INNER JOIN
-	skypoint_db.account a ON a.id = t.account_id
+	transaction_types tt ON tt.code = tv.transaction_type_code AND tt.language_code = :languageCode
+INNER JOIN
+	account a ON a.id = t.account_id
 WHERE
-	tv.id = :transactionValueId
+	tv.code = :transactionCode

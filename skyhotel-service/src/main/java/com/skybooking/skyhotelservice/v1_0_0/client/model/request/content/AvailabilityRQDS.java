@@ -8,6 +8,7 @@ import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 public class AvailabilityRQDS {
@@ -17,7 +18,8 @@ public class AvailabilityRQDS {
     private HotelRQDS hotels = new HotelRQDS();
     private List<ReviewRQDS> reviews = new ArrayList<>();
 
-    public AvailabilityRQDS() { }
+    public AvailabilityRQDS() {
+    }
 
     public AvailabilityRQDS(AvailabilityRQ availabilityRQ, List<Integer> hotelCodes) {
 
@@ -31,8 +33,12 @@ public class AvailabilityRQDS {
 
         if (availabilityRQ.getChildren().size() > 0) {
 
-            childrenNum = availabilityRQ.getChildren().size();
-            for (PaxRQ child : availabilityRQ.getChildren()) {
+            childrenNum = 1;
+            for (PaxRQ child : availabilityRQ
+                .getChildren()
+                .stream()
+                .limit(1)
+                .collect(Collectors.toList())) {
                 PaxRQDS pax = new PaxRQDS();
                 pax.setAge(child.getAge());
                 pax.setType(PaxTypeConstant.CHILD);
@@ -42,8 +48,8 @@ public class AvailabilityRQDS {
         }
 
         occupancy.setPaxes(paxes);
-        occupancy.setRooms(availabilityRQ.getRoom());
-        occupancy.setAdults(availabilityRQ.getAdult());
+        occupancy.setRooms(1);
+        occupancy.setAdults((int) Math.ceil((double) availabilityRQ.getAdult() / (double) availabilityRQ.getRoom()));
         occupancy.setChildren(childrenNum);
         occupancies.add(occupancy);
 

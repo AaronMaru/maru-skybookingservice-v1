@@ -1,5 +1,6 @@
 package com.skybooking.stakeholderservice.exception;
 
+import com.skybooking.stakeholderservice.constant.PasswordConstant;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.users.UserRepository;
 import com.skybooking.stakeholderservice.v1_0_0.util.localization.LocalizationBean;
@@ -53,6 +54,11 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
             vldRegisterWeb(fieldError, result, body);
         }
         body.put("message", validation);
+
+        if (validation.equals(PasswordConstant.SOCIAL_REQUIRE_PASSWORD)) {
+            body.put("status", HttpStatus.UNPROCESSABLE_ENTITY.value());
+            return new ResponseEntity<>(body, headers, HttpStatus.UNPROCESSABLE_ENTITY);
+        }
         return new ResponseEntity<>(body, headers, status);
 
     }

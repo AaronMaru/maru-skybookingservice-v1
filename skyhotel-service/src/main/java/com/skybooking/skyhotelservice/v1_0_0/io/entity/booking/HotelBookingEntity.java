@@ -25,17 +25,22 @@ public class HotelBookingEntity {
 
     private String code;
 
+    // Reference from DS
     @Column(name = "booking_reference")
     private String bookingReference;
 
-    @Column(name = "cancellation_reference")
-    private String cancellationReference;
+    // Cancellation Reference
+    @Column(name = "reference_code")
+    private String referenceCode;
+
+    @Column(name = "check_in")
+    private Date checkIn;
+
+    @Column(name = "check_out")
+    private Date checkOut;
 
     @Column(name = "markup_amount")
     private BigDecimal markupAmount = BigDecimal.ZERO;
-
-    @Column(name = "markup_percentage")
-    private BigDecimal markupPercentage = BigDecimal.ZERO;
 
     @Column(name = "payment_fee_amount")
     private BigDecimal paymentFeeAmount = BigDecimal.ZERO;
@@ -43,17 +48,20 @@ public class HotelBookingEntity {
     @Column(name = "payment_fee_percentage")
     private BigDecimal paymentFeePercentage = BigDecimal.ZERO;
 
-    @Column(name = "base_payment_percentage")
-    private BigDecimal basePaymentPercentage = BigDecimal.ZERO;
+    @Column(name = "markup_pay_percentage")
+    private BigDecimal markupPayPercentage = BigDecimal.ZERO;
 
-    @Column(name = "base_payment_amount")
-    private BigDecimal basePaymentAmount = BigDecimal.ZERO;
+    @Column(name = "markup_pay_amount")
+    private BigDecimal markupPayAmount = BigDecimal.ZERO;
 
-    @Column(name = "dis_payment_percentage")
-    private BigDecimal disPaymentPercentage = BigDecimal.ZERO;
+    @Column(name = "discount_payment_percentage")
+    private BigDecimal discountPaymentPercentage = BigDecimal.ZERO;
 
-    @Column(name = "dis_payment_amount")
-    private BigDecimal disPaymentAmount = BigDecimal.ZERO;
+    @Column(name = "discount_payment_amount")
+    private BigDecimal discountPaymentAmount = BigDecimal.ZERO;
+
+    @Column(name = "total_amount_before_discount")
+    private BigDecimal totalAmountBeforeDiscount = BigDecimal.ZERO;
 
     private BigDecimal cost = BigDecimal.ZERO;
 
@@ -73,23 +81,20 @@ public class HotelBookingEntity {
 
     private String status;
 
-    @Lob
-    private String remark;
+    @Column(name = "contact_email")
+    private String contactEmail;
 
-    @Column(name = "cont_email")
-    private String contEmail;
+    @Column(name = "contact_phone")
+    private String contactPhone;
 
-    @Column(name = "cont_phone")
-    private String contPhone;
+    @Column(name = "contact_phone_code")
+    private String contactPhoneCode;
 
-    @Column(name = "cont_phone_code")
-    private String contPhoneCode;
+    @Column(name = "contact_fullname")
+    private String contactFullname;
 
-    @Column(name = "cont_fullname")
-    private String contFullname;
-
-    @Column(name = "cust_name")
-    private String custName;
+    @Column(name = "commision_amount")
+    private BigDecimal commisionAmount = BigDecimal.ZERO;
 
     @Column(name = "created_by")
     private String createdBy;

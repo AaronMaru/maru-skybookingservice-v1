@@ -9,7 +9,7 @@ public class HotelCodeRQDS {
 
     private List<DestinationRQDS> destinations;
     private GeolocationRQDS geolocation;
-    private String accommodationType;
+    private String accommodationType = "";
 
     public HotelCodeRQDS() { }
 

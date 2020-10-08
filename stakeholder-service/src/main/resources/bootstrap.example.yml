@@ -13,6 +13,20 @@ spring:
     user: artemis
     password: simetraehcapa
 
+  awsImage:
+    url: s3.amazonaws.com
+    region: us-east-1
+    bucket: skybooking
+    key: AKIAJEC5JZZKMU7GNCFQ
+    secret: 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
+    visibility: public
+  awsImageUrl:
+    mailTemplate: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/mail/images/
+    companyProfile: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/company_profiles/
+    profile:
+      url_larg: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/profile/
+      url_small: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/profile/_thumbnail/
+
 #active:
 #  broker-url: tcp://localhost:61616
 

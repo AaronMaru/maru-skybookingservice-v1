@@ -63,20 +63,20 @@
             <td>
                 <img src="https://s3.amazonaws.com/skybooking/uploads/mail/images/logo.png"/>
                 <div class="topup-title">
-                    <h2>Topup Confirmaction</h2>
-                    <p>Thank you for your topup! Your receipt details are below.</p>
+                    <h2>${label_topUp.header??? then(label_topUp.header, 'NO LABEL YET')}</h2>
+                    <p>${label_topUp.description??? then(label_topUp.description, 'NO LABEL YET')}</p>
                 </div><br />
-                <p><b>Issued for:</b></p>
-                <p>Company / Traveler Name: ${data.fullName}</p>
-                <p>Contact: ${data.email}/${data.phone}</p><br />
+                <p><b>${label_topUp.issued_for??? then(label_topUp.issued_for, 'NO LABEL YET')}:</b></p>
+                <p>${label_topUp.name??? then(label_topUp.name, 'NO LABEL YET')}: ${data.fullName}</p>
+                <p>${label_topUp.contact??? then(label_topUp.contact, 'NO LABEL YET')}: ${data.email}/${data.phone}</p><br />
 
-                <p><b>Transaction Detail</b></p>
+                <p><b>${label_topUp.transaction_detail??? then(label_topUp.transaction_detail, 'NO LABEL YET')}</b></p>
                 <ul class="list-topup-info">
                     <li>
-                        <p>The total of payment:</p>
-                        <p>SkyPoint Received:</p>
-                        <p>Transaction ID:</p>
-                        <p>Transaction Date:</p>
+                        <p>${label_topUp.total_payment??? then(label_topUp.total_payment, 'NO LABEL YET')}:</p>
+                        <p>${label_topUp.point_received??? then(label_topUp.point_received, 'NO LABEL YET')}:</p>
+                        <p>${label_topUp.transaction_id??? then(label_topUp.transaction_id, 'NO LABEL YET')}:</p>
+                        <p>${label_topUp.transaction_date??? then(label_topUp.transaction_date, 'NO LABEL YET')}:</p>
                     </li>
                     <li class="list-value">
                         <p>USD ${data.amount}</p>

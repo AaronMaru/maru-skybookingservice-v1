@@ -7,6 +7,7 @@ public class ImageRSDS {
 
     private String thumbnail;
     private String typeCode;
+    private String typeName;
     private Integer sortOrder;
     private String roomCode;
     private String roomType;

@@ -1,10 +1,13 @@
 package com.skybooking.stakeholderservice.v1_0_0.service.implement.locale;
 
+import com.skybooking.stakeholderservice.v1_0_0.io.enitity.locale.LocaleEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.enitity.locale.TranslationEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.locale.LocaleRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.locale.TranslationRP;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.locale.LocaleSV;
 import com.skybooking.stakeholderservice.v1_0_0.transformer.locale.LocaleTF;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.locale.LocaleRQ;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.locale.LocaleExistRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.locale.LocaleRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.locale.ModuleLanguageRS;
 import com.skybooking.stakeholderservice.v1_0_0.util.general.StringUtil;
@@ -77,6 +80,14 @@ public class LocaleIP implements LocaleSV {
     @Override
     public List<LocaleRS> findAllLocale() {
         return LocaleTF.getResponseList(localeRP.findAll());
+    }
+
+    @Override
+    public LocaleExistRS getLocaleByKey(String lang) {
+
+        String isLang = localeRP.existsLocale(lang);
+
+        return new LocaleExistRS(isLang);
     }
 
 

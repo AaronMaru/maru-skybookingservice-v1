@@ -14,16 +14,18 @@ import com.skybooking.skyhistoryservice.v1_0_0.ui.model.request.SendBookingNoAut
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.request.SendBookingPDFRQ;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.booking.PrintRS;
 import com.skybooking.skyhistoryservice.v1_0_0.ui.model.response.booking.detail.BookingDetailRS;
-import com.skybooking.skyhistoryservice.v1_0_0.util.JwtUtils;
 import com.skybooking.skyhistoryservice.v1_0_0.util.datetime.DateTimeBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.email.EmailBean;
 import com.skybooking.skyhistoryservice.v1_0_0.util.header.HeaderBean;
+import freemarker.template.Configuration;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 import static com.skybooking.skyhistoryservice.constant.MailStatusConstant.*;
@@ -35,7 +37,7 @@ public class SendBookingIP implements SendBookingSV {
     private BookingRP bookingRP;
 
     @Autowired
-    private JwtUtils jwtUtils;
+    private Configuration configuration;
 
     @Autowired
     private EmailBean emailBean;
@@ -92,7 +94,7 @@ public class SendBookingIP implements SendBookingSV {
         mailData.put("data", mailBookingDetail);
 
         // apply locale
-        mailData.put("pdfLang", locale);
+        mailData.put("pdfLang", locale); // mail have too not only pdf
 
         Map<String, Object> pdfData = new HashMap<>();
         pdfData.put("label_" + pdfTemplate, emailBean.dataPdfTemplate(pdfTemplate, Label));
@@ -101,10 +103,10 @@ public class SendBookingIP implements SendBookingSV {
         // apply logo
         Integer companyId = request.getHeader("X-CompanyId") != null &&
                 !request.getHeader("X-CompanyId").isEmpty() ?
-                Integer.valueOf(request.getHeader("X-CompanyId")): 0;
+                Integer.parseInt(request.getHeader("X-CompanyId")) : 0;
         pdfData.put("logoPdf", this.embedLogo(companyId));
 
-        List<String> sendData = Arrays.asList(pdfTemplate);
+        List<String> sendData = Collections.singletonList(pdfTemplate);
         pdfData.put("sendData", sendData);
 
         emailBean.sendEmailSMS("send-booking", mailData, pdfData);
@@ -247,12 +249,43 @@ public class SendBookingIP implements SendBookingSV {
     }
 
     @Override
-    public PrintRS
-    printBooking(String bookingCode) {
+    public PrintRS printBooking(String bookingCode) {
+
+        String locale = headerBean.getLocalization();
         BookingEntity booking = bookingRP.findByBookingCode(bookingCode);
 
         if (booking == null) {
             throw new BadRequestException("no_bk", null);
+        }
+
+        BookingDetailRS bookingEmailDetailRS = bookingDetailSV.getBookingDetail(booking.getBookingCode(), null);
+
+        BookingDetailTF mailBookingDetail = this.mailBookingDetail(bookingEmailDetailRS);
+
+        Map<String, Object> pdfData = new HashMap<>();
+        pdfData.put("label_itinerary", emailBean.dataPdfTemplate("itinerary", "api_itinerary_pdf"));
+        pdfData.put("data_itinerary", mailBookingDetail);
+
+        // apply logo
+        Integer companyId = request.getHeader("X-CompanyId") != null &&
+                !request.getHeader("X-CompanyId").isEmpty() ?
+                Integer.parseInt(request.getHeader("X-CompanyId")) : 0;
+
+        pdfData.put("logoPdf", this.embedLogo(companyId));
+
+        List<String> sendData = Collections.singletonList("itinerary");
+        pdfData.put("sendData", sendData);
+        pdfData.put("pdfLang", locale);
+
+        try {
+            File file = emailBean.pdfRender(configuration, pdfData, "itinerary");
+
+            emailBean.uploadItineraryReceiptTos3bucket(file, "itinerary", bookingCode);
+
+            file.delete();
+
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
         }
 
         PrintRS printRS = new PrintRS();
@@ -260,6 +293,7 @@ public class SendBookingIP implements SendBookingSV {
         printRS.setUrl(environment.getProperty("spring.awsImageUrl.file.itinerary") + booking.getItineraryPath() + "/" + booking.getItineraryFile());
 
         return printRS;
+
     }
 
     public BookingDetailTF mailBookingDetail(BookingDetailRS bookingEmailDetailRS) {

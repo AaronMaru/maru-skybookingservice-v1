@@ -1,5 +1,6 @@
 package com.skybooking.skyhotelservice.v1_0_0.ui.model.response.payment;
 
+import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.history.detail.BookingDetailRS;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -15,7 +16,7 @@ public class PaymentTransactionRQ {
     private String cardType;
     private String bankName;
     private String description;
-    private int status;
+    private int status = 1;
     private String pipayStatus;
     private String transId;
     private String orderId;
@@ -32,5 +33,7 @@ public class PaymentTransactionRQ {
     private String email;
     private Integer skyuserId;
     private Integer companyId;
+    private String lang;
+    private BookingDetailRS bookingDetail;
 
 }

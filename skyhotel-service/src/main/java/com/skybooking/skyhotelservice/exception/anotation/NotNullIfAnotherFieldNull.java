@@ -1,8 +1,5 @@
 package com.skybooking.skyhotelservice.exception.anotation;
 
-import com.skybooking.skyhotelservice.exception.anotation.checkinoutdate.CheckoutDate;
-import com.skybooking.skyhotelservice.exception.anotation.checkinoutdate.CheckoutDateValidator;
-
 import javax.validation.Constraint;
 import javax.validation.Payload;
 import java.lang.annotation.Documented;

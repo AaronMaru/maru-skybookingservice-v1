@@ -1,6 +1,7 @@
 package com.skybooking.skyflightservice.v1_0_0.ui.model.request.ticketing;
 
 public class IssueTicketRQ {
+
     private String itineraryNo;
     private Integer passengerQualifier;
     private String bookingCode;

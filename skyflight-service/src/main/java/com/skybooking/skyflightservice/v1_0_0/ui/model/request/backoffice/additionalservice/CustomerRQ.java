@@ -10,9 +10,9 @@ import java.math.BigDecimal;
 @Data
 public class CustomerRQ extends AdditionalItemRQ {
 
-    @NotNull(message = "Customer fee is required")
-    @Min(value = 0, message = "Customer fee must be greater or equal 0")
-    @Max(value = 1000000, message = "Customer fee must be less than 1000000")
+    @NotNull(message = "REQUIRE_CUSTOMER_FEE")
+    @Min(value = 0, message = "CUSTOMER_FEE_MIN_0")
+    @Max(value = 1000000, message = "CUSTOMER_FEE_MAX_1000000")
     private BigDecimal fee;
 
 }

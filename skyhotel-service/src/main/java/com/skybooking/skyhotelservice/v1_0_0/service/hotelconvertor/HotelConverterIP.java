@@ -1,202 +1,616 @@
 package com.skybooking.skyhotelservice.v1_0_0.service.hotelconvertor;
 
+import com.skybooking.skyhotelservice.constant.CancellationTypeConstant;
 import com.skybooking.skyhotelservice.constant.CurrencyConstant;
 import com.skybooking.skyhotelservice.constant.SubReviewConstant;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.response.availability.AvailabilityRSDS;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.response.basehotel.ResourceRSDS;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.response.basehotel.availability.AvailabilityHotelRSDS;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.response.basehotel.availability.properties.review.ReviewRSDS;
+import com.skybooking.skyhotelservice.v1_0_0.client.model.response.basehotel.availability.properties.room.CancellationPolicyRSDS;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.response.basehotel.availability.properties.room.RoomRSDS;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.response.basehotel.availability.properties.room.RoomRateRSDS;
-import com.skybooking.skyhotelservice.v1_0_0.client.model.response.basehotel.availability.room.*;
+import com.skybooking.skyhotelservice.v1_0_0.client.model.response.basehotel.availability.room.CancellationRSDS;
+import com.skybooking.skyhotelservice.v1_0_0.client.model.response.basehotel.availability.room.FeeRSDS;
+import com.skybooking.skyhotelservice.v1_0_0.client.model.response.basehotel.availability.room.PromotionRSDS;
+import com.skybooking.skyhotelservice.v1_0_0.client.model.response.basehotel.availability.room.RateRSDS;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.response.basehotel.content.ContentRSDS;
+import com.skybooking.skyhotelservice.v1_0_0.client.model.response.booking.RateTaxesHBRS;
+import com.skybooking.skyhotelservice.v1_0_0.io.entity.markup.HotelMarkupEntity;
+import com.skybooking.skyhotelservice.v1_0_0.io.repository.markup.HotelMarkupRP;
+import com.skybooking.skyhotelservice.v1_0_0.ui.model.request.hotel.AvailabilityRQ;
+import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.booking.checkrate.CancellationPolicy;
+import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.booking.checkrate.Discount;
+import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.booking.checkrate.Tax;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.BoardRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.HotelRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.content.*;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.content.facility.HotelFacilityRS;
-import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.price.PriceUnitRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.score.ScoreItemRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.score.ScoreRS;
-import com.skybooking.skyhotelservice.v1_0_0.util.calculator.CalculatorCM;
+import com.skybooking.skyhotelservice.v1_0_0.util.calculator.CalculatePriceRS.*;
+import com.skybooking.skyhotelservice.v1_0_0.util.calculator.CalculatePriceUtil;
+import com.skybooking.skyhotelservice.v1_0_0.util.datetime.DatetimeUtil;
+import com.skybooking.skyhotelservice.v1_0_0.util.mapper.HotelConverterMapper;
+import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.sql.Date;
+import java.math.RoundingMode;
+import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.function.Predicate;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class HotelConverterIP implements HotelConverterSV {
 
-    @Autowired
-    private CalculatorCM calculatorCM;
-
-    @Autowired
-    private ModelMapper modelMapper;
+    private final HotelConverterMapper mapper;
+    private final ModelMapper modelMapper;
+    private final HotelMarkupRP hotelMarkupRP;
 
     @Override
-    public List<HotelRS> availabilities(AvailabilityRSDS availabilityRSDS) {
+    public List<HotelRS> availabilities(AvailabilityRSDS availabilityRSDS, AvailabilityRQ availabilityRQ) {
 
-        List<HotelRS> response = new ArrayList<>();
-        var data = availabilityRSDS.getData();
-        Map<Integer, ContentRSDS> contentRSDSMap = new HashMap<>();
+        List<AvailabilityHotelRSDS> availabilities = availabilityRSDS.getData().getAvailabilities();
+        if (availabilities.isEmpty()) return Collections.emptyList();
 
-        data.getHotelContents()
-            .forEach(contentRSDS ->
-                contentRSDSMap.put(contentRSDS.getCode(), contentRSDS));
+        Map<Integer, ContentRSDS> hotelContents = availabilityRSDS
+            .getData()
+            .getHotelContents()
+            .parallelStream()
+            .collect(Collectors.toMap(ContentRSDS::getCode, content -> content));
 
-        data.getAvailabilities()
-            .forEach(availabilityHotelRSDS -> {
+        ResourceRSDS resource = availabilityRSDS.getData().getResource();
 
-                HotelRS hotelRS = new HotelRS();
+        final List<HotelMarkupEntity> markup = hotelMarkupRP.getAllByType("SKYUSER");
 
-                if (availabilityHotelRSDS.getReviews().size() > 0) {
-                    ReviewRSDS review = availabilityHotelRSDS.getReviews().get(0);
-                    List<ScoreItemRS> scoreItems = new ArrayList<>();
-                    ScoreRS scoreRS = new ScoreRS();
-
-                    scoreRS.setTitle("Excellent");
-                    scoreRS.setNumber(review.getRate());
-                    scoreRS.setReviewCount(review.getReviewCount());
-
-                    SubReviewConstant.LIST.forEach(s -> {
-                        ScoreItemRS scoreItemRS = new ScoreItemRS(s, (float) 4.7);
-                        scoreItems.add(scoreItemRS);
-                    });
-
-                    scoreRS.setSubScore(scoreItems);
-                    hotelRS.setScore(scoreRS);
-                }
-
-                RoomRSDS room = availabilityHotelRSDS.getRooms().get(0);
-                RoomRateRSDS roomRate = room.getRates().get(0);
-
-                BigDecimal amount = calculatorCM.markupPrice(new BigDecimal(roomRate.getNet()));
-
-                PriceUnitRS priceUnitRS = new PriceUnitRS();
-                priceUnitRS.setAmount(amount);
-                priceUnitRS.setAmountAfterDiscount(amount);
-                hotelRS.setPriceUnit(priceUnitRS);
-
-                hotelRS.setPaymentType(RateRS.PaymentType.getByValue(roomRate.getPaymentType()));
-                setContentDataToList(contentRSDSMap
-                    .get(availabilityHotelRSDS.getCode()), availabilityHotelRSDS, data.getResource(), hotelRS);
-
-                response.add(hotelRS);
-
-            });
-
-        return response;
+        return availabilities
+            .parallelStream()
+            .map(getAvailabilityHotelResponse(availabilityRQ, hotelContents, resource, markup))
+            .collect(Collectors.toList());
 
     }
 
-    private void setContentDataToList(ContentRSDS contentRSDS,
-                                      AvailabilityHotelRSDS availabilityHotelRSDS,
-                                      ResourceRSDS resourceRSDS,
-                                      HotelRS hotelRS) {
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get availability hotel response function
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param availabilityRQ
+     * @param hotelContents
+     * @param resource
+     * @param markup
+     * @return Function
+     */
+    private Function<AvailabilityHotelRSDS, HotelRS> getAvailabilityHotelResponse(AvailabilityRQ availabilityRQ, Map<Integer, ContentRSDS> hotelContents, ResourceRSDS resource, List<HotelMarkupEntity> markup) {
 
-        Map<String, RoomRSDS> roomRSDSMap = availabilityHotelRSDS
+        return availabilityHotel -> {
+
+            ContentRSDS content = hotelContents.get(availabilityHotel.getCode());
+
+            HotelRS hotel = new HotelRS();
+            hotel.setScore(getHotelScoreResponse(availabilityHotel));
+
+            // set hotel detail
+            setHotelResponseDetail(
+                availabilityHotel,
+                availabilityRQ,
+                content,
+                resource,
+                markup,
+                hotel
+            );
+
+            return hotel;
+        };
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * set hotel response in detail
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param availabilityHotel
+     * @param availabilityRQ
+     * @param content
+     * @param resource
+     * @param markup
+     * @param hotel
+     */
+    private void setHotelResponseDetail(AvailabilityHotelRSDS availabilityHotel, AvailabilityRQ availabilityRQ, ContentRSDS content, ResourceRSDS resource, List<HotelMarkupEntity> markup, HotelRS hotel) {
+
+        if (content.getRooms().isEmpty()) return;
+
+        final Map<String, RoomRSDS> rooms = availabilityHotel
+            .getRooms()
+            .parallelStream()
+            .collect(Collectors.toMap(RoomRSDS::getCode, room -> room));
+
+        hotel.setCode(content.getCode());
+        hotel.setBasic(getHotelBasicResponse(content));
+        hotel.setLocation(getHotelLocationResponse(content));
+        hotel.setBoards(getHotelBoardResponse(content));
+        hotel.setPhones(getHotelPhoneResponse(content));
+        hotel.setInterestPoints(getHotelInterestPointResponse(content));
+        hotel.setImages(getHotelImageResponse(content, resource.getImageUrl().getMedium()));
+        hotel.setSegments(getHotelSegmentResponse(content));
+        hotel.setRooms(getHotelRoomResponse(hotel, content, rooms, availabilityRQ, markup));
+        hotel.setFacility(getHotelFacilityResponse(content));
+
+        // get rate price of first room availability in hotel
+        final RateRS roomRate = hotel
             .getRooms()
             .stream()
-            .collect(Collectors.toMap(RoomRSDS::getCode, o -> o));
+            .findFirst()
+            .map(it -> it.getRates().stream().findFirst().get())
+            .get();
 
-        hotelRS.setCode(contentRSDS.getCode());
-        hotelRS.setBasic(modelMapper.map(contentRSDS.getBasic(), BasicRS.class));
-        hotelRS.setLocation(modelMapper.map(contentRSDS.getDestination(), LocationRS.class));
+        hotel.setPriceUnit(getHotelPriceUnit(roomRate));
+        hotel.setPaymentType(roomRate.getPaymentType());
 
-        hotelRS.setBoards(contentRSDS
-            .getBoards()
-            .stream()
-            .map(boardRSDS -> modelMapper.map(boardRSDS, BoardRS.class))
-            .collect(Collectors.toList()));
+    }
 
-        hotelRS.setPhones(contentRSDS
-            .getPhones()
-            .stream()
-            .map(item -> modelMapper.map(item, PhoneRS.class))
-            .collect(Collectors.toList()));
 
-        hotelRS.setInterestPoints(contentRSDS
-            .getInterestPoints()
-            .stream()
-            .map(item -> modelMapper.map(item, InterestPointRS.class))
-            .collect(Collectors.toList()));
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get hotel price unit
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param roomRate
+     * @return PriceUnitRS
+     */
+    private PriceUnitRS getHotelPriceUnit(RateRS roomRate) {
+        return roomRate.getPrice().getPriceUnit();
+    }
 
-        hotelRS.setImages(contentRSDS
-            .getImages()
-            .stream()
-            .map(item -> {
-                ImageRS imageRS = modelMapper.map(item, ImageRS.class);
-                imageRS.setThumbnailUrl(resourceRSDS.getImageUrl().getMedium() + imageRS.getThumbnail());
-                return imageRS;
-            })
-            .collect(Collectors.toList()));
 
-        hotelRS.setSegments(contentRSDS
-            .getSegments()
-            .stream()
-            .map(segmentRSDS -> modelMapper.map(segmentRSDS, SegmentRS.class))
-            .collect(Collectors.toList()));
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get hotel facility response
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param content
+     * @return HotelFacilityRS
+     */
+    private HotelFacilityRS getHotelFacilityResponse(ContentRSDS content) {
+        return mapper.toHotelFacilityRS(content.getFacility());
+    }
 
-        hotelRS.setRooms(contentRSDS
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get hotel room response
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param hotel
+     * @param content
+     * @param rooms
+     * @param availabilityRQ
+     * @param markup
+     * @return List
+     */
+    private List<RoomRS> getHotelRoomResponse(HotelRS hotel, ContentRSDS content, Map<String, RoomRSDS> rooms, AvailabilityRQ availabilityRQ, List<HotelMarkupEntity> markup) {
+
+        return content
             .getRooms()
             .stream()
-            .map(item -> {
-                RoomRSDS roomRSDS = roomRSDSMap.get(item.getRoomCode());
+            .map(it -> {
 
-                List<RateRS> rateRSs = roomRSDS.getRates()
+                final List<RateRS> rates = rooms.get(it.getRoomCode())
+                    .getRates()
                     .stream()
-                    .map(rate -> {
-                        RateRSDS rateRSDS1 = modelMapper.map(rate, RateRSDS.class);
-
-                        if (rate.getCancellationPolicies() != null)
-                            rateRSDS1.setCancellation(new CancellationRSDS(
-                                rate.getCancellationPolicies().size() > 0,
-                                rate.getCancellationPolicies()
-                                    .stream()
-                                    .map(c -> new FeeRSDS(
-                                        new BigDecimal(c.getAmount()),
-                                        CurrencyConstant.USD.CODE,
-                                        c.getFrom()
-                                    ))
-                                    .collect(Collectors.toList())
-                            ));
-
-                        BigDecimal amount = calculatorCM.markupPrice(new BigDecimal(rate.getNet()));
-
-                        PriceUnitRSDS priceUnitRSDS = new PriceUnitRSDS();
-                        priceUnitRSDS.setAmount(amount);
-
-                        DetailRSDS detailRSDS = new DetailRSDS();
-                        detailRSDS.setNetAmount(new BigDecimal(rate.getNet()));
-                        detailRSDS.setTotalAmount(amount);
-                        detailRSDS.setTotalTaxesAmount(amount);
-
-                        rateRSDS1.setPrice(new PriceRSDS(priceUnitRSDS, detailRSDS));
-
-                        RateRS rateRS = modelMapper.map(rateRSDS1, RateRS.class);
-
-                        rateRS.getPrice().getPriceUnit().setAmountAfterDiscount(amount);
-                        rateRS.getPrice().getPriceUnit().setCurrency(CurrencyConstant.USD.CODE);
-                        rateRS.getPrice().getDetail().setCurrency(CurrencyConstant.USD.CODE);
-
-                        rateRS.setPaymentType(RateRS.PaymentType.getByValue(rateRSDS1.getPaymentType()));
-
-                        return rateRS;
-                    })
+                    .map(getHotelRoomRateResponse(hotel, availabilityRQ, markup))
                     .collect(Collectors.toList());
 
-                RoomRS roomRS = modelMapper.map(item, RoomRS.class);
-                roomRS.setRates(rateRSs);
+                RoomRS roomRS = mapper.toRoomRS(it);
+                roomRS.setRates(rates);
 
                 return roomRS;
-            })
-            .collect(Collectors.toList()));
 
-        hotelRS.setFacility(modelMapper.map(contentRSDS.getFacility(), HotelFacilityRS.class));
+            })
+            .collect(Collectors.toList());
     }
 
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get hotel room rate response
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param hotel
+     * @param availabilityRQ
+     * @param markup
+     * @return Function
+     */
+    private Function<RoomRateRSDS, RateRS> getHotelRoomRateResponse(HotelRS hotel, AvailabilityRQ availabilityRQ, List<HotelMarkupEntity> markup) {
+        return rate -> {
+            final RateRSDS rateRSDS = mapper.toRateRSDS(rate);
+
+            // checking hotel cancellation policy of each rooms
+            setHotelCancellationPolicy(hotel, rate);
+
+            if (rate.getCancellationPolicies() != null) {
+                final List<FeeRSDS> feeRSDS = rate
+                    .getCancellationPolicies()
+                    .stream()
+                    .map(cancellation -> new FeeRSDS(
+                        new BigDecimal(cancellation.getAmount()),
+                        CurrencyConstant.USD.CODE, cancellation.getFrom()))
+                    .collect(Collectors.toList());
+                rateRSDS.setCancellation(new CancellationRSDS(
+                    !rate.getCancellationPolicies().isEmpty(),
+                    feeRSDS
+                ));
+            }
+
+            if (rate.getPromotions() != null) {
+                final List<PromotionRSDS> promotions = rate
+                    .getPromotions()
+                    .stream()
+                    .map(mapper::toPromotionRSDS)
+                    .collect(Collectors.toList());
+
+                rateRSDS.setPromotions(promotions);
+            }
+
+            final PriceRS priceRS = calculatePrices(
+                availabilityRQ.getCheckIn(),
+                availabilityRQ.getCheckOut(),
+                availabilityRQ.getRoom(),
+                markup, rateRSDS);
+
+            RateRS rateRS = mapper.toRateRS(rateRSDS);
+            rateRS.setPrice(priceRS);
+
+            rateRS.setRooms(availabilityRQ.getRoom());
+            rateRS.setAdults(availabilityRQ.getAdult());
+            rateRS.setChildren(availabilityRQ.getChildren().size());
+
+            CancellationRS cancellation = rateRS.getCancellation();
+            if (cancellation != null)
+                cancellation.setDetail(getCancellationDetail(rate, false));
+            rateRS.setCancellation(cancellation);
+
+            return rateRS;
+
+        };
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * set hotel cancellation policy by room rate policy
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param hotel
+     * @param rate
+     */
+    private void setHotelCancellationPolicy(HotelRS hotel, RoomRateRSDS rate) {
+
+        if (hotel.getPolicy() != null && hotel.getPolicy().equals(hotel.getPolicy())) return;
+
+        if (rate.getCancellationPolicies() != null) {
+            CancellationDetailRS cancellationDetail = getCancellationDetail(rate, true);
+            hotel.setCancellation(cancellationDetail);
+        }
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Get Cancellation Policy detail for each rate or hotel see (isHotel)
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param rate
+     * @param isHotel
+     * @return
+     */
+    private CancellationDetailRS getCancellationDetail(RoomRateRSDS rate, boolean isHotel) {
+        if (rate.getCancellationPolicies().isEmpty()) {
+            return new CancellationDetailRS(
+                CancellationTypeConstant.NON_REFUNDABLE,
+                CancellationTypeConstant.NON_REFUNDABLE.getValue(),
+                null);
+        }
+        ZonedDateTime now = ZonedDateTime.now();
+        CancellationPolicyRSDS cancellationPolicyRSDS = rate.getCancellationPolicies().get(0);
+        if (now.isBefore(DatetimeUtil.toZonedDateTime(cancellationPolicyRSDS.getFrom()))) {
+            if (isHotel) {
+                return new CancellationDetailRS(
+                    CancellationTypeConstant.FREE,
+                    CancellationTypeConstant.FREE.getValue(),
+                    cancellationPolicyRSDS.getFrom()
+                );
+            }
+            String str = CancellationTypeConstant.FREE_BEFORE.getValue()
+                .replace("{{datetime}}",
+                    Objects.requireNonNull(DatetimeUtil
+                        .toFormattedDateTime(cancellationPolicyRSDS.getFrom())));
+            return new CancellationDetailRS(
+                CancellationTypeConstant.FREE_BEFORE,
+                str,
+                cancellationPolicyRSDS.getFrom()
+            );
+        }
+        return new CancellationDetailRS(
+            CancellationTypeConstant.PARTIAL,
+            CancellationTypeConstant.PARTIAL.getValue(),
+            null);
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get hotel segment response
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param content
+     * @return List
+     */
+    private List<SegmentRS> getHotelSegmentResponse(ContentRSDS content) {
+        return content
+            .getSegments()
+            .parallelStream()
+            .map(mapper::toSegmentRS)
+            .collect(Collectors.toList());
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get hotel image response
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param content
+     * @param imageUrl
+     * @return List
+     */
+    private List<ImageRS> getHotelImageResponse(ContentRSDS content, String imageUrl) {
+        return content
+            .getImages()
+            .parallelStream()
+            .map(it -> {
+                final ImageRS image = mapper.toImageRS(it);
+                image.setThumbnailUrl(imageUrl + image.getThumbnail());
+                return image;
+            })
+            .collect(Collectors.toList());
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get hotel interest point response
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param content
+     * @return List
+     */
+    private List<InterestPointRS> getHotelInterestPointResponse(ContentRSDS content) {
+        return content
+            .getInterestPoints()
+            .parallelStream()
+            .map(mapper::toInterestPointRS)
+            .collect(Collectors.toList());
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get hotel phone response
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param content
+     * @return List
+     */
+    private List<PhoneRS> getHotelPhoneResponse(ContentRSDS content) {
+        return content
+            .getPhones()
+            .parallelStream()
+            .map(mapper::toPhoneRS)
+            .collect(Collectors.toList());
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get hotel board response
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param content
+     * @return List
+     */
+    private List<BoardRS> getHotelBoardResponse(ContentRSDS content) {
+        return content
+            .getBoards()
+            .parallelStream()
+            .map(mapper::toBoardRS)
+            .collect(Collectors.toList());
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get hotel location response
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param content
+     * @return LocationRS
+     */
+    private LocationRS getHotelLocationResponse(ContentRSDS content) {
+        return mapper.toLocationRS(content.getDestination());
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get hotel basic information response
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param content
+     * @return BasicRS
+     */
+    private BasicRS getHotelBasicResponse(ContentRSDS content) {
+        return mapper.toBasicRS(content.getBasic());
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get hotel score
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param availabilityHotel
+     * @return ScoreRS
+     */
+    private ScoreRS getHotelScoreResponse(AvailabilityHotelRSDS availabilityHotel) {
+        return Optional
+            .ofNullable(availabilityHotel.getReviews())
+            .orElse(Collections.emptyList())
+            .stream()
+            .findFirst()
+            .map(getReviewHotelScore()).orElse(new ScoreRS());
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get review hotel score
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @return Function
+     */
+    private Function<ReviewRSDS, ScoreRS> getReviewHotelScore() {
+
+        return review -> {
+
+            ScoreRS scoreRS = new ScoreRS();
+            scoreRS.setTitle("Excellent");
+            scoreRS.setNumber(review.getRate());
+            scoreRS.setReviewCount(review.getReviewCount());
+
+            // get score items
+            List<ScoreItemRS> scoreItems = SubReviewConstant
+                .LIST
+                .stream()
+                .map(subReview -> new ScoreItemRS(subReview, 4.7f))
+                .collect(Collectors.toList());
+
+            scoreRS.setSubScore(scoreItems);
+
+            return scoreRS;
+        };
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get hotel price response
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param checkIn
+     * @param checkOut
+     * @param numberOfRooms
+     * @param hotelMarkupEntities
+     * @param rate
+     * @return PriceRS
+     */
+    private PriceRS calculatePrices(
+        String checkIn, String checkOut,
+        Integer numberOfRooms,
+        List<HotelMarkupEntity> hotelMarkupEntities,
+        RateRSDS rate) {
+        // declare variable
+        String currency = CurrencyConstant.USD.CODE;
+        long numberOfNights = DatetimeUtil.night(checkIn, checkOut);
+
+        RateTaxesHBRS taxesHBRS = null;
+
+        // tax
+        if (rate.getTaxes() != null) {
+            taxesHBRS = mapper.toRateTaxesHBRS(rate.getTaxes());
+        }
+        // get exclude tax
+        BigDecimal excludeTaxBeforeMarkup = CalculatePriceUtil.excludeTaxBeforeMarkup(taxesHBRS);
+        // get breakdown discount
+        List<Discount> discounts = CalculatePriceUtil.breakdownDiscountUnit(rate, BigDecimal.valueOf(numberOfNights));
+        // get discount detail
+        DiscountDetail discountDetail = CalculatePriceUtil
+            .discountDetail(discounts, BigDecimal.valueOf(numberOfRooms), BigDecimal.valueOf(numberOfNights));
+        // get net detail
+        NetPriceDetail netDetail = CalculatePriceUtil
+            .detailNet(rate.getNet(), excludeTaxBeforeMarkup, BigDecimal.valueOf(numberOfRooms), BigDecimal.valueOf(numberOfNights));
+        // get markup
+        MarkupPriceDetail markup = CalculatePriceUtil
+            .markupPricesDetail(hotelMarkupEntities, netDetail.getUnitNet(), BigDecimal.valueOf(numberOfRooms), BigDecimal.valueOf(numberOfNights));
+
+        List<CancellationPolicy> cancellationPolicy = new ArrayList();
+        // get cancellation policy
+        if (rate.getCancellation() != null && rate.getCancellation().getCancellable()) {
+            cancellationPolicy = CalculatePriceUtil
+                .breakdownCancellationPolicy(rate.getCancellation().getFees(), markup.getMarkupPercentage(), BigDecimal.valueOf(numberOfNights));
+        }
+
+        // get tax breakdown unit
+        List<Tax> breakdownTaxUnit = CalculatePriceUtil
+            .breakdownTaxUnit(taxesHBRS, markup, rate.getRooms(), numberOfNights);
+        // get total tax detail
+        TaxDetail taxDetail = CalculatePriceUtil.taxDetail(breakdownTaxUnit, numberOfRooms, numberOfNights);
+        // get unit amount
+        BigDecimal unitAmount = CalculatePriceUtil
+            .unitAmount(netDetail.getUnitNet(), markup.getMarkupAmount(), taxDetail.getUnitTax(), discountDetail.getUnitDiscount());
+        // total discount
+        BigDecimal unitDiscountPercentage = calculateDiscountPercentage(unitAmount, discountDetail.getUnitDiscount());
+        // get total price
+        TotalPriceDetail totalPrice = CalculatePriceUtil
+            .detailTotalPrice(unitAmount, discountDetail.getDiscount(), taxDetail.getTax(), BigDecimal.valueOf(numberOfRooms), BigDecimal.valueOf(numberOfNights));
+        // get amount after discount
+        BigDecimal amountAfterDiscount = unitAmount.subtract(discountDetail.getUnitDiscount());
+        // set value to response
+        PriceUnitRS priceUnitRS = new PriceUnitRS();
+
+        priceUnitRS.setNetAmount(netDetail.getUnitNet());
+        priceUnitRS.setAmount(unitAmount);
+        priceUnitRS.setTaxAmount(taxDetail.getUnitTax());
+        priceUnitRS.setAmountAfterDiscount(amountAfterDiscount);
+        priceUnitRS.setDiscountPercentage(unitDiscountPercentage);
+        priceUnitRS.setDiscountAmount(discountDetail.getUnitDiscount());
+        priceUnitRS.setMarkupAmount(markup.getMarkupAmount());
+        priceUnitRS.setCurrency(currency);
+        priceUnitRS.setTaxes(breakdownTaxUnit);
+        priceUnitRS.setDiscounts(discounts);
+        priceUnitRS.setCancellations(cancellationPolicy);
+
+        DetailRS detailRS = new DetailRS();
+
+        detailRS.setMarkupAmount(markup.getTotalMarkupAmount());
+        detailRS.setMarkupPercentage(markup.getMarkupPercentage());
+        detailRS.setTotalNet(netDetail.getTotalNet());
+        detailRS.setTotalAmount(totalPrice.getAmountAfterDiscount());
+        detailRS.setTotalTaxesAmount(taxDetail.getTax());
+        detailRS.setCurrency(currency);
+
+        PriceRS priceRS = new PriceRS();
+        priceRS.setPriceUnit(priceUnitRS);
+        priceRS.setDetail(detailRS);
+
+        return priceRS;
+    }
+
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * calculate discount percentage
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param amount
+     * @param discountAmount
+     * @return BigDecimal
+     */
+    private BigDecimal calculateDiscountPercentage(BigDecimal amount, BigDecimal discountAmount) {
+        return discountAmount
+            .multiply(new BigDecimal(100))
+            .divide(amount, 2, RoundingMode.HALF_UP);
+    }
 }

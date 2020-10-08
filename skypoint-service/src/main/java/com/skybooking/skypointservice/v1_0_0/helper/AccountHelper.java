@@ -4,7 +4,8 @@ import com.skybooking.skypointservice.constant.AccountStatusConstant;
 import com.skybooking.skypointservice.httpstatus.BadRequestException;
 import com.skybooking.skypointservice.v1_0_0.client.ClientResponse;
 import com.skybooking.skypointservice.v1_0_0.client.stakeholder.action.StakeholderAction;
-import com.skybooking.skypointservice.v1_0_0.client.stakeholder.model.response.BasicAccountInfoRS;
+import com.skybooking.skypointservice.v1_0_0.client.stakeholder.model.response.BasicCompanyAccountInfoRS;
+import com.skybooking.skypointservice.v1_0_0.client.stakeholder.model.response.UserAccountInfoRS;
 import com.skybooking.skypointservice.v1_0_0.client.stakeholder.model.response.UserReferenceRS;
 import com.skybooking.skypointservice.v1_0_0.io.entity.account.AccountEntity;
 import com.skybooking.skypointservice.v1_0_0.io.entity.transaction.TransactionEntity;
@@ -32,10 +33,8 @@ public class AccountHelper {
     public AccountEntity createNewAccount(AccountEntity account, String userCode, String userType) {
         account.setUserCode(userCode);
         account.setType(userType);
-        account.setLevelName("Blue");
+        account.setLevelCode("LEVEL1");
         account.setStatus(AccountStatusConstant.ACTIVE);
-        account.setCreatedAt(new Date());
-        account.setUpdatedAt(new Date());
         account = accountRP.save(account);
         return account;
     }
@@ -50,7 +49,7 @@ public class AccountHelper {
     }
 
     public UserReferenceRS getUserReference(HttpServletRequest httpServletRequest) {
-        Integer companyId = httpServletRequest.getHeader("X-CompanyId") != null &&
+        Integer stakeholderCompanyId = httpServletRequest.getHeader("X-CompanyId") != null &&
                 !httpServletRequest.getHeader("X-CompanyId").isEmpty() ?
                 Integer.valueOf(httpServletRequest.getHeader("X-CompanyId")) : 0;
 
@@ -59,16 +58,24 @@ public class AccountHelper {
         if (httpServletRequest.getHeader("Authorization") != null) {
             stakeholderUserId = jwtUtils.getClaim("stakeholderId", Integer.class);
         }
-        ClientResponse clientResponse = stakeholderAction.getUserReference(stakeholderUserId, companyId);
+
+        return this.getUserReference(stakeholderUserId, stakeholderCompanyId);
+    }
+
+    public UserReferenceRS getUserReference(Integer stakeholderUserId, Integer stakeholderCompanyId) {
+        ClientResponse clientResponse = stakeholderAction.getUserReference(stakeholderUserId, stakeholderCompanyId);
 
         Map<String, Object> data = clientResponse.getData();
+        if (data.get("referenceCode") == null) {
+            throw new BadRequestException("user_not_found", null);
+        }
         String referenceCode = data.get("referenceCode").toString();
         String userType = data.get("type").toString();
         String userRole = data.get("userRole") != null ? data.get("userRole").toString() : null;
 
         UserReferenceRS userReferenceRS = new UserReferenceRS();
         userReferenceRS.setStakeholderUserId(stakeholderUserId);
-        userReferenceRS.setStakeholderCompanyId(companyId == 0 ? null : companyId);
+        userReferenceRS.setStakeholderCompanyId(stakeholderCompanyId == 0 ? null : stakeholderCompanyId);
         userReferenceRS.setUserCode(referenceCode);
         userReferenceRS.setType(userType.toUpperCase());
         userReferenceRS.setUserRole(userRole);
@@ -76,23 +83,38 @@ public class AccountHelper {
         return userReferenceRS;
     }
 
-    public BasicAccountInfoRS getBasicAccountInfo(String referenceCode, HttpServletRequest httpServletRequest) {
-        ClientResponse clientResponse = stakeholderAction.getCompanyDetail(referenceCode, httpServletRequest);
+    public BasicCompanyAccountInfoRS getBasicCompanyAccountInfo(String referenceCode) {
+        ClientResponse clientResponse = stakeholderAction.getCompanyDetail(referenceCode);
         Map<String, Object> data = clientResponse.getData();
         if (data == null) {
-            throw new BadRequestException("Company account not found", null);
+            throw new BadRequestException("company_not_found", null);
         }
-        BasicAccountInfoRS basicAccountInfoRS = new BasicAccountInfoRS();
-        basicAccountInfoRS.setUserCode(data.get("companyCode").toString());
-        basicAccountInfoRS.setEmail(data.get("email").toString());
-        basicAccountInfoRS.setPhoneNumber(data.get("phone").toString());
-        basicAccountInfoRS.setName(data.get("companyName").toString());
-        return basicAccountInfoRS;
+        BasicCompanyAccountInfoRS basicCompanyAccountInfoRS = new BasicCompanyAccountInfoRS();
+        basicCompanyAccountInfoRS.setUserCode(data.get("companyCode").toString());
+        basicCompanyAccountInfoRS.setEmail(data.get("email") == null ? "" : data.get("email").toString());
+        basicCompanyAccountInfoRS.setPhoneNumber(data.get("phone") == null ? "" : data.get("phone").toString());
+        basicCompanyAccountInfoRS.setName(data.get("companyName").toString());
+        return basicCompanyAccountInfoRS;
+    }
+
+    public UserAccountInfoRS getUserOrCompanyDetailByUserCode(String referenceCode) {
+        ClientResponse clientResponse = stakeholderAction.getUserOrCompanyDetailByUserCode(referenceCode);
+        Map<String, Object> data = clientResponse.getData();
+        if (data == null) {
+            throw new BadRequestException("user_not_found", null);
+        }
+        UserAccountInfoRS userAccountInfoRS = new UserAccountInfoRS();
+        userAccountInfoRS.setCode(data.get("code").toString());
+        userAccountInfoRS.setEmail(data.get("email") == null ? "" : data.get("email").toString());
+        userAccountInfoRS.setPhone(data.get("phone") == null ? "" : data.get("phone").toString());
+        userAccountInfoRS.setName(data.get("name").toString());
+        userAccountInfoRS.setThumbnail(data.get("thumbnail") == null ? "" : String.valueOf(data.get("thumbnail")));
+        return userAccountInfoRS;
     }
 
     private AccountEntity updateAccount(AccountEntity account, BigDecimal topUp, BigDecimal earningExtra,
-                                        BigDecimal balance, BigDecimal savedPoint, String levelName) {
-        account.setLevelName(levelName);
+                                        BigDecimal balance, BigDecimal savedPoint, String levelCode) {
+        account.setLevelCode(levelCode);
         account.setTopup(topUp);
         account.setEarningExtra(earningExtra);
         account.setBalance(balance);

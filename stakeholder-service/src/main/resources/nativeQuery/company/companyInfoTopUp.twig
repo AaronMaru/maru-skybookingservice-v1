@@ -26,8 +26,8 @@ LEFT JOIN
 ) cp ON cp.contactable_id = sc.id AND cp.contactable_type = "company"
 
 WHERE sc.`status` = 4
-AND sc.company_name LIKE "%" :keyword "%"
-OR sc.company_code LIKE "%" :keyword "%"
+AND (sc.company_name LIKE "%" :keyword "%"
+OR sc.company_code LIKE "%" :keyword "%")
 
 UNION
 

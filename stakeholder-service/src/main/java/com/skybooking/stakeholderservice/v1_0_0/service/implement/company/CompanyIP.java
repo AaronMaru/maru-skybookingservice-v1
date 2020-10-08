@@ -8,10 +8,14 @@ import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.company.CompanyDetailsTO;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.company.CompanyNQ;
 import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.company.CompanyTO;
+import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.info.CompanyUserDetailsTO;
+import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.info.CompanyUserTO;
+import com.skybooking.stakeholderservice.v1_0_0.io.nativeQuery.info.InfoCompanyUserNQ;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.*;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.contact.ContactRP;
 import com.skybooking.stakeholderservice.v1_0_0.service.interfaces.company.CompanySV;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company.CompanyUpdateRQ;
+import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.company.CompanyUserRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.request.user.SkyownerRegisterRQ;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.BussinessDocRS;
 import com.skybooking.stakeholderservice.v1_0_0.ui.model.response.company.BussinessTypeRS;
@@ -67,6 +71,9 @@ public class CompanyIP implements CompanySV {
 
     @Autowired
     private CompanyNQ companyNQ;
+
+    @Autowired
+    private InfoCompanyUserNQ infoCompanyUserNQ;
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -343,6 +350,42 @@ public class CompanyIP implements CompanySV {
         return companyNQ.companyInfoDetailsTopUp(companyCode);
     }
 
+    @Override
+    public List<CompanyUserTO> listCompanyUser(String keyword) {
+        return infoCompanyUserNQ.searchCompanyOrUser(keyword);
+    }
+
+    @Override
+    public CompanyUserDetailsTO companyOrUserDetails(String companyCode) {
+
+        CompanyUserDetailsTO companyUserDetailsTO = infoCompanyUserNQ.companyOrUserDetails(companyCode);
+
+        if (companyUserDetailsTO != null) {
+
+            if(companyUserDetailsTO.getThumbnail() == null) {
+                companyUserDetailsTO.setThumbnail(environment.getProperty("spring.awsImageUrl.profile.url_larg") + "default.png");
+            }else {
+                if (companyCode.contains("SKYU")) {
+                    companyUserDetailsTO.setThumbnail(environment.getProperty("spring.awsImageUrl.profile.url_larg")
+                            + companyUserDetailsTO.getThumbnail());
+                } else {
+                    companyUserDetailsTO.setThumbnail(environment.getProperty("spring.awsImageUrl.companyProfile")
+                            + "medium/" + companyUserDetailsTO.getThumbnail());
+                }
+            }
+
+        }
+
+
+        return companyUserDetailsTO;
+    }
+
+    @Override
+    public List<CompanyUserTO> companyOrUserList(CompanyUserRQ companyUserRQ) {
+
+        return infoCompanyUserNQ.companyOrUserList(companyUserRQ.getKeycode());
+
+    }
 
     private void statusCompanyVld(StakeholderCompanyEntity company, CompanyUpdateRQ companyRQ) {
         if (company.getStatus() == 1) {

@@ -48,6 +48,9 @@ public class BookingAdditionalServiceEntity {
     @Column(name = "bank_received_date")
     private Date bankReceivedDate;
 
+    @Column(name = "bank_no")
+    private String bankNo;
+
     @Column(name = "bank_fee")
     private BigDecimal bankFee;
 

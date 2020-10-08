@@ -34,34 +34,57 @@ public class AdditionalServiceIP extends BaseServiceIP implements AdditionalServ
             BookingEntity bookingEntity = bookingRP.getOne(request.getBookingId());
 
             if (bookingEntity.getStatus() == TicketConstant.TICKET_ISSUED
-                || bookingEntity.getStatus() == TicketConstant.TICKET_ISSUED_MANUAL)
+                || bookingEntity.getStatus() == TicketConstant.TICKET_ISSUED_MANUAL
+                || bookingEntity.getStatus() == TicketConstant.TICKET_ISSUED_OFFLINE_BOOKING
+                || bookingEntity.getStatus() == TicketConstant.TICKET_FAIL)
             {
+                if (request.getService().getType().equals("REFUND")) {
+
+                    if (bookingEntity.getStatus() != TicketConstant.TICKET_FAIL)
+                        return responseBody(HttpStatus.BAD_REQUEST,"SERVICE_TYPE_NOT_MATCH");
+
+                    bookingEntity.setStatus(TicketConstant.TICKET_REFUND);
+                } else if (request.getService().getType().equals("VOID_TICKET")) {
+
+                    if (!(bookingEntity.getStatus() == TicketConstant.TICKET_ISSUED
+                        || bookingEntity.getStatus() == TicketConstant.TICKET_ISSUED_OFFLINE_BOOKING))
+                    {
+                        return responseBody(HttpStatus.BAD_REQUEST,"SERVICE_TYPE_NOT_MATCH");
+                    }
+
+                    bookingEntity.setStatus(TicketConstant.TICKET_VOID);
+                }
+
+                bookingEntity.setIsAdditional(1);
+
                 BookingAdditionalServiceEntity additionalServiceEntity = new BookingAdditionalServiceEntity();
                 additionalServiceEntity.setCreatedBy(request.getEmployeeId());
                 additionalServiceEntity.setBookingId(request.getBookingId());
                 additionalServiceEntity.setServiceType(request.getService().getType());
                 additionalServiceEntity.setServiceHappenedAt(request.getService().getHappenedAt());
                 additionalServiceEntity.setServiceDescription(request.getService().getDescription());
-                additionalServiceEntity.setSupplierName(request.getSupplier().getName());
-                additionalServiceEntity.setSupplierFee(request.getSupplier().getFee());
-                additionalServiceEntity.setSupplierDescription(request.getSupplier().getDescription());
                 additionalServiceEntity.setCustomerFee(request.getCustomer().getFee());
                 additionalServiceEntity.setCustomerDescription(request.getCustomer().getDescription());
+                if (request.getSupplier() != null) {
+                    additionalServiceEntity.setSupplierName(request.getSupplier().getName());
+                    additionalServiceEntity.setSupplierFee(request.getSupplier().getFee());
+                    additionalServiceEntity.setSupplierDescription(request.getSupplier().getDescription());
+                }
                 if (request.getBank() != null) {
                     additionalServiceEntity.setBankReceivedDate(request.getBank().getReceivedDate());
                     additionalServiceEntity.setBankFee(request.getBank().getFee());
                     additionalServiceEntity.setBankDescription(request.getBank().getDescription());
+                    additionalServiceEntity.setBankNo(request.getBank().getNumber());
                 }
                 additionalServiceEntity.setStatus(1);
                 bookingAdditionalServiceRP.save(additionalServiceEntity);
 
-                bookingEntity.setIsAdditional(1);
                 bookingRP.save(bookingEntity);
 
                 return responseBody(HttpStatus.CREATED);
             }
 
-            return responseBody(HttpStatus.BAD_REQUEST);
+            return responseBody(HttpStatus.BAD_REQUEST, "INCORRECT_INFO");
         } catch (Exception exception) {
             return responseBody(HttpStatus.BAD_REQUEST);
         }
@@ -75,19 +98,37 @@ public class AdditionalServiceIP extends BaseServiceIP implements AdditionalServ
             if (additionalServiceEntity.getDeletedAt() != null)
                 return responseBody(HttpStatus.BAD_REQUEST);
 
+            BookingEntity bookingEntity = bookingRP.getOne(additionalServiceEntity.getBookingId());
+            if (request.getService().getType().equals("VOID_TICKET")) {
+
+                if (bookingEntity.getStatus() != TicketConstant.TICKET_VOID)
+                    return responseBody(HttpStatus.BAD_REQUEST,"SERVICE_TYPE_NOT_MATCH");
+
+                bookingEntity.setStatus(TicketConstant.TICKET_VOID);
+            } else if (request.getService().getType().equals("REFUND")) {
+
+                if (bookingEntity.getStatus() != TicketConstant.TICKET_REFUND)
+                    return responseBody(HttpStatus.BAD_REQUEST,"SERVICE_TYPE_NOT_MATCH");
+
+                bookingEntity.setStatus(TicketConstant.TICKET_REFUND);
+            }
+
             additionalServiceEntity.setServiceType(request.getService().getType());
             additionalServiceEntity.setUpdatedBy(request.getEmployeeId());
             additionalServiceEntity.setServiceHappenedAt(request.getService().getHappenedAt());
             additionalServiceEntity.setServiceDescription(request.getService().getDescription());
             additionalServiceEntity.setCustomerFee(request.getCustomer().getFee());
             additionalServiceEntity.setCustomerDescription(request.getCustomer().getDescription());
-            additionalServiceEntity.setSupplierName(request.getSupplier().getName());
-            additionalServiceEntity.setSupplierFee(request.getSupplier().getFee());
-            additionalServiceEntity.setSupplierDescription(request.getSupplier().getDescription());
             if (request.getBank() != null) {
                 additionalServiceEntity.setBankReceivedDate(request.getBank().getReceivedDate());
+                additionalServiceEntity.setBankNo(request.getBank().getNumber());
                 additionalServiceEntity.setBankFee(request.getBank().getFee());
                 additionalServiceEntity.setBankDescription(request.getBank().getDescription());
+            }
+            if (request.getSupplier() != null) {
+                additionalServiceEntity.setSupplierName(request.getSupplier().getName());
+                additionalServiceEntity.setSupplierFee(request.getSupplier().getFee());
+                additionalServiceEntity.setSupplierDescription(request.getSupplier().getDescription());
             }
             additionalServiceEntity.setStatus(1);
             bookingAdditionalServiceRP.save(additionalServiceEntity);
@@ -108,10 +149,24 @@ public class AdditionalServiceIP extends BaseServiceIP implements AdditionalServ
             entity.setDeletedAt(new Date());
             bookingAdditionalServiceRP.save(entity);
             List<AdditionalServiceTO> list = additionalServiceNQ.getAdditionalServices(entity.getBookingId());
+            BookingEntity bookingEntity = bookingRP.getOne(entity.getBookingId());
 
-            if (list.size() == 0) {
-                BookingEntity bookingEntity = bookingRP.getOne(entity.getId());
-                bookingEntity.setIsAdditional(0);
+            if (list.size() == 0
+                || bookingEntity.getStatus() == TicketConstant.TICKET_REFUND
+                || bookingEntity.getStatus() == TicketConstant.TICKET_VOID)
+            {
+                if (bookingEntity.getStatus() == TicketConstant.TICKET_REFUND) {
+                    bookingEntity.setStatus(TicketConstant.TICKET_FAIL);
+                } else if (bookingEntity.getStatus() == TicketConstant.TICKET_VOID) {
+                    if (bookingEntity.getIsOfflineBooking() == 1)
+                        bookingEntity.setStatus(TicketConstant.TICKET_ISSUED_OFFLINE_BOOKING);
+                    else
+                        bookingEntity.setStatus(TicketConstant.TICKET_ISSUED);
+                }
+
+                if (list.size() == 0)
+                    bookingEntity.setIsAdditional(0);
+
                 bookingRP.save(bookingEntity);
             }
 
@@ -148,6 +203,7 @@ public class AdditionalServiceIP extends BaseServiceIP implements AdditionalServ
                 bankRS.setReceivedDate(item.getBankReceivedDate());
                 bankRS.setFee(item.getBankFee());
                 bankRS.setDescription(item.getBankDescription());
+                bankRS.setNumber(item.getBankNo());
 
                 additionalServiceRS.setId(item.getId());
                 additionalServiceRS.setBookingId(item.getBookingId());

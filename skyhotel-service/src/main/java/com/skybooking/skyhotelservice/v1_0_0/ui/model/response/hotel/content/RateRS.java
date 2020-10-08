@@ -2,23 +2,35 @@ package com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.content;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
 public class RateRS {
     private String rateKey;
+    private String rateClass;
+    private String rateType;
     private Integer allotment;
     private PaymentType paymentType;
+    private Boolean packaging;
     private String boardCode;
     private String boardName;
+    private Integer rooms;
+    private Integer adults;
+    private Integer children;
     private PriceRS price;
     private CancellationRS cancellation;
-    private List<PromotionRS> promotions = new ArrayList<>();
+    private List<PromotionRS> promotions;
+    private RateTaxesRS taxes;
 
-    public static enum PaymentType {
-        PREPAY("AT_WEB"),
-        POSTPAY("AT_HOTEL");
+    public void setPaymentType(PaymentType paymentType) {
+        this.paymentType = paymentType;
+    }
+
+    public static enum PaymentType implements Serializable {
+        PREPAID("AT_WEB"),
+        POSTPAID("AT_HOTEL");
 
         public String getValue() {
             return value;
@@ -31,9 +43,9 @@ public class RateRS {
         }
 
         public static PaymentType getByValue(String value) {
-            if (PaymentType.POSTPAY.value.equals(value))
-                return PaymentType.POSTPAY;
-            return PaymentType.PREPAY;
+            if (PaymentType.POSTPAID.value.equals(value))
+                return PaymentType.POSTPAID;
+            return PaymentType.PREPAID;
         }
     }
 }

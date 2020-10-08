@@ -14,9 +14,6 @@ import javax.servlet.http.HttpServletRequest;
 @Service
 public class EventNotificationAction {
     @Autowired
-    private HttpServletRequest httpServletRequest;
-
-    @Autowired
     private WebClient webClient;
 
     @Autowired
@@ -25,7 +22,7 @@ public class EventNotificationAction {
     @Autowired
     private AuthUtility authUtility;
 
-    public void topUpNotification(TopUpNotificationRQ topUpNotificationRQ) {
+    public void topUpNotification(HttpServletRequest httpServletRequest, TopUpNotificationRQ topUpNotificationRQ) {
 
         webClient
                 .post()
@@ -37,7 +34,7 @@ public class EventNotificationAction {
                 .subscribe();
     }
 
-    public void sendNotification(NotificationRQ notificationRQ) {
+    public void sendNotification(HttpServletRequest httpServletRequest, NotificationRQ notificationRQ) {
 
         webClient
                 .post()

@@ -7,7 +7,6 @@ import com.skybooking.skyflightservice.v1_0_0.ui.model.request.backoffice.additi
 import com.skybooking.skyflightservice.v1_0_0.ui.model.response.StructureRS;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.method.P;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -65,7 +64,7 @@ public class AdditionalServiceController extends BaseController {
      *
      * @return
      */
-    @PreAuthorize("#oauth2.hasScope('listing-additional-service-skyflight')")
+    @PreAuthorize("#oauth2.hasScope('list-additional-service-skyflight')")
     @GetMapping("/{bookingId}")
     public ResponseEntity<StructureRS> listing(@PathVariable Integer bookingId)
     {

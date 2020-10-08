@@ -7,6 +7,7 @@ SELECT
 	earning_extra AS earningExtra,
 	refund ,
 	balance ,
+	saved_point as savedPoint,
 	level_name AS levelName,
 	status
 FROM

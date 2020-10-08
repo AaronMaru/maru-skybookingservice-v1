@@ -23,9 +23,9 @@ public class AmazonClient {
     public AmazonS3 s3client() {
         BasicAWSCredentials awsCreds = new BasicAWSCredentials(accessKey, secretKey);
         AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
-            .withRegion(Regions.fromName(region))
-            .withCredentials(new AWSStaticCredentialsProvider(awsCreds))
-            .build();
+                .withRegion(Regions.fromName(region))
+                .withCredentials(new AWSStaticCredentialsProvider(awsCreds))
+                .build();
 
         return s3Client;
     }

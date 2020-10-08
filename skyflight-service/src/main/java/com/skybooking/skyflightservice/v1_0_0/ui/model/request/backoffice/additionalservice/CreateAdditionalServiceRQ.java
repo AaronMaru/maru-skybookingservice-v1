@@ -7,7 +7,7 @@ import javax.validation.constraints.NotNull;
 @Data
 public class CreateAdditionalServiceRQ extends UpdateAdditionalServiceRQ{
 
-    @NotNull(message = "Booking id is required")
+    @NotNull(message = "REQUIRE_BOOKING_ID")
     private Integer bookingId;
 }
 

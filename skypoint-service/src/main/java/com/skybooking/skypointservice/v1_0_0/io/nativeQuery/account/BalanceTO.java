@@ -15,6 +15,7 @@ public class BalanceTO {
     private BigDecimal earningExtra;
     private BigDecimal refund;
     private BigDecimal balance;
+    private BigDecimal savedPoint;
     private String levelName;
     private String status;
 

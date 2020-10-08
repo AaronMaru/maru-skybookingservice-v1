@@ -11,13 +11,13 @@ import java.math.BigDecimal;
 @Data
 public class SupplierRQ extends AdditionalItemRQ {
 
-    @NotNull(message = "Supplier name is required")
-    @IsIn(contains = {"SABRE", "PATHFINDER"}, caseSensitive = true)
+    @NotNull(message = "REQUIRE_SUPPLIER_NAME")
+    @IsIn(contains = {"SABRE", "PATHFINDER"}, message = "SUPPLIER_NAME_INVALID", caseSensitive = true)
     private String name;
 
-    @NotNull(message = "Supplier fee is required")
-    @Min(value = 0, message = "Supplier fee must be greater or equal 0")
-    @Max(value = 1000000, message = "Supplier fee must be less than 1000000")
+    @NotNull(message = "REQUIRE_SUPPLIER_FEE")
+    @Min(value = 0, message = "SUPPLIER_FEE_MIN_0")
+    @Max(value = 1000000, message = "SUPPLIER_FEE_MAX_1000000")
     private BigDecimal fee;
 
 }

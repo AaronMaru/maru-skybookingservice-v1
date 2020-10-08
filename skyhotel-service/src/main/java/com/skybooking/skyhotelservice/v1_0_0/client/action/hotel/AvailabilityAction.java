@@ -9,6 +9,7 @@ import com.skybooking.skyhotelservice.v1_0_0.client.model.response.hotel.Destina
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
+import reactor.core.publisher.Mono;
 
 @Service
 public class AvailabilityAction extends BaseAction {
@@ -35,24 +36,18 @@ public class AvailabilityAction extends BaseAction {
 
     }
 
-    public DestinationHotelCodeRSDS fetchHotelCodes(HotelCodeRQDS request) {
+    public Mono<DestinationHotelCodeRSDS> fetchHotelCodes(HotelCodeRQDS request) {
 
-        try {
+        return client
+            .mutate()
+            .build()
+            .post()
+            .uri(appConfig.getDISTRIBUTED_URL() + EndpointConstant.DestinationHotelCode.V1_0_0)
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
+            .bodyValue(request)
+            .retrieve()
+            .bodyToMono(DestinationHotelCodeRSDS.class);
 
-            return client
-                .mutate()
-                .build()
-                .post()
-                .uri(appConfig.getDISTRIBUTED_URL() + EndpointConstant.DestinationHotelCode.V1_0_0)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(DestinationHotelCodeRSDS.class)
-                .block();
-
-        } catch (Exception exception) {
-            throw exception;
-        }
     }
 
 }

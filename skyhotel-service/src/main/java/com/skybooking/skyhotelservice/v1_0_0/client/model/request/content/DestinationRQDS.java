@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 public class DestinationRQDS {
 
     private String code;
-    private String group;
+    private String group = "TERMINAL";
     private String hotelCode;
 
     public DestinationRQDS(String code) {

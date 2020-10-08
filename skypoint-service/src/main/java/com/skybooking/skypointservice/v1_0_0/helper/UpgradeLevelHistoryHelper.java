@@ -21,7 +21,7 @@ public class UpgradeLevelHistoryHelper {
         upgradeLevelHistory.setRate(configUpgradeLevel.getRate());
         upgradeLevelHistory.setFromValue(configUpgradeLevel.getFromValue());
         upgradeLevelHistory.setToValue(configUpgradeLevel.getToValue());
-        upgradeLevelHistory.setLevelName(configUpgradeLevel.getLevelName());
+        upgradeLevelHistory.setLevelCode(configUpgradeLevel.getCode());
         upgradeLevelHistory.setCreatedAt(cratedAt);
         upgradeLevelHistory.setUpdatedAt(new Date());
         upgradeLevelHistoryRP.save(upgradeLevelHistory);

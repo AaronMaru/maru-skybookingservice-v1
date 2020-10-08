@@ -216,7 +216,6 @@ public class PaymentFormController {
             bookingRP.save(booking);
             activityLog.activities(ActivityLoggingBean.Action.INDEX_TICKETING_PROCESSING_PAYMENT, activityLog.getUser(booking.getStakeholderUserId()), booking);
         }
-        System.out.println("hello world");
         return ResponseEntity
                 .status(HttpStatus.FOUND)
                 .location(URI.create(providerSV.getPipaySucceedResponse(request)))

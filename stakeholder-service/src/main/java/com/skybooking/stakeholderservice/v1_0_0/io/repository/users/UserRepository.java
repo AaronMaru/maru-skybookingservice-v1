@@ -24,6 +24,9 @@ public interface UserRepository extends JpaRepository<UserEntity, Integer> {
     @Query(value = "SELECT * FROM users WHERE provider IS NULL AND (email = ?1 OR (phone = ?1 AND code = ?2))", nativeQuery = true)
     UserEntity findByPhoneOrEmail(String username, String code);
 
+    @Query(value = "SELECT * FROM users WHERE email = ?1 OR (phone = ?1 AND code = ?2)", nativeQuery = true)
+    UserEntity findByPhoneOrEmailV100(String username, String code);
+
     /**
      * Find user login by phone
      */

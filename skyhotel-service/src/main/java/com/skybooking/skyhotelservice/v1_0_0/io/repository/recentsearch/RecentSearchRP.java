@@ -8,18 +8,19 @@ import org.springframework.stereotype.Repository;
 
 import javax.transaction.Transactional;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
-public interface RecentSearchRP extends JpaRepository<RecentSearchEntity, Integer> {
+public interface RecentSearchRP extends JpaRepository<RecentSearchEntity, Long> {
 
-    @Query(value = "SELECT * FROM hotel_recent_search WHERE destination_code like :destinationCode AND stakeholder_user_id = :userId AND stakeholder_company_id = :companyId", nativeQuery = true)
-    RecentSearchEntity existsRecentSearch(String destinationCode, Integer userId, Integer companyId);
+    @Query(value = "SELECT * FROM hotel_recent_search WHERE (CASE WHEN ?2 <> 0 THEN stakeholder_company_id = ?2 ELSE stakeholder_company_id = 0 AND stakeholder_user_id = ?1 END) AND destination_code = ?3", nativeQuery = true)
+    Optional<RecentSearchEntity> existsRecentSearch(Long skyuserId, Long companyId, String destinationCode);
 
-    @Query(value = "SELECT * FROM hotel_recent_search WHERE stakeholder_user_id = :userId AND stakeholder_company_id = :companyId LIMIT 5", nativeQuery = true)
-    List<RecentSearchEntity> listRecentSearch(Integer userId, Integer companyId);
+    @Query(value = "SELECT * FROM hotel_recent_search WHERE (CASE WHEN ?2 <> 0 THEN stakeholder_company_id = ?2 ELSE stakeholder_company_id = 0 AND stakeholder_user_id = ?1 END)", nativeQuery = true)
+    List<RecentSearchEntity> listRecentSearch(Long skyuserId, Long companyId);
 
     @Modifying
     @Transactional
-    @Query(value = "DELETE FROM hotel_recent_search WHERE stakeholder_user_id = :userId AND stakeholder_company_id = :companyId", nativeQuery = true)
-    void clearRecentSearch(Integer userId, Integer companyId);
+    @Query(value = "DELETE FROM hotel_recent_search WHERE (CASE WHEN ?2 <> 0 THEN stakeholder_company_id = ?2 ELSE stakeholder_company_id = 0 AND stakeholder_user_id = ?1 END)", nativeQuery = true)
+    void clearRecentSearch(Long skyuserId, Long companyId);
 }

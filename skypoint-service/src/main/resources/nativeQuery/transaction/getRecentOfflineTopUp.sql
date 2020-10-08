@@ -1,6 +1,6 @@
 SELECT
-    t.code AS transactionCode,
-    t.amount,
+    tv.code AS transactionCode,
+    IFNULL(t.amount, 0) AS amount,
     t.created_at AS createdAt,
     t.created_by AS createdBy
 FROM

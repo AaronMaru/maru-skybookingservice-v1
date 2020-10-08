@@ -14,7 +14,7 @@ import java.util.Date;
 public class HotelBookingEntity {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "stakeholder_user_id")
@@ -28,20 +28,35 @@ public class HotelBookingEntity {
     @Column(name = "booking_reference")
     private String bookingReference;
 
-    @Column(name = "cancellation_reference")
-    private String cancellationReference;
+    @Column(name = "reference_code")
+    private String referenceCode;
+
+    @Column(name = "check_in")
+    private Date checkIn;
+
+    @Column(name = "check_out")
+    private Date checkOut;
 
     @Column(name = "markup_amount")
     private BigDecimal markupAmount = BigDecimal.ZERO;
-
-    @Column(name = "markup_percentage")
-    private BigDecimal markupPercentage = BigDecimal.ZERO;
 
     @Column(name = "payment_fee_amount")
     private BigDecimal paymentFeeAmount = BigDecimal.ZERO;
 
     @Column(name = "payment_fee_percentage")
     private BigDecimal paymentFeePercentage = BigDecimal.ZERO;
+
+    @Column(name = "markup_pay_percentage")
+    private BigDecimal markupPayPercentage = BigDecimal.ZERO;
+
+    @Column(name = "markup_pay_amount")
+    private BigDecimal markupPayAmount = BigDecimal.ZERO;
+
+    @Column(name = "discount_payment_percentage")
+    private BigDecimal discountPaymentPercentage = BigDecimal.ZERO;
+
+    @Column(name = "discount_payment_amount")
+    private BigDecimal discountPaymentAmount = BigDecimal.ZERO;
 
     private BigDecimal cost = BigDecimal.ZERO;
 
@@ -61,8 +76,20 @@ public class HotelBookingEntity {
 
     private String status;
 
-    @Lob
-    private String remark;
+    @Column(name = "contact_email")
+    private String contactEmail;
+
+    @Column(name = "contact_phone")
+    private String contactPhone;
+
+    @Column(name = "contact_phone_code")
+    private String contactPhoneCode;
+
+    @Column(name = "contact_fullname")
+    private String contactFullname;
+
+    @Column(name = "commision_amount")
+    private BigDecimal commisionAmount = BigDecimal.ZERO;
 
     @Column(name = "created_by")
     private String createdBy;

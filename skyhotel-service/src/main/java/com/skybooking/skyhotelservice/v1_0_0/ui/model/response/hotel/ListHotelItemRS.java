@@ -22,5 +22,6 @@ public class ListHotelItemRS {
     private List<InterestPointRS> interestPoints = new ArrayList<>();
     private PolicyRS policy;
     private ScoreRS score;
+    private CancellationDetailRS cancellation;
     private PriceUnitRS priceUnit;
 }

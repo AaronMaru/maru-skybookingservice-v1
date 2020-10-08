@@ -5,7 +5,8 @@ spring:
     cloud:
         config:
             uri: http://192.168.2.4:8888
-
+    download:
+            url: /home/maru/files/
     email:
         host: mail.smtp2go.com
         username: developer@skybooking.info
@@ -20,17 +21,22 @@ spring:
             starttls.enable: true
             ssl.trust: smtp.gmail.
 
-
     awsImage:
         url: s3.amazonaws.com
         region: us-east-1
-        bucket: skybooking
-        key: AKIAJEC5JZZKMU7GNCFQ
-        secret: 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
+        bucket: dev-skypoint-v1
+        bucketUpload: dev-skypoint-v1
+        key: AKIARX6S32NWQ3RHNMPW
+        secret: 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
         visibility: public
+        skyhotel:
+            voucher: /uploads/attachment/voucher/
+            receipt: /uploads/attachment/receipt/
+        skyPoint:
+            topUpUrl: /uploads/topup-receipt/
 
     awsImageUrl:
-        mailTemplate: https://${spring.awsImage.bucket}.s3.amazonaws.com/uploads/mail/images/
+        mailTemplate: https://skybooking.s3.amazonaws.com/uploads/mail/images/
 
     aws:
         url: s3.amazonaws.com

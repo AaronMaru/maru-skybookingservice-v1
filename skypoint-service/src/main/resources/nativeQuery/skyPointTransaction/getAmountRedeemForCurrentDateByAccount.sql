@@ -1,11 +1,11 @@
 SELECT
-    SUM(t.amount ) AS amount
+    IFNULL(SUM(t.amount ), 0) AS amount
 FROM
-    skypoint_db.skypoint_transaction st
+    skypoint_transaction st
 INNER JOIN
-    skypoint_db.transactions t  ON t.code  = st.transaction_code
+    transactions t  ON t.id  = st.transaction_id
 INNER JOIN
-    skypoint_db.transaction_values tv  ON tv.transaction_id  = t.id
+    transaction_values tv  ON tv.transaction_id  = t.id
 WHERE
     st.stakeholder_user_id = :stakeholderUserId
 AND
@@ -13,6 +13,6 @@ AND
 AND
     DATE(st.created_at) = CURDATE()
 AND
-    tv.transaction_type_code  = 'WITHDRAWAL'
+    tv.transaction_type_code  = 'REDEEMED_FLIGHT' || tv.transaction_type_code  = 'REDEEMED_HOTEL'
 AND
 	t.status = 'SUCCESS'

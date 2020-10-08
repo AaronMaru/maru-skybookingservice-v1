@@ -4,6 +4,7 @@ import com.netflix.zuul.ZuulFilter;
 import com.netflix.zuul.exception.ZuulException;
 
 public class ErrorFilter extends ZuulFilter {
+
     @Override
     public String filterType() {
         return "error";
@@ -22,7 +23,7 @@ public class ErrorFilter extends ZuulFilter {
     @Override
     public Object run() throws ZuulException {
 
-        System.out.println("Inside Route Filter Error");
+        System.out.println("Inside Error Filter");
 
         return null;
     }

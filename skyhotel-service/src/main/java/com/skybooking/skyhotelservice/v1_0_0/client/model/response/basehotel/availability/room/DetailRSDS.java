@@ -10,5 +10,6 @@ public class DetailRSDS {
     private BigDecimal netAmount = BigDecimal.ZERO;
     private BigDecimal totalTaxesAmount = BigDecimal.ZERO;
     private String currency;
+
 }
 

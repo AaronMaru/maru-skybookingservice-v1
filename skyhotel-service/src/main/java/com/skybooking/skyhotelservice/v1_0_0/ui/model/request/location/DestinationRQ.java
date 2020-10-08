@@ -1,5 +1,6 @@
 package com.skybooking.skyhotelservice.v1_0_0.ui.model.request.location;
 
+import com.skybooking.core.validators.annotations.IsIn;
 import com.skybooking.skyhotelservice.constant.DestinationTypeGroupConstant;
 import com.skybooking.skyhotelservice.exception.anotation.NotNullIfAnotherFieldNull;
 import lombok.Data;
@@ -9,7 +10,10 @@ import lombok.Data;
 public class DestinationRQ {
 
     private String code;
-    private DestinationTypeGroupConstant group = DestinationTypeGroupConstant.DESTINATION;
+
+    @IsIn(contains = {"GEOLOCATION", "DESTINATION", "TERMINAL"})
+    private String group = DestinationTypeGroupConstant.DESTINATION.name();
+
     private String hotelCode;
 
 }

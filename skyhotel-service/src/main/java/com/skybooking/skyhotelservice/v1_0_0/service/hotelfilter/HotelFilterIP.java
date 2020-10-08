@@ -5,6 +5,7 @@ import com.skybooking.skyhotelservice.constant.PromotionTypeConstant;
 import com.skybooking.skyhotelservice.constant.SortTypeConstant;
 import com.skybooking.skyhotelservice.constant.TopHotelTypeConstant;
 import com.skybooking.skyhotelservice.v1_0_0.io.entity.hotel.cached.HotelCached;
+import com.skybooking.skyhotelservice.v1_0_0.ui.model.request.hotel.AvailabilityRQ;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.request.hotel.FilterPriceRQ;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.request.hotel.FilterRQ;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.BoardRS;
@@ -31,6 +32,9 @@ public class HotelFilterIP implements HotelFilterSV {
     @Override
     public FilterRS available(List<HotelRS> list, FilterRQ filterRQ) {
         FilterRS filterRS = new FilterRS();
+
+        if (list.isEmpty())
+            return filterRS;
 
         // Price Range
         HotelRS minHotel = list
@@ -221,7 +225,10 @@ public class HotelFilterIP implements HotelFilterSV {
                             .contains(hotelRS.getBasic().getChainCode());
 
                     // Filter Cancellation Policies
-
+                    if (!filter.getCancellations().isEmpty()) {
+                        isFiltered &= filter.getCancellations()
+                            .contains(hotelRS.getCancellation().getType().toString());
+                    }
 
                     // Filter establishment profile
                     if (!filter.getEstablishmentProfile().isEmpty()) {
@@ -239,4 +246,30 @@ public class HotelFilterIP implements HotelFilterSV {
         return list;
 
     }
+
+    @Override
+    public List<HotelRS> filterByOccupancy(List<HotelRS> hotelRS, AvailabilityRQ availabilityRQ) {
+
+        if (hotelRS.isEmpty())
+            return hotelRS;
+
+        return hotelRS.stream()
+            .filter(hotelRS1 -> hotelRS1
+                .getRooms()
+                .stream()
+                // filter only match adult and children rooms
+                .filter(roomRS -> roomRS.getMinAdults() <= availabilityRQ.getAdult() &&
+                    roomRS.getMaxAdults() >= availabilityRQ.getAdult() &&
+                    roomRS.getMaxChildren() >= availabilityRQ.getChildren().size())
+                .anyMatch(roomRS -> roomRS
+                    .getRates()
+                    .stream()
+                    // filter only room have enough allotment
+                    .anyMatch(rateRS -> rateRS.getAllotment() >= availabilityRQ.getRoom())))
+            // filter only hotels that have available rooms
+            .filter(hotelRS1 -> !hotelRS1.getRooms().isEmpty())
+            .collect(Collectors.toList());
+
+    }
+
 }

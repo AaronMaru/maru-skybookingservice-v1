@@ -1,11 +1,11 @@
 package com.skybooking.skypointservice.v1_0_0.ui.model.response.transaction;
 
-import com.skybooking.skypointservice.v1_0_0.client.stakeholder.model.response.BasicAccountInfoRS;
+import com.skybooking.skypointservice.v1_0_0.client.stakeholder.model.response.BasicCompanyAccountInfoRS;
 import lombok.Data;
 
 @Data
 public class OfflineTopUpTransactionDetailRS {
-    private BasicAccountInfoRS basicAccountInfo;
+    private BasicCompanyAccountInfoRS basicAccountInfo;
     private AccountInfo accountInfo;
     private TopUpInfo topUpInfo;
 }

@@ -35,4 +35,5 @@ LEFT JOIN
 	FROM stakeholder_user_has_companies suhc
 ) suhc ON suhc.stakeholder_company_id = sc.id AND suhc.status = 1
 WHERE sc.`company_code` = :companyCode
+AND sc.status = 4
 GROUP BY sc.company_code, c.email

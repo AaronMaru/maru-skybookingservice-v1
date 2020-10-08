@@ -24,5 +24,18 @@ public class AppConfig {
 
     @Value("${hazelcast.expire}")
     private Integer HAZELCAST_EXPIRED_TIME;
+    
+    @Value("${spring.service.hotel-ds.url}")
+    private String hotelUrl;
+
+    @Value("${spring.service.event.url}")
+    private String eventService;
+
+    @Value("${spring.service.hotel-ds.version}")
+    private String hotelVersion;
+
+    @Value("${spring.awsImageUrl.popularcity.medium}")
+    private String POPULAR_CITY_IMG_URL;
+
 
 }

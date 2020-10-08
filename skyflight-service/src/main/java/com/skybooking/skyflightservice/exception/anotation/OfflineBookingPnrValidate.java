@@ -16,7 +16,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 public @interface OfflineBookingPnrValidate {
 
-    String message() default "PNR code is invalid";
+    String message() default "PNR_CODE_EXISTED";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 

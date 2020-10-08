@@ -4,9 +4,11 @@ import com.skybooking.skypointservice.v1_0_0.io.entity.transaction.TransactionVa
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 @Repository
 public interface TransactionValueRP extends JpaRepository<TransactionValueEntity, Integer> {
     TransactionValueEntity findByTransactionIdAndTransactionTypeCode(Integer transactionId, String transactionTypeCode);
+
+    TransactionValueEntity findFirstByOrderByIdDesc();
+
+    TransactionValueEntity findByCode(String code);
 }

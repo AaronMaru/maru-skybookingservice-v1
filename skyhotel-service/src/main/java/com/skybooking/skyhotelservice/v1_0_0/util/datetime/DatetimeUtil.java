@@ -4,7 +4,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.Date;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 public class DatetimeUtil {
@@ -36,6 +38,50 @@ public class DatetimeUtil {
         } catch (Exception exception) {
             return null;
         }
+    }
+
+    public static ZonedDateTime toZonedDateTime(String s) {
+        try {
+            return ZonedDateTime.parse(s);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public static String toFormattedDateTime(String datetime) {
+        try {
+            ZonedDateTime zonedDateTime = ZonedDateTime.parse(datetime);
+            return DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
+                .format(zonedDateTime);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public static String convertDateFormat(Date date) {
+        SimpleDateFormat sdf;
+        sdf = new SimpleDateFormat("MMMM,dd,yyyy");
+        sdf.setTimeZone(TimeZone.getTimeZone("CET"));
+        String text = sdf.format(date);
+        return text;
+
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Date to iso date
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @Param date
+     */
+    public static String convertDateTimeISO(Date date) {
+        SimpleDateFormat sdf;
+        sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
+        sdf.setTimeZone(TimeZone.getTimeZone("CET"));
+        String text = sdf.format(date);
+
+        return text;
+
     }
 
 }

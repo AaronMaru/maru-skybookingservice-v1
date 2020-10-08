@@ -2,7 +2,6 @@ package com.skybooking.skypointservice.v1_0_0.helper;
 
 import com.skybooking.skypointservice.constant.TopUpTypeConstant;
 import com.skybooking.skypointservice.constant.TransactionStatusConstant;
-import com.skybooking.skypointservice.util.GenerateTransactionCode;
 import com.skybooking.skypointservice.v1_0_0.io.entity.account.AccountEntity;
 import com.skybooking.skypointservice.v1_0_0.io.entity.transaction.TransactionEntity;
 import com.skybooking.skypointservice.v1_0_0.io.repository.transaction.TransactionRP;
@@ -23,7 +22,6 @@ public class TransactionHelper {
                                                         BigDecimal fee, String paymentMethod, Integer stakeholderUserId,
                                                         Integer stakeholderCompanyId) {
         //======== Create transaction
-        transaction.setCode(this.generateTransactionCode());
         transaction.setAccountId(account.getId());
         transaction.setAmount(onlineTopUpRQ.getAmount());
         transaction.setPaidAmount(onlineTopUpRQ.getAmount());
@@ -32,7 +30,7 @@ public class TransactionHelper {
         transaction.setStakeholderUserId(stakeholderUserId);
         transaction.setStakeholderCompanyId(stakeholderCompanyId);
         transaction.setProceedBy(TopUpTypeConstant.ONLINE);
-        transaction.setStatus(TransactionStatusConstant.PRE_TOP_UP);
+        transaction.setStatus(TransactionStatusConstant.PENDING);
         transaction.setCreatedBy(stakeholderUserId.toString());
         transaction.setCreatedAt(new Date());
         transactionRP.save(transaction);
@@ -42,14 +40,13 @@ public class TransactionHelper {
 
     public TransactionEntity saveTransactionOfflineTopUp(TransactionEntity transaction, AccountEntity account,
                                                          OfflineTopUpRQ offlineTopUpRQ, String createdBy) {
-        transaction.setCode(generateTransactionCode());
         transaction.setAccountId(account.getId());
         transaction.setAmount(offlineTopUpRQ.getAmount());
         transaction.setPaidAmount(offlineTopUpRQ.getAmount());
         transaction.setStakeholderCompanyId(offlineTopUpRQ.getStakeholderCompanyId());
         transaction.setStakeholderUserId(offlineTopUpRQ.getStakeholderUserId());
         transaction.setProceedBy(TopUpTypeConstant.OFFLINE);
-        transaction.setStatus(TransactionStatusConstant.SUCCESS);
+        transaction.setStatus(TransactionStatusConstant.PENDING);
         transaction.setReferenceCode(offlineTopUpRQ.getReferenceCode());
         transaction.setRemark(offlineTopUpRQ.getRemark());
         transaction.setCreatedBy(createdBy);
@@ -57,18 +54,5 @@ public class TransactionHelper {
         transactionRP.save(transaction);
         return transaction;
 
-    }
-
-    public String generateTransactionCode() {
-        //========= Get last transaction
-        TransactionEntity lastCode = transactionRP.findFirstByOrderByIdDesc();
-        //========= Generate unique transactionCode
-        String txnCode = GenerateTransactionCode.generateTransactionCodeUnique(
-                "PTS",
-                (lastCode != null) ? lastCode.getCode() : null,
-                "3"
-        );
-
-        return txnCode;
     }
 }

@@ -21,6 +21,7 @@ public class EndpointConstant {
 
     public static class DataHotel {
         public static final String V1_0_0 = "hotel-content/v1.0.0/datahotels";
+        public static final String V1_0_0_BASIC = "hotel-content/v1.0.0/datahotels/basic";
     }
 
     public static class RecommendHotel {
@@ -36,6 +37,29 @@ public class EndpointConstant {
 
     public static class PopularCity {
         public static final String V1_0_0 = "hotel-content/v1.0.0/popular-city";
+    }
+
+    public static class CheckRate {
+        public static final String V1_0_0 = "hotel/v1.0.0/checkrates";
+    }
+
+    public static class Reserve {
+        public static final String V1_0_0 = "hotel/v1.0.0/reserve";
+    }
+
+    public static class Booking {
+        public static final String V1_0_0 = "hotel/v1.0.0/bookings";
+    }
+
+    public static class BookingHistory {
+        public static final String V1_0_0 = "hotel/v1.0.0/histories";
+    }
+
+    public static class PaymentSuccess {
+        public static final String V1_0_0 = "event/v1.0.0/email/payment-success";
+    }
+    public static class PaymentInfo {
+        public static final String V1_0_0 = "event/v1.0.0/email/payment-info";
     }
 
 }

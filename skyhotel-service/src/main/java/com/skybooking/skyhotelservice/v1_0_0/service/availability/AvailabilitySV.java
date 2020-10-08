@@ -1,11 +1,11 @@
 package com.skybooking.skyhotelservice.v1_0_0.service.availability;
 
 import com.skybooking.skyhotelservice.v1_0_0.client.model.request.content.AvailabilityRQDS;
+import com.skybooking.skyhotelservice.v1_0_0.client.model.request.content.GeolocationRQDS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.request.hotel.AvailabilityRQ;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.request.hotel.HotelDetailRQ;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.StructureRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.HotelRS;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
@@ -27,9 +27,10 @@ public interface AvailabilitySV {
      * Get availability by destination codes
      *
      * @param destinationCode
+     * @param geolocation
      * @return
      */
-    List<HotelRS> getAvailabilityByDesCodes(List<String> destinationCode);
+    List<HotelRS> getAvailabilityByDesCodes(List<String> destinationCode, GeolocationRQDS geolocation);
 
     /**
      * -----------------------------------------------------------------------------------------------------------------

@@ -5,6 +5,7 @@ import com.netflix.zuul.context.RequestContext;
 import com.netflix.zuul.exception.ZuulException;
 import com.skybooking.skygatewayservice.constant.AuthConstant;
 import com.skybooking.skygatewayservice.service.AuthService;
+import com.skybooking.skygatewayservice.service.EncryptionDecryptionService;
 import com.skybooking.skygatewayservice.utils.JwtUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,8 @@ import org.springframework.http.HttpStatus;
 
 import javax.servlet.http.HttpServletRequest;
 
+import static com.netflix.zuul.context.RequestContext.getCurrentContext;
+
 public class PreFilter extends ZuulFilter {
 
     @Autowired
@@ -20,6 +23,9 @@ public class PreFilter extends ZuulFilter {
 
     @Autowired
     private JwtUtils jwtUtils;
+
+    @Autowired
+    private EncryptionDecryptionService encryptionDecryptionService;
 
     private static Logger log = LoggerFactory.getLogger(PreFilter.class);
 
@@ -41,7 +47,7 @@ public class PreFilter extends ZuulFilter {
     @Override
     public Object run() throws ZuulException {
 
-        RequestContext ctx = RequestContext.getCurrentContext();
+        RequestContext ctx = getCurrentContext();
         HttpServletRequest request = ctx.getRequest();
 
         log.info(String.format("%s request to %s", request.getMethod(), request.getRequestURL().toString()));
@@ -74,6 +80,9 @@ public class PreFilter extends ZuulFilter {
 
         }
 
+        //============= Encrypt data for skyPoint
+       // encryptionService.decryptRequest(request, ctx);
+
         return null;
     }
 
@@ -88,7 +97,7 @@ public class PreFilter extends ZuulFilter {
 
         log.debug("Reporting error ({}): {}", status.value(), body);
 
-        RequestContext ctx = RequestContext.getCurrentContext();
+        RequestContext ctx = getCurrentContext();
         ctx.setResponseStatusCode(status.value());
 
         if (ctx.getResponseBody() == null) {
@@ -224,5 +233,4 @@ public class PreFilter extends ZuulFilter {
 
         return false;
     }
-
 }

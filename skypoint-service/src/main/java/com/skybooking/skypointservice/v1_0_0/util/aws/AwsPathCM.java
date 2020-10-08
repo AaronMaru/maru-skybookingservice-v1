@@ -13,19 +13,15 @@ public class AwsPathCM {
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
-     * Getting a url part amazone of photo
+     * Getting a url part amazon of photo
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @Param String typeSky
-     * @Param String fileName
-     * @Return String
+     * @param fileName String
+     * @return String
      */
     public String partUrl(String fileName) {
 
         fileName = (fileName != null) ? fileName : "default.png";
-        String partUrl = environment.getProperty("spring.awsUrl.upload") + fileName;
-
-        return partUrl;
-
+        return environment.getProperty("spring.aws.awsUrl.upload") + fileName;
     }
 }

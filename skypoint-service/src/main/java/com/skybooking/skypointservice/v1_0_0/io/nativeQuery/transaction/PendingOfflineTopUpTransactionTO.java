@@ -1,0 +1,8 @@
+package com.skybooking.skypointservice.v1_0_0.io.nativeQuery.transaction;
+
+import lombok.Data;
+
+@Data
+public class PendingOfflineTopUpTransactionTO extends OfflineTopUpTransactionDetailTO {
+    private String userCode;
+}

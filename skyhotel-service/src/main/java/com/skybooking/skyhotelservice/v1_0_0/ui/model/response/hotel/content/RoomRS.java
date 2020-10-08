@@ -2,7 +2,6 @@ package com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.content;
 
 import com.skybooking.skyhotelservice.v1_0_0.client.model.response.basehotel.content.RoomStayRSDS;
 import lombok.Data;
-
 import java.util.List;
 
 @Data

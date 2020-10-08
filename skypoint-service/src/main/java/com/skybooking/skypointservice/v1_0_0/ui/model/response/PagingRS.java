@@ -13,4 +13,7 @@ public class PagingRS {
         this.size = size;
         this.totals = totals;
     }
+
+    public PagingRS() {
+    }
 }

@@ -8,9 +8,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface HotelPaymentTransactionRP extends JpaRepository<HotelPaymentTransactionEntity, Long> {
 
-    @Query(value = "SELECT transaction_id FROM hotel_payment_transaction ORDER BY id DESC LIMIT 1", nativeQuery = true)
+    @Query(value = "SELECT transaction_code FROM payment_transaction ORDER BY id DESC LIMIT 1", nativeQuery = true)
     String getLatestRow();
 
-    HotelPaymentTransactionEntity findByBookingIdAndStatus(Long bookingId, int status);
+    HotelPaymentTransactionEntity findByBookingId(Long bookingId);
 
 }

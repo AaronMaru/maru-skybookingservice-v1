@@ -43,11 +43,11 @@ public class ExtraRateIP implements ExtraRateSV {
 
     private StructureRS getExtraRateByUserType(StructureRS structureRS, String userType) {
         //======== Get topUp extra rate configuration
-        ConfigTopUpEntity configTopUp = configTopupRP.findByTypeAndTopupKeyAndStatus(userType,
+        ConfigTopUpEntity configTopUp = configTopupRP.findByTypeAndTopUpKeyAndStatus(userType,
                 ConfigTopUpTypeConstant.EXTRA_RATE, true);
 
         if (configTopUp == null) {
-            throw new BadRequestException("No configuration extra rate.", null);
+            throw new BadRequestException("not_config_extra_rate", null);
         }
 
         //========= Set up response

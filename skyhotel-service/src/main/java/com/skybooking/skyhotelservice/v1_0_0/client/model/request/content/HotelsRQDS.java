@@ -8,7 +8,5 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class HotelsRQDS {
-
-    private HotelRQDS hotels;
-
+    private List<Integer> hotels;
 }

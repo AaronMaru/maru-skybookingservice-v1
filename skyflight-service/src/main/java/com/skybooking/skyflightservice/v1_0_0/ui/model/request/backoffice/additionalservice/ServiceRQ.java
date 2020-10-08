@@ -10,11 +10,11 @@ import java.util.Date;
 @Data
 public class ServiceRQ extends AdditionalItemRQ {
 
-    @NotNull(message = "The service type is required.")
-    @IsIn(contains = {"REFUND", "MODIFIED"}, caseSensitive = true)
+    @NotNull(message = "REQUIRE_SERVICE_TYPE")
+    @IsIn(contains = {"REFUND", "VOID_TICKET", "MODIFIED"}, message = "SERVICE_TYPE_INVALID", caseSensitive = true)
     private String type;
 
-    @NotNull(message = "The service happened is required.")
+    @NotNull(message = "REQUIRE_HAPPENED_AT")
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private Date happenedAt;
 }

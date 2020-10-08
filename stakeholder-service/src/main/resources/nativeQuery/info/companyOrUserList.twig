@@ -1,0 +1,16 @@
+SELECT
+	sc.company_name AS name,
+	sc.company_code AS code
+
+FROM `stakeholder_companies` sc
+
+WHERE sc.`status` = 4
+AND sc.company_code IN (:keycode)
+
+
+UNION
+SELECT
+	CONCAT(su.first_name, " ", su.last_name ) AS name,
+	su.user_code
+FROM stakeholder_users su
+WHERE su.user_code IN (:keycode)

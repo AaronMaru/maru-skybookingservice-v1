@@ -13,8 +13,6 @@ public class AvailabilityHotelRSDS {
     private Integer code;
 //    private BigDecimal minRate = BigDecimal.ZERO;
 //    private BigDecimal maxRate = BigDecimal.ZERO;
-//    private String currency;
-//    private List<RoomRSDS> rooms;
     private String categoryCode;
     private List<RoomRSDS> rooms;
     private List<ReviewRSDS> reviews;

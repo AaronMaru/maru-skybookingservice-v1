@@ -18,7 +18,8 @@ public class ResourceServiceConfig extends ResourceServerConfigurerAdapter {
                     "/v1.0.0/recommend-hotel/**",
                     "/v1.0.0/availability/**",
                     "/v1.0.0/similar-hotel/**",
-                    "/v1.0.0/payment/**"
+                    "/v1.0.0/payment/**",
+                    "/v1.0.0/history-booking/**"
             ).permitAll()
             .antMatchers("/**").authenticated();
     }

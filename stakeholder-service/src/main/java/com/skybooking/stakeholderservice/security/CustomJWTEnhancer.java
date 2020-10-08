@@ -1,5 +1,7 @@
 package com.skybooking.stakeholderservice.security;
 
+import com.skybooking.stakeholderservice.constant.GrantTypeConstant;
+import com.skybooking.stakeholderservice.v1_0_0.io.enitity.user.UserEntity;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyDocRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyHasUserRP;
 import com.skybooking.stakeholderservice.v1_0_0.io.repository.company.CompanyRP;
@@ -43,11 +45,20 @@ public class CustomJWTEnhancer implements TokenEnhancer {
             return accessToken;
 
         Map<String, Object> additionalInfo = new HashMap<>();
+        UserEntity user;
 
-        var userPrinciple = (UserPrinciple) authentication.getPrincipal();
-        var user = userRepository.findById(userPrinciple.getId());
+        if (authentication.getOAuth2Request().getGrantType().equals(GrantTypeConstant.CLIENT_CREDENTIALS)) {
+            String username = authentication.getOAuth2Request().getRequestParameters().get("username");
+            var userPrinciple = userRepository.findByEmailOrPhone(username, "");
+            user = userRepository.findById(userPrinciple.getId());
+        } else {
+            var userPrinciple = (UserPrinciple) authentication.getPrincipal();
+            user = userRepository.findById(userPrinciple.getId());
+        }
+
         var company = companyHasUserRP.findByStakeholderUserId(user.getStakeHolderUser().getId());
         additionalInfo.put("userId", user.getId());
+        additionalInfo.put("user_name", user.getUsername());
         additionalInfo.put("stakeholderId", user.getStakeHolderUser().getId());
         additionalInfo.put("fullName", user.getStakeHolderUser().getLastName() + " " + user.getStakeHolderUser().getFirstName());
         additionalInfo.put("userType", "skyuser");
@@ -67,9 +78,8 @@ public class CustomJWTEnhancer implements TokenEnhancer {
             additionalInfo.put("profile", environment.getProperty("spring.awsImageUrl.companyProfile") + "medium/" + profile);
             additionalInfo.put("profileItinerary", environment.getProperty("spring.awsImageUrl.companyProfile") + "origin/" + profileItenery);
             additionalInfo.put("userType", company.getStatus() == 1 ? "skyowner" : "skystaff");
+
         }
-
-
 
         ((DefaultOAuth2AccessToken) accessToken).setAdditionalInformation(additionalInfo);
         return accessToken;

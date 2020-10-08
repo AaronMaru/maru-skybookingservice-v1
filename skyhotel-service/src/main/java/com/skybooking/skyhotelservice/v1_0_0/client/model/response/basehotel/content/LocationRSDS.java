@@ -14,6 +14,5 @@ public class LocationRSDS {
     private String address;
     private Double longitude;
     private Double latitude;
-    private Object distance;
 
 }

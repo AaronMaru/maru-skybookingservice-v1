@@ -9,8 +9,8 @@ import javax.validation.constraints.NotNull;
 @Data
 public class UpdateAdditionalServiceRQ {
 
-    @NotNull(message = "Employee ID is required")
-    @Min(value = 1, message = "Employee ID must be greeter than 0")
+    @NotNull(message = "REQUIRE_EMPLOYEE_ID")
+    @Min(value = 1, message = "EMPLOYEE_ID_INVALID")
     private Integer employeeId;
 
     @Valid

@@ -19,6 +19,33 @@ public class GeneratorCM {
      * @param lastCode
      * @return String
      */
+    public static String bookingCode(String lastCode) {
+        return getCode("SBHT", lastCode, "1");
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Get Generate unique booking code of flight
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param hotelCode
+     * @param roomCode
+     * @param lastCode
+     * @return String
+     */
+    public static String rateCode(Integer hotelCode, String roomCode,String boardCode, String lastCode) {
+
+        return hotelCode + "|" + roomCode + "|" + boardCode + "|" + lastCode;
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * Get Generate unique booking code of flight
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param lastCode
+     * @return String
+     */
     public static String transactionCode(String lastCode) {
         return getCode("SBTP", lastCode, "1");
     }

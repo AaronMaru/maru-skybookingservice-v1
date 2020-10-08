@@ -35,4 +35,7 @@ public interface BookingRP extends JpaRepository<BookingEntity, Integer> {
 
     @Query(value = "SELECT * FROM bookings WHERE itinerary_ref = ?", nativeQuery = true)
     BookingEntity getBookingByItineraryRef(String itineraryRef);
+
+    @Query(value = "SELECT * FROM bookings WHERE booking_code = ? AND status = ?", nativeQuery = true)
+    BookingEntity getBookingByBookingCode(String bookingCode, int statusIssuedFail);
 }

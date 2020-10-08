@@ -1,17 +1,23 @@
 package com.skybooking.skyhotelservice.v1_0_0.service.availability;
 
 import com.skybooking.skyhotelservice.constant.SortTypeConstant;
+import com.skybooking.skyhotelservice.constant.WishlistConstant;
 import com.skybooking.skyhotelservice.exception.httpstatus.NotFoundException;
 import com.skybooking.skyhotelservice.v1_0_0.client.action.hotel.AvailabilityAction;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.request.content.*;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.response.availability.AvailabilityRSDS;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.response.hotel.DestinationHotelCodeRSDS;
+import com.skybooking.skyhotelservice.v1_0_0.io.entity.hotel.cached.HotelWrapperCached;
+import com.skybooking.skyhotelservice.v1_0_0.io.entity.wishlist.WishlistHotelEntity;
+import com.skybooking.skyhotelservice.v1_0_0.io.repository.wishlist.WishlistHotelRP;
 import com.skybooking.skyhotelservice.v1_0_0.service.BaseServiceIP;
 import com.skybooking.skyhotelservice.v1_0_0.service.hotelCached.HotelCachedSV;
 import com.skybooking.skyhotelservice.v1_0_0.service.hotelconvertor.HotelConverterSV;
 import com.skybooking.skyhotelservice.v1_0_0.service.hotelfilter.HotelFilterSV;
 import com.skybooking.skyhotelservice.v1_0_0.service.hotelsort.HotelSortSV;
 import com.skybooking.skyhotelservice.v1_0_0.service.recentsearch.RecentSearchSV;
+import com.skybooking.skyhotelservice.v1_0_0.service.savedhotel.SavedHotelSV;
+import com.skybooking.skyhotelservice.v1_0_0.service.viewedhotel.ViewedHotelSV;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.request.hotel.AvailabilityRQ;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.request.hotel.GeolocationRQ;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.request.hotel.HotelDetailRQ;
@@ -21,17 +27,25 @@ import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.StructureRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.HotelRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.HotelWrapperRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.ListHotelItemRS;
+import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.filter.FilterRS;
+import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.sort.SortRS;
+import com.skybooking.skyhotelservice.v1_0_0.util.JwtUtils;
+import com.skybooking.skyhotelservice.v1_0_0.util.header.HeaderCM;
+import com.skybooking.skyhotelservice.v1_0_0.util.mapper.HotelMapper;
 import com.skybooking.skyhotelservice.v1_0_0.util.pagination.PaginationUtil;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AvailabilityIP extends BaseServiceIP implements AvailabilitySV {
 
     private final AvailabilityAction availabilityAction;
@@ -40,20 +54,32 @@ public class AvailabilityIP extends BaseServiceIP implements AvailabilitySV {
     private final RecentSearchSV recentSearchSV;
     private final HotelFilterSV hotelFilterSV;
     private final HotelSortSV hotelSortSV;
-    private final ModelMapper modelMapper;
+    private final HotelMapper hotelMapper;
+    private final ViewedHotelSV viewedHotelSV;
+    private final WishlistHotelRP wishlistRP;
+    private final HttpServletRequest httpServletRequest;
+    private final HeaderCM headerCM;
+    private final JwtUtils jwt;
+
+    private final int HOTELBED_MAX_AVAILABILITY = 2000;
+
 
     public StructureRS availability(AvailabilityRQ availabilityRQ, Map<String, Object> paramRQ) {
-        int page = 1;
-        int size = 10;
-        if (paramRQ.containsKey("page"))
-            page = Integer.parseInt(paramRQ.get("page").toString());
+        String requestId = String.valueOf(paramRQ.getOrDefault("requestId", ""));
+        int page = paramRQ.containsKey("page") ? Integer.parseInt(paramRQ.get("page").toString()) : 1;
+        int size = paramRQ.containsKey("size") ? Integer.parseInt(paramRQ.get("size").toString()) : 10;
 
-        if (paramRQ.containsKey("size"))
-            size = Integer.parseInt(paramRQ.get("size").toString());
+        if (availabilityRQ.getMeta() != null && availabilityRQ.getMeta().getPage() != null)
+            page = availabilityRQ.getMeta().getPage();
 
-        if (paramRQ.containsKey("requestId"))
-            return availabilityWithCached(availabilityRQ,
-                String.valueOf(paramRQ.get("requestId")), page, size);
+        if (availabilityRQ.getMeta() != null && availabilityRQ.getMeta().getSize() != null)
+            size = availabilityRQ.getMeta().getSize();
+
+        if (availabilityRQ.getMeta() != null && availabilityRQ.getMeta().getRequestId() != null)
+            requestId = availabilityRQ.getMeta().getRequestId();
+
+        if (!requestId.isEmpty())
+            return availabilityWithCached(availabilityRQ, requestId, page, size);
 
         DestinationRQ destinationRQ = availabilityRQ.getDestination();
         GeolocationRQ geolocationRQ = availabilityRQ.getGeolocation();
@@ -65,7 +91,7 @@ public class AvailabilityIP extends BaseServiceIP implements AvailabilitySV {
             destinationRQDS = List
                 .of(new DestinationRQDS(
                     destinationRQ.getCode(),
-                    destinationRQ.getGroup().name(),
+                    destinationRQ.getGroup(),
                     destinationRQ.getHotelCode())
                 );
             recentSearchSV.saveOrUpdate(availabilityRQ);
@@ -78,40 +104,65 @@ public class AvailabilityIP extends BaseServiceIP implements AvailabilitySV {
         }
 
         DestinationHotelCodeRSDS hotelCodes = new DestinationHotelCodeRSDS();
-        if (availabilityRQ.getDestination().getHotelCode() == null)
-            hotelCodes = availabilityAction
-                .fetchHotelCodes(new HotelCodeRQDS(destinationRQDS, geolocationRQDS));
-        else {
-            DestinationHotelCodeRSDS.Hotel hotel = new DestinationHotelCodeRSDS.Hotel();
-            hotel.setCodes(List.of(Integer.valueOf(availabilityRQ.getDestination().getHotelCode())));
-            hotelCodes.setData(hotel);
+
+        // search by hotels code of destination.
+        if (destinationRQ != null) {
+            if (destinationRQ.getHotelCode() != null) {
+                DestinationHotelCodeRSDS.Hotel hotel = new DestinationHotelCodeRSDS.Hotel();
+                hotel.setCodes(List.of(Integer.valueOf(destinationRQ.getHotelCode())));
+                hotelCodes.setData(hotel);
+            }
         }
 
-        AvailabilityRQDS availabilityRQDS =
-            new AvailabilityRQDS(availabilityRQ, hotelCodes.getData().getCodes());
+        // get hotels code with destination or geo location.
+        if (hotelCodes.getData() == null)
+            hotelCodes = availabilityAction
+                .fetchHotelCodes(new HotelCodeRQDS(destinationRQDS, geolocationRQDS))
+                .block();
 
+        List<Integer> hotels = Objects.requireNonNull(hotelCodes)
+            .getData()
+            .getCodes()
+            .stream()
+            .sorted()
+            .limit(HOTELBED_MAX_AVAILABILITY)
+            .collect(Collectors.toList());
+
+        log.info("Searching {} hotels.", hotels.size());
+        log.info("Searching availability: {}", hotels);
+
+        AvailabilityRQDS availabilityRQDS = new AvailabilityRQDS(availabilityRQ, hotels);
+
+        // search availability by hotels code
+        final long startSearch = System.currentTimeMillis();
         AvailabilityRSDS availabilityRSDS = availabilityAction.search(availabilityRQDS);
-        List<HotelRS> hotelRS = hotelConverterSV.availabilities(availabilityRSDS);
-        HotelWrapperRS<HotelRS> hotelWrapperRS =
-            new HotelWrapperRS<>(UUID.randomUUID().toString(), hotelRS);
+        final long stopSearch = System.currentTimeMillis();
+        log.info("Response time: {} ms", stopSearch - startSearch);
 
-        hotelCachedSV.saveHotelList(hotelWrapperRS.getRequestId(),
-            hotelWrapperRS, availabilityRSDS.getData().getResource());
+        final long startConvert = System.currentTimeMillis();
+        List<HotelRS> hotelRS = hotelConverterSV.availabilities(availabilityRSDS, availabilityRQ);
+        final long stopConvert = System.currentTimeMillis();
+        log.info("Convert time: {} ms", stopConvert - startConvert);
+        HotelWrapperRS<HotelRS> hotelWrapperRS = new HotelWrapperRS<>(UUID.randomUUID().toString(), hotelRS);
+        final HotelWrapperCached hotelWrapperCached = hotelCachedSV.getHotelWrapperCached(hotelWrapperRS, availabilityRSDS.getData().getResource());
 
-        List<HotelRS> hotelRSList = hotelCachedSV.retrieveHotelList(
+        // store cached
+        hotelCachedSV.saveCacheHotelWrapperAsync(hotelWrapperCached);
+
+        // prepare response body
+        final List<HotelRS> hotelList = hotelCachedSV.getHotelList(hotelWrapperCached.getHotelList(), availabilityRQ);
+        final FilterRS filterInfo = hotelFilterSV.available(hotelList, availabilityRQ.getFilter());
+        final SortRS sortInfo = hotelSortSV.sortInfo(SortTypeConstant.getName(availabilityRQ.getSortBy()));
+
+        final HotelWrapperRS<ListHotelItemRS> response = new HotelWrapperRS<>(
             hotelWrapperRS.getRequestId(),
-            availabilityRQ.getSortBy(),
-            availabilityRQ.getFilter()
-        );
+            filterInfo,
+            sortInfo,
+            mapCachedToListHotel(hotelList, page, size));
 
-        return responseBodyWithSuccessMessage(
-            new HotelWrapperRS<>(
-                hotelWrapperRS.getRequestId(),
-                hotelFilterSV.available(hotelCachedSV
-                    .retrieveHotelList(hotelWrapperRS.getRequestId()), availabilityRQ.getFilter()),
-                hotelSortSV.sortInfo(SortTypeConstant.getName(availabilityRQ.getSortBy())),
-                mapCachedToListHotel(hotelRSList, page, size)),
-            new PagingRS(page, size, hotelRSList.size()));
+        final PagingRS paging = new PagingRS(page, size, hotelList.size());
+
+        return responseBodyWithSuccessMessage(response, paging);
     }
 
     private StructureRS availabilityWithCached(AvailabilityRQ availabilityRQ, String requestId, int page, int size) {
@@ -132,27 +183,64 @@ public class AvailabilityIP extends BaseServiceIP implements AvailabilitySV {
 
     private List<ListHotelItemRS> mapCachedToListHotel(List<HotelRS> list, int page, int size) {
 
+        List<Integer> wishlistHotelCodes = getSavedHotels();
         List<ListHotelItemRS> hotelItemRSList = list.stream()
-            .map(hotelRS -> modelMapper.map(hotelRS, ListHotelItemRS.class))
+            .peek(hotelRS -> {
+                hotelRS.setImages(
+                    hotelRS
+                        .getImages()
+                        .stream()
+                        .limit(4)
+                        .collect(Collectors.toList())
+                );
+                hotelRS.setIsFavorite(wishlistHotelCodes.contains(hotelRS.getCode()));
+            })
+            .map(hotelMapper::toListHotelItemRS)
             .collect(Collectors.toList());
 
         return PaginationUtil.of(hotelItemRSList, page, size);
     }
 
+    private List<Integer> getSavedHotels() {
+        List<Integer> wishlistHotelCodes = new ArrayList<>();
+        if (httpServletRequest.getHeader("Authorization") != null) {
+            var companyId = headerCM.getCompanyId();
+            var skyUserId = jwt.userToken().getSkyuserId();
+            List<WishlistHotelEntity> wishlistHotelEntities = wishlistRP
+                .findBySkyuserIdAndCompanyId(skyUserId, companyId, WishlistConstant.SAVED_HOTEL);
+
+            wishlistHotelCodes = wishlistHotelEntities
+                .stream()
+                .map(WishlistHotelEntity::getHotelCode)
+                .collect(Collectors.toList());
+        }
+        return wishlistHotelCodes;
+    }
+
     @Override
-    public List<HotelRS> getAvailabilityByDesCodes(List<String> destinationCodes) {
+    public List<HotelRS> getAvailabilityByDesCodes(List<String> destinationCodes, GeolocationRQDS geolocation) {
+
         List<DestinationRQDS> destinationRQDS = destinationCodes
             .stream()
             .map(DestinationRQDS::new)
             .collect(Collectors.toList());
-
         DestinationHotelCodeRSDS hotelCodes = availabilityAction
-            .fetchHotelCodes(new HotelCodeRQDS(destinationRQDS));
+            .fetchHotelCodes(new HotelCodeRQDS(destinationRQDS, geolocation)).block();
+
+        AvailabilityRQDS availabilityRQDS = this.getSampleRequest(hotelCodes.getData().getCodes());
 
         AvailabilityRSDS availabilityRSDS = availabilityAction
-            .search(this.getSampleRequest(hotelCodes.getData().getCodes()));
+            .search(availabilityRQDS);
 
-        return hotelConverterSV.availabilities(availabilityRSDS);
+        AvailabilityRQ availabilityRQ = new AvailabilityRQ();
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_MONTH, 1);
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        availabilityRQ.setCheckIn(format.format(calendar.getTime()));
+        calendar.add(Calendar.DAY_OF_MONTH, 1);
+        availabilityRQ.setCheckOut(format.format(calendar.getTime()));
+
+        return hotelConverterSV.availabilities(availabilityRSDS, availabilityRQ);
     }
 
     @Override
@@ -189,9 +277,35 @@ public class AvailabilityIP extends BaseServiceIP implements AvailabilitySV {
                 .getHotelList()
                 .stream()
                 .filter(item -> item.getCode().equals(hotelDetailRQ.getHotelCode()))
+                .peek(item -> item.setRooms(
+                    item.getRooms()
+                        .stream()
+                        // filter only match adult and children rooms
+                        .filter(roomRS -> roomRS.getMinAdults() <= hotelDetailRQ.getAdult() &&
+                            roomRS.getMaxAdults() >= hotelDetailRQ.getAdult() &&
+                            roomRS.getMaxChildren() >= hotelDetailRQ.getChildren().size())
+                        // filter only room have enough allotment
+                        .filter(roomRS -> roomRS
+                            .getRates()
+                            .stream()
+                            .anyMatch(rateRS -> rateRS.getAllotment() >= hotelDetailRQ.getRoom()))
+                        // set rooms and adults to room's rate
+//                        .peek(roomRS -> roomRS
+//                            .setRates(roomRS
+//                                .getRates()
+//                                .stream()
+//                                .peek(rateRS -> {
+//                                    rateRS.setAdults(hotelDetailRQ.getAdult());
+//                                    rateRS.setRooms(hotelDetailRQ.getRoom());
+//                                }).collect(Collectors.toList())
+//                            ))
+                        .collect(Collectors.toList())
+                ))
                 .findFirst();
-        if (data.isEmpty())
+        if (data.isEmpty()) {
             throw new NotFoundException("Hotel Not Found", null);
+        }
+        viewedHotelSV.saveOrUpdate(data.get());
 
         data.get().setResource(hotelWrapperRS.getResource());
 

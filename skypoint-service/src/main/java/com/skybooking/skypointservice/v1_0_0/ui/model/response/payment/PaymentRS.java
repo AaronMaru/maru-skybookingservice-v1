@@ -9,6 +9,7 @@ public class PaymentRS {
 
     private BigDecimal earning;
     private BigDecimal balance;
+    private String levelCode;
     private String levelName;
 
 }

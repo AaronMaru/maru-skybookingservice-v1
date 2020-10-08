@@ -33,7 +33,9 @@ public class HotelCodeValidator implements ConstraintValidator<HotelCodeValidate
                 .addPropertyNode(firstFieldName)
                 .addConstraintViolation()
                 .disableDefaultConstraintViolation();
-
+        System.out.println("dadadadada");
+        var bookingss = bookingRP.getBooking("SBHT01003620");
+        System.out.println(bookingss);
         try
         {
             final String bookingCode = BeanUtils.getProperty(value, firstFieldName);
@@ -46,7 +48,6 @@ public class HotelCodeValidator implements ConstraintValidator<HotelCodeValidate
                 }
                 for (String status: statuses) {
                     if (booking.getStatus().equals(status)) {
-                        System.out.println(status);
                         return true;
                     }
                 }

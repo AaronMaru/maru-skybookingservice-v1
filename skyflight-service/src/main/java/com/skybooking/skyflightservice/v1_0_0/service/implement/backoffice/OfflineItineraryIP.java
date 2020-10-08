@@ -4,7 +4,14 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hazelcast.core.HazelcastInstance;
 import com.skybooking.skyflightservice.config.AppConfig;
+import com.skybooking.skyflightservice.constant.TicketConstant;
 import com.skybooking.skyflightservice.v1_0_0.client.distributed.action.BookingAction;
+import com.skybooking.skyflightservice.v1_0_0.io.entity.booking.BookingAirTicketEntity;
+import com.skybooking.skyflightservice.v1_0_0.io.entity.booking.BookingEntity;
+import com.skybooking.skyflightservice.v1_0_0.io.entity.booking.BookingPaymentTransactionEntity;
+import com.skybooking.skyflightservice.v1_0_0.io.repository.booking.BookingAirTicketRP;
+import com.skybooking.skyflightservice.v1_0_0.io.repository.booking.BookingPaymentTransactionRP;
+import com.skybooking.skyflightservice.v1_0_0.io.repository.booking.BookingRP;
 import com.skybooking.skyflightservice.v1_0_0.service.implement.baseservice.BaseServiceIP;
 import com.skybooking.skyflightservice.v1_0_0.service.interfaces.backoffice.OfflineItinerarySV;
 import com.skybooking.skyflightservice.v1_0_0.service.model.booking.FullReservation;
@@ -16,12 +23,18 @@ import com.skybooking.skyflightservice.v1_0_0.ui.model.request.backoffice.offlin
 import com.skybooking.skyflightservice.v1_0_0.ui.model.request.backoffice.offlineitinerary.OfflineItineraryRQ;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.response.StructureRS;
 import com.skybooking.skyflightservice.v1_0_0.ui.model.response.backoffice.CheckOfflineItineraryRS;
+import com.skybooking.skyflightservice.v1_0_0.ui.model.response.backoffice.CreateOfflineBookingRS;
+import com.skybooking.skyflightservice.v1_0_0.ui.model.response.backoffice.offlineitinerary.PassengerInfoRS;
+import com.skybooking.skyflightservice.v1_0_0.ui.model.response.backoffice.offlineitinerary.PaymentInfoRS;
+import com.skybooking.skyflightservice.v1_0_0.util.passenger.PassengerUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -35,6 +48,9 @@ public class OfflineItineraryIP extends BaseServiceIP implements OfflineItinerar
     private final AppConfig appConfig;
     private final BookingAction bookingAction;
     private final OfflineBooking offlineBooking;
+    private final BookingRP bookingRP;
+    private final BookingPaymentTransactionRP paymentRP;
+    private final BookingAirTicketRP airTicketRP;
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -50,7 +66,7 @@ public class OfflineItineraryIP extends BaseServiceIP implements OfflineItinerar
         FullReservation fullReservation = getOfflineReservation(checkItineraryRQ.getPnrCode());
 
         if (fullReservation == null)
-            return responseBody(HttpStatus.BAD_REQUEST, "PNR code is invalid");
+            return responseBody(HttpStatus.BAD_REQUEST, "PNR_CODE_INVALID");
 
         BigDecimal amount = BigDecimal.ZERO;
         BigDecimal commission = fullReservation
@@ -65,7 +81,65 @@ public class OfflineItineraryIP extends BaseServiceIP implements OfflineItinerar
             amount = amount.add(pricedItinerary.getAirItineraryPricingInfo().getItinTotalFare().getTotals().getTotal().getContent());
         }
 
-        return responseBodyWithSuccessMessage(new CheckOfflineItineraryRS(amount, commission));
+
+        List<PassengerInfoRS> passengerInfo = new ArrayList<>();
+        PaymentInfoRS paymentInfo = null;
+
+        if (checkItineraryRQ.getReferenceCode() != null) {
+            BookingEntity bookingEntity = bookingRP.getBookingByBookingCode(checkItineraryRQ.getReferenceCode(), TicketConstant.TICKET_FAIL);
+            if (bookingEntity != null) {
+                BookingPaymentTransactionEntity paymentEntity = paymentRP.findByBookingIdAndStatus(bookingEntity.getId(), 1);
+                if (paymentEntity != null) {
+                    paymentInfo = new PaymentInfoRS();
+                    paymentInfo.setAmount(paymentEntity.getAmount());
+                    paymentInfo.setCurrency(paymentEntity.getCurrency());
+                    paymentInfo.setCardHolder(paymentEntity.getHolderName());
+                    paymentInfo.setCardNumber(paymentEntity.getCardNumber());
+                    paymentInfo.setBankName(paymentEntity.getBankName());
+                    paymentInfo.setPaymentCode(paymentEntity.getPaymentCode());
+                }
+
+                List<BookingAirTicketEntity> airTicketEntities = airTicketRP.getTickets(bookingEntity.getId());
+                if (airTicketEntities.size() > 0) {
+                    airTicketEntities.forEach(item -> {
+                        PassengerInfoRS passenger = new PassengerInfoRS();
+                        passenger.setFirstName(item.getFirstName());
+                        passenger.setLastName(item.getLastName());
+                        passenger.setPassengerType(item.getPassType());
+                        passenger.setAmount(item.getAmount());
+                        passenger.setCurrency(item.getCurrency());
+                        passenger.setBirthDay(item.getBirthday());
+                        passenger.setGender(PassengerUtil.gender(item.getGender()));
+                        passenger.setNationality(item.getNationality());
+                        passenger.setIdType(PassengerUtil.idType(item.getIdType()));
+                        passenger.setIdNumber(item.getIdNumber());
+                        passengerInfo.add(passenger);
+                    });
+                }
+            }
+        } else {
+            fullReservation.getReservation().getAccountingLines().getAccountingLine().forEach(item -> {
+                fullReservation
+                    .getReservation()
+                    .getPassengerReservation()
+                    .getPassengers()
+                    .getPassenger()
+                    .stream()
+                    .filter(psg -> psg.getNameAssocId() == item.getIndex())
+                    .findFirst()
+                    .ifPresent(psg -> {
+                        PassengerInfoRS passenger = new PassengerInfoRS();
+                        passenger.setFirstName(psg.getFirstName());
+                        passenger.setLastName(psg.getLastName());
+                        passenger.setPassengerType(psg.getPassengerType());
+                        passenger.setTicketNumber(item.getDocumentNumber());
+                        passenger.setAmount(item.getBaseFare().add(item.getTaxAmount()).subtract(item.getCommissionAmount()));
+                        passengerInfo.add(passenger);
+                    });
+            });
+        }
+
+        return responseBodyWithSuccessMessage(new CheckOfflineItineraryRS(amount, commission, passengerInfo, paymentInfo));
     }
 
 
@@ -85,10 +159,10 @@ public class OfflineItineraryIP extends BaseServiceIP implements OfflineItinerar
         if (fullReservation == null)
             return responseBody(HttpStatus.INTERNAL_SERVER_ERROR);
 
-        offlineBooking.save(fullReservation, itineraryRQ);
+        String bookingCode = offlineBooking.save(fullReservation, itineraryRQ);
 
-        return responseBody(HttpStatus.CREATED);
-
+        if (bookingCode.equals("")) return responseBody(HttpStatus.INTERNAL_SERVER_ERROR);
+        else return responseBody(HttpStatus.CREATED, "", new CreateOfflineBookingRS(bookingCode));
     }
 
 

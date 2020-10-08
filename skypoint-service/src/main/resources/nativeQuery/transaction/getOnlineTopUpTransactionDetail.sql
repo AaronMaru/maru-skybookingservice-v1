@@ -1,19 +1,18 @@
 SELECT
-	t.code  AS transactionCode,
-	DATE_FORMAT(t.created_at, "%e-%M-%Y") as transactionDate,
-	tv.earning_amount AS earningExtra,
-	(t.amount + tv.earning_amount) AS pointAmount,
-	t.paid_amount  AS paidPrice,
+	tv.code  AS transactionCode,
+	DATE_FORMAT(t.created_at, "%e-%M-%Y") AS transactionDate,
+	tv.amount AS topUpPoint,
+	tv.extra_rate * tv.amount AS earnedPoint,
+	(t.amount + (tv.extra_rate * tv.amount)) AS totalPoint,
 	t.amount AS totalPrice,
-	CASE
-    	WHEN t.status = 'SUCCESS' THEN 'Successfully'
-    	WHEN t.status = 'FAILED' THEN 'Failed'
-    END AS status
+	t.paid_amount  AS paidPrice
 FROM
-	skypoint_db.transactions t
+	transaction_values tv
 INNER JOIN
-	skypoint_db.transaction_values tv ON tv.transaction_id  = t.id
+	transactions t ON t.id = tv.transaction_id
 WHERE
-	t.code = :transactionCode
+	tv.code = :transactionCode
 AND
-	tv.transaction_type_code = 'EARNING_EXTRA'
+	t.proceed_by = 'ONLINE'
+AND
+    t.status != 'PENDING'

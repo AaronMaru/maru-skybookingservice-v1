@@ -5,4 +5,6 @@ import lombok.Data;
 @Data
 public class PromotionRS {
     private String code;
+    private String name;
+    private String remark;
 }

@@ -6,6 +6,6 @@ import lombok.Data;
 public class SortItemRS {
 
     private String title;
-    private int status;
+    private boolean status;
 
 }

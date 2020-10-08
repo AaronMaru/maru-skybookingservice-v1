@@ -2,7 +2,9 @@ package com.skybooking.eventservice;
 
 import com.skybooking.eventservice.v1_0_0.util.email.EmailBean;
 import com.skybooking.eventservice.v1_0_0.util.email.SendingMailThroughAWSSESSMTPServer;
+import com.skybooking.eventservice.v1_0_0.util.general.ApiBean;
 import com.skybooking.eventservice.v1_0_0.util.header.HeaderBean;
+import com.skybooking.eventservice.v1_0_0.util.localization.LocalizationBean;
 import com.skybooking.eventservice.v1_0_0.util.pdf.PdfBean;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -42,4 +44,13 @@ public class EventServiceApplication {
     PdfBean pdfBean() {
         return new PdfBean();
     }
+
+    @Bean
+    LocalizationBean localization() {
+        return new LocalizationBean();
+    }
+
+    @Bean
+    ApiBean apiBean() { return new ApiBean(); }
+
 }
