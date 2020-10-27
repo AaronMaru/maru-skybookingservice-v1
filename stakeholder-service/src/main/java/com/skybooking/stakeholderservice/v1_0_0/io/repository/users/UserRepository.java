@@ -12,7 +12,7 @@ public interface UserRepository extends JpaRepository<UserEntity, Integer> {
     /**
      * Find user login by email or username
      */
-    @Query(value = "SELECT * FROM users WHERE provider IS NULL AND (username = ?1 OR email = ?1)", nativeQuery = true)
+    @Query(value = "SELECT * FROM users WHERE username = ?1 OR email = ?1", nativeQuery = true)
     UserEntity findByUsernameOrEmail(String username);
 
     /**

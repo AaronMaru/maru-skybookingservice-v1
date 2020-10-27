@@ -11,6 +11,7 @@ import java.util.Map;
 @Component
 public class StructureRS {
     private int status = HttpStatus.OK.value();
+//    abc
     private String message = ResponseConstant.SUCCESS;
     private Map<String, Object> data;
     private PagingRS paging;

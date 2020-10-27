@@ -1,8 +1,6 @@
 package com.skybooking.paymentservice.v1_0_0.util.integration;
 
-
 import com.skybooking.paymentservice.v1_0_0.client.flight.ui.response.FlightMandatoryDataRS;
-import com.skybooking.paymentservice.v1_0_0.client.hotel.ui.response.HotelMandatoryDataRS;
 import com.skybooking.paymentservice.v1_0_0.io.enitity.PaymentEnitity;
 import com.skybooking.paymentservice.v1_0_0.io.repository.PaymentInfoRP;
 import com.skybooking.paymentservice.v1_0_0.io.repository.PaymentRP;
@@ -13,6 +11,7 @@ import com.skybooking.paymentservice.v1_0_0.ui.model.response.PaymentInfoRS;
 import com.skybooking.paymentservice.v1_0_0.ui.model.response.PaymentRS;
 import com.skybooking.paymentservice.v1_0_0.ui.model.response.UrlPaymentRS;
 import com.skybooking.paymentservice.v1_0_0.util.generator.GeneralUtility;
+import com.skybooking.paymentservice.v1_0_0.util.header.HeaderBean;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -28,17 +27,19 @@ import java.util.Map;
 public class Payments {
 
     @Autowired
-    Environment environment;
+    private Environment environment;
 
     @Autowired
-    PaymentRP paymentRP;
+    private PaymentRP paymentRP;
 
     @Autowired
-    PaymentInfoRP paymentInfoRP;
+    private PaymentInfoRP paymentInfoRP;
 
     @Autowired
-    GeneralUtility generalUtility;
+    private GeneralUtility generalUtility;
 
+    @Autowired
+    private HeaderBean headerBean;
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -51,8 +52,11 @@ public class Payments {
      */
     public UrlPaymentRS getPaymentUrl(PaymentRQ paymentRQ, String path) {
 
+        String language = headerBean.getLocalization();
+
         paymentRQ.setToken(generalUtility.paymentEncode(paymentRQ));
-        var url_token = generalUtility.getBaseUrl() + path + "?token=" + generalUtility.tokenEncodeBase64(addUrlToken(paymentRQ).getToken());
+        var url_token = generalUtility.getBaseUrl() + path + "?lang=" + language + "&token="
+                + generalUtility.tokenEncodeBase64(addUrlToken(paymentRQ).getToken());
         UrlPaymentRS urlPaymentRS = new UrlPaymentRS();
         urlPaymentRS.setUrlPayment(url_token);
 
@@ -72,14 +76,14 @@ public class Payments {
     public UrlPaymentRS getPaymentUrl(PaymentHotelRQ paymentRQ, String path) {
 
         paymentRQ.setToken(generalUtility.paymentEncodeHotel(paymentRQ));
-        var url_token = generalUtility.getBaseUrl() + path + "?token=" + generalUtility.tokenEncodeBase64(addUrlTokenHotel(paymentRQ).getToken());
+        var url_token = generalUtility.getBaseUrl() + path + "?token="
+                + generalUtility.tokenEncodeBase64(addUrlTokenHotel(paymentRQ).getToken());
         UrlPaymentRS urlPaymentRS = new UrlPaymentRS();
         urlPaymentRS.setUrlPayment(url_token);
 
         return urlPaymentRS;
 
     }
-
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -153,7 +157,8 @@ public class Payments {
         model.addAttribute("LimitAB", environment.getProperty("spring.IPAY88.LIMIT_AB"));
         model.addAttribute("LimitAQ", environment.getProperty("spring.IPAY88.LIMIT_AQ"));
         model.addAttribute("LimitEM", environment.getProperty("spring.IPAY88.LIMIT_EM"));
-        model.addAttribute("lang", environment.getProperty("spring.IPAY88.LANG"));
+        model.addAttribute("Lang",
+                paymentRS.getLang().equals("zh") ? environment.getProperty("spring.IPAY88.LANG") : "");
         model.addAttribute("PaymentId", paymentRS.getPaymentId());
         model.addAttribute("RefNo", paymentRS.getBookingCode());
         model.addAttribute("Amount", paymentRS.getAmount());
@@ -169,7 +174,6 @@ public class Payments {
 
     }
 
-
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Generate ipay88 request signature
@@ -184,14 +188,11 @@ public class Payments {
         String replaceComma = replaceDot.replace(",", "");
 
         var signature = environment.getProperty("spring.IPAY88.MERCHANT_KEY")
-                + environment.getProperty("spring.IPAY88.MERCHANT_CODE")
-                + paymentRS.getBookingCode()
-                + replaceComma
+                + environment.getProperty("spring.IPAY88.MERCHANT_CODE") + paymentRS.getBookingCode() + replaceComma
                 + environment.getProperty("spring.IPAY88.CURRENCY");
 
         return generalUtility.encrypt(signature);
     }
-
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -210,12 +211,8 @@ public class Payments {
         String replaceComma = replaceDot.replace(",", "");
 
         var signature = environment.getProperty("spring.IPAY88.MERCHANT_KEY")
-                + environment.getProperty("spring.IPAY88.MERCHANT_CODE")
-                + paymentId
-                + refNo
-                + replaceComma
-                + environment.getProperty("spring.IPAY88.CURRENCY")
-                + status;
+                + environment.getProperty("spring.IPAY88.MERCHANT_CODE") + paymentId + refNo + replaceComma
+                + environment.getProperty("spring.IPAY88.CURRENCY") + status;
 
         return generalUtility.encrypt(signature);
     }
@@ -279,7 +276,6 @@ public class Payments {
 
     }
 
-
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Update Payment Status Render
@@ -293,7 +289,10 @@ public class Payments {
         String token = generalUtility.tokenDecodeBase64(request.get("token"));
         String bookingCode = generalUtility.paymentDecode(token);
 
-        return getUrlToken(bookingCode);
+        PaymentRS paymentRS = getUrlToken(bookingCode);
+        paymentRS.setLang(request.get("lang"));
+
+        return paymentRS;
 
     }
 
@@ -344,7 +343,6 @@ public class Payments {
 
     }
 
-
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Get Payment method information
@@ -372,8 +370,11 @@ public class Payments {
      */
     public UrlPaymentRS getPaymentUrlPoint(PaymentPointRQ paymentRQ, String path) {
 
+        String language = headerBean.getLocalization();
+
         paymentRQ.setToken(generalUtility.paymentEncodePoint(paymentRQ));
-        var url_token = generalUtility.getBaseUrl() + path + "?token=" + generalUtility.tokenEncodeBase64(addUrlTokenPoint(paymentRQ).getToken());
+        var url_token = generalUtility.getBaseUrl() + path + "?lang=" + language + "&token="
+                + generalUtility.tokenEncodeBase64(addUrlTokenPoint(paymentRQ).getToken());
         UrlPaymentRS urlPaymentRS = new UrlPaymentRS();
         urlPaymentRS.setUrlPayment(url_token);
 

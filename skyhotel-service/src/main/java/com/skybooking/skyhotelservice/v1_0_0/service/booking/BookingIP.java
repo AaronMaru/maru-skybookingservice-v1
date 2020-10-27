@@ -1,6 +1,6 @@
 package com.skybooking.skyhotelservice.v1_0_0.service.booking;
 
-import com.skybooking.skyhotelservice.constant.BookingConstant;
+import com.skybooking.skyhotelservice.constant.BookingConstantPayment;
 import com.skybooking.skyhotelservice.constant.BookingStatus;
 import com.skybooking.skyhotelservice.constant.CurrencyConstant;
 import com.skybooking.skyhotelservice.constant.RateType;
@@ -29,7 +29,6 @@ import com.skybooking.skyhotelservice.v1_0_0.ui.model.request.booking.ReserveRQ;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.StructureRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.booking.checkrate.*;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.HotelRS;
-import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.content.DetailRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.content.PriceUnitRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.content.RateRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.content.RoomRS;
@@ -187,7 +186,6 @@ public class BookingIP extends BaseServiceIP implements BookingSV {
 
     // Has Response from DS
     private CheckRateHotel getCheckRateWithResponse(CheckRateHotelHBRS checkRateHotelHBRS, HotelRS hotelRS, CheckRateRQ checkRateRQ) {
-        //TODO: Mark up price and create response here
         CheckRateHotel checkRateHotelRS = new CheckRateHotel();
         // get total night from checkRateRQ
         long numberOfNights = DatetimeUtil.night(checkRateHotelHBRS.getCheckIn(), checkRateHotelHBRS.getCheckOut());
@@ -201,6 +199,7 @@ public class BookingIP extends BaseServiceIP implements BookingSV {
                 CheckRateRoomRateRQ::getRateKey,
                 checkRateRoomRateRQ -> checkRateRoomRateRQ
             ));
+
         // declare variable
         List<Rate> rates = new ArrayList<>();
         List<Room> rooms = new ArrayList<>();
@@ -260,29 +259,30 @@ public class BookingIP extends BaseServiceIP implements BookingSV {
                     .detailTotalPrice(unitAmount, discountDetail.getDiscount(), taxDetail.getTax(), BigDecimal.valueOf(checkRateRoomRateRQ.getRooms()), BigDecimal.valueOf(numberOfNights));
                 BigDecimal subTotalAmount = totalPrice.getAmountIncludeDiscount();
                 BigDecimal totalAmount = totalPrice.getAmountAfterDiscount();
+
                 // set value to rateRS
                 rate.setKey(dataRate.getRateKey());
                 rate.setCurrencyCode(CurrencyConstant.USD.CODE);
-                rate.setUnitNet(netDetail.getUnitNet());
-                rate.setTotalNet(netDetail.getTotalNet());
-                rate.setUnitAmount(unitAmount);
-                rate.setMarkupAmount(markup.getTotalMarkupAmount());
+                rate.setUnitNet(NumberFormatter.trimAmount(netDetail.getUnitNet()));
+                rate.setTotalNet(NumberFormatter.trimAmount(netDetail.getTotalNet()));
+                rate.setUnitAmount(NumberFormatter.trimAmount(unitAmount));
+                rate.setMarkupAmount(NumberFormatter.trimAmount(markup.getTotalMarkupAmount()));
                 rate.setMarkupPercentage(markup.getMarkupPercentage());
-                rate.setSubTotalAmount(subTotalAmount);
-                rate.setTotalAmount(totalAmount);
-                rate.setTotalDiscount(discountDetail.getDiscount());
+                rate.setSubTotalAmount(NumberFormatter.trimAmount(subTotalAmount));
+                rate.setTotalAmount(NumberFormatter.trimAmount(totalAmount));
+                rate.setTotalDiscount(NumberFormatter.trimAmount(discountDetail.getDiscount()));
                 rate.setDiscounts(discounts);
                 rate.setBoardCode(dataRate.getBoardCode());
                 rate.setTax(taxDetail.getTaxes());
-                rate.setUnitTax(taxDetail.getUnitTax());
-                rate.setTotalTax(taxDetail.getTax());
+                rate.setUnitTax(NumberFormatter.trimAmount(taxDetail.getUnitTax()));
+                rate.setTotalTax(NumberFormatter.trimAmount(taxDetail.getTax()));
                 rate.setTotalRoom(checkRateRoomRateRQ.getRooms());
                 rate.setTotalNight(Math.toIntExact(numberOfNights));
-                rate.setCommissionAmount(dataRate.getCommission());
+                rate.setCommissionAmount(NumberFormatter.trimAmount(dataRate.getCommission()));
                 rate.setCancellationPolicy(cancellationPolicyDetail.getCancellationPolicies());
                 // get previous amount from cache
                 BigDecimal previousAmount = ratesCachedMap.get(rate.getKey()).getPrice().getDetail().getTotalAmount();
-                rate.setPreviousTotalAmount(previousAmount);
+                rate.setPreviousTotalAmount(NumberFormatter.trimAmount(previousAmount));
                 // check isChanged
                 boolean isChanged = !previousAmount.equals(rate.getTotalAmount());
                 rate.setIsChanged(isChanged);
@@ -290,14 +290,14 @@ public class BookingIP extends BaseServiceIP implements BookingSV {
                 rates.add(rate);
 
                 // set value to roomRS
-                room.setCost(room.getCost().add(rate.getTotalNet()));
-                room.setTotalAmount(room.getTotalAmount().add(rate.getTotalAmount()));
-                room.setMarkupAmount(room.getMarkupAmount().add(rate.getMarkupAmount()));
-                room.setTotalTaxFees(room.getTotalTaxFees().add(rate.getTotalTax()));
-                room.setTotalDiscountAmount(room.getTotalDiscountAmount().add(rate.getTotalDiscount()));
-                room.setPreviousTotalAmount(room.getPreviousTotalAmount().add(rate.getPreviousTotalAmount()));
+                room.setCost(NumberFormatter.trimAmount(room.getCost().add(rate.getTotalNet())));
+                room.setTotalAmount(NumberFormatter.trimAmount(room.getTotalAmount().add(rate.getTotalAmount())));
+                room.setMarkupAmount(NumberFormatter.trimAmount(room.getMarkupAmount().add(rate.getMarkupAmount())));
+                room.setTotalTaxFees(NumberFormatter.trimAmount(room.getTotalTaxFees().add(rate.getTotalTax())));
+                room.setTotalDiscountAmount(NumberFormatter.trimAmount(room.getTotalDiscountAmount().add(rate.getTotalDiscount())));
+                room.setPreviousTotalAmount(NumberFormatter.trimAmount(room.getPreviousTotalAmount().add(rate.getPreviousTotalAmount())));
                 room.setIsChanged(rate.getIsChanged());
-                room.setCommissionAmount(room.getCommissionAmount().add(rate.getCommissionAmount()));
+                room.setCommissionAmount(NumberFormatter.trimAmount(room.getCommissionAmount().add(rate.getCommissionAmount())));
 
             });
 
@@ -307,17 +307,17 @@ public class BookingIP extends BaseServiceIP implements BookingSV {
             rooms.add(room);
 
             // set value to hotelRS
-            checkRateHotelRS.setCost(checkRateHotelRS.getCost().add(room.getCost()));
-            checkRateHotelRS.setTotalAmount(checkRateHotelRS.getTotalAmount().add(room.getTotalAmount()));
-            checkRateHotelRS.setMarkupAmount(checkRateHotelRS.getMarkupAmount().add(room.getMarkupAmount()));
-            checkRateHotelRS.setPreviousTotalAmount(checkRateHotelRS.getPreviousTotalAmount().add(room.getPreviousTotalAmount()));
+            checkRateHotelRS.setCost(NumberFormatter.trimAmount(checkRateHotelRS.getCost().add(room.getCost())));
+            checkRateHotelRS.setTotalAmount(NumberFormatter.trimAmount(checkRateHotelRS.getTotalAmount().add(room.getTotalAmount())));
+            checkRateHotelRS.setMarkupAmount(NumberFormatter.trimAmount(checkRateHotelRS.getMarkupAmount().add(room.getMarkupAmount())));
+            checkRateHotelRS.setPreviousTotalAmount(NumberFormatter.trimAmount(checkRateHotelRS.getPreviousTotalAmount().add(room.getPreviousTotalAmount())));
             checkRateHotelRS.setIsChanged(room.getIsChanged());
         });
 
         checkRateHotelRS.setCheckIn(checkRateHotelHBRS.getCheckIn());
         checkRateHotelRS.setCheckOut(checkRateHotelHBRS.getCheckOut());
         checkRateHotelRS.setCode(checkRateHotelHBRS.getCode());
-        checkRateHotelRS.setMarkupPaymentAmount(CalculatePriceUtil.markupPayment(checkRateHotelRS.getTotalAmount()).getMarkupAmount());
+        checkRateHotelRS.setMarkupPaymentAmount(NumberFormatter.trimAmount(CalculatePriceUtil.markupPayment(checkRateHotelRS.getTotalAmount()).getMarkupAmount()));
         checkRateHotelRS.setMarkupPaymentPercentage(CalculatePriceUtil.markupPayment(checkRateHotelRS.getTotalAmount()).getMarkupPercentage());
         checkRateHotelRS.setCurrencyCode(CurrencyConstant.USD.CODE);
         checkRateHotelRS.setRooms(rooms);
@@ -347,6 +347,7 @@ public class BookingIP extends BaseServiceIP implements BookingSV {
                 .setTotalAmount(checkRateHotelRS
                     .getTotalAmount()
                     .add(room.getTotalAmount()));
+
             checkRateHotelRS
                 .setCost(checkRateHotelRS
                     .getCost()
@@ -363,6 +364,11 @@ public class BookingIP extends BaseServiceIP implements BookingSV {
         });
 
         // general mark up (payment)
+        checkRateHotelRS
+            .setMarkupPaymentPercentage(CalculatePriceUtil
+                .markupPayment(checkRateHotelRS.getTotalAmount())
+                .getMarkupPercentage());
+
         checkRateHotelRS.setMarkupPaymentAmount(CalculatePriceUtil
             .markupPayment(checkRateHotelRS.getTotalAmount()).getMarkupAmount());
         checkRateHotelRS.setRooms(rooms);
@@ -391,7 +397,6 @@ public class BookingIP extends BaseServiceIP implements BookingSV {
             List<Rate> rates = new ArrayList<>();
             // loop rate
             roomRS.getRates().forEach(rateRS -> {
-
                 Rate rate = new Rate();
                 // total room come form request
                 Integer rRoom = roomMap.get(rateRS.getRateKey()).getRooms();
@@ -415,6 +420,7 @@ public class BookingIP extends BaseServiceIP implements BookingSV {
                     .cancellationPolicyDetail(priceUnit.getCancellations(), BigDecimal.valueOf(rRoom), BigDecimal.valueOf(numberOfNights));
                 // get total net
                 BigDecimal totalNet = priceUnit.getNetAmount().multiply(BigDecimal.valueOf(rRoom)).multiply(BigDecimal.valueOf(numberOfNights));
+
                 // Rate info
                 rate.setBoardCode(rateRS.getBoardCode());
                 rate.setUnitNet(priceUnit.getNetAmount());
@@ -429,26 +435,21 @@ public class BookingIP extends BaseServiceIP implements BookingSV {
                     .multiply(BigDecimal.valueOf(numberOfNights));
                 rate.setMarkupPercentage(rateRS.getPrice().getDetail().getMarkupPercentage());
                 rate.setMarkupAmount(markupAmount);
-                // Previously
                 rate.setPreviousTotalAmount(totalAmount);
                 rate.setIsChanged(false);
-                // Rate tax
                 rate.setTotalTax(taxDetail.getTax());
                 rate.setUnitTax(priceUnit.getTaxAmount());
                 rate.setTax(taxDetail.getTaxes());
-                // Cancellation Policy
                 rate.setCancellationPolicy(cancellationPolicyDetail.getCancellationPolicies());
-                // Rate discount
                 rate.setTotalDiscount(discountDetail.getDiscount());
                 rate.setDiscounts(discountDetail.getDiscounts());
+
                 // Room info
                 room.setCost(room.getCost().add(rate.getTotalNet()));
                 room.setTotalAmount(room.getTotalAmount().add(rate.getTotalAmount()));
                 room.setCurrencyCode(rate.getCurrencyCode());
                 room.setMarkupAmount(room.getMarkupAmount().add(rate.getMarkupAmount()));
-                // Room Tax
                 room.setTotalTaxFees(room.getTotalTaxFees().add(rate.getTotalTax()));
-                // Previously
                 room.setPreviousTotalAmount(room.getPreviousTotalAmount().add(rate.getTotalAmount()));
                 room.setIsChanged(room.getIsChanged() || rate.getIsChanged());
 
@@ -508,7 +509,7 @@ public class BookingIP extends BaseServiceIP implements BookingSV {
         HotelBookingEntity hotelBooking = new HotelBookingEntity();
 
         hotelBooking.setCode(GeneratorCM.bookingCode(booking == null ? null : booking.getCode()));
-        hotelBooking.setStatus(BookingConstant.PENDING);
+        hotelBooking.setStatus(BookingConstantPayment.PENDING);
         hotelBooking.setCheckIn(DatetimeUtil.toDate(checkRateRS.getSummary().getCheckIn()));
         hotelBooking.setCheckOut(DatetimeUtil.toDate(checkRateRS.getSummary().getCheckOut()));
         hotelBooking.setPaymentFeePercentage(checkRateRS.getSummary().getMarkupPaymentAmount());

@@ -7,7 +7,6 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Date;
 
 @RestController
 @RequestMapping("/v1.0.0/history")
@@ -21,9 +20,9 @@ public class HistoryController {
                                                       @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") String endDate,
                                                       @RequestParam(value = "transactionTypeCode", defaultValue = "all") String transactionTypeCode,
                                                       @RequestParam(value = "page", defaultValue = "1") Integer page,
-                                                      @RequestParam(value = "limit", defaultValue = "10") Integer limit) {
+                                                      @RequestParam(value = "size", defaultValue = "10") Integer size) {
         return historySV.getTransactionHistoryByUserAccount(httpServletRequest, startDate, endDate, transactionTypeCode,
-                page, limit);
+                page, size);
     }
 
     @RequestMapping(value = "/transaction/detail/{transactionCode}", method = RequestMethod.POST)
@@ -34,9 +33,10 @@ public class HistoryController {
 
     @RequestMapping(value = "/sky-owner/transaction", method = RequestMethod.GET)
     public StructureRS skyOwnerTransactionHistory(HttpServletRequest httpServletRequest,
+                                                  @RequestParam(value = "stakeholderUserId") Integer stakeholderUserId,
                                                   @RequestParam(value = "page", defaultValue = "1") Integer page,
-                                                  @RequestParam(value = "limit", defaultValue = "50") Integer limit) {
-        return historySV.skyOwnerTransactionHistory(httpServletRequest, page, limit);
+                                                  @RequestParam(value = "size", defaultValue = "10") Integer size) {
+        return historySV.skyOwnerTransactionHistory(httpServletRequest, stakeholderUserId, page, size);
     }
 
     @RequestMapping(value = "download/receipt/top-up", method = RequestMethod.GET)
@@ -45,9 +45,9 @@ public class HistoryController {
     }
 
     @RequestMapping(value = "/transaction/export", method = RequestMethod.GET)
-    public StructureRS getTransactionHistoryByAccount(HttpServletRequest httpServletRequest,
-                                                      @RequestParam(value = "startDate") @DateTimeFormat(pattern = "yyyy-MM-dd") String startDate,
-                                                      @RequestParam(value = "endDate") @DateTimeFormat(pattern = "yyyy-MM-dd") String endDate) {
+    public StructureRS exportTransactionHistoryByUserAccount(HttpServletRequest httpServletRequest,
+                                                             @RequestParam(value = "startDate") @DateTimeFormat(pattern = "yyyy-MM-dd") String startDate,
+                                                             @RequestParam(value = "endDate") @DateTimeFormat(pattern = "yyyy-MM-dd") String endDate) {
         return historySV.exportTransactionHistoryByUserAccount(httpServletRequest, startDate, endDate);
     }
 }

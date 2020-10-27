@@ -1,6 +1,7 @@
 package com.skybooking.skypointservice.v1_0_0.client.payment.action;
 
 import com.skybooking.skypointservice.config.AppConfig;
+import com.skybooking.skypointservice.util.HeaderDataUtil;
 import com.skybooking.skypointservice.v1_0_0.client.ClientResponse;
 import com.skybooking.skypointservice.v1_0_0.client.payment.model.requset.PaymentGetUrlPaymentRQ;
 import com.skybooking.skypointservice.v1_0_0.util.auth.AuthUtility;
@@ -8,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import javax.servlet.http.HttpServletRequest;
 
 @Service
 public class PaymentAction {
@@ -21,6 +24,9 @@ public class PaymentAction {
     @Autowired
     private AuthUtility authUtility;
 
+    @Autowired
+    private HeaderDataUtil headerDataUtil;
+
     public ClientResponse getPaymentMethodFee(String paymentMethodCode) {
 
         return webClient.mutate()
@@ -33,13 +39,14 @@ public class PaymentAction {
                 .block();
     }
 
-    public ClientResponse getPaymentUrl(PaymentGetUrlPaymentRQ paymentGetUrlPaymentRQ) {
+    public ClientResponse getPaymentUrl(HttpServletRequest httpServletRequest, PaymentGetUrlPaymentRQ paymentGetUrlPaymentRQ) {
 
         return webClient.mutate()
                 .build()
                 .post()
                 .uri(appConfig.getPaymentUrl() + appConfig.getPaymentNewVersion() + "/request")
                 .header(HttpHeaders.AUTHORIZATION, authUtility.getAuthToken())
+                .header("X-localization", headerDataUtil.languageCodeExist(httpServletRequest))
                 .bodyValue(paymentGetUrlPaymentRQ)
                 .retrieve()
                 .bodyToMono(ClientResponse.class)

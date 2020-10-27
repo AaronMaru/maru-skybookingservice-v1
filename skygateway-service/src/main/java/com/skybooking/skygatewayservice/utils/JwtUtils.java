@@ -1,5 +1,6 @@
 package com.skybooking.skygatewayservice.utils;
 
+import com.skybooking.skygatewayservice.model.UserTokenModel;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.json.JsonParser;
@@ -13,8 +14,7 @@ import java.util.Map;
 @Component
 public class JwtUtils {
 
-    @Autowired
-    HttpServletRequest request;
+    @Autowired HttpServletRequest request;
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -38,6 +38,16 @@ public class JwtUtils {
             ex.printStackTrace();
             return null;
         }
+    }
+
+    public UserTokenModel getUserToken() {
+        UserTokenModel userToken = new UserTokenModel();
+        userToken.setClientId(this.getClaim("client_id", String.class));
+        userToken.setUserId(this.getClaim("userId", Integer.class));
+        userToken.setCompanyId(this.getClaim("companyId", Integer.class));
+        userToken.setStakeholderId(this.getClaim("stakeholderId", Integer.class));
+        userToken.setUserRole((this.getClaim("userRole", String.class) != null) ? this.getClaim("userRole", String.class) : "");
+        return userToken;
     }
 
 }

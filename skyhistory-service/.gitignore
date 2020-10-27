@@ -29,8 +29,8 @@ build/
 
 ### VS Code ###
 .vscode/
+.vscode/
+**/logs/**
 
 /src/main/resources/application.yml
 /src/main/resources/bootstrap.yml
-
-**/logs/**

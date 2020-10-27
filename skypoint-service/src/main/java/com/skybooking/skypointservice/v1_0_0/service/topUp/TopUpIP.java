@@ -4,25 +4,20 @@ import com.skybooking.skypointservice.constant.*;
 import com.skybooking.skypointservice.httpstatus.BadRequestException;
 import com.skybooking.skypointservice.httpstatus.InternalServerError;
 import com.skybooking.skypointservice.util.HeaderDataUtil;
+import com.skybooking.skypointservice.util.AmountFormatUtil;
 import com.skybooking.skypointservice.util.ValidateKeyUtil;
 import com.skybooking.skypointservice.v1_0_0.client.ClientResponse;
-import com.skybooking.skypointservice.v1_0_0.client.event.action.EventEmailAction;
 import com.skybooking.skypointservice.v1_0_0.client.event.action.EventNotificationAction;
-import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.SkyPointTopUpRQ;
 import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.TopUpNotificationRQ;
 import com.skybooking.skypointservice.v1_0_0.client.payment.action.PaymentAction;
 import com.skybooking.skypointservice.v1_0_0.client.payment.model.requset.PaymentGetUrlPaymentRQ;
 import com.skybooking.skypointservice.v1_0_0.client.stakeholder.model.response.BasicCompanyAccountInfoRS;
 import com.skybooking.skypointservice.v1_0_0.client.stakeholder.model.response.UserReferenceRS;
-import com.skybooking.skypointservice.v1_0_0.helper.AccountHelper;
-import com.skybooking.skypointservice.v1_0_0.helper.SkyPointTransactionHelper;
-import com.skybooking.skypointservice.v1_0_0.helper.TopUpHelper;
-import com.skybooking.skypointservice.v1_0_0.helper.TransactionHelper;
+import com.skybooking.skypointservice.v1_0_0.helper.*;
 import com.skybooking.skypointservice.v1_0_0.io.entity.account.AccountEntity;
 import com.skybooking.skypointservice.v1_0_0.io.entity.config.ConfigTopUpEntity;
 import com.skybooking.skypointservice.v1_0_0.io.entity.config.ConfigUpgradeLevelEntity;
 import com.skybooking.skypointservice.v1_0_0.io.entity.redis.BookingLanguageCached;
-import com.skybooking.skypointservice.v1_0_0.io.entity.topUp.TopUpDocumentEntity;
 import com.skybooking.skypointservice.v1_0_0.io.entity.transaction.TransactionContactInfoEntity;
 import com.skybooking.skypointservice.v1_0_0.io.entity.transaction.TransactionEntity;
 import com.skybooking.skypointservice.v1_0_0.io.entity.transaction.TransactionValueEntity;
@@ -30,12 +25,10 @@ import com.skybooking.skypointservice.v1_0_0.io.repository.account.AccountRP;
 import com.skybooking.skypointservice.v1_0_0.io.repository.config.ConfigTopUpRP;
 import com.skybooking.skypointservice.v1_0_0.io.repository.config.ConfigUpgradeLevelRP;
 import com.skybooking.skypointservice.v1_0_0.io.repository.redis.BookingLanguageRedisRP;
-import com.skybooking.skypointservice.v1_0_0.io.repository.topUp.TopUpDocumentRP;
 import com.skybooking.skypointservice.v1_0_0.io.repository.transaction.TransactionContactInfoRP;
 import com.skybooking.skypointservice.v1_0_0.io.repository.transaction.TransactionRP;
 import com.skybooking.skypointservice.v1_0_0.io.repository.transaction.TransactionValueRP;
 import com.skybooking.skypointservice.v1_0_0.service.BaseServiceIP;
-import com.skybooking.skypointservice.v1_0_0.ui.model.request.ContactInfo;
 import com.skybooking.skypointservice.v1_0_0.ui.model.request.topUp.ConfirmOfflineTopUpRQ;
 import com.skybooking.skypointservice.v1_0_0.ui.model.request.topUp.OfflineTopUpRQ;
 import com.skybooking.skypointservice.v1_0_0.ui.model.request.topUp.OnlineTopUpRQ;
@@ -46,7 +39,6 @@ import com.skybooking.skypointservice.v1_0_0.ui.model.response.topUp.PreTopUpRS;
 import com.skybooking.skypointservice.v1_0_0.ui.model.response.topUp.ProceedTopUpRS;
 import com.skybooking.skypointservice.v1_0_0.ui.model.response.transaction.AccountInfo;
 import com.skybooking.skypointservice.v1_0_0.ui.model.response.transaction.TopUpInfo;
-import com.skybooking.skypointservice.v1_0_0.util.datetime.DateTimeBean;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -55,11 +47,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
-import static com.skybooking.skypointservice.constant.TopUpTypeConstant.TOPUP_RECEIPT;
 
 @Service
 public class TopUpIP extends BaseServiceIP implements TopUpSV {
@@ -88,9 +79,6 @@ public class TopUpIP extends BaseServiceIP implements TopUpSV {
     private SkyPointTransactionHelper skyPointTransactionHelper;
 
     @Autowired
-    private EventEmailAction eventEmailAction;
-
-    @Autowired
     private TransactionContactInfoRP transactionContactInfoRP;
 
     @Autowired
@@ -100,19 +88,16 @@ public class TopUpIP extends BaseServiceIP implements TopUpSV {
     private TransactionValueRP transactionValueRP;
 
     @Autowired
-    private DateTimeBean dateTimeBean;
-
-    @Autowired
     private ConfigUpgradeLevelRP configUpgradeLevelRP;
-
-    @Autowired
-    private TopUpDocumentRP topUpDocumentRP;
 
     @Autowired
     private HeaderDataUtil headerDataUtil;
 
     @Autowired
     private BookingLanguageRedisRP bookingLanguageRedisRP;
+
+    @Autowired
+    private SendMailSMSHelper sendMailSMSHelper;
 
     @Override
     @Transactional(rollbackFor = {})
@@ -123,21 +108,15 @@ public class TopUpIP extends BaseServiceIP implements TopUpSV {
             OfflineTopUpRQ offlineTopUpRQValidate = new OfflineTopUpRQ();
             BeanUtils.copyProperties(offlineTopUpRQ, offlineTopUpRQValidate);
             offlineTopUpRQValidate.setFile(null);
-            List<String> keyList = Arrays.asList("amount", "userCode", "referenceCode", "createdBy",
-                    "stakeholderCompanyId", "stakeholderUserId", "email", "name", "phoneNumber");
-            ValidateKeyUtil.validateMultipartFile(offlineTopUpRQ.getFile(), "file");
+            List<String> keyList = Arrays.asList("amount", "userCode", "referenceCode", "createdBy");
+            //ValidateKeyUtil.validateMultipartFile(offlineTopUpRQ.getFile(), "file");
             ValidateKeyUtil.validateKey(offlineTopUpRQValidate, keyList);
 
             //========= Validate amount not negative
             ValidateKeyUtil.validateAmountNotNegative(offlineTopUpRQ.getAmount());
 
-            //========= Validate name
-            ValidateKeyUtil.validateLetter(offlineTopUpRQ.getName());
-            //========= Validate phone number
-            ValidateKeyUtil.validateNumber(offlineTopUpRQ.getPhoneNumber());
-
             //========== Validate user
-            accountHelper.getBasicCompanyAccountInfo(offlineTopUpRQ.getUserCode());
+            BasicCompanyAccountInfoRS basicCompanyAccountInfo = accountHelper.getBasicCompanyAccountInfo(offlineTopUpRQ.getUserCode());
 
             //========== Get value from jwt header
             String createdBy = offlineTopUpRQ.getCreatedBy();
@@ -152,7 +131,7 @@ public class TopUpIP extends BaseServiceIP implements TopUpSV {
 
             //========= Save transaction
             TransactionEntity transaction = transactionHelper.saveTransactionOfflineTopUp(
-                    new TransactionEntity(), account, offlineTopUpRQ, createdBy);
+                    new TransactionEntity(), account, offlineTopUpRQ, createdBy, basicCompanyAccountInfo);
 
             //========= Save file (topUp document)
             topUpHelper.saveFileForTopUpOffline(offlineTopUpRQ.getFile(), transaction);
@@ -163,14 +142,16 @@ public class TopUpIP extends BaseServiceIP implements TopUpSV {
 
             //======== Save top up contact info
             TransactionContactInfoEntity transactionContactInfo = new TransactionContactInfoEntity();
-            BeanUtils.copyProperties(offlineTopUpRQ, transactionContactInfo);
+            BeanUtils.copyProperties(basicCompanyAccountInfo, transactionContactInfo);
             transactionContactInfo.setTransactionId(transaction.getId());
             transactionContactInfo.setPhoneCode("");
             transactionContactInfoRP.save(transactionContactInfo);
 
             //======= Hit api to get basic account info
             BasicCompanyAccountInfoRS basicCompanyAccountInfoRS = new BasicCompanyAccountInfoRS();
-            BeanUtils.copyProperties(offlineTopUpRQ, basicCompanyAccountInfoRS);
+            BeanUtils.copyProperties(basicCompanyAccountInfo, basicCompanyAccountInfoRS);
+            basicCompanyAccountInfoRS.setStakeholderUserId(basicCompanyAccountInfo.getStakeholderUserId());
+            basicCompanyAccountInfoRS.setStakeholderCompanyId(basicCompanyAccountInfo.getStakeholderCompanyId());
 
             //======== Return response
             AccountInfo accountInfo = new AccountInfo();
@@ -204,12 +185,15 @@ public class TopUpIP extends BaseServiceIP implements TopUpSV {
     }
 
     @Override
+    @Transactional(rollbackFor = {})
     public StructureRS confirmOfflineTopUp(HttpServletRequest httpServletRequest, ConfirmOfflineTopUpRQ confirmOfflineTopUpRQ) {
         try {
-            StructureRS structureRS = new StructureRS();
             //======== Validate key request
-            List<String> keyList = Arrays.asList("transactionCode");
+            List<String> keyList = Arrays.asList("transactionCode", "status");
             ValidateKeyUtil.validateKey(confirmOfflineTopUpRQ, keyList);
+
+            //======= Validate status
+            this.validateStatus(confirmOfflineTopUpRQ.getStatus());
 
             TransactionValueEntity transactionValue = transactionValueRP.findByCode(confirmOfflineTopUpRQ.getTransactionCode());
             if (transactionValue == null) {
@@ -221,7 +205,16 @@ public class TopUpIP extends BaseServiceIP implements TopUpSV {
                 throw new BadRequestException("transaction_approved", null);
             }
 
-            updateTopUp(httpServletRequest, transaction, transactionValue);
+            if (transaction.getStatus().equalsIgnoreCase(TransactionStatusConstant.REJECTED)) {
+                throw new BadRequestException("transaction_rejected", null);
+            }
+
+            if (confirmOfflineTopUpRQ.getStatus().equalsIgnoreCase(TransactionStatusConstant.APPROVED)) {
+                updateTopUp(httpServletRequest, transaction, transactionValue);
+            } else if (confirmOfflineTopUpRQ.getStatus().equalsIgnoreCase(TransactionStatusConstant.REJECTED)){
+                transaction.setStatus(TransactionStatusConstant.REJECTED);
+                transactionRP.save(transaction);
+            }
 
             return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, null);
         } catch (BadRequestException e) {
@@ -260,15 +253,15 @@ public class TopUpIP extends BaseServiceIP implements TopUpSV {
                     ConfigTopUpTypeConstant.EXTRA_RATE, true);
 
             //======== Return response
-            BigDecimal topUpSkyPoint = onlineTopUpRQ.getAmount();
-            BigDecimal earnSkyPoint = onlineTopUpRQ.getAmount().multiply(configTopUp.getValue());
-            BigDecimal totalSkyPoint = topUpSkyPoint.add(earnSkyPoint);
+            BigDecimal topUpSkyPoint = AmountFormatUtil.roundAmount(onlineTopUpRQ.getAmount());
+            BigDecimal earnSkyPoint = AmountFormatUtil.roundAmount(onlineTopUpRQ.getAmount().multiply(configTopUp.getValue()));
+            BigDecimal totalSkyPoint = AmountFormatUtil.roundAmount(topUpSkyPoint.add(earnSkyPoint));
 
             PreTopUpRS preTopUpRS = new PreTopUpRS();
             preTopUpRS.setTopUpSkyPoint(topUpSkyPoint);
             preTopUpRS.setEarnSkyPoint(earnSkyPoint);
             preTopUpRS.setTotalSkyPoint(totalSkyPoint);
-            preTopUpRS.setAmountPayable(onlineTopUpRQ.getAmount());
+            preTopUpRS.setAmountPayable(AmountFormatUtil.roundAmount(onlineTopUpRQ.getAmount()));
             structureRS.setData(preTopUpRS);
             structureRS.setMessage(ResponseConstant.SUCCESS);
             return structureRS;
@@ -288,17 +281,13 @@ public class TopUpIP extends BaseServiceIP implements TopUpSV {
         try {
             StructureRS structureRS = new StructureRS();
             //======== Validate key request
-            List<String> keyList = Arrays.asList("amount", "paymentMethodCode", "contactInfo");
+            List<String> keyList = Arrays.asList("amount", "paymentMethodCode");
             ValidateKeyUtil.validateKey(onlineTopUpRQ, keyList);
 
             //========= Validate amount not negative
             ValidateKeyUtil.validateAmountNotNegative(onlineTopUpRQ.getAmount());
 
             //======== Get userType
-            ContactInfo contactInfo = onlineTopUpRQ.getContactInfo();
-            List<String> contactInfoKey = Arrays.asList("email", "name", "phoneCode", "phoneNumber");
-            ValidateKeyUtil.validateKey(contactInfo, contactInfoKey);
-
             UserReferenceRS userReferenceRS = accountHelper.getUserReference(httpServletRequest);
             String userType = userReferenceRS.getType();
             String userCode = userReferenceRS.getUserCode();
@@ -314,6 +303,9 @@ public class TopUpIP extends BaseServiceIP implements TopUpSV {
             //======== Hit api to get fee
             ClientResponse paymentRS = paymentAction.getPaymentMethodFee(onlineTopUpRQ.getPaymentMethodCode());
             Map<String, Object> dataRS = paymentRS.getData();
+            if (dataRS == null) {
+                throw new BadRequestException("payment_method_not_valid", null);
+            }
             BigDecimal percentage = new BigDecimal(dataRS.get("percentage").toString());
             BigDecimal fee = onlineTopUpRQ.getAmount().multiply(percentage.divide(new BigDecimal(100)));
             String paymentMethod = String.valueOf(dataRS.get("method"));
@@ -324,7 +316,7 @@ public class TopUpIP extends BaseServiceIP implements TopUpSV {
 
             //======== Save top up contact info
             TransactionContactInfoEntity transactionContactInfo = new TransactionContactInfoEntity();
-            BeanUtils.copyProperties(contactInfo, transactionContactInfo);
+            BeanUtils.copyProperties(userReferenceRS, transactionContactInfo);
             transactionContactInfo.setTransactionId(transaction.getId());
             transactionContactInfoRP.save(transactionContactInfo);
 
@@ -345,7 +337,7 @@ public class TopUpIP extends BaseServiceIP implements TopUpSV {
             paymentGetUrlPaymentRQ.setBookingCode(transactionValue.getCode());
             paymentGetUrlPaymentRQ.setPaymentCode(onlineTopUpRQ.getPaymentMethodCode());
             paymentGetUrlPaymentRQ.setProductType("POINT");
-            ClientResponse paymentUrlData = paymentAction.getPaymentUrl(paymentGetUrlPaymentRQ);
+            ClientResponse paymentUrlData = paymentAction.getPaymentUrl(httpServletRequest, paymentGetUrlPaymentRQ);
 
             //Save Language to redis for email template
             BookingLanguageCached bookingLanguageCached = new BookingLanguageCached();
@@ -392,9 +384,15 @@ public class TopUpIP extends BaseServiceIP implements TopUpSV {
 
             if (postOnlineTopUpRQ.getPaymentStatus().equalsIgnoreCase("success")) {
                 updateTopUp(httpServletRequest, transaction, transactionValue);
-            } else {
+            } else if (postOnlineTopUpRQ.getPaymentStatus().equalsIgnoreCase("failed")) {
                 transaction.setStatus(TransactionStatusConstant.FAILED);
                 transactionRP.save(transaction);
+
+                TransactionContactInfoEntity transactionContactInfo =
+                        transactionContactInfoRP.findByTransactionId(transaction.getId());
+                sendMailSMSHelper.sendMailOrSmsTopUpFailed(httpServletRequest, transactionValue, transactionContactInfo);
+            } else {
+                throw new BadRequestException("paymentStatus_invalid", null);
             }
 
             return structureRS;
@@ -407,26 +405,11 @@ public class TopUpIP extends BaseServiceIP implements TopUpSV {
         }
     }
 
-    private ClientResponse sendMailTopUp(HttpServletRequest httpServletRequest, TransactionEntity transaction,
-                                         TransactionValueEntity transactionValue, String email, String fullName, BigDecimal earnAmount,
-                                         String phone) {
-        //======= Send mail
-        SkyPointTopUpRQ skyPointTopUpRQ = new SkyPointTopUpRQ();
-        skyPointTopUpRQ.setAmount(transactionValue.getAmount());
-        skyPointTopUpRQ.setEmail(email);
-        skyPointTopUpRQ.setFullName(fullName);
-        skyPointTopUpRQ.setEarnAmount(earnAmount);
-        skyPointTopUpRQ.setPhone(phone);
-        skyPointTopUpRQ.setTransactionId(transactionValue.getCode());
-        skyPointTopUpRQ.setTransactionDate(dateTimeBean.convertDateTime(transaction.getCreatedAt()));
-        return eventEmailAction.topUpEmail(httpServletRequest, skyPointTopUpRQ);
-    }
-
     private void sendNotificationTopUp(HttpServletRequest httpServletRequest, TransactionEntity transaction) {
         TopUpNotificationRQ topUpNotificationRQ = new TopUpNotificationRQ();
         TransactionValueEntity transactionValue = transactionValueRP.findByTransactionIdAndTransactionTypeCode(transaction.getId(),
                 TransactionTypeConstant.TOP_UP);
-        topUpNotificationRQ.setBookingId(transactionValue.getCode());
+        topUpNotificationRQ.setTransactionCode(transactionValue.getCode());
         topUpNotificationRQ.setStakeholderCompanyId(transaction.getStakeholderCompanyId());
         topUpNotificationRQ.setStakeholderUserId(transaction.getStakeholderUserId());
         topUpNotificationRQ.setType("TOP_UP_POINT");
@@ -459,21 +442,19 @@ public class TopUpIP extends BaseServiceIP implements TopUpSV {
 
         //======= Send mail
         TransactionContactInfoEntity transactionContactInfo = transactionContactInfoRP.findByTransactionId(transaction.getId());
-        ClientResponse s3UploadRS = this.sendMailTopUp(httpServletRequest, transaction, transactionValue,
-                transactionContactInfo.getEmail(), transactionContactInfo.getName(),
-                transaction.getAmount().multiply(configTopUp.getValue()),
-                transactionContactInfo.getPhoneCode() + transactionContactInfo.getPhoneNumber());
+        sendMailSMSHelper.sendMailOrSmsTopUp(transaction, transactionValue, transactionContactInfo,
+                configTopUp, languageCode, httpServletRequest);
 
-        Map<String, Object> dataRS = s3UploadRS.getData();
-
-        TopUpDocumentEntity topUpDocument = new TopUpDocumentEntity();
-        topUpDocument.setTransactionId(transaction.getId());
-        topUpDocument.setFile(dataRS.get("file").toString());
-        topUpDocument.setPath(dataRS.get("path").toString());
-        topUpDocument.setType(TOPUP_RECEIPT);
-        topUpDocument.setLanguageCode(languageCode);
-        topUpDocumentRP.save(topUpDocument);
         //======= Send Notification
         this.sendNotificationTopUp(httpServletRequest, transaction);
+    }
+
+    private void validateStatus(String status) {
+        List<String> statuses = new ArrayList<>();
+        statuses.add(TransactionStatusConstant.APPROVED);
+        statuses.add(TransactionStatusConstant.REJECTED);
+        if (!statuses.contains(status)) {
+            throw new BadRequestException("status_not_valid", null);
+        }
     }
 }

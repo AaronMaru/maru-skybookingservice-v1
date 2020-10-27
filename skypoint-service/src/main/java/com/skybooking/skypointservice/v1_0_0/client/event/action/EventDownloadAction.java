@@ -2,7 +2,7 @@ package com.skybooking.skypointservice.v1_0_0.client.event.action;
 
 import com.skybooking.skypointservice.config.AppConfig;
 import com.skybooking.skypointservice.v1_0_0.client.ClientResponse;
-import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.SkyPointTopUpRQ;
+import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.SkyPointTopUpSuccessRQ;
 import com.skybooking.skypointservice.v1_0_0.util.auth.AuthUtility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -23,7 +23,7 @@ public class EventDownloadAction {
     @Autowired
     private AuthUtility authUtility;
 
-    public ClientResponse downloadReceipt(HttpServletRequest httpServletRequest, SkyPointTopUpRQ skyPointTopUpRQ) {
+    public ClientResponse downloadReceipt(HttpServletRequest httpServletRequest, SkyPointTopUpSuccessRQ skyPointTopUpSuccessRQ) {
 
         return webClient.mutate()
                 .build()
@@ -31,7 +31,7 @@ public class EventDownloadAction {
                 .uri(appConfig.getEventUrl() + appConfig.getEventVersion() + "/sky-point/download/receipt")
                 .header("X-localization", httpServletRequest.getHeader("X-localization"))
                 .header(HttpHeaders.AUTHORIZATION, authUtility.getAuthToken())
-                .bodyValue(skyPointTopUpRQ)
+                .bodyValue(skyPointTopUpSuccessRQ)
                 .retrieve()
                 .bodyToMono(ClientResponse.class)
                 .block();

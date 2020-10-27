@@ -21,7 +21,8 @@ public class CompanyController {
     @GetMapping("company")
     public ResRS companyInfo(@RequestParam String keyword) {
 
-        return localization.resAPI(HttpStatus.OK, "res_succ", companySV.listCompany(keyword));
+        return localization.resAPI(HttpStatus.OK, "res_succ",
+                keyword.equals("") ? null : companySV.listCompany(keyword));
 
     }
 
@@ -35,7 +36,8 @@ public class CompanyController {
     @GetMapping("company-user")
     public ResRS companyOrUser(@RequestParam String keyword) {
 
-        return localization.resAPI(HttpStatus.OK, "res_succ", companySV.listCompanyUser(keyword));
+        return localization.resAPI(HttpStatus.OK, "res_succ",
+                keyword.equals("") ? null :companySV.listCompanyUser(keyword));
 
     }
 

@@ -62,7 +62,7 @@
                 </tr>
             </table>
             <h6 style="border-radius:5px; font-size:14px; font-weight:700; margin:5px 0; padding:10px 15px; text-align:center; background: rgba(3, 126, 188, 0.3)" align="center">${usd??? then(usd, 'NO LABEL YET')} ${data.grandTotal}</h6>
-            <h6 style="border-radius:5px; font-size:14px; font-weight:700; margin:5px 0; padding:10px 15px; text-align:center; background: rgba(3, 126, 188, 0.3)" align="center">${usd??? then(usd, 'NO LABEL YET')} ${data.totalPaymentFee}</h6>
+            <h6 style="border-radius:5px; font-size:14px; font-weight:700; margin:5px 0; padding:10px 15px; text-align:center; background: rgba(3, 126, 188, 0.3)" align="center">${usd??? then(usd, 'NO LABEL YET')} ${data.totalPaidToCreditCard}</h6>
         </div>
     </div>
 

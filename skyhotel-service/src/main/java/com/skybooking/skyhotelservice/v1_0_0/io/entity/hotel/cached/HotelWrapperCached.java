@@ -13,6 +13,7 @@ public class HotelWrapperCached implements Serializable {
     private String id;
     private AvailabilityRQ availabilityRQ;
     private ResourceCached resource;
+    private String locale;
     private List<HotelCached> hotelList = new ArrayList<>();
     private FilterIndexCached filterIndex;
 

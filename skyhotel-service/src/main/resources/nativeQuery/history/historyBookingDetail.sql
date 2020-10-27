@@ -21,10 +21,12 @@ SELECT
 	hb.check_out AS checkOut,
 	pt.card_holder_name AS cardHolderName,
 	pt.card_type AS cardType,
+	pt.payment_method AS paymentMethod,
 	pt.card_number AS cardNumber,
 	pt.transaction_id As paymentId,
 	pt.amount AS paidAmount,
-	pt.booking_type As paymentOf
+	pt.booking_type As paymentOf,
+	hb.total_amount_before_discount AS totalAmountBeforeDiscount
 
 FROM `hotel_booking` hb
 LEFT JOIN payment_transaction AS pt on pt.booking_id = hb.id
@@ -39,5 +41,5 @@ AND CASE WHEN :skyType = "skyuser"
             hb.code = :bookingCode
     END
 
-AND hb.status IN ('CONFIRMED', 'CANCELLED', 'FAILED', 'PENDING', 'PAYMENT_SUCCEED')
+AND hb.status IN ('CONFIRMED', 'CANCELLED', 'FAILED', 'PENDING')
 

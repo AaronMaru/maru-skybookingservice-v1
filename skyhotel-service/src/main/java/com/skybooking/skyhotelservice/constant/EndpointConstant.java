@@ -24,6 +24,10 @@ public class EndpointConstant {
         public static final String V1_0_0_BASIC = "hotel-content/v1.0.0/datahotels/basic";
     }
 
+    public static class SimilarHotel {
+        public static final String V1_0_0 = "hotel-content/v1.0.0/similar-hotels";
+    }
+
     public static class RecommendHotel {
         public static final String V1_0_0 = "hotel-content/v1.0.0/location-hotel";
     }

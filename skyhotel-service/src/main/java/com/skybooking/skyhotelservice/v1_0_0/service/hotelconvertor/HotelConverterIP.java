@@ -2,6 +2,7 @@ package com.skybooking.skyhotelservice.v1_0_0.service.hotelconvertor;
 
 import com.skybooking.skyhotelservice.constant.CancellationTypeConstant;
 import com.skybooking.skyhotelservice.constant.CurrencyConstant;
+import com.skybooking.skyhotelservice.constant.PromotionTypeConstant;
 import com.skybooking.skyhotelservice.constant.SubReviewConstant;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.response.availability.AvailabilityRSDS;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.response.basehotel.ResourceRSDS;
@@ -30,6 +31,7 @@ import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.score.Score
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.score.ScoreRS;
 import com.skybooking.skyhotelservice.v1_0_0.util.calculator.CalculatePriceRS.*;
 import com.skybooking.skyhotelservice.v1_0_0.util.calculator.CalculatePriceUtil;
+import com.skybooking.skyhotelservice.v1_0_0.util.calculator.NumberFormatter;
 import com.skybooking.skyhotelservice.v1_0_0.util.datetime.DatetimeUtil;
 import com.skybooking.skyhotelservice.v1_0_0.util.mapper.HotelConverterMapper;
 import lombok.RequiredArgsConstructor;
@@ -142,16 +144,61 @@ public class HotelConverterIP implements HotelConverterSV {
         hotel.setFacility(getHotelFacilityResponse(content));
 
         // get rate price of first room availability in hotel
-        final RateRS roomRate = hotel
-            .getRooms()
-            .stream()
-            .findFirst()
-            .map(it -> it.getRates().stream().findFirst().get())
-            .get();
+        RateRS roomRate = getBestRate(hotel);
 
         hotel.setPriceUnit(getHotelPriceUnit(roomRate));
+        hotel.setOffer(getHotelOffer(roomRate));
         hotel.setPaymentType(roomRate.getPaymentType());
 
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get the best rate with cheapest price and with promotion
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param hotel: HotelRS
+     * @return RateRS
+     */
+    private RateRS getBestRate(HotelRS hotel) {
+        List<RateRS> rates = hotel
+            .getRooms()
+            .stream()
+            .map(RoomRS::getRates)
+            .flatMap(Collection::stream)
+            .collect(Collectors.toList());
+
+        Comparator<RateRS> compareByPrice = Comparator
+            .comparing(rateRS -> rateRS
+                .getPrice()
+                .getPriceUnit()
+                .getAmountAfterDiscount());
+
+        return rates
+            .stream()
+            .min(compareByPrice)
+            .get();
+    }
+
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * get hotel special offer if existed
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param rateRS: RateRS
+     * @return SpecialOfferRS
+     */
+    private SpecialOfferRS getHotelOffer(RateRS rateRS) {
+        BigDecimal discountAmount = rateRS.getPrice().getPriceUnit().getDiscountAmount();
+        SpecialOfferRS offer = null;
+        if (discountAmount.compareTo(BigDecimal.ZERO) > 0) {
+            offer = new SpecialOfferRS();
+            offer.setType(PromotionTypeConstant.SPECIAL);
+
+            BigDecimal discountPercentage = rateRS.getPrice().getPriceUnit().getDiscountPercentage();
+            offer.setPercentage(discountPercentage);
+        }
+        return offer;
     }
 
 
@@ -274,6 +321,22 @@ public class HotelConverterIP implements HotelConverterSV {
             if (cancellation != null)
                 cancellation.setDetail(getCancellationDetail(rate, false));
             rateRS.setCancellation(cancellation);
+
+            if (rateRS
+                .getPrice()
+                .getPriceUnit()
+                .getDiscountAmount()
+                .compareTo(BigDecimal.valueOf(0)) > 0) {
+                SpecialOfferRS offerRS = new SpecialOfferRS();
+                offerRS.setType(PromotionTypeConstant.SPECIAL);
+                offerRS.setPercentage(rateRS
+                    .getPrice()
+                    .getPriceUnit()
+                    .getDiscountPercentage());
+
+                rateRS.setOffer(offerRS);
+
+            }
 
             return rateRS;
 
@@ -524,9 +587,7 @@ public class HotelConverterIP implements HotelConverterSV {
         // declare variable
         String currency = CurrencyConstant.USD.CODE;
         long numberOfNights = DatetimeUtil.night(checkIn, checkOut);
-
         RateTaxesHBRS taxesHBRS = null;
-
         // tax
         if (rate.getTaxes() != null) {
             taxesHBRS = mapper.toRateTaxesHBRS(rate.getTaxes());
@@ -551,7 +612,6 @@ public class HotelConverterIP implements HotelConverterSV {
             cancellationPolicy = CalculatePriceUtil
                 .breakdownCancellationPolicy(rate.getCancellation().getFees(), markup.getMarkupPercentage(), BigDecimal.valueOf(numberOfNights));
         }
-
         // get tax breakdown unit
         List<Tax> breakdownTaxUnit = CalculatePriceUtil
             .breakdownTaxUnit(taxesHBRS, markup, rate.getRooms(), numberOfNights);
@@ -561,7 +621,7 @@ public class HotelConverterIP implements HotelConverterSV {
         BigDecimal unitAmount = CalculatePriceUtil
             .unitAmount(netDetail.getUnitNet(), markup.getMarkupAmount(), taxDetail.getUnitTax(), discountDetail.getUnitDiscount());
         // total discount
-        BigDecimal unitDiscountPercentage = calculateDiscountPercentage(unitAmount, discountDetail.getUnitDiscount());
+        BigDecimal unitDiscountPercentage = CalculatePriceUtil.calculateDiscountPercentage(unitAmount, discountDetail.getUnitDiscount());
         // get total price
         TotalPriceDetail totalPrice = CalculatePriceUtil
             .detailTotalPrice(unitAmount, discountDetail.getDiscount(), taxDetail.getTax(), BigDecimal.valueOf(numberOfRooms), BigDecimal.valueOf(numberOfNights));
@@ -570,13 +630,13 @@ public class HotelConverterIP implements HotelConverterSV {
         // set value to response
         PriceUnitRS priceUnitRS = new PriceUnitRS();
 
-        priceUnitRS.setNetAmount(netDetail.getUnitNet());
-        priceUnitRS.setAmount(unitAmount);
-        priceUnitRS.setTaxAmount(taxDetail.getUnitTax());
-        priceUnitRS.setAmountAfterDiscount(amountAfterDiscount);
-        priceUnitRS.setDiscountPercentage(unitDiscountPercentage);
-        priceUnitRS.setDiscountAmount(discountDetail.getUnitDiscount());
-        priceUnitRS.setMarkupAmount(markup.getMarkupAmount());
+        priceUnitRS.setNetAmount(NumberFormatter.trimAmount(netDetail.getUnitNet()));
+        priceUnitRS.setAmount(NumberFormatter.trimAmount(unitAmount));
+        priceUnitRS.setTaxAmount(NumberFormatter.trimAmount(taxDetail.getUnitTax()));
+        priceUnitRS.setAmountAfterDiscount(NumberFormatter.trimAmount(amountAfterDiscount));
+        priceUnitRS.setDiscountPercentage(NumberFormatter.trimPercentage(unitDiscountPercentage));
+        priceUnitRS.setDiscountAmount(NumberFormatter.trimAmount(discountDetail.getUnitDiscount()));
+        priceUnitRS.setMarkupAmount(NumberFormatter.trimAmount(markup.getMarkupAmount()));
         priceUnitRS.setCurrency(currency);
         priceUnitRS.setTaxes(breakdownTaxUnit);
         priceUnitRS.setDiscounts(discounts);
@@ -584,11 +644,18 @@ public class HotelConverterIP implements HotelConverterSV {
 
         DetailRS detailRS = new DetailRS();
 
-        detailRS.setMarkupAmount(markup.getTotalMarkupAmount());
+        detailRS.setMarkupAmount(NumberFormatter.trimAmount(markup.getTotalMarkupAmount()));
+        detailRS.setTotalNight(numberOfNights);
         detailRS.setMarkupPercentage(markup.getMarkupPercentage());
-        detailRS.setTotalNet(netDetail.getTotalNet());
-        detailRS.setTotalAmount(totalPrice.getAmountAfterDiscount());
-        detailRS.setTotalTaxesAmount(taxDetail.getTax());
+        detailRS.setSubTotalAmount(NumberFormatter.trimAmount(totalPrice.getAmountIncludeDiscount()));
+        detailRS.setTotalNet(NumberFormatter.trimAmount(netDetail.getTotalNet()));
+        detailRS.setTotalAmount(NumberFormatter.trimAmount(totalPrice.getAmountAfterDiscount()));
+        detailRS.setTotalTaxesAmount(NumberFormatter.trimAmount(taxDetail.getTax()));
+        detailRS.setTaxes(taxDetail.getTaxes());
+        detailRS.setDiscountAmount(discountDetail.getDiscount());
+        detailRS.setDiscountPercentage(NumberFormatter.trimPercentage(unitDiscountPercentage));
+        detailRS.setDiscounts(discountDetail.getDiscounts());
+
         detailRS.setCurrency(currency);
 
         PriceRS priceRS = new PriceRS();
@@ -598,19 +665,4 @@ public class HotelConverterIP implements HotelConverterSV {
         return priceRS;
     }
 
-
-    /**
-     * -----------------------------------------------------------------------------------------------------------------
-     * calculate discount percentage
-     * -----------------------------------------------------------------------------------------------------------------
-     *
-     * @param amount
-     * @param discountAmount
-     * @return BigDecimal
-     */
-    private BigDecimal calculateDiscountPercentage(BigDecimal amount, BigDecimal discountAmount) {
-        return discountAmount
-            .multiply(new BigDecimal(100))
-            .divide(amount, 2, RoundingMode.HALF_UP);
-    }
 }

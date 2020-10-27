@@ -14,6 +14,7 @@ public class GatewayConfig extends ResourceServerConfigurerAdapter {
         http.authorizeRequests()
             .antMatchers(
                 "/stakeholder/**v1.0.0/auth/**",
+                "/stakeholder/**v1.1.0/auth/**",
                 "/stakeholder/**v1.0.0/utils/**",
                 "/staff/**v1.0.0/auth/**",
                 "/staff/**v1.0.0/utils/**",
@@ -45,6 +46,7 @@ public class GatewayConfig extends ResourceServerConfigurerAdapter {
                 "/back-office-point/v1.0.0/**/**/**",
                 "/event/v1.0.0/email/no-auth/**",
                 "/event/v1.0.0/notification/no-auth/**",
+                "/event/v1.0.0/sms/no-auth/**",
                 "/event/v1.0.0/email/**",
                 "/skypoint/v1.0.0/top-up/online/post/**",
                 "/skypoint/v1.0.0/transaction/detail",

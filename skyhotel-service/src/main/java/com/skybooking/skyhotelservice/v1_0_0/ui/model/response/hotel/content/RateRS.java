@@ -21,8 +21,9 @@ public class RateRS {
     private Integer children;
     private PriceRS price;
     private CancellationRS cancellation;
-    private List<PromotionRS> promotions;
-    private RateTaxesRS taxes;
+//    private List<PromotionRS> promotions;
+    private SpecialOfferRS offer;
+//    private RateTaxesRS taxes;
 
     public void setPaymentType(PaymentType paymentType) {
         this.paymentType = paymentType;

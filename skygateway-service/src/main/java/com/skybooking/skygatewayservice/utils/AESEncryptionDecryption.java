@@ -1,80 +1,55 @@
 package com.skybooking.skygatewayservice.utils;
 
 import com.netflix.zuul.exception.ZuulException;
-import feign.FeignException;
+import org.apache.commons.codec.binary.Base64;
 import org.json.JSONObject;
 
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.Base64;
- 
 import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 
+
 public class AESEncryptionDecryption {
- 
-    private static SecretKeySpec secretKey;
-    private static byte[] key;
-    private static final String secret = "aesskybooking";
- 
-    public static void setKey(String myKey) 
-    {
-        MessageDigest sha = null;
+
+    public static String encrypt(String text, String key, String initVector) throws ZuulException {
         try {
-            key = myKey.getBytes("UTF-8");
-            sha = MessageDigest.getInstance("SHA-1");
-            key = sha.digest(key);
-            key = Arrays.copyOf(key, 16); 
-            secretKey = new SecretKeySpec(key, "AES");
-        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-    }
- 
-    public static String encrypt(String strToEncrypt) throws ZuulException {
-        try {
-            setKey(secret);
-            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey);
-            return Base64.getEncoder().encodeToString(cipher.doFinal(strToEncrypt.getBytes("UTF-8")));
+            IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
+            SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
+
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+            cipher.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
+
+            byte[] encrypted = cipher.doFinal(text.getBytes());
+
+            return Base64.encodeBase64String(encrypted);
+
         } catch (Exception e) {
             throw new ZuulException(e, BAD_REQUEST.value(), "Error while decrypting data.");
         }
     }
- 
-    public static String decrypt(String strToDecrypt) throws ZuulException {
+
+    public static String decrypt(String encrypted, String key, String initVector) throws ZuulException {
         try {
-            setKey(secret);
-            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
-            cipher.init(Cipher.DECRYPT_MODE, secretKey);
-            return new String(cipher.doFinal(Base64.getDecoder().decode(strToDecrypt)));
+            IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
+            SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
+
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+            cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
+            byte[] original = cipher.doFinal(Base64.decodeBase64(encrypted));
+            return new String(original);
         } catch (Exception e) {
             throw new ZuulException(e, BAD_REQUEST.value(), "Incorrect encrypted data.");
         }
     }
 
-    public static void main(String arg[]) throws ZuulException {
-        JSONObject data = new JSONObject();
-        data.put("amount", 500);
-        data.put("paymentMethodCode", "JC");
+    public static void main(String[] arg) throws ZuulException {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("code", "PTS030009720");
+        String key = "12345678901234567890123456789012";
+        String initVector = "1234567890123456";
+        System.out.println(encrypt(jsonObject.toString(), key, initVector));
 
-        JSONObject contactInfo = new JSONObject();
-        contactInfo.put("email", "momsambath@skybooking.info");
-        contactInfo.put("name", "Dara Reak");
-        contactInfo.put("phoneCode", "+855");
-        contactInfo.put("phoneNumber", "9676765");
-
-
-        data.put("contactInfo", contactInfo);
-        String encrypt =  encrypt(data.toString());
-
-        System.out.println("=== Encrypt: " + encrypt);
-        System.out.println("=== Decrypt: " + decrypt(encrypt));
+        System.out.println(decrypt("aXoy+jOwkpeAPhGqjIcq6lNDdgRXGqY0V52EtTGYe7A=", key, initVector));
     }
-
-
 }

@@ -41,11 +41,10 @@ public class TranslationService {
     public void message() throws ZuulException {
         RequestContext context = RequestContext.getCurrentContext();
 
-        try
-        {
+        try {
             InputStream responseDataStream = context.getResponseDataStream();
 
-            if(responseDataStream != null) {
+            if (responseDataStream != null) {
 
                 ObjectMapper mapper = new ObjectMapper();
                 JsonNode jsonNodeRS = mapper.readTree(new InputStreamReader(responseDataStream, StandardCharsets.UTF_8));
@@ -63,7 +62,7 @@ public class TranslationService {
                             message = getMessage(messageKey, getLocaleId(LOCALE));
                     }
 
-                    ((ObjectNode)jsonNodeRS).put("message", message);
+                    ((ObjectNode) jsonNodeRS).put("message", message);
                     logger.info("RESPONSE BODY AFTER MESSAGE TRANSLATION: {}", jsonNodeRS.toString());
 
                     InputStream response = new ByteArrayInputStream(jsonNodeRS.toString().getBytes());
@@ -75,9 +74,7 @@ public class TranslationService {
             } else {
                 logger.info("RESPONSE BODY: {}", "");
             }
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             throw new ZuulException(e, INTERNAL_SERVER_ERROR.value(), e.getMessage());
         }
     }
@@ -101,7 +98,7 @@ public class TranslationService {
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @param messageKey String
-     * @param localeId Integer
+     * @param localeId   Integer
      * @return String
      */
     private String getMessage(String messageKey, Integer localeId) {

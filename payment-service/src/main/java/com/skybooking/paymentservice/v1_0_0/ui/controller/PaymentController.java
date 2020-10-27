@@ -1,28 +1,19 @@
 package com.skybooking.paymentservice.v1_0_0.ui.controller;
 
-import com.skybooking.paymentservice.v1_0_0.client.pipay.model.request.PipayVerifyDataRQ;
-import com.skybooking.paymentservice.v1_0_0.client.pipay.model.request.PipayVerifyRQ;
-import com.skybooking.paymentservice.v1_0_0.client.pipay.model.response.PipayVerifyRS;
 import com.skybooking.paymentservice.v1_0_0.service.interfaces.ProviderSV;
 import com.skybooking.paymentservice.v1_0_0.ui.model.request.IPay88RQ;
-import com.skybooking.paymentservice.v1_0_0.ui.model.request.PaymentHotelRQ;
 import com.skybooking.paymentservice.v1_0_0.ui.model.request.PaymentRQ;
 import com.skybooking.paymentservice.v1_0_0.ui.model.response.BaseRS;
 import com.skybooking.paymentservice.v1_0_0.ui.model.response.PaymentMethodAvailableRS;
 import com.skybooking.paymentservice.v1_0_0.ui.model.response.PaymentMethodRS;
 import com.skybooking.paymentservice.v1_0_0.ui.model.response.UrlPaymentRS;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.servlet.ModelAndView;
 
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.List;
 
@@ -108,27 +99,4 @@ public class PaymentController {
         );
     }
 
-    @GetMapping("maru")
-    public void maru() {
-        PipayVerifyRQ pipayVerifyRQ = new PipayVerifyRQ(
-                new PipayVerifyDataRQ("SBFT01200120", "685415")
-        );
-
-        PipayVerifyRS pipayVerifyRS = client.mutate()
-                .build()
-                .post()
-                .uri("https://onlinepayment-uat.pipay.com/rest-api/verifyTransaction")
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .bodyValue(pipayVerifyRQ)
-                .retrieve()
-                .bodyToMono(PipayVerifyRS.class)
-                .block();
-
-        System.out.println(pipayVerifyRS);
-    }
-
-    @GetMapping(value = "/redirect")
-    public ModelAndView method() {
-        return new ModelAndView("redirect:" + "http://96.9.69.92:5555/flights/payment-info?bookingCode=SBFT01049420&status=1");
-    }
 }

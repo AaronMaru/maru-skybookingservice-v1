@@ -25,5 +25,6 @@ public class PaymentRS {
     private String userEmail;
     private String userContact;
     private String remark;
+    private String lang;
 
 }

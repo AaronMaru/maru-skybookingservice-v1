@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import java.math.BigDecimal;
-import java.util.Date;
 
 @Data
 public class HistoryBookingRS {
@@ -32,6 +31,9 @@ public class HistoryBookingRS {
     private Long nights;
     private Integer totalRoom = 0;
     private Integer totalAdult = 0;
+    private String interestPointDistance;
+    private String interestPointName;
+    private String interestPointDistanceUnit;
     private String thumbnail;
 
 }

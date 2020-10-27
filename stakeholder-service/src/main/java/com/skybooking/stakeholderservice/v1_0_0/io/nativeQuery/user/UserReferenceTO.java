@@ -9,4 +9,8 @@ public class UserReferenceTO {
     private String referenceCode;
     private String type;
     private String userRole;
+    private String name;
+    private String email;
+    private String phoneCode;
+    private String phoneNumber;
 }

@@ -6,6 +6,7 @@ import com.netflix.zuul.exception.ZuulException;
 import com.skybooking.skygatewayservice.constant.AuthConstant;
 import com.skybooking.skygatewayservice.service.AuthService;
 import com.skybooking.skygatewayservice.service.EncryptionDecryptionService;
+import com.skybooking.skygatewayservice.service.StakeholderService;
 import com.skybooking.skygatewayservice.utils.JwtUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,9 @@ import javax.servlet.http.HttpServletRequest;
 import static com.netflix.zuul.context.RequestContext.getCurrentContext;
 
 public class PreFilter extends ZuulFilter {
+
+    @Autowired
+    private StakeholderService stakeholderService;
 
     @Autowired
     private AuthService authService;
@@ -77,11 +81,14 @@ public class PreFilter extends ZuulFilter {
             }
             this.checkRoleUser(request);
             this.validationCompanyId(request, authorization);
+            stakeholderService.checkUserContact(ctx);
 
         }
 
+
+
         //============= Encrypt data for skyPoint
-       // encryptionService.decryptRequest(request, ctx);
+        encryptionDecryptionService.decryptRequest(request, ctx);
 
         return null;
     }
@@ -90,6 +97,7 @@ public class PreFilter extends ZuulFilter {
      * -----------------------------------------------------------------------------------------------------------------
      * Reports an error message given a response body and code.
      * -----------------------------------------------------------------------------------------------------------------
+     *
      * @param status
      * @param body
      */
@@ -112,6 +120,7 @@ public class PreFilter extends ZuulFilter {
      * -----------------------------------------------------------------------------------------------------------------
      * Validation company id
      * -----------------------------------------------------------------------------------------------------------------
+     *
      * @param request
      * @param token
      */
@@ -122,9 +131,9 @@ public class PreFilter extends ZuulFilter {
                 : 0;
 
         if (companyId != 0) {
-            String tokenId = token.substring("Bearer".length()+1);
+            String tokenId = token.substring("Bearer".length() + 1);
 
-            Long tokenCompanyId = authService.getClaim(tokenId,"companyId", Long.class);
+            Long tokenCompanyId = authService.getClaim(tokenId, "companyId", Long.class);
 
             if (!companyId.equals(tokenCompanyId)) {
                 this.setFailedRequest(HttpStatus.FORBIDDEN, "{\"status\": 403,\"message\": \"Forbidden\",\"error\": null}");
@@ -185,7 +194,9 @@ public class PreFilter extends ZuulFilter {
                 || uri.matches("/payment/pipay/form(.*)")
                 || uri.matches("/payment/ipay88/form(.*)")
                 || uri.matches("/skyhistory/wv1.0.0/payment-success/no-auth(.*)")
-                || uri.matches("/skyhistory/wv1.0.0/receipt-itinerary(.*)")) {
+                || uri.matches("/skyhistory/wv1.0.0/receipt-itinerary(.*)")
+                || uri.matches("/skypoint/v(.*)/top-up/online/post/(.*)")
+                || uri.matches("/skypoint/v(.*)/transaction/detail")) {
 
             return true;
 
@@ -221,11 +232,11 @@ public class PreFilter extends ZuulFilter {
         var uri = new String(request.getRequestURI());
 
         if (uri.matches("/staff/(.*)v1.0.0/find-skyuser")
-            || uri.matches("/staff/(.*)v1.0.0/invite-skyuser")
-            || uri.matches("/staff/(.*)v1.0.0/invite-skyuser-no-acc")
-            || uri.matches("/staff/(.*)v1.0.0/list-pending-email")
-            || uri.matches("/staff/(.*)v1.0.0/list-pending-email(.*)")
-            || uri.matches("/staff/(.*)v1.0.0/list-pending-email/resend")) {
+                || uri.matches("/staff/(.*)v1.0.0/invite-skyuser")
+                || uri.matches("/staff/(.*)v1.0.0/invite-skyuser-no-acc")
+                || uri.matches("/staff/(.*)v1.0.0/list-pending-email")
+                || uri.matches("/staff/(.*)v1.0.0/list-pending-email(.*)")
+                || uri.matches("/staff/(.*)v1.0.0/list-pending-email/resend")) {
 
             return true;
 

@@ -5,15 +5,17 @@ import com.skybooking.paymentservice.v1_0_0.client.flight.action.FlightAction;
 import com.skybooking.paymentservice.v1_0_0.client.flight.ui.response.FlightMandatoryDataRS;
 import com.skybooking.paymentservice.v1_0_0.client.hotel.action.HotelAction;
 import com.skybooking.paymentservice.v1_0_0.client.point.action.PointAction;
-import com.skybooking.paymentservice.v1_0_0.client.point.ui.TransactionRQ;
+import com.skybooking.paymentservice.v1_0_0.client.point.ui.PointRQ;
 import com.skybooking.paymentservice.v1_0_0.io.repository.booking.BookingRP;
 import com.skybooking.paymentservice.v1_0_0.service.implement.paymentForm.PaymentFormIP;
 import com.skybooking.paymentservice.v1_0_0.service.interfaces.PipaySV;
 import com.skybooking.paymentservice.v1_0_0.service.interfaces.ProviderSV;
 import com.skybooking.paymentservice.v1_0_0.ui.model.response.PaymentRS;
 import com.skybooking.paymentservice.v1_0_0.util.activitylog.ActivityLoggingBean;
+import com.skybooking.paymentservice.v1_0_0.util.encrypt.AESEncryptionDecryption;
 import com.skybooking.paymentservice.v1_0_0.util.integration.Payments;
 import com.skybooking.paymentservice.v1_0_1.ui.model.response.StructureRS;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -23,6 +25,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.view.RedirectView;
 
 import java.math.BigDecimal;
 import java.net.URI;
@@ -94,7 +97,38 @@ public class PaymentFormController {
         if (dataToken.getBookingCode().contains("SBFT")) {
             payments.pipayPayload(payments.getPaymentInfo(dataToken, flightAction.getMandatoryData(dataToken.getBookingCode())), model);
         }
+        if (dataToken.getBookingCode().contains("PTS")) {
+            PointRQ pointRQ = new PointRQ();
 
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("code", dataToken.getBookingCode());
+
+            String initVector = "1234567890123456";
+            String key = "12345678901234567890123456789012";
+
+            try {
+                pointRQ.setData(AESEncryptionDecryption.encrypt(jsonObject.toString(), key, initVector));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            StructureRS structureRS = pointAction.getMandatoryData(pointRQ);
+
+            Map<String, Object> transactionData = structureRS.getData();
+            FlightMandatoryDataRS flightMandatoryDataRS = new FlightMandatoryDataRS();
+            Double amount = (Double) transactionData.get("amount");
+            flightMandatoryDataRS.setDescription((String) transactionData.get("description"));
+            flightMandatoryDataRS.setAmount(BigDecimal.valueOf(amount));
+            flightMandatoryDataRS.setSkyuserId((Integer) transactionData.get("stakeholderUserId"));
+            flightMandatoryDataRS.setBookingCode((String) transactionData.get("code"));
+            flightMandatoryDataRS.setCompanyId((Integer) transactionData.get("stakeholderCompanyId"));
+            flightMandatoryDataRS.setName((String) transactionData.get("name"));
+            flightMandatoryDataRS.setEmail((String) transactionData.get("email"));
+            flightMandatoryDataRS.setPhoneNumber((String) transactionData.get("phoneNumber"));
+
+            PaymentRS paymentRS = payments.getPaymentInfo(dataToken, flightMandatoryDataRS);
+            payments.pipayPayload(paymentRS, model);
+        }
         return "pipay/form";
 
     }
@@ -136,9 +170,21 @@ public class PaymentFormController {
         if (bookingCode.contains("SBFT")) {
             payments.ipay88Payload(payments.getPaymentInfo(dataToken, flightAction.getMandatoryData(dataToken.getBookingCode())), model);
         } else {
-            TransactionRQ transactionRQ = new TransactionRQ(bookingCode);
+            PointRQ pointRQ = new PointRQ();
 
-            StructureRS structureRS = pointAction.getMandatoryData(transactionRQ);
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("code", bookingCode);
+
+            String key = "12345678901234567890123456789012";
+            String initVector = "1234567890123456";
+
+            try {
+                pointRQ.setData(AESEncryptionDecryption.encrypt(jsonObject.toString(), key, initVector));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            StructureRS structureRS = pointAction.getMandatoryData(pointRQ);
 
             Map<String, Object> transactionData = structureRS.getData();
             Double amount = (Double) transactionData.get("amount");
@@ -170,7 +216,7 @@ public class PaymentFormController {
      * @return
      */
     @PostMapping(value = "/ipay88/response", consumes = {MediaType.ALL_VALUE})
-    public ResponseEntity<Void> ipay88Response(@RequestParam Map<String, Object> request) {
+    public RedirectView ipay88Response(@RequestParam Map<String, Object> request) {
 
         var params = request.entrySet().stream().map(item -> item.getKey().concat("=").concat(item.getValue().toString())).collect(Collectors.joining("&"));
         String bookingCode = (String) request.get("RefNo");
@@ -187,10 +233,11 @@ public class PaymentFormController {
             activityLog.activities(action, activityLog.getUser(booking.getStakeholderUserId()), booking);
         }
 
-        return ResponseEntity
-                .status(HttpStatus.FOUND)
-                .location(URI.create(providerSV.getIpay88Response(request)))
-                .build();
+        var redirectURI = providerSV.getIpay88Response(request);
+
+        System.out.println(String.format("Redirecting to: %s", redirectURI));
+
+        return new RedirectView(redirectURI);
 
     }
 
@@ -257,7 +304,6 @@ public class PaymentFormController {
                 .location(URI.create(providerSV.getPipayFailResponse(request)))
                 .build();
     }
-
 
 
 }

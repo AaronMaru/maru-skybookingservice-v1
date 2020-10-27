@@ -8,4 +8,6 @@ public class BasicCompanyAccountInfoRS {
     private String userCode;
     private String phoneNumber;
     private String email;
+    private Integer stakeholderUserId;
+    private Integer stakeholderCompanyId;
 }

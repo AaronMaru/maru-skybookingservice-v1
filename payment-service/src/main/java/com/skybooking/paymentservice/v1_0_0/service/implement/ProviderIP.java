@@ -8,8 +8,10 @@ import com.skybooking.paymentservice.v1_0_0.client.flight.ui.request.PaymentSucc
 import com.skybooking.paymentservice.v1_0_0.client.flight.ui.response.FlightMandatoryDataRS;
 import com.skybooking.paymentservice.v1_0_0.client.hotel.action.HotelAction;
 import com.skybooking.paymentservice.v1_0_0.client.hotel.ui.request.HotelMandatoryDataRQ;
+import com.skybooking.paymentservice.v1_0_0.client.hotel.ui.response.HotelMandatoryDataRS;
 import com.skybooking.paymentservice.v1_0_0.client.pipay.action.PipayAction;
 import com.skybooking.paymentservice.v1_0_0.client.point.action.PointAction;
+import com.skybooking.paymentservice.v1_0_0.client.point.ui.PointRQ;
 import com.skybooking.paymentservice.v1_0_0.client.point.ui.PostOnlineTopUpRQ;
 import com.skybooking.paymentservice.v1_0_0.io.enitity.booking.BookingEntity;
 import com.skybooking.paymentservice.v1_0_0.io.enitity.booking.HotelBookingEntity;
@@ -28,12 +30,16 @@ import com.skybooking.paymentservice.v1_0_0.ui.model.response.PriceDetailRS;
 import com.skybooking.paymentservice.v1_0_0.ui.model.response.UrlPaymentRS;
 import com.skybooking.paymentservice.v1_0_0.util.activitylog.ActivityLoggingBean;
 import com.skybooking.paymentservice.v1_0_0.util.classse.CardInfo;
+import com.skybooking.paymentservice.v1_0_0.util.encrypt.AESEncryptionDecryption;
 import com.skybooking.paymentservice.v1_0_0.util.generator.CardUtility;
 import com.skybooking.paymentservice.v1_0_0.util.generator.GeneralUtility;
 import com.skybooking.paymentservice.v1_0_0.util.header.HeaderBean;
 import com.skybooking.paymentservice.v1_0_1.ui.model.response.StructureRS;
+import lombok.extern.slf4j.Slf4j;
+import org.json.JSONObject;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -42,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@Slf4j
 public class ProviderIP implements ProviderSV {
 
     @Autowired
@@ -86,11 +93,10 @@ public class ProviderIP implements ProviderSV {
     @Autowired
     private PointAction pointAction;
 
-
     @Override
     public UrlPaymentRS getRequestUrl(PaymentRQ paymentRQ) {
 
-        //Save Language to redis for email template
+        // Save Language to redis for email template
         BookingLanguageCached bookingLanguageCached = new BookingLanguageCached();
         bookingLanguageCached.setBookingCode(paymentRQ.getBookingCode());
         bookingLanguageCached.setLanguage(headerBean.getLocalization());
@@ -122,13 +128,17 @@ public class ProviderIP implements ProviderSV {
                 paymentMethodTO.getPercentageBase()
         );
 
-        var mandatoryData = flightAction.updateDiscountPaymentMethod(mandatoryDataRQ);
+        FlightMandatoryDataRS mandatoryData = flightAction.updateDiscountPaymentMethod(mandatoryDataRQ);
         if (mandatoryData.getAmount().equals(BigDecimal.ZERO)) {
             return new UrlPaymentRS();
         }
 
         if (paymentRQ.getPaymentCode().equals(PaymentCodeConstant.PIPAY)) {
             return piPayIP.getRequestUrl(paymentRQ);
+        }
+
+        if (paymentRQ.getPaymentCode().equals(PaymentCodeConstant.SKY_POINT)) {
+            return this.redeemPointProcess(paymentRQ, mandatoryData, null);
         }
 
         return iPay88IP.getRequestUrl(paymentRQ);
@@ -142,14 +152,10 @@ public class ProviderIP implements ProviderSV {
         if (paymentRQ.getProductType().equals(ProductTypeConstant.HOTEL)) {
 
             PaymentMethodTO paymentMethodTO = paymentNQ.getPaymentMethod(paymentRQ.getPaymentCode());
-            HotelMandatoryDataRQ mandatoryDataRQ = new HotelMandatoryDataRQ(
-                    paymentRQ.getBookingCode(),
-                    paymentRQ.getPaymentCode(),
-                    paymentMethodTO.getPercentage(),
-                    paymentMethodTO.getPercentageBase()
-            );
+            HotelMandatoryDataRQ mandatoryDataRQ = new HotelMandatoryDataRQ(paymentRQ.getBookingCode(),
+                    paymentRQ.getPaymentCode(), paymentMethodTO.getPercentage(), paymentMethodTO.getPercentageBase());
 
-            var mandatoryData = hotelAction.updateDiscountPaymentMethod(mandatoryDataRQ);
+            HotelMandatoryDataRS mandatoryData = hotelAction.updateDiscountPaymentMethod(mandatoryDataRQ);
             if (mandatoryData.getAmount().equals(BigDecimal.ZERO)) {
                 return new UrlPaymentRS();
             }
@@ -158,12 +164,16 @@ public class ProviderIP implements ProviderSV {
                 return piPayIP.getRequestUrl(paymentRQ);
             }
 
+            if (paymentRQ.getPaymentCode().equals(PaymentCodeConstant.SKY_POINT)) {
+
+                return this.redeemPointProcess(paymentRQ, null, mandatoryData);
+            }
+
             return iPay88IP.getRequestUrl(paymentRQ);
         }
 
         return new UrlPaymentRS();
     }
-
 
     @Override
     public List<PaymentMethodRS> getPaymentMethods(String bookingCode) {
@@ -190,36 +200,30 @@ public class ProviderIP implements ProviderSV {
             var commission = BigDecimal.ZERO;
 
             if (bookingCode.contains("SBFT")) {
-                totalAmount = finalBooking.getTotalAmount().add(finalBooking.getMarkupAmount().add(finalBooking.getMarkupPayAmount()));
+                totalAmount = finalBooking.getTotalAmount()
+                        .add(finalBooking.getMarkupAmount().add(finalBooking.getMarkupPayAmount()));
                 commission = finalBooking.getCommissionAmount();
             }
             if (bookingCode.contains("SBHT")) {
-                //To do
+                // To do
                 totalAmount = finalHotelBooking.getTotalAmount();
                 commission = finalHotelBooking.getCommisionAmount();
             }
 
             totalAmount = totalAmount.subtract(commission);
-            var discount = GeneralUtility.trimAmount(totalAmount.multiply(item.getPercentage().divide(new BigDecimal(100))));
+            var discount = GeneralUtility
+                    .trimAmount(totalAmount.multiply(item.getPercentage().divide(new BigDecimal(100))));
             discount = discount.add(commission);
 
             var paidAmount = totalAmount.subtract(discount);
 
-            paymentMethodRS.add(
-                    new PaymentMethodRS(
-                            item.getType(),
-                            item.getCode(),
-                            item.getMethod(),
-                            item.getPercentage(),
-                            appConfig.getImagePathPaymentMethod() + item.getCode() + ".png",
-                            new PriceDetailRS(totalAmount, discount, paidAmount)
-                    )
-            );
+            paymentMethodRS.add(new PaymentMethodRS(item.getType(), item.getCode(), item.getMethod(),
+                    item.getPercentage(), appConfig.getImagePathPaymentMethod() + item.getCode() + ".png",
+                    new PriceDetailRS(totalAmount, discount, paidAmount)));
         });
 
         return paymentMethodRS;
     }
-
 
     @Override
     public String getIpay88Response(Map<String, Object> request) {
@@ -254,12 +258,14 @@ public class ProviderIP implements ProviderSV {
 
             if (request.get("Status").equals("0")) {
 
+                log.info("Payment Fail : {}", request);
                 postOnlineTopUpRQ.setPaymentStatus("fail");
-
-                return appConfig.getPaymentPage() + "?bookingCode=" + bookingCode + "&status=" + PaymentStatusConstant.PAYMENT_FAIL;
+                return appConfig.getPointTopUp() + "?bookingCode=" + bookingCode + "&status=" + PaymentStatusConstant.PAYMENT_FAIL;
             }
 
             StructureRS structureRS = pointAction.paymentPointTopUpPost(postOnlineTopUpRQ);
+
+            return appConfig.getPointTopUp() + "?bookingCode=" + bookingCode + "&status=" + PaymentStatusConstant.PAYMENT_SUCCESS;
 
         } else if (bookingCode.contains("SBHT")) {
             if (request.get("Status").equals("0")) {
@@ -278,8 +284,44 @@ public class ProviderIP implements ProviderSV {
         return appConfig.getPaymentPage() + "?bookingCode=" + bookingCode + "&status=" + PaymentStatusConstant.PAYMENT_SUCCESS;
     }
 
-    private PaymentSucceedRQ paymentIpay88SucceedRQ(Map<String, Object> request, String bookingCode, FlightMandatoryDataRS mandatoryData) {
+    private PaymentSucceedRQ paymentPointByFlightSucceedRQ(String bookingCode, FlightMandatoryDataRS mandatoryData) {
 
+        PaymentSucceedRQ paymentSucceedRQ = new PaymentSucceedRQ();
+
+        paymentSucceedRQ.setBankName("SkyPoint");
+        paymentSucceedRQ.setStatus(1);
+        paymentSucceedRQ.setBookingCode(bookingCode);
+        paymentSucceedRQ.setPaymentCode("SP");
+        paymentSucceedRQ.setMethod("POINT");
+        paymentSucceedRQ.setAmount(mandatoryData.getAmount());
+        paymentSucceedRQ.setSkyuserId(mandatoryData.getSkyuserId());
+        paymentSucceedRQ.setEmail(mandatoryData.getEmail());
+        paymentSucceedRQ.setCompanyId(mandatoryData.getCompanyId());
+        paymentSucceedRQ.setCurrency("USD");
+
+        return paymentSucceedRQ;
+    }
+
+    private PaymentSucceedRQ paymentPointByHotelSucceedRQ(String bookingCode, HotelMandatoryDataRS mandatoryData) {
+
+        PaymentSucceedRQ paymentSucceedRQ = new PaymentSucceedRQ();
+
+        paymentSucceedRQ.setBankName("SkyPoint");
+        paymentSucceedRQ.setStatus(1);
+        paymentSucceedRQ.setPaymentCode("SP");
+        paymentSucceedRQ.setBookingCode(bookingCode);
+        paymentSucceedRQ.setMethod("POINT");
+        paymentSucceedRQ.setAmount(mandatoryData.getAmount());
+        paymentSucceedRQ.setEmail(mandatoryData.getEmail());
+        paymentSucceedRQ.setSkyuserId(mandatoryData.getSkyuserId());
+        paymentSucceedRQ.setCompanyId(mandatoryData.getCompanyId());
+        paymentSucceedRQ.setCurrency("USD");
+
+        return paymentSucceedRQ;
+    }
+
+    private PaymentSucceedRQ paymentIpay88SucceedRQ(Map<String, Object> request, String bookingCode,
+                                                    FlightMandatoryDataRS mandatoryData) {
 
         PaymentSucceedRQ paymentSucceedRQ = new PaymentSucceedRQ();
         if (request.containsKey("S_bankname")) {
@@ -327,23 +369,58 @@ public class ProviderIP implements ProviderSV {
 
             FlightMandatoryDataRS mandatoryData = flightAction.getMandatoryData(bookingCode);
             if (!pipayAction.verify(request, mandatoryData.getAmount())) {
-                return appConfig.getPaymentPage() + "?bookingCode=" + bookingCode + "&status=" + PaymentStatusConstant.PAYMENT_FAIL;
+                return appConfig.getPaymentPage() + "?bookingCode=" + bookingCode + "&status="
+                        + PaymentStatusConstant.PAYMENT_FAIL;
             }
             PaymentSucceedRQ paymentSucceedRQ = pipaySucceedRS(request, mandatoryData);
             /**
              * Update payment succeed for booking
              */
             flightAction.updateFlightPaymentSucceed(paymentSucceedRQ);
-        }
-
-        if (bookingCode.contains("SBHT")) {
+        } else if (bookingCode.contains("SBHT")) {
             general.updatePaymentBookingStatus(bookingCode, HotelBookingStatusConstant.PAYMENT_PROCESSING);
             FlightMandatoryDataRS mandatoryData = hotelAction.getMandatoryData(bookingCode);
             if (!pipayAction.verify(request, mandatoryData.getAmount())) {
-                return appConfig.getPaymentPage() + "?bookingCode=" + bookingCode + "&status=" + PaymentStatusConstant.PAYMENT_FAIL;
+                return appConfig.getPaymentPage() + "?bookingCode=" + bookingCode + "&status="
+                        + PaymentStatusConstant.PAYMENT_FAIL;
             }
             PaymentSucceedRQ paymentSucceedRQ = pipaySucceedRS(request, mandatoryData);
             hotelAction.updateHotelPaymentSucceed(paymentSucceedRQ);
+        } else if (bookingCode.contains("PTS")) {
+
+            PostOnlineTopUpRQ postOnlineTopUpRQ = new PostOnlineTopUpRQ();
+            postOnlineTopUpRQ.setPaymentStatus("success");
+            postOnlineTopUpRQ.setTransactionCode(bookingCode);
+
+            PointRQ pointRQ = new PointRQ();
+
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("code", bookingCode);
+
+            String key = "12345678901234567890123456789012";
+            String initVector = "1234567890123456";
+
+            try {
+                pointRQ.setData(AESEncryptionDecryption.encrypt(jsonObject.toString(), key, initVector));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            StructureRS structureRS = pointAction.getMandatoryData(pointRQ);
+
+            Map<String, Object> dataRS = structureRS.getData();
+
+            if (!pipayAction.verify(request, new BigDecimal(dataRS.get("amount").toString()))) {
+
+                postOnlineTopUpRQ.setPaymentStatus("fail");
+                log.info("Payment Fail : {}", request);
+                return appConfig.getPaymentPage() + "?bookingCode=" + bookingCode + "&status=" + PaymentStatusConstant.PAYMENT_FAIL;
+            }
+
+            StructureRS potTopUpResponse = pointAction.paymentPointTopUpPost(postOnlineTopUpRQ);
+
+            return appConfig.getPointTopUp() + "?bookingCode=" + bookingCode + "&status=" + PaymentStatusConstant.PAYMENT_SUCCESS;
+
         }
 
         return page + "?bookingCode=" + bookingCode + "&status=" + PaymentStatusConstant.PAYMENT_SUCCESS;
@@ -386,7 +463,8 @@ public class ProviderIP implements ProviderSV {
             mandatoryData = hotelAction.getMandatoryData(request.get("orderID").toString());
         }
 
-        return appConfig.getPaymentPage() + "?bookingCode=" + mandatoryData.getBookingCode() + "&status=" + PaymentStatusConstant.PAYMENT_FAIL;
+        return appConfig.getPaymentPage() + "?bookingCode=" + mandatoryData.getBookingCode() + "&status="
+                + PaymentStatusConstant.PAYMENT_FAIL;
 
     }
 
@@ -398,13 +476,8 @@ public class ProviderIP implements ProviderSV {
         List<PaymentMethodTO> paymentMethodTOS = paymentNQ.getListPaymentMethods();
 
         paymentMethodTOS.forEach(item -> {
-            paymentMethodRS.add(new PaymentMethodAvailableRS(
-                    item.getType(),
-                    item.getCode(),
-                    item.getMethod(),
-                    item.getPercentage(),
-                    appConfig.getImagePathPaymentMethod() + item.getCode() + ".png"
-            ));
+            paymentMethodRS.add(new PaymentMethodAvailableRS(item.getType(), item.getCode(), item.getMethod(),
+                    item.getPercentage(), appConfig.getImagePathPaymentMethod() + item.getCode() + ".png"));
         });
 
         return paymentMethodRS;
@@ -436,21 +509,18 @@ public class ProviderIP implements ProviderSV {
             var booking = bookingRP.getBooking(paymentRQ.getBookingCode());
             booking.setStatus(BookingStatusConstant.PAYMENT_SELECTED);
             bookingRP.save(booking);
-            activityLog.activities(ActivityLoggingBean.Action.INDEX_PAYMNET_METHOD_SELECT, activityLog.getUser(), booking);
+            activityLog.activities(ActivityLoggingBean.Action.INDEX_PAYMNET_METHOD_SELECT, activityLog.getUser(),
+                    booking);
 
-            //Save Language to redis for email template
+            // Save Language to redis for email template
             BookingLanguageCached bookingLanguageCached = new BookingLanguageCached();
             bookingLanguageCached.setBookingCode(booking.getBookingCode());
             bookingLanguageCached.setLanguage(headerBean.getLocalization());
             bookingLanguageRedisRP.save(bookingLanguageCached);
 
             PaymentMethodTO paymentMethodTO = paymentNQ.getPaymentMethod(paymentRQ.getPaymentCode());
-            FlightMandatoryDataRQ mandatoryDataRQ = new FlightMandatoryDataRQ(
-                    paymentRQ.getBookingCode(),
-                    paymentRQ.getPaymentCode(),
-                    paymentMethodTO.getPercentage(),
-                    paymentMethodTO.getPercentageBase()
-            );
+            FlightMandatoryDataRQ mandatoryDataRQ = new FlightMandatoryDataRQ(paymentRQ.getBookingCode(),
+                    paymentRQ.getPaymentCode(), paymentMethodTO.getPercentage(), paymentMethodTO.getPercentageBase());
 
             var mandatoryData = flightAction.updateDiscountPaymentMethod(mandatoryDataRQ);
             if (mandatoryData.getAmount().equals(BigDecimal.ZERO)) {
@@ -463,10 +533,61 @@ public class ProviderIP implements ProviderSV {
 
             return iPay88IP.getRequestUrlPoint(paymentRQ);
         } else if (paymentRQ.getProductType().equals(ProductTypeConstant.POINT)) {
+
+            if (paymentRQ.getPaymentCode().equals(PaymentCodeConstant.PIPAY)) {
+                return piPayIP.getRequestUrlPoint(paymentRQ);
+            }
+
             return iPay88IP.getRequestUrlPoint(paymentRQ);
         }
 
         return new UrlPaymentRS();
     }
 
+    private UrlPaymentRS redeemPointProcess(PaymentRQ paymentRQ, FlightMandatoryDataRS flightData, HotelMandatoryDataRS hotelData) {
+
+        PointRQ pointRQ = new PointRQ();
+
+        JSONObject jsonObject = new JSONObject();
+        if (paymentRQ.getProductType().equals("FLIGHT")) {
+            jsonObject.put("amount", flightData.getAmount());
+        } else {
+            jsonObject.put("amount", hotelData.getAmount());
+        }
+
+        jsonObject.put("transactionFor", paymentRQ.getProductType());
+        jsonObject.put("referenceCode", paymentRQ.getBookingCode());
+        String key = "12345678901234567890123456789012";
+        String initVector = "1234567890123456";
+        try {
+            pointRQ.setData(AESEncryptionDecryption.encrypt(jsonObject.toString(), key, initVector));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        StructureRS structureRS = pointAction.payByRedeemPoint(pointRQ);
+        UrlPaymentRS urlPaymentRS = new UrlPaymentRS();
+
+        if (structureRS.getStatus() == HttpStatus.OK.value()) {
+
+            urlPaymentRS.setUrlPayment(appConfig.getPaymentPage() + "?bookingCode=" + paymentRQ.getBookingCode()
+                    + "&status=" + PaymentStatusConstant.PAYMENT_SUCCESS);
+
+
+            if (paymentRQ.getProductType().equals(ProductTypeConstant.FLIGHT)) {
+                PaymentSucceedRQ paymentSucceedRQ = paymentPointByFlightSucceedRQ(paymentRQ.getBookingCode(), flightData);
+                flightAction.updateFlightPaymentSucceed(paymentSucceedRQ);
+            } else {
+                PaymentSucceedRQ paymentSucceedRQ = paymentPointByHotelSucceedRQ(paymentRQ.getBookingCode(), hotelData);
+                hotelAction.updateHotelPaymentSucceed(paymentSucceedRQ);
+            }
+
+            return urlPaymentRS;
+        }
+
+        urlPaymentRS.setUrlPayment(appConfig.getPaymentPage() + "?bookingCode=" + paymentRQ.getBookingCode() +
+                "&status=" + PaymentStatusConstant.PAYMENT_FAIL);
+
+        return urlPaymentRS;
+    }
 }

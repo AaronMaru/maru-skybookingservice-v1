@@ -4,6 +4,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Date;
 
 @Data
 public class TransactionHistoryDetailTO {
@@ -18,6 +19,6 @@ public class TransactionHistoryDetailTO {
     protected BigDecimal redeemedPoint;
     protected BigDecimal totalPrice;
     protected BigDecimal paidPrice;
-    protected String status = "Successfully";
-    protected String createdAt;
+    protected String status;
+    protected Date createdAt;
 }

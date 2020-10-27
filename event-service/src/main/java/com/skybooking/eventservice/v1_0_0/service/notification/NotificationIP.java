@@ -48,9 +48,17 @@ public class NotificationIP implements NotificationSV {
         BeanUtils.copyProperties(notificationRQ, notificationDTO);
         String notificationType = notificationRQ.getType();
         if (notificationType.equalsIgnoreCase("EARNED_POINT")) {
-            notificationDTO.setScript("skp_earn_notification");
+            if (notificationRQ.getTransactionFor().equalsIgnoreCase("FLIGHT")) {
+                notificationDTO.setScript("skp_earn_flight_notification");
+            } else {
+                notificationDTO.setScript("skp_earn_hotel_notification");
+            }
         } else if (notificationType.equalsIgnoreCase("REDEEM_POINT")) {
-            notificationDTO.setScript("skp_redeem_notification");
+            if (notificationRQ.getTransactionFor().equalsIgnoreCase("FLIGHT")) {
+                notificationDTO.setScript("skp_redeem_flight_notification");
+            } else {
+                notificationDTO.setScript("skp_redeem_hotel_notification");
+            }
         } else if (notificationType.equalsIgnoreCase("REFUND_POINT")) {
             notificationDTO.setScript("skp_refund_notification");
         }

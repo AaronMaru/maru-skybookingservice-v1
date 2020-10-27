@@ -5,10 +5,11 @@ import com.skybooking.skypointservice.constant.TransactionStatusConstant;
 import com.skybooking.skypointservice.constant.TransactionTypeConstant;
 import com.skybooking.skypointservice.httpstatus.BadRequestException;
 import com.skybooking.skypointservice.httpstatus.InternalServerError;
-import com.skybooking.skypointservice.v1_0_0.client.event.action.EventEmailAction;
 import com.skybooking.skypointservice.v1_0_0.client.event.action.EventNotificationAction;
 import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.NotificationRQ;
-import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.SkyPointRefundedRQ;
+import com.skybooking.skypointservice.v1_0_0.client.stakeholder.model.response.UserAccountInfoRS;
+import com.skybooking.skypointservice.v1_0_0.helper.AccountHelper;
+import com.skybooking.skypointservice.v1_0_0.helper.SendMailSMSHelper;
 import com.skybooking.skypointservice.v1_0_0.helper.SkyPointTransactionHelper;
 import com.skybooking.skypointservice.v1_0_0.helper.TransactionValueHelper;
 import com.skybooking.skypointservice.v1_0_0.io.entity.account.AccountEntity;
@@ -44,10 +45,13 @@ public class RefundIP extends BaseServiceIP implements RefundSV {
     private SkyPointTransactionHelper skyPointTransactionHelper;
 
     @Autowired
-    private EventEmailAction eventEmailAction;
+    private EventNotificationAction eventNotificationAction;
 
     @Autowired
-    private EventNotificationAction eventNotificationAction;
+    private AccountHelper accountHelper;
+
+    @Autowired
+    private SendMailSMSHelper sendMailOrSMSHelper;
 
     @Override
     public StructureRS refund(HttpServletRequest httpServletRequest, RefundRQ refundRQ) {
@@ -81,17 +85,13 @@ public class RefundIP extends BaseServiceIP implements RefundSV {
             account.setWithdrawal(account.getWithdrawal().subtract(refundRQ.getAmount()));
             account = accountRP.save(account);
 
-            //========== Send Mail
-            SkyPointRefundedRQ skyPointRefundedRQ = new SkyPointRefundedRQ();
-            skyPointRefundedRQ.setAmount(refundRQ.getAmount());
-            skyPointRefundedRQ.setEmail(refundRQ.getEmail());
-            skyPointRefundedRQ.setFullName(refundRQ.getName());
-            skyPointRefundedRQ.setTransactionCode(transactionValue.getCode());
-            eventEmailAction.refundedEmail(httpServletRequest, skyPointRefundedRQ);
+            //======= Send mail or SMS
+            UserAccountInfoRS userAccountInfoRS = accountHelper.getUserOrCompanyDetailByUserCode(refundRQ.getUserCode());
+            sendMailOrSMSHelper.sendMailOrSmsRefund(userAccountInfoRS, transaction, refundRQ.getReferenceCode(), httpServletRequest);
 
             //========== Send notification
             NotificationRQ notificationRQ = new NotificationRQ();
-            notificationRQ.setBookingId(transactionValue.getCode());
+            notificationRQ.setTransactionCode(transactionValue.getCode());
             notificationRQ.setType("REFUND_POINT");
             eventNotificationAction.sendNotification(httpServletRequest, notificationRQ);
 

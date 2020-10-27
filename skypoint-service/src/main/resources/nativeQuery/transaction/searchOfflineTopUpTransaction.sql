@@ -8,8 +8,6 @@ FROM
 INNER JOIN
     transactions t ON t.id = tv.transaction_id
 WHERE
-    t.status  = 'SUCCESS'
-AND
     t.proceed_by = 'OFFLINE'
 AND
     tv.transaction_type_code = 'TOP_UP'

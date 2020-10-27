@@ -119,12 +119,14 @@ public class TopUpHelper {
         if (file != null) {
             if (!file.isEmpty()) {
                 for (MultipartFile file1 : file) {
-                    TopUpDocumentEntity topUpDocument = new TopUpDocumentEntity();
-                    String fileName = awsUploadCM.uploadFileForm(file1);
-                    topUpDocument.setFile(fileName);
-                    topUpDocument.setTransactionId(transaction.getId());
-                    topUpDocument.setType("topup_document");
-                    topUpDocumentRP.save(topUpDocument);
+                    if (file1.getSize() > 0) {
+                        TopUpDocumentEntity topUpDocument = new TopUpDocumentEntity();
+                        String fileName = awsUploadCM.uploadFileForm(file1);
+                        topUpDocument.setFile(fileName);
+                        topUpDocument.setTransactionId(transaction.getId());
+                        topUpDocument.setType("topup_document");
+                        topUpDocumentRP.save(topUpDocument);
+                    }
                 }
             }
         }

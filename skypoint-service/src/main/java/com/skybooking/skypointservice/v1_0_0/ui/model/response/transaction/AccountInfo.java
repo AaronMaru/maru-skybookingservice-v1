@@ -2,6 +2,7 @@ package com.skybooking.skypointservice.v1_0_0.ui.model.response.transaction;
 
 import lombok.Data;
 
+import javax.validation.constraints.Digits;
 import java.math.BigDecimal;
 
 @Data

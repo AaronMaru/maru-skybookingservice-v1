@@ -3,10 +3,13 @@ package com.skybooking.skyhotelservice.v1_0_0.service.payment;
 import com.skybooking.skyhotelservice.v1_0_0.io.entity.booking.HotelBookingEntity;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.request.payment.PaymentMailRQ;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.request.payment.PaymentMandatoryRQ;
+import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.StructureRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.history.detail.BookingDetailRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.payment.PaymentMandatoryRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.payment.PaymentTransactionRQ;
+import org.springframework.stereotype.Service;
 
+@Service
 public interface PaymentSV {
     PaymentMandatoryRS payment(PaymentMandatoryRQ paymentRQ);
     PaymentMandatoryRS getMandatoryData(String bookingCode);
@@ -14,5 +17,5 @@ public interface PaymentSV {
     HotelBookingEntity saveBookingPayment(PaymentTransactionRQ paymentSucceedRQ);
     void sendMailPaymentSuccess(PaymentMailRQ paymentMailRQ);
     void sendPaymentInfoBookingSuccess(PaymentMailRQ paymentMailRQ, BookingDetailRS bookingDetail);
-    void sendMailPaymentInfo(PaymentMailRQ paymentMailRQ);
+    StructureRS sendMailPaymentInfo(PaymentMailRQ paymentMailRQ);
 }

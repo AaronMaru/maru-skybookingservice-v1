@@ -15,6 +15,7 @@ import com.skybooking.skyhotelservice.v1_0_0.ui.model.request.hotel.FilterRQ;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.HotelRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.HotelWrapperRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.ResourceRS;
+import com.skybooking.skyhotelservice.v1_0_0.util.header.HeaderCM;
 import com.skybooking.skyhotelservice.v1_0_0.util.mapper.HotelMapper;
 import jdk.jshell.spi.ExecutionControl;
 import org.modelmapper.ModelMapper;
@@ -22,9 +23,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static com.skybooking.skyhotelservice.constant.HeaderConstants.X_LOCALIZATION;
 
 @Service
 public class HotelCachedIP implements HotelCachedSV {
@@ -49,6 +53,9 @@ public class HotelCachedIP implements HotelCachedSV {
 
     @Autowired
     private HotelMapper hotelMapper;
+
+    @Autowired
+    private HeaderCM headerCM;
 
 
     /**
@@ -77,10 +84,12 @@ public class HotelCachedIP implements HotelCachedSV {
             })
             .collect(Collectors.toList());
 
-
         hotelWrapperCached.setId(source.getRequestId());
         hotelWrapperCached.setHotelList(hotelCachedList);
         hotelWrapperCached.setResource(hotelMapper.toResourceCached(resource));
+
+        String locale = headerCM.getLocalization();
+        hotelWrapperCached.setLocale(locale);
 
         return hotelWrapperCached;
     }
@@ -189,7 +198,8 @@ public class HotelCachedIP implements HotelCachedSV {
     public List<HotelRS> retrieveHotelList(String id) {
 
         HotelWrapperRS<HotelRS> hotelRSHotelWrapperRS = retrieveHotelWrapper(id);
-        if (hotelRSHotelWrapperRS == null) return Collections.emptyList();
+        if (hotelRSHotelWrapperRS == null)
+            return Collections.emptyList();
 
         return hotelRSHotelWrapperRS.getHotelList();
     }
@@ -258,7 +268,12 @@ public class HotelCachedIP implements HotelCachedSV {
         HotelWrapperRS<HotelRS> hotelRSHotelWrapperRS = new HotelWrapperRS<>();
         Optional<HotelWrapperCached> hotelWrapperCached = retrieveHotelWrapperCached(id, false);
 
-        if (hotelWrapperCached.isEmpty()) return hotelRSHotelWrapperRS;
+        String locale = headerCM.getLocalization();
+
+        if (hotelWrapperCached.isEmpty() ||
+            !hotelWrapperCached.get()
+                .getLocale().equalsIgnoreCase(locale))
+            return hotelRSHotelWrapperRS;
 
         final ResourceRS resourceRS = modelMapper.map(hotelWrapperCached.get().getResource(), ResourceRS.class);
         final List<HotelRS> hotelList = hotelWrapperCached.get()
@@ -291,7 +306,7 @@ public class HotelCachedIP implements HotelCachedSV {
     public List<HotelCached> retrieveHotelListCached(String id) {
         Optional<HotelWrapperCached> hotelWrapperCached = retrieveHotelWrapperCached(id, true);
         if (hotelWrapperCached.isEmpty())
-            throw new RequestExpiredException(id);
+            return null;
         return hotelWrapperCached.get().getHotelList();
     }
 
@@ -358,17 +373,20 @@ public class HotelCachedIP implements HotelCachedSV {
             .getMap(HOTEL_LIST_CACHED)
             .getOrDefault(id, null);
 
-        if (hotelWrapperCached != null)
-            hotelWrapperCached.setHotelList(hotelWrapperCached.getHotelList()
-                .stream()
-                .peek(hotelCached -> hotelCached.setImages(hotelCached.getImages()
-                    .stream()
-                    .sorted(Comparator.comparingInt(ImageCached::getSortOrder))
-                    .limit(isList ? 4 : hotelCached.getImages().size())
-                    .collect(Collectors.toList())))
-                .collect(Collectors.toList()));
+        String locale = headerCM.getLocalization();
+        if (hotelWrapperCached == null || !hotelWrapperCached.getLocale().equalsIgnoreCase(locale))
+            return Optional.empty();
 
-        return Optional.ofNullable(hotelWrapperCached);
+        hotelWrapperCached.setHotelList(hotelWrapperCached.getHotelList()
+            .stream()
+            .peek(hotelCached -> hotelCached.setImages(hotelCached.getImages()
+                .stream()
+                .sorted(Comparator.comparingInt(ImageCached::getSortOrder))
+                .limit(isList ? 4 : hotelCached.getImages().size())
+                .collect(Collectors.toList())))
+            .collect(Collectors.toList()));
+
+        return Optional.of(hotelWrapperCached);
     }
 
 

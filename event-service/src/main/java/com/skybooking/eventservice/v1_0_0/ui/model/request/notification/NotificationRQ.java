@@ -4,13 +4,16 @@ import com.skybooking.core.validators.annotations.IsIn;
 import com.skybooking.core.validators.annotations.IsNotEmpty;
 import lombok.Data;
 
+import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 
 @Data
 public class NotificationRQ {
 
     @IsNotEmpty
+    @NotNull
     private String transactionCode;
 
     @IsNotEmpty
@@ -19,4 +22,9 @@ public class NotificationRQ {
 
     private String script;
 
+    @IsIn(contains = {"FLIGHT", "HOTEL"}, message = "TransactionFor is invalid.")
+    private String transactionFor;
+
+    @DecimalMin(value = "0.0", inclusive = false)
+    private BigDecimal amount;
 }

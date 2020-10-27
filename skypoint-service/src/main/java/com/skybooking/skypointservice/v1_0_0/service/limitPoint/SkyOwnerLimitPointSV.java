@@ -32,10 +32,10 @@ public interface SkyOwnerLimitPointSV {
      * Frontend: Get limit point detail
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @param pointLimitId Integer
+     * @param stakeholderUserId Integer
      * @return StructureRS
      */
-    StructureRS getDetailLimitPoint(Integer pointLimitId);
+    StructureRS getDetailLimitPoint(Integer stakeholderUserId);
 
     /**
      * -----------------------------------------------------------------------------------------------------------------

@@ -4,17 +4,14 @@ import com.skybooking.paymentservice.v1_0_0.client.flight.action.FlightAction;
 import com.skybooking.paymentservice.v1_0_0.client.flight.ui.request.FlightPaymentFailureRQ;
 import com.skybooking.paymentservice.v1_0_0.io.nativeQuery.paymentMethod.PaymentNQ;
 import com.skybooking.paymentservice.v1_0_0.service.interfaces.PipaySV;
-import com.skybooking.paymentservice.v1_0_0.ui.model.request.PaymentHotelRQ;
 import com.skybooking.paymentservice.v1_0_0.ui.model.request.PaymentPointRQ;
 import com.skybooking.paymentservice.v1_0_0.ui.model.request.PaymentRQ;
 import com.skybooking.paymentservice.v1_0_0.ui.model.response.UrlPaymentRS;
 import com.skybooking.paymentservice.v1_0_0.util.classse.CardInfo;
-import com.skybooking.paymentservice.v1_0_0.util.generator.CardUtility;
 import com.skybooking.paymentservice.v1_0_0.util.integration.Payments;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.Map;
 
 @Service

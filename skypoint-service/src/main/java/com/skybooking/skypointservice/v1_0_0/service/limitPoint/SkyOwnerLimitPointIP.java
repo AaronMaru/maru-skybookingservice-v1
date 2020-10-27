@@ -3,6 +3,7 @@ package com.skybooking.skypointservice.v1_0_0.service.limitPoint;
 import com.skybooking.skypointservice.constant.ResponseConstant;
 import com.skybooking.skypointservice.httpstatus.BadRequestException;
 import com.skybooking.skypointservice.httpstatus.InternalServerError;
+import com.skybooking.skypointservice.util.AmountFormatUtil;
 import com.skybooking.skypointservice.v1_0_0.client.stakeholder.model.response.UserReferenceRS;
 import com.skybooking.skypointservice.v1_0_0.helper.AccountHelper;
 import com.skybooking.skypointservice.v1_0_0.io.entity.account.AccountEntity;
@@ -23,6 +24,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -47,6 +49,7 @@ public class SkyOwnerLimitPointIP extends BaseServiceIP implements SkyOwnerLimit
     @Autowired
     private JwtUtils jwtUtils;
 
+    @Transactional
     @Override
     public StructureRS createLimitPoint(SkyOwnerLimitPointRQ skyOwnerLimitPointRQ) {
         try {
@@ -61,7 +64,11 @@ public class SkyOwnerLimitPointIP extends BaseServiceIP implements SkyOwnerLimit
             AccountEntity account = accountRP.findAccountEntityByUserCode(userReferenceRS.getUserCode())
                     .orElse(null);
             if (account == null) {
-                throw new BadRequestException("account_not_found", null);
+                account = new AccountEntity();
+                account.setUserCode(userReferenceRS.getUserCode());
+                account.setType(userReferenceRS.getType());
+                account.setLevelCode("LEVEL1");
+                account = accountRP.save(account);
             }
 
             SkyOwnerLimitPointEntity checkSkyOwnerLimitPoint = skyOwnerLimitPointRP.findByStakeholderUserIdAndStatus(
@@ -72,7 +79,7 @@ public class SkyOwnerLimitPointIP extends BaseServiceIP implements SkyOwnerLimit
             }
 
             skyOwnerLimitPoint.setCreatedBy(jwtUtils.userToken().getUserId().toString());
-            skyOwnerLimitPoint.setStakeholderUserId(stakeholderCompanyId);
+            skyOwnerLimitPoint.setStakeholderUserId(skyOwnerLimitPointRQ.getStakeholderUserId());
             skyOwnerLimitPoint.setAccountId(account.getId());
             skyOwnerLimitPoint = skyOwnerLimitPointRP.save(skyOwnerLimitPoint);
 
@@ -88,6 +95,7 @@ public class SkyOwnerLimitPointIP extends BaseServiceIP implements SkyOwnerLimit
         }
     }
 
+    @Transactional
     @Override
     public StructureRS updateLimitPoint(SkyOwnerLimitPointRQ skyOwnerLimitPointRQ) {
         try {
@@ -115,11 +123,11 @@ public class SkyOwnerLimitPointIP extends BaseServiceIP implements SkyOwnerLimit
     }
 
     @Override
-    public StructureRS getDetailLimitPoint(Integer limitPointId) {
+    public StructureRS getDetailLimitPoint(Integer stakeholderUserId) {
         try {
 
-            SkyOwnerLimitPointEntity skyOwnerLimitPoint = skyOwnerLimitPointRP.findByIdAndStatus(
-                    limitPointId, true);
+            SkyOwnerLimitPointEntity skyOwnerLimitPoint = skyOwnerLimitPointRP.findByStakeholderUserIdAndStatus(
+                    stakeholderUserId, true);
             if (skyOwnerLimitPoint == null) {
                 throw new BadRequestException("point_limit_not_found", null);
             }
@@ -166,9 +174,10 @@ public class SkyOwnerLimitPointIP extends BaseServiceIP implements SkyOwnerLimit
                     stakeholderCompanyId).orElse(new TransactionAmountTO());
 
             AvailablePointRS availablePointRS = new AvailablePointRS();
-            availablePointRS.setAvailablePoint(skyOwnerLimitPoint.getValue().subtract(transactionAmountTO.getAmount()));
-            availablePointRS.setUsedPoint(transactionAmountTO.getAmount());
-            availablePointRS.setLimitPoint(skyOwnerLimitPoint.getValue());
+            availablePointRS.setAvailablePoint(AmountFormatUtil.roundAmount(
+                    skyOwnerLimitPoint.getValue().subtract(transactionAmountTO.getAmount())));
+            availablePointRS.setUsedPoint(AmountFormatUtil.roundAmount(transactionAmountTO.getAmount()));
+            availablePointRS.setLimitPoint(AmountFormatUtil.roundAmount(skyOwnerLimitPoint.getValue()));
             return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, availablePointRS);
         } catch (BadRequestException e) {
             e.printStackTrace();

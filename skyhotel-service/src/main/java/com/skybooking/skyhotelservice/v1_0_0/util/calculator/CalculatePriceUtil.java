@@ -373,4 +373,24 @@ public class CalculatePriceUtil {
         return cancellationPolicyDetail;
     }
 
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * calculate discount percentage
+     * -----------------------------------------------------------------------------------------------------------------
+     *
+     * @param amount
+     * @param discountAmount
+     * @return BigDecimal
+     */
+    public static BigDecimal calculateDiscountPercentage(BigDecimal amount, BigDecimal discountAmount) {
+        return discountAmount
+            .multiply(new BigDecimal(100))
+            .divide(amount, 2, RoundingMode.HALF_UP)
+            .setScale(0, RoundingMode.HALF_EVEN);
+    }
+
 }
+
+
+
+

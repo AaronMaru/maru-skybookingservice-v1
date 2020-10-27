@@ -26,7 +26,6 @@ public class PaymentAction extends BaseAction {
                     .post()
                     .uri(appConfig.getEventService() + EndpointConstant.PaymentSuccess.V1_0_0)
                     .header("X-localization", bookingLanguageCached.get().getLanguage())
-                    .header("X-localization", request.getLang())
                     .bodyValue(request)
                     .retrieve()
                     .bodyToMono(PaymentSucessMailRSEV.class)

@@ -21,6 +21,10 @@ public class NumberFormatter {
         return amount.setScale(2, RoundingMode.HALF_UP);
     }
 
+    public static BigDecimal trimPercentage(BigDecimal percentage) {
+        return percentage.setScale(0, RoundingMode.HALF_DOWN);
+    }
+
     public static BigDecimal trimAmount(double amount) {
         return new BigDecimal(amount).setScale(2, RoundingMode.HALF_UP);
     }

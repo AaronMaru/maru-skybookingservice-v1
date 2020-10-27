@@ -4,7 +4,6 @@ import com.skybooking.skypointservice.v1_0_0.ui.model.response.StructureRS;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Date;
 
 @Service
 public interface HistorySV {
@@ -18,11 +17,13 @@ public interface HistorySV {
      * @param startDate          String
      * @param endDate            String
      * @param transactionTypCode String
+     * @param page               Integer
+     * @param size               Integer
      * @return StructureRS
      */
     StructureRS getTransactionHistoryByUserAccount(HttpServletRequest httpServletRequest,
                                                    String startDate, String endDate, String transactionTypCode,
-                                                   Integer page, Integer limit);
+                                                   Integer page, Integer size);
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -41,11 +42,13 @@ public interface HistorySV {
      * -----------------------------------------------------------------------------------------------------------------
      *
      * @param httpServletRequest HttpServletRequest
+     * @param stakeholderUserId  Integer
      * @param page               Integer
-     * @param limit              Integer
+     * @param size               Integer
      * @return StructureRS
      */
-    StructureRS skyOwnerTransactionHistory(HttpServletRequest httpServletRequest, Integer page, Integer limit);
+    StructureRS skyOwnerTransactionHistory(HttpServletRequest httpServletRequest, Integer stakeholderUserId,
+                                           Integer page, Integer size);
 
     /**
      * -----------------------------------------------------------------------------------------------------------------

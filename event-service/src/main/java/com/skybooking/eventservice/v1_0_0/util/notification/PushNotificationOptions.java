@@ -52,14 +52,19 @@ public class PushNotificationOptions {
 
             var data = new JSONObject();
             data.put("notiType", notiType);
-            data.put("bookingCode", "bookingCode");
+            data.put("transactionCode", notificationDTO.getTransactionCode());
 
             var contents = new JSONObject();
-            contents.put("en", scriptingTO.getSubject());
+            String script = scriptingTO.getSubject();
 
             JSONArray playerIdArray = new JSONArray();
             playerIdArray.put(playerId);
 
+            if (script.contains("{{AMOUNT}}")) {
+                script = script.replace("{{AMOUNT}}", notificationDTO.getAmount().toString());
+            }
+
+            contents.put("en", script);
             sendData.put("contents", contents);
             sendData.put("data", data);
             sendData.put("include_player_ids", playerIdArray);

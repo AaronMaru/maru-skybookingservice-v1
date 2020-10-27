@@ -39,8 +39,6 @@ public class HotelEmailIP implements HotelEmailSV {
     @Autowired
     private AttachmentRP attachmentRP;
 
-    @Autowired
-    private Environment environment;
 
     @Override
     public void paymentSuccess(PaymentSuccessRQ paymentSuccessRQ) {

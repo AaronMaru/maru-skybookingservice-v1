@@ -4,7 +4,7 @@ import com.skybooking.skyhotelservice.v1_0_0.service.payment.PaymentSV;
 import com.skybooking.skyhotelservice.v1_0_0.ui.controller.BaseController;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.request.payment.PaymentMailRQ;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.request.payment.PaymentMandatoryRQ;
-import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.payment.PaymentMandatoryRS;
+import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.StructureRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.payment.PaymentTransactionRQ;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -58,8 +58,8 @@ public class PaymentController extends BaseController {
     }
 
     @PostMapping("payment-info")
-    public void mailPaymentInfo(@RequestBody PaymentMailRQ paymentMailRQ) {
-        paymentSV.sendMailPaymentInfo(paymentMailRQ);
+    public ResponseEntity<StructureRS> mailPaymentInfo(@RequestBody PaymentMailRQ paymentMailRQ) {
+        return response(paymentSV.sendMailPaymentInfo(paymentMailRQ));
     }
 
 }

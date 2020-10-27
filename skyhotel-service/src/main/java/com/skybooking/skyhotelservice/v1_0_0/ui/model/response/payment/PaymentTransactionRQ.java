@@ -31,8 +31,8 @@ public class PaymentTransactionRQ {
     private String ipay88PaymentId;
     private String paymentCode;
     private String email;
-    private Integer skyuserId;
-    private Integer companyId;
+    private Long skyuserId;
+    private Long companyId;
     private String lang;
     private BookingDetailRS bookingDetail;
 

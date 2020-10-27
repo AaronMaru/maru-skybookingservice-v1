@@ -1,0 +1,13 @@
+
+spring:
+    application:
+        name: back-office-service
+
+    cloud:
+        config:
+            uri: http://192.168.2.4:8888
+
+native-query:
+    package-scan: com.skybooking.backofficeservice
+    file:
+        sufix: sql

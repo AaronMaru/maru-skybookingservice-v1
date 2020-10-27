@@ -71,7 +71,11 @@ public class AccountHelper {
         }
         String referenceCode = data.get("referenceCode").toString();
         String userType = data.get("type").toString();
-        String userRole = data.get("userRole") != null ? data.get("userRole").toString() : null;
+        String userRole = data.get("userRole") != null ? data.get("userRole").toString() : "";
+        String name = data.get("name") != null ? data.get("name").toString() : "";
+        String phoneCode = data.get("phoneCode") != null ? data.get("phoneCode").toString() : "";
+        String phoneNumber = data.get("phoneNumber") != null ? data.get("phoneNumber").toString() : "";
+        String email = data.get("email") != null ? data.get("email").toString() : "";
 
         UserReferenceRS userReferenceRS = new UserReferenceRS();
         userReferenceRS.setStakeholderUserId(stakeholderUserId);
@@ -79,6 +83,10 @@ public class AccountHelper {
         userReferenceRS.setUserCode(referenceCode);
         userReferenceRS.setType(userType.toUpperCase());
         userReferenceRS.setUserRole(userRole);
+        userReferenceRS.setName(name);
+        userReferenceRS.setEmail(email);
+        userReferenceRS.setPhoneNumber(phoneNumber);
+        userReferenceRS.setPhoneCode(phoneCode);
 
         return userReferenceRS;
     }
@@ -90,6 +98,8 @@ public class AccountHelper {
             throw new BadRequestException("company_not_found", null);
         }
         BasicCompanyAccountInfoRS basicCompanyAccountInfoRS = new BasicCompanyAccountInfoRS();
+        basicCompanyAccountInfoRS.setStakeholderUserId(Integer.valueOf(data.get("stakeholderUserId").toString()));
+        basicCompanyAccountInfoRS.setStakeholderCompanyId(Integer.valueOf(data.get("stakeholderCompanyId").toString()));
         basicCompanyAccountInfoRS.setUserCode(data.get("companyCode").toString());
         basicCompanyAccountInfoRS.setEmail(data.get("email") == null ? "" : data.get("email").toString());
         basicCompanyAccountInfoRS.setPhoneNumber(data.get("phone") == null ? "" : data.get("phone").toString());

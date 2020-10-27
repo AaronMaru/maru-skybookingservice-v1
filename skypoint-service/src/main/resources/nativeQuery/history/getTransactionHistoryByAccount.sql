@@ -9,7 +9,7 @@ SELECT
 		WHEN tv.transaction_type_code = 'TOP_UP' THEN (tv.amount + (tv.amount * tv.extra_rate))
 	    ELSE tv.amount
 	END AS totalPoint,
-	DATE_FORMAT(t.created_at, "%e %M %Y at %H:%m") as createdAt
+	t.created_at as createdAt
 FROM
 	transaction_values tv
 INNER JOIN

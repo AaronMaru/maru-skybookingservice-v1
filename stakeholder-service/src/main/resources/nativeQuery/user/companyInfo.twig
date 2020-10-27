@@ -3,16 +3,18 @@ SELECT
 	uhc.stakeholder_company_id AS stakeholderCompanyId,
 	sc.company_code AS referenceCode,
 	uhc.skyuser_role AS userRole,
-	CONCAT("skyowner") AS type
+	sc.company_name AS name,
+	CONCAT("skyowner") AS type,
+	(select c.value from contacts c where contactable_id = sc.id and type = "p" and contactable_type = "company" LIMIT 1) AS phoneNumber,
+	(select c.value from contacts c where contactable_id = sc.id and type = "e" and contactable_type = "company" LIMIT 1) AS email
 
 FROM `stakeholder_user_has_companies` uhc
 INNER JOIN
 (
-	SELECT sc.id, sc.company_code, sc.`status`
+	SELECT sc.id, sc.company_code, sc.company_name, sc.`status`
 	FROM stakeholder_companies sc
 ) sc ON sc.id = uhc.stakeholder_company_id AND sc.`status` = 4
 WHERE uhc.stakeholder_user_id = :skyuserId
 AND uhc.stakeholder_company_id = :companyId
 AND uhc.join_status = 1
-AND uhc.skyuser_role = "admin"
 LIMIT 1

@@ -2,6 +2,20 @@ spring:
     application:
         name: event-service
 
+    twilio:
+        accountSID: "AC0e8e56c1fbc7a4a39a193811c06af403"
+        authToken: "2252fe368a5dd3628996ed3d034860e4"
+        phoneNumber: "+18552006055"
+
+        sms:
+          url: https://api.mekongsms.com/api/postsms.aspx
+          username: pathfinder_otp@mekongnet
+          pass: 98b7d5e059b3814ef3bdcfff750061bd
+          sender: skybooking
+          cd: 203.189.151.167
+          isflash: 0
+          int: 1
+
     cloud:
         config:
             uri: http://192.168.2.4:8888

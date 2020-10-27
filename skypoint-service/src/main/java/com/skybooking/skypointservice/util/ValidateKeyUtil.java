@@ -28,6 +28,7 @@ public class ValidateKeyUtil {
                         throw new BadRequestException("key_" + key + "_not_null", null);
                     }
                 }
+
             });
         } catch (JsonProcessingException e) {
             e.printStackTrace();
@@ -45,21 +46,32 @@ public class ValidateKeyUtil {
         }
     }
 
-    public static void validateLetter(String word) {
-        if(!word.matches("[a-zA-Z]+")){
-            throw new BadRequestException("allow_only_letter", null);
-        }
-    }
-
-    public static void validateNumber(String number) {
-        if(!number.matches("[a-zA-Z]+")){
-            throw new BadRequestException("allow_only_number", null);
+    public static void validatePhoneNumber(String number) {
+        if (!number.matches("[0-9]+")) {
+            throw new BadRequestException("phone_number_not_valid", null);
+        } else if (number.length() < 6 || number.length() > 14) {
+            throw new BadRequestException("phone_number_not_valid", null);
         }
     }
 
     public static void validateAmountNotNegative(BigDecimal amount) {
         if (amount.compareTo(new BigDecimal(0)) <= 0) {
             throw new BadRequestException("amount_not_negative", null);
+        }
+    }
+
+    public static void validateEmail(String email) {
+        String regex = "^[\\w-_\\.+]*[\\w-_\\.]\\@([\\w]+\\.)+[\\w]+[\\w]$";
+        if (!email.matches(regex)) {
+            throw new BadRequestException("email_not_valid", null);
+        }
+    }
+
+    public static void validatePhoneCode(String phoneCode) {
+        if (!phoneCode.substring(0, 1).equalsIgnoreCase("+") ||
+                !phoneCode.substring(1, phoneCode.length() - 1).matches("[0-9]+") ||
+                phoneCode.length() < 2 || phoneCode.length() > 6) {
+            throw new BadRequestException("phone_code_not_valid", null);
         }
     }
 }

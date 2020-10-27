@@ -18,6 +18,7 @@ public class HistoryAction extends BaseAction {
                     .mutate()
                     .build()
                     .post()
+//                    .uri("http://127.0.0.1:9003/v1.0.0/histories")
                     .uri(appConfig.getDISTRIBUTED_URL() + EndpointConstant.BookingHistory.V1_0_0)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + dsTokenHolder.getAuth().getAccessToken())
                     .bodyValue(request)

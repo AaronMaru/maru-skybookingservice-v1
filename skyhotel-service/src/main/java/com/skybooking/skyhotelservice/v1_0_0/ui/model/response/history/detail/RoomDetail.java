@@ -6,18 +6,20 @@ import java.util.List;
 
 @Data
 public class RoomDetail {
+
     private String thumbnail;
-    @JsonIgnore
+//    @JsonIgnore
     private String code;
-    private String type;
+    private String description = "";
     private Integer capacity;
     private List<String> specialRequest;
 
     public RoomDetail() {}
-    public RoomDetail(String thumbnail, String type, Integer capacity, List<String> specialRequest) {
+    public RoomDetail(String thumbnail, String description, Integer capacity, List<String> specialRequest) {
         this.thumbnail = thumbnail;
-        this.type = type;
+        this.description = description;
         this.capacity = capacity;
         this.specialRequest = specialRequest;
     }
+
 }

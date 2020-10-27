@@ -27,7 +27,8 @@ SELECT
 	END as redeemedPoint,
 	t.amount AS totalPrice,
 	t.paid_amount AS paidPrice,
-	DATE_FORMAT(t.created_at, "%e-%M-%Y") AS createdAt
+	t.status AS status,
+	t.created_at AS createdAt
 FROM
 	transaction_values tv
 INNER JOIN

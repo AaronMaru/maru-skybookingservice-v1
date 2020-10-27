@@ -34,7 +34,7 @@ FROM
             AND t.status = 'SUCCESS'
         INNER JOIN account a ON a.id = t.account_id
             AND a.user_code = :userCode
-        GROUP BY tv.transactiON_type_code
+        GROUP BY tv.transactiON_type_code, tv.created_at
     ) AS result1
 ) AS result2
 GROUP BY createdAt 

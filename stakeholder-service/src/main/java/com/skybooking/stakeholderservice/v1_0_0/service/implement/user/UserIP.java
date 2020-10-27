@@ -612,13 +612,22 @@ public class UserIP implements UserSV {
 
         String companyId = request.getHeader("X-CompanyId");
 
-        if (companyId!= null && !companyId.isEmpty()) {
+        if (companyId != null && !companyId.isEmpty()) {
             userReferenceTO = userNQ.companyInfo(skyuserId, Long.valueOf(companyId));
+
+            if (userReferenceTO.getPhoneNumber() != null) {
+                String contactPhone[]= userReferenceTO.getPhoneNumber().split("-");
+                userReferenceTO.setPhoneCode(contactPhone[0]);
+                userReferenceTO.setPhoneNumber(contactPhone[1]);
+            }
+
         }
 
         UserReferenceRS userReference = new UserReferenceRS();
         if (userReferenceTO != null) {
             BeanUtils.copyProperties(userReferenceTO, userReference);
+
+
         }
 
         return userReference;

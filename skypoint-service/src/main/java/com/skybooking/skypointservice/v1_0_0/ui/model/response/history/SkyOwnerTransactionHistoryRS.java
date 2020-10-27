@@ -7,5 +7,5 @@ import java.util.List;
 
 @Data
 public class SkyOwnerTransactionHistoryRS {
-    private List<SkyOwnerTransactionHistoryTO> skyOwnerTransactionHistoryList;
+    private List<SkyOwnerTransactionHistory> skyOwnerTransactionHistoryList;
 }

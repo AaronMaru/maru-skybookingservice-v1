@@ -3,7 +3,7 @@ SELECT
 	CASE
 		WHEN tv.transaction_type_code IN ('EARNED_HOTEL', 'EARNED_FLIGHT') THEN tv.earning_amount
 		WHEN tv.transaction_type_code IN ('REDEEMED_FLIGHT', 'REDEEMED_HOTEL') THEN tv.amount * (-1)
-	    WHEN tv.transaction_type_code = 'TOP_UP' THEN tv.amount + (tv.amount + (tv.amount * tv.extra_rate))
+	    WHEN tv.transaction_type_code = 'TOP_UP' THEN tv.amount + (tv.amount * tv.extra_rate)
 	    ELSE tv.amount
 	END AS amount,
 	t.created_at AS createdAt

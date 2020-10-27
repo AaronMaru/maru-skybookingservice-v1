@@ -15,7 +15,6 @@ public class NotificationTopUpRQ {
     private Long stakeholderUserId;
 
     @Min(1)
-    @NotNull
     private Long stakeholderCompanyId;
 
     @IsNotEmpty

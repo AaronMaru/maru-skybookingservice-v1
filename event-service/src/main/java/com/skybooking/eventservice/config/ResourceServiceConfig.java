@@ -13,6 +13,7 @@ public class ResourceServiceConfig extends ResourceServerConfigurerAdapter {
     public void configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeRequests()
                 .antMatchers("/**v1.0.0/email/no-auth/**",
+                        "/**v1.0.0/sms/no-auth/**",
                         "/**v1.0.0/notification/no-auth/**",
                         "/**v1.0.0/email/**").permitAll()
                 .antMatchers("/**").authenticated();

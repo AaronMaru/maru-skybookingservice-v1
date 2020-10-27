@@ -8,7 +8,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Date;
 
 @RestController
 @RequestMapping("/v1.0.0/report")
@@ -122,11 +121,12 @@ public class ReportController {
     }
 
     @PreAuthorize("#oauth2.hasScope('summary-transaction-list-report-skypoint')")
-    @RequestMapping(value = "/summary/transaction/list", method = RequestMethod.GET)
-    public StructureRS transactionSummaryReportList(
+    @RequestMapping(value = "/transaction/export", method = RequestMethod.GET)
+    public StructureRS transactionReportExport(
+            HttpServletRequest httpServletRequest,
             @RequestParam("startDate") @DateTimeFormat(pattern = "yyyy-MM-dd") String startDate,
             @RequestParam("endDate") @DateTimeFormat(pattern = "yyyy-MM-dd") String endDate) {
-        return reportSV.transactionSummaryReportList(startDate, endDate);
+        return reportSV.transactionReportExport(httpServletRequest, startDate, endDate);
     }
 
 }

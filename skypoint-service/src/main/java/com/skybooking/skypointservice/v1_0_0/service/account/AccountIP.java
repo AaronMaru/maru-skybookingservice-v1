@@ -53,7 +53,7 @@ public class AccountIP extends BaseServiceIP implements AccountSV {
             BeanUtils.copyProperties(account, balanceRS);
             balanceRS.setLevelName(configUpgradeLevel.getLevelName());
 
-            return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, balanceRS);
+            return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, new BalanceRS(balanceRS));
         } catch (BadRequestException e) {
             e.printStackTrace();
             throw new BadRequestException(e.getMessage(), null);
@@ -79,7 +79,7 @@ public class AccountIP extends BaseServiceIP implements AccountSV {
             );
             accountBalanceInfoRS.setLevelName(configUpgradeLevel.getLevelName());
 
-            return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, accountBalanceInfoRS);
+            return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, new AccountBalanceInfoRS(accountBalanceInfoRS));
         } catch (BadRequestException e) {
             e.printStackTrace();
             throw new BadRequestException(e.getMessage(), null);

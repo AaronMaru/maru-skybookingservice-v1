@@ -25,7 +25,7 @@ public interface TransactionSV {
      *
      * @return StructureRS
      */
-    StructureRS getRecentOfflineTopUp();
+    StructureRS getRecentTopUp();
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -34,11 +34,11 @@ public interface TransactionSV {
      *
      * @param httpServletRequest HttpServletRequest
      * @param userCode           String
-     * @param limit              Integer
+     * @param size               Integer
      * @param page               Integer
      * @return StructureRS
      */
-    StructureRS getRecentTransaction(HttpServletRequest httpServletRequest, String userCode, Integer limit, Integer page);
+    StructureRS getRecentTransaction(HttpServletRequest httpServletRequest, String userCode, Integer size, Integer page);
 
     /**
      * -----------------------------------------------------------------------------------------------------------------
@@ -76,9 +76,9 @@ public interface TransactionSV {
      * Backend: Get pending offline top up list
      * -----------------------------------------------------------------------------------------------------------------
      *
-     * @param page  Integer
-     * @param limit Integer
+     * @param page Integer
+     * @param size Integer
      * @return StructureRS
      */
-    StructureRS getPendingOfflineTopUpList(Integer page, Integer limit);
+    StructureRS getPendingOfflineTopUpList(Integer page, Integer size);
 }

@@ -10,7 +10,7 @@ public class PriceUnitRS {
 
     private BigDecimal amount = BigDecimal.ZERO;
     private BigDecimal amountAfterDiscount = BigDecimal.ZERO;
-    private float discountPercentage = 0;
+    private BigDecimal discountPercentage = BigDecimal.ZERO;
     private String currency = CurrencyConstant.USD.CODE;
 
 }

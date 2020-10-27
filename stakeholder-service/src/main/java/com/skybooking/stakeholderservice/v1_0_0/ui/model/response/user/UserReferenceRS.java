@@ -4,9 +4,15 @@ import lombok.Data;
 
 @Data
 public class UserReferenceRS {
+
     private Integer stakeholderUserId;
     private Integer stakeholderCompanyId;
     private String referenceCode;
     private String type;
     private String userRole;
+    private String name;
+    private String email;
+    private String phoneCode;
+    private String phoneNumber;
+
 }

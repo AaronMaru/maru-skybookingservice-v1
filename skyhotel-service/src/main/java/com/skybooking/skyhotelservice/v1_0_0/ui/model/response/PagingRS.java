@@ -7,10 +7,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class PagingRS {
     private Integer page = 1;
-    private Integer size = 10;
-    private Integer totals = 0;
+    private Integer size = 20;
+    private Long totals = (long) 0;
 
-    public PagingRS(Integer page, Integer size, Integer totals) {
+    public PagingRS(Integer page, Integer size, Long totals) {
         this.page = page;
         this.size = size;
         this.totals = totals;

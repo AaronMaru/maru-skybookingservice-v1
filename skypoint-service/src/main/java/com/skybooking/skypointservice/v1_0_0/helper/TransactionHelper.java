@@ -2,6 +2,7 @@ package com.skybooking.skypointservice.v1_0_0.helper;
 
 import com.skybooking.skypointservice.constant.TopUpTypeConstant;
 import com.skybooking.skypointservice.constant.TransactionStatusConstant;
+import com.skybooking.skypointservice.v1_0_0.client.stakeholder.model.response.BasicCompanyAccountInfoRS;
 import com.skybooking.skypointservice.v1_0_0.io.entity.account.AccountEntity;
 import com.skybooking.skypointservice.v1_0_0.io.entity.transaction.TransactionEntity;
 import com.skybooking.skypointservice.v1_0_0.io.repository.transaction.TransactionRP;
@@ -39,12 +40,13 @@ public class TransactionHelper {
     }
 
     public TransactionEntity saveTransactionOfflineTopUp(TransactionEntity transaction, AccountEntity account,
-                                                         OfflineTopUpRQ offlineTopUpRQ, String createdBy) {
+                                                         OfflineTopUpRQ offlineTopUpRQ, String createdBy,
+                                                         BasicCompanyAccountInfoRS basicCompanyAccountInfoRS) {
         transaction.setAccountId(account.getId());
         transaction.setAmount(offlineTopUpRQ.getAmount());
         transaction.setPaidAmount(offlineTopUpRQ.getAmount());
-        transaction.setStakeholderCompanyId(offlineTopUpRQ.getStakeholderCompanyId());
-        transaction.setStakeholderUserId(offlineTopUpRQ.getStakeholderUserId());
+        transaction.setStakeholderCompanyId(basicCompanyAccountInfoRS.getStakeholderCompanyId());
+        transaction.setStakeholderUserId(basicCompanyAccountInfoRS.getStakeholderUserId());
         transaction.setProceedBy(TopUpTypeConstant.OFFLINE);
         transaction.setStatus(TransactionStatusConstant.PENDING);
         transaction.setReferenceCode(offlineTopUpRQ.getReferenceCode());

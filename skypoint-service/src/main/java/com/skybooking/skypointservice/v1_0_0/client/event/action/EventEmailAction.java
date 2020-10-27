@@ -2,10 +2,9 @@ package com.skybooking.skypointservice.v1_0_0.client.event.action;
 
 import com.skybooking.skypointservice.config.AppConfig;
 import com.skybooking.skypointservice.v1_0_0.client.ClientResponse;
-import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.SkyPointEarnedRQ;
-import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.SkyPointRedeemRQ;
-import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.SkyPointRefundedRQ;
-import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.SkyPointTopUpRQ;
+import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.SkyPointMailRQ;
+import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.SkyPointTopUpFailedRQ;
+import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.SkyPointTopUpSuccessRQ;
 import com.skybooking.skypointservice.v1_0_0.util.auth.AuthUtility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -25,56 +24,71 @@ public class EventEmailAction {
     @Autowired
     private AuthUtility authUtility;
 
-    public ClientResponse topUpEmail(HttpServletRequest httpServletRequest, SkyPointTopUpRQ skyPointTopUpRQ) {
+    public ClientResponse topUpEmail(HttpServletRequest httpServletRequest, SkyPointTopUpSuccessRQ skyPointTopUpSuccessRQ) {
 
         return webClient.mutate()
                 .build()
                 .post()
-                .uri(appConfig.getEventUrl() + appConfig.getEventVersion() + "/email/no-auth/top-up")
+                .uri(appConfig.getEventUrl() + appConfig.getEventVersion() + "/email/no-auth/top-up/success")
                 .header("X-localization", httpServletRequest.getHeader("X-localization"))
-                .bodyValue(skyPointTopUpRQ)
+                .bodyValue(skyPointTopUpSuccessRQ)
                 .retrieve()
                 .bodyToMono(ClientResponse.class)
                 .block();
 
     }
 
-    public void earnedEmail(HttpServletRequest httpServletRequest, SkyPointEarnedRQ skyPointEarnedRQ) {
+    public void topUpFailedMail(HttpServletRequest httpServletRequest, SkyPointTopUpFailedRQ skyPointTopUpFailedRQ) {
+
+        webClient
+                .post()
+                .uri(appConfig.getEventUrl() + appConfig.getEventVersion() + "/email/no-auth/top-up/failed")
+                .header("X-localization", httpServletRequest.getHeader("X-localization"))
+                .header(HttpHeaders.AUTHORIZATION, authUtility.getAuthToken())
+                .bodyValue(skyPointTopUpFailedRQ)
+                .retrieve()
+                .bodyToMono(Object.class)
+                .subscribe();
+
+    }
+
+
+    public void earnedEmail(HttpServletRequest httpServletRequest, SkyPointMailRQ skyPointMailRQ) {
 
         webClient
                 .post()
                 .uri(appConfig.getEventUrl() + appConfig.getEventVersion() + "/email/earned")
                 .header("X-localization", httpServletRequest.getHeader("X-localization"))
                 .header(HttpHeaders.AUTHORIZATION, authUtility.getAuthToken())
-                .bodyValue(skyPointEarnedRQ)
+                .bodyValue(skyPointMailRQ)
                 .retrieve()
                 .bodyToMono(Object.class)
                 .subscribe();
 
     }
 
-    public void redeemEmail(HttpServletRequest httpServletRequest, SkyPointRedeemRQ skyPointRedeemRQ) {
+    public void redeemEmail(HttpServletRequest httpServletRequest, SkyPointMailRQ skyPointMailRQ) {
 
         webClient
                 .post()
                 .uri(appConfig.getEventUrl() + appConfig.getEventVersion() + "/email/redeem")
                 .header("X-localization", httpServletRequest.getHeader("X-localization"))
                 .header(HttpHeaders.AUTHORIZATION, authUtility.getAuthToken())
-                .bodyValue(skyPointRedeemRQ)
+                .bodyValue(skyPointMailRQ)
                 .retrieve()
                 .bodyToMono(Object.class)
                 .subscribe();
 
     }
 
-    public void refundedEmail(HttpServletRequest httpServletRequest, SkyPointRefundedRQ skyPointRefundedRQ) {
+    public void refundedEmail(HttpServletRequest httpServletRequest, SkyPointMailRQ skyPointMailRQ) {
 
         webClient
                 .post()
                 .uri(appConfig.getEventUrl() + appConfig.getEventVersion() + "/email/refund")
                 .header("X-localization", httpServletRequest.getHeader("X-localization"))
                 .header(HttpHeaders.AUTHORIZATION, authUtility.getAuthToken())
-                .bodyValue(skyPointRefundedRQ)
+                .bodyValue(skyPointMailRQ)
                 .retrieve()
                 .bodyToMono(Object.class)
                 .subscribe();

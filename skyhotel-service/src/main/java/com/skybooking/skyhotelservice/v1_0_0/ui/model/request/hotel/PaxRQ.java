@@ -12,6 +12,6 @@ public class PaxRQ {
     @NotNull
     @Positive
     @Max(value = 16)
-    private Integer age;
+    private Integer age = 1;
 
 }

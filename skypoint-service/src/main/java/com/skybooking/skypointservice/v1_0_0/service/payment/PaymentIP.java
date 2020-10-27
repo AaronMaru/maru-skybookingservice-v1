@@ -4,14 +4,13 @@ import com.skybooking.skypointservice.constant.*;
 import com.skybooking.skypointservice.httpstatus.BadRequestException;
 import com.skybooking.skypointservice.httpstatus.InternalServerError;
 import com.skybooking.skypointservice.util.HeaderDataUtil;
+import com.skybooking.skypointservice.util.AmountFormatUtil;
 import com.skybooking.skypointservice.util.ValidateKeyUtil;
-import com.skybooking.skypointservice.v1_0_0.client.event.action.EventEmailAction;
 import com.skybooking.skypointservice.v1_0_0.client.event.action.EventNotificationAction;
 import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.NotificationRQ;
-import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.SkyPointEarnedRQ;
-import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.SkyPointRedeemRQ;
 import com.skybooking.skypointservice.v1_0_0.client.stakeholder.model.response.UserReferenceRS;
 import com.skybooking.skypointservice.v1_0_0.helper.AccountHelper;
+import com.skybooking.skypointservice.v1_0_0.helper.SendMailSMSHelper;
 import com.skybooking.skypointservice.v1_0_0.helper.SkyPointTransactionHelper;
 import com.skybooking.skypointservice.v1_0_0.helper.TransactionValueHelper;
 import com.skybooking.skypointservice.v1_0_0.io.entity.account.AccountEntity;
@@ -28,12 +27,12 @@ import com.skybooking.skypointservice.v1_0_0.io.repository.transaction.Transacti
 import com.skybooking.skypointservice.v1_0_0.io.repository.transaction.TransactionValueRP;
 import com.skybooking.skypointservice.v1_0_0.service.BaseServiceIP;
 import com.skybooking.skypointservice.v1_0_0.service.upgradeLevel.UpgradeLevelSV;
-import com.skybooking.skypointservice.v1_0_0.ui.model.request.ContactInfo;
 import com.skybooking.skypointservice.v1_0_0.ui.model.request.payment.PaymentRQ;
 import com.skybooking.skypointservice.v1_0_0.ui.model.response.StructureRS;
-import com.skybooking.skypointservice.v1_0_0.ui.model.response.payment.PaymentRS;
-import com.skybooking.skypointservice.v1_0_0.ui.model.response.payment.RedeemPointRS;
-import org.springframework.beans.BeanUtils;
+import com.skybooking.skypointservice.v1_0_0.ui.model.response.payment.EarnPointCheckRS;
+import com.skybooking.skypointservice.v1_0_0.ui.model.response.payment.EarnPointConfirmRS;
+import com.skybooking.skypointservice.v1_0_0.ui.model.response.payment.RedeemPointCheckRS;
+import com.skybooking.skypointservice.v1_0_0.ui.model.response.payment.RedeemPointConfirmRS;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
@@ -82,7 +81,7 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
     private TransactionValueHelper transactionValueHelper;
 
     @Autowired
-    private EventEmailAction eventEmailAction;
+    private SendMailSMSHelper sendMailSMSHelper;
 
     @Autowired
     private EventNotificationAction eventNotificationAction;
@@ -95,7 +94,6 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
         UserReferenceRS userReferenceRS = accountHelper.getUserReference(httpServletRequest);
         List<String> key = Arrays.asList("amount");
         ValidateKeyUtil.validateKey(paymentRQ, key);
-
         //======= Validate amount not negative
         ValidateKeyUtil.validateAmountNotNegative(paymentRQ.getAmount());
 
@@ -110,7 +108,11 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
         );
 
         //======== Data response
-        return this.earnPointResponse(account, configUpgradeLevel, paymentRQ.getAmount().multiply(configUpgradeLevel.getRate()));
+        EarnPointCheckRS earnPointCheckRS = new EarnPointCheckRS();
+        earnPointCheckRS.setAmount(AmountFormatUtil.roundAmount(paymentRQ.getAmount()));
+        earnPointCheckRS.setBalance(AmountFormatUtil.roundAmount(account.getBalance()));
+        earnPointCheckRS.setEarning(AmountFormatUtil.roundAmount(paymentRQ.getAmount().multiply(configUpgradeLevel.getRate())));
+        return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, earnPointCheckRS);
     }
 
     @Override
@@ -119,20 +121,10 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
         try {
             String languageCode = headerDataUtil.languageCode(httpServletRequest);
             //======= Validate key
-            List<String> key = Arrays.asList("amount", "transactionFor", "contactInfo", "referenceCode");
+            List<String> key = Arrays.asList("amount", "transactionFor", "referenceCode");
             ValidateKeyUtil.validateKey(paymentRQ, key);
-
-            //======== Get userType
-            ContactInfo contactInfo = paymentRQ.getContactInfo();
-            List<String> contactInfoKey = Arrays.asList("email", "name", "phoneCode", "phoneNumber");
-            ValidateKeyUtil.validateKey(contactInfo, contactInfoKey);
-
             //======= Validate amount not negative
             ValidateKeyUtil.validateAmountNotNegative(paymentRQ.getAmount());
-
-            //======= Validate name & phoneNumber
-            ValidateKeyUtil.validateLetter(contactInfo.getName());
-            ValidateKeyUtil.validateNumber(contactInfo.getPhoneNumber());
 
             String transactionTypeCode = this.getTransactionTypeCode(paymentRQ.getTransactionFor(), "earned");
             UserReferenceRS userReferenceRS = accountHelper.getUserReference(httpServletRequest);
@@ -197,19 +189,16 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
                     userReferenceRS.getStakeholderCompanyId(),
                     userReferenceRS.getStakeholderUserId(), transaction);
 
-            //======== Send mail
-            SkyPointEarnedRQ skyPointEarnedRQ = new SkyPointEarnedRQ();
-            skyPointEarnedRQ.setAmount(transaction.getAmount());
-            skyPointEarnedRQ.setTransactionCode(paymentRQ.getReferenceCode());
-            skyPointEarnedRQ.setEmail(paymentRQ.getContactInfo().getEmail());
-            skyPointEarnedRQ.setFullName(paymentRQ.getContactInfo().getName());
-            eventEmailAction.earnedEmail(httpServletRequest, skyPointEarnedRQ);
+            //======= Send mail or sms
+            sendMailSMSHelper.sendMailOrSmsEarnRedeem(userReferenceRS, transaction, paymentRQ, httpServletRequest, "earned",
+                    paymentRQ.getTransactionFor(), earningAmount);
 
             //======= Send Notification
-            this.sendNotification(httpServletRequest, transaction, "EARNED_POINT", transactionTypeCode);
+            this.sendNotification(httpServletRequest, transaction, "EARNED_POINT", transactionTypeCode,
+                    paymentRQ.getTransactionFor(), earningAmount);
 
             //======== Data response
-            return this.earnPointResponse(account, configUpgradeLevel, earningAmount);
+            return this.earnPointResponse(account, configUpgradeLevel, earningAmount, paymentRQ.getAmount());
         } catch (BadRequestException e) {
             e.printStackTrace();
             throw new BadRequestException(e.getMessage(), null);
@@ -223,6 +212,12 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
     @Override
     public StructureRS redeemCheck(HttpServletRequest httpServletRequest, PaymentRQ paymentRQ) {
         try {
+            //======= Validate key
+            List<String> key = Arrays.asList("amount");
+            ValidateKeyUtil.validateKey(paymentRQ, key);
+            //======= Validate amount not negative
+            ValidateKeyUtil.validateAmountNotNegative(paymentRQ.getAmount());
+
             //======== Get user reference
             UserReferenceRS userReferenceRS = accountHelper.getUserReference(httpServletRequest);
 
@@ -230,7 +225,11 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
             AccountEntity account = this.validate(httpServletRequest, paymentRQ, userReferenceRS);
 
             //======= Return response
-            return this.redeemPointResponse(httpServletRequest, account, paymentRQ.getAmount(), null);
+            RedeemPointCheckRS redeemPointCheckRS = new RedeemPointCheckRS();
+            redeemPointCheckRS.setBalance(AmountFormatUtil.roundAmount(account.getBalance()));
+            redeemPointCheckRS.setSavedPoint(AmountFormatUtil.roundAmount(account.getSavedPoint()));
+            redeemPointCheckRS.setRedeem(AmountFormatUtil.roundAmount(paymentRQ.getAmount()));
+            return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, redeemPointCheckRS);
         } catch (BadRequestException e) {
             e.printStackTrace();
             throw new BadRequestException(e.getMessage(), null);
@@ -245,6 +244,20 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
     @Transactional(rollbackFor = {})
     public StructureRS redeemConfirm(HttpServletRequest httpServletRequest, PaymentRQ paymentRQ) {
         try {
+
+            //======= Validate key
+            List<String> key = Arrays.asList("amount", "transactionFor", "referenceCode");
+            ValidateKeyUtil.validateKey(paymentRQ, key);
+            //======= Validate amount not negative
+            ValidateKeyUtil.validateAmountNotNegative(paymentRQ.getAmount());
+
+            //======= Check referenceCode with status success
+            TransactionEntity transactionReferenceCode = transactionRP.findByReferenceCodeAndStatus(paymentRQ.getReferenceCode(),
+                    TransactionStatusConstant.SUCCESS);
+            if (transactionReferenceCode != null) {
+                throw new BadRequestException("referenceCode_paid_already", null);
+            }
+
             //======== Get user reference
             UserReferenceRS userReferenceRS = accountHelper.getUserReference(httpServletRequest);
             AccountEntity account = this.validate(httpServletRequest, paymentRQ, userReferenceRS);
@@ -286,16 +299,13 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
                     userReferenceRS.getStakeholderCompanyId(),
                     userReferenceRS.getStakeholderUserId(), transaction);
 
-            //======= Send mail and notification
-            SkyPointRedeemRQ skyPointRedeemRQ = new SkyPointRedeemRQ();
-            skyPointRedeemRQ.setAmount(transaction.getAmount());
-            skyPointRedeemRQ.setEmail(paymentRQ.getContactInfo().getEmail());
-            skyPointRedeemRQ.setFullName(paymentRQ.getContactInfo().getName());
-            skyPointRedeemRQ.setTransactionCode(paymentRQ.getReferenceCode());
-            eventEmailAction.redeemEmail(httpServletRequest, skyPointRedeemRQ);
+            //======= Send mail or sms
+            sendMailSMSHelper.sendMailOrSmsEarnRedeem(userReferenceRS, transaction, paymentRQ, httpServletRequest, "redeemed",
+                    paymentRQ.getTransactionFor(), null);
 
             //======= Send Notification
-            this.sendNotification(httpServletRequest, transaction, "REDEEM_POINT", transactionTypeCode);
+            this.sendNotification(httpServletRequest, transaction, "REDEEM_POINT", transactionTypeCode, paymentRQ.getTransactionFor(),
+                    null);
 
             //========= Response
             return this.redeemPointResponse(httpServletRequest, account, transaction.getAmount(), transactionValue.getCode());
@@ -309,22 +319,6 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
     }
 
     private AccountEntity validate(HttpServletRequest httpServletRequest, PaymentRQ paymentRQ, UserReferenceRS userReferenceRS) {
-        //======= Validate key
-        List<String> key = Arrays.asList("amount", "transactionFor", "contactInfo", "referenceCode");
-        ValidateKeyUtil.validateKey(paymentRQ, key);
-
-        //======== Get userType
-        ContactInfo contactInfo = paymentRQ.getContactInfo();
-        List<String> contactInfoKey = Arrays.asList("email", "name", "phoneCode", "phoneNumber");
-        ValidateKeyUtil.validateKey(contactInfo, contactInfoKey);
-
-        //======= Validate amount not negative
-        ValidateKeyUtil.validateAmountNotNegative(paymentRQ.getAmount());
-
-        //======= Validate name & phoneNumber
-        ValidateKeyUtil.validateLetter(contactInfo.getName());
-        ValidateKeyUtil.validateNumber(contactInfo.getPhoneNumber());
-
         //======= Check limitation of skyStaff
         if (userReferenceRS.getType().equalsIgnoreCase(UserTypeConstant.SKYOWNER)) {
             if (!userReferenceRS.getUserRole().equalsIgnoreCase("admin")) {
@@ -363,12 +357,16 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
         return account;
     }
 
-    private StructureRS earnPointResponse(AccountEntity account, ConfigUpgradeLevelEntity configUpgradeLevel, BigDecimal earningAmount) {
-        PaymentRS paymentRS = new PaymentRS();
-        BeanUtils.copyProperties(account, paymentRS);
-        paymentRS.setLevelName(configUpgradeLevel.getLevelName());
-        paymentRS.setEarning(earningAmount);
-        return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, paymentRS);
+    private StructureRS earnPointResponse(AccountEntity account, ConfigUpgradeLevelEntity configUpgradeLevel,
+                                          BigDecimal earningAmount, BigDecimal amount) {
+        EarnPointConfirmRS earnPointConfirmRS = new EarnPointConfirmRS();
+        earnPointConfirmRS.setBalance(AmountFormatUtil.roundAmount(account.getBalance()));
+        earnPointConfirmRS.setAmount(AmountFormatUtil.roundAmount(amount));
+        earnPointConfirmRS.setLevelCode(account.getLevelCode());
+        earnPointConfirmRS.setLevelName(configUpgradeLevel.getLevelName());
+        earnPointConfirmRS.setEarning(AmountFormatUtil.roundAmount(earningAmount));
+        earnPointConfirmRS.setSavedPoint(AmountFormatUtil.roundAmount(account.getSavedPoint()));
+        return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, earnPointConfirmRS);
     }
 
     private StructureRS redeemPointResponse(HttpServletRequest httpServletRequest, AccountEntity account,
@@ -380,20 +378,27 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
                 account.getType(),
                 languageCode
         );
-        RedeemPointRS redeemPointRS = new RedeemPointRS();
-        BeanUtils.copyProperties(account, redeemPointRS);
-        redeemPointRS.setRedeem(amount);
-        redeemPointRS.setLevelName(configUpgradeLevel.getLevelName());
-        redeemPointRS.setTransactionCode(transactionCode);
-        return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, redeemPointRS);
+        RedeemPointConfirmRS redeemPointConfirmRS = new RedeemPointConfirmRS();
+        redeemPointConfirmRS.setBalance(AmountFormatUtil.roundAmount(account.getBalance()));
+        redeemPointConfirmRS.setSavedPoint(AmountFormatUtil.roundAmount(account.getSavedPoint()));
+        redeemPointConfirmRS.setRedeem(AmountFormatUtil.roundAmount(amount));
+        redeemPointConfirmRS.setLevelCode(account.getLevelCode());
+        redeemPointConfirmRS.setLevelName(configUpgradeLevel.getLevelName());
+        redeemPointConfirmRS.setTransactionCode(transactionCode);
+        return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, redeemPointConfirmRS);
     }
 
-    private void sendNotification(HttpServletRequest httpServletRequest, TransactionEntity transaction, String type, String transactionTypeCode) {
+    private void sendNotification(HttpServletRequest httpServletRequest, TransactionEntity transaction, String type, String transactionTypeCode,
+                                  String transactionFor, BigDecimal earnAmount) {
         NotificationRQ notificationRQ = new NotificationRQ();
         TransactionValueEntity transactionValue = transactionValueRP.findByTransactionIdAndTransactionTypeCode(transaction.getId(),
                 transactionTypeCode);
-        notificationRQ.setBookingId(transactionValue.getCode());
+        notificationRQ.setTransactionCode(transactionValue.getCode());
+        notificationRQ.setTransactionFor(transactionFor);
         notificationRQ.setType(type);
+        if (type.equalsIgnoreCase("EARNED_POINT")) {
+            notificationRQ.setAmount(AmountFormatUtil.roundAmount(earnAmount));
+        }
         eventNotificationAction.sendNotification(httpServletRequest, notificationRQ);
     }
 

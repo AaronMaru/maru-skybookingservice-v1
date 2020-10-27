@@ -45,4 +45,7 @@ public class AppConfig {
 
     @Value("${spring.service.point.version}")
     private String pointVersion;
+
+    @Value("${spring.point.topup}")
+    private String pointTopUp;
 }

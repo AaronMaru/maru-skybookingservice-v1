@@ -19,9 +19,9 @@ public class AuthService {
 
     public int checkToken(String authorization) {
 
-        if (authorization != null && authorization.contains("Bearer")){
+        if (authorization != null && authorization.contains("Bearer")) {
 
-            String tokenId = this.getClaim(authorization.substring("Bearer".length()+1), "jti", String.class);
+            String tokenId = this.getClaim(authorization.substring("Bearer".length() + 1), "jti", String.class);
 
             var auth = oauthUserRP.getFirst(tokenId);
             System.out.println(auth);

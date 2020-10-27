@@ -24,6 +24,7 @@ public class RateCached implements Serializable {
     private List<PromotionCached> promotions;
     private RateTaxesCached taxes;
     private RateBreakDownCached rateBreakDown;
+    private SpecialOfferCached offer;
     private List<RateOfferCached> offers;
 
 }

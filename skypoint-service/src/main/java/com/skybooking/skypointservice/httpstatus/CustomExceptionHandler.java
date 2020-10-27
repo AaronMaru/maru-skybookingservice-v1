@@ -38,7 +38,7 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
         List<FieldError> fieldErrors = result.getFieldErrors();
         String validation = "";
 
-        for (FieldError fieldError: fieldErrors) {
+        for (FieldError fieldError : fieldErrors) {
             validation = fieldError.getDefaultMessage();
         }
 

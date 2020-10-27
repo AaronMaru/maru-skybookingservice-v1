@@ -29,11 +29,11 @@ build/
 
 ### VS Code ###
 .vscode/
-
-/src/main/resources/bootstrap.yml
-
 *.pdf
-
 *.log
 *.tmp
 *.gz
+
+
+/src/main/resources/application.yml
+/src/main/resources/bootstrap.yml

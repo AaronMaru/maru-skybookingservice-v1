@@ -1,6 +1,7 @@
 package com.skybooking.skyflightservice.v1_0_0.service.implement.booking;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skybooking.skyflightservice.constant.BookingConstant;
 import com.skybooking.skyflightservice.constant.CompanyConstant;
 import com.skybooking.skyflightservice.constant.TicketConstant;
@@ -24,6 +25,7 @@ import com.skybooking.skyflightservice.v1_0_0.util.GeneratorUtils;
 import com.skybooking.skyflightservice.v1_0_0.util.booking.BookingUtility;
 import com.skybooking.skyflightservice.v1_0_0.util.calculator.CalculatorUtils;
 import com.skybooking.skyflightservice.v1_0_0.util.passenger.PassengerUtil;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -83,9 +85,13 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
 
     @Override
     @Transactional(rollbackFor = {Exception.class})
+    @SneakyThrows
     public BookingEntity save(BookingRequestTA requestTA, BookingMetadataTA metadataTA, JsonNode pnrRS, BookingCreateRQ request) {
 
         var booking = this.insertBooking(requestTA, metadataTA, pnrRS);
+
+        log.info("after save: {}", new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(booking));
+
         this.insertBookingOriginDestination(requestTA, booking.getId());
         this.insertBookingSpecialService(booking.getId(), pnrRS);
         List<TravelItineraryTA> travelItineraryTAS = this.insertBookingTravelItinerary(booking.getId(), pnrRS, request);
@@ -99,6 +105,7 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
 
 
     @Override
+    @SneakyThrows
     public BookingEntity insertBooking(BookingRequestTA requestTA, BookingMetadataTA metadataTA, JsonNode pnrRS) {
 
         var booking = new BookingEntity();
@@ -171,12 +178,15 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
         booking.setIsOfflineBooking(0);
         booking.setIsAdditional(0);
 
+        log.info("before save: {}", new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(booking));
+
         return bookingRP.save(booking);
 
     }
 
 
     @Override
+    @SneakyThrows
     public void insertBookingOriginDestination(BookingRequestTA requestTA, Integer bookingId) {
 
         var requestId = requestTA.getRequest().getRequestId();
@@ -198,8 +208,10 @@ public class BookingDataIP extends MetadataIP implements BookingDataSV {
             bookingOD.setMultipleAirStatus(leg.isMultiAir() ? 1 : 0);
             bookingOD.setAdjustmentDate(leg.getAdjustmentDates());
 
+            log.info("before save OD: {}", new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(bookingOD));
             // store parent data
             bookingOD = bookingOriginDestinationRP.save(bookingOD);
+            log.info("after save OD: {}", new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(bookingOD));
 
             var totalStop = leg.getSegments().size() - 1;
 

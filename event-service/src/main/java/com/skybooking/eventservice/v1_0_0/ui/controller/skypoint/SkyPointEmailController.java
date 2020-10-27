@@ -28,13 +28,18 @@ public class SkyPointEmailController extends BaseController {
         emailSV.send(sendRQ);
     }
 
-    @PostMapping("no-auth/top-up")
-    public ResponseEntity<StructureRS> topUpSkyPoint(@Valid @RequestBody SkyPointTopUpRQ skyPointTopUpRQ) {
+    @PostMapping("no-auth/top-up/success")
+    public ResponseEntity<StructureRS> topUpSkyPointSuccess(@Valid @RequestBody SkyPointTopUpSuccessRQ skyPointTopUpSuccessRQ) {
 
-        S3UploadRS s3UploadRS = emailSV.topUp(skyPointTopUpRQ);
+        S3UploadRS s3UploadRS = emailSV.topUpSuccess(skyPointTopUpSuccessRQ);
 
         return response(new StructureRS(HttpStatus.OK.value(),"is_skb_info", s3UploadRS));
 
+    }
+
+    @PostMapping("no-auth/top-up/failed")
+    public void topUpSkyPointFailed(@Valid @RequestBody SkyPointTopUpFailedRQ skyPointTopUpFailedRQ) {
+        emailSV.topUpFailed(skyPointTopUpFailedRQ);
     }
 
     @PostMapping("earned")

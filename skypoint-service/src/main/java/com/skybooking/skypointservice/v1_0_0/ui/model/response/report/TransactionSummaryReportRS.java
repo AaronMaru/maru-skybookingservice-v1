@@ -8,5 +8,5 @@ import java.util.List;
 @Data
 public class TransactionSummaryReportRS {
     private TransactionSummaryReportTO transactionSummaryReportInfo;
-    private List<TransactionSummaryReportTO> transactionSummaryReportList;
+    private List<TransactionSummaryReport> transactionSummaryReportList;
 }

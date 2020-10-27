@@ -4,7 +4,6 @@ import com.skybooking.skypointservice.v1_0_0.ui.model.response.StructureRS;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Date;
 
 @Service
 public interface ReportSV {
@@ -43,12 +42,12 @@ public interface ReportSV {
      * -----------------------------------------------------------------------------------------------------------------
      * Backend: Transaction summary report list filter by startDate & endDate
      * -----------------------------------------------------------------------------------------------------------------
-     *
+     * @param httpServletRequest HttpServletRequest
      * @param startDate String
      * @param endDate   String
      * @return StructureRS
      */
-    StructureRS transactionSummaryReportList(String startDate, String endDate);
+    StructureRS transactionReportExport(HttpServletRequest httpServletRequest, String startDate, String endDate);
 
     /**
      * -----------------------------------------------------------------------------------------------------------------

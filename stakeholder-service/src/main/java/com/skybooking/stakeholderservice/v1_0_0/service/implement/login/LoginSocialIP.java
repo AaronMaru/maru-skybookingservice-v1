@@ -72,6 +72,7 @@ public class LoginSocialIP implements LoginSocialSV {
         UserEntity user = userRepository.findByEmailOrProviderId(loginSocialRQ.getUsername(), loginSocialRQ.getProvider());
 
         if (user == null) {
+            loginSocialRQ.setPassword(pwdEncoder.encode(PasswordConstant.DEFAULT));
             user = addSkyuser(loginSocialRQ);
             logger.activities(ActivityLoggingBean.Action.REGISTER, user);
         }
@@ -108,25 +109,32 @@ public class LoginSocialIP implements LoginSocialSV {
 
         String credential = userBean.oauth2Credential(httpHeaders);
         UserEntity user = userRepository.findByEmailOrProviderId(loginSocialRQ.getUsername(), loginSocialRQ.getProvider());
+        TokenRS token;
+        String password = loginSocialRQ.getPassword();
 
         if (user == null) {
-            loginSocialRQ.setPassword(pwdEncoder.encode(loginSocialRQ.getPassword()));
+            loginSocialRQ.setPassword(pwdEncoder.encode(password));
             user = addSkyuser(loginSocialRQ);
             logger.activities(ActivityLoggingBean.Action.REGISTER, user);
-        }
-
-        if (loginSocialRQ.getPassword() != null) {
-            if (pwdEncoder.matches(PasswordConstant.DEFAULT, user.getPassword()) || user.getPassword() == null) {
-                user.setPassword(pwdEncoder.encode(loginSocialRQ.getPassword()));
-                userRepository.save(user);
-            }
         }
 
         if (user.getProvider() == null) {
             throw new BadRequestException("fail_reg", null);
         }
 
-        TokenRS token = userBean.getCredential(user.getEmail(), credential, null, loginSocialRQ.getProvider());
+        if (loginSocialRQ.getPassword() != null) {
+            if (pwdEncoder.matches(PasswordConstant.DEFAULT, user.getPassword()) || user.getPassword() == null) {
+                user.setPassword(pwdEncoder.encode(password));
+                userRepository.save(user);
+                token = userBean.getCredential(user.getEmail(), password, credential, null, loginSocialRQ.getProvider());
+            } else if (pwdEncoder.matches(password, user.getPassword())) {
+                token = userBean.getCredential(user.getEmail(), password, credential, null, loginSocialRQ.getProvider());
+            } else {
+                token = userBean.getCredential(user.getEmail(), credential, null, loginSocialRQ.getProvider());
+            }
+        } else {
+            token = userBean.getCredential(user.getEmail(), credential, null, loginSocialRQ.getProvider());
+        }
 
         UserDetailsTokenRS userDetailsTokenRS = new UserDetailsTokenRS();
 

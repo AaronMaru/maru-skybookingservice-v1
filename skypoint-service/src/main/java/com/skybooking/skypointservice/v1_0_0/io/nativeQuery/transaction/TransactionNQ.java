@@ -17,10 +17,10 @@ public interface TransactionNQ extends NativeQuery {
             @NativeQueryParam(value = "accountId") Integer accountId);
 
     @Transactional
-    List<OfflineTopUpTransactionDetailTO> getRecentOfflineTopUp();
+    List<TopUpTransactionDetailTO> getRecentTopUp();
 
     @Transactional
-    List<OfflineTopUpTransactionDetailTO> searchOfflineTopUpTransaction(@NativeQueryParam(value = "valueSearch")
+    List<TopUpTransactionDetailTO> searchOfflineTopUpTransaction(@NativeQueryParam(value = "valueSearch")
                                                                                 String valueSearch);
 
     @Transactional

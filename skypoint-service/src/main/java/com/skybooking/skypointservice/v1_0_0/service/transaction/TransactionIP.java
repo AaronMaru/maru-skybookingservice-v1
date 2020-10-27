@@ -4,6 +4,7 @@ import com.skybooking.skypointservice.constant.ResponseConstant;
 import com.skybooking.skypointservice.httpstatus.BadRequestException;
 import com.skybooking.skypointservice.httpstatus.InternalServerError;
 import com.skybooking.skypointservice.util.HeaderDataUtil;
+import com.skybooking.skypointservice.util.AmountFormatUtil;
 import com.skybooking.skypointservice.v1_0_0.client.stakeholder.model.response.BasicCompanyAccountInfoRS;
 import com.skybooking.skypointservice.v1_0_0.helper.AccountHelper;
 import com.skybooking.skypointservice.v1_0_0.helper.TopUpHelper;
@@ -23,12 +24,14 @@ import com.skybooking.skypointservice.v1_0_0.ui.model.request.transaction.Transa
 import com.skybooking.skypointservice.v1_0_0.ui.model.response.PagingRS;
 import com.skybooking.skypointservice.v1_0_0.ui.model.response.StructureRS;
 import com.skybooking.skypointservice.v1_0_0.ui.model.response.transaction.*;
+import com.skybooking.skypointservice.v1_0_0.util.datetime.DateTimeBean;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -60,6 +63,9 @@ public class TransactionIP extends BaseServiceIP implements TransactionSV {
     @Autowired
     private TopUpHelper topUpHelper;
 
+    @Autowired
+    private DateTimeBean dateTimeBean;
+
     @Override
     public StructureRS getTransactionDetail(TransactionRQ transactionRQ) {
         try {
@@ -79,6 +85,8 @@ public class TransactionIP extends BaseServiceIP implements TransactionSV {
 
             TransactionRS transactionRS = new TransactionRS();
             BeanUtils.copyProperties(transaction, transactionRS);
+            transactionRS.setAmount(AmountFormatUtil.roundAmount(transaction.getAmount()));
+            transactionRS.setCode(transactionValue.getCode());
             transactionRS.setName(transactionContactInfo.getName());
             transactionRS.setEmail(transactionContactInfo.getEmail());
             transactionRS.setPhoneNumber(transactionContactInfo.getPhoneCode() + " "
@@ -96,12 +104,13 @@ public class TransactionIP extends BaseServiceIP implements TransactionSV {
     }
 
     @Override
-    public StructureRS getRecentOfflineTopUp() {
+    public StructureRS getRecentTopUp() {
         try {
-            List<OfflineTopUpTransactionDetailTO> offlineTopUpTransactionDetailTO =
-                    transactionNQ.getRecentOfflineTopUp();
+            List<TopUpTransactionDetailTO> topUpTransactionDetailTO =
+                    transactionNQ.getRecentTopUp();
 
-            return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, offlineTopUpTransactionDetailTO);
+            return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS,
+                    formatOfflineTopUpTransactionList(topUpTransactionDetailTO));
         } catch (BadRequestException e) {
             e.printStackTrace();
             throw new BadRequestException(e.getMessage(), null);
@@ -112,27 +121,26 @@ public class TransactionIP extends BaseServiceIP implements TransactionSV {
     }
 
     @Override
-    public StructureRS getRecentTransaction(HttpServletRequest httpServletRequest, String userCode, Integer limit, Integer page) {
+    public StructureRS getRecentTransaction(HttpServletRequest httpServletRequest, String userCode, Integer size, Integer page) {
         try {
             String languageCode = headerDataUtil.languageCode(httpServletRequest);
             List<AccountTransactionTO> recentTransactionList;
             PagingRS pagesRS = new PagingRS();
-            if (limit != 0) {
-                Integer offset = (page - 1) * limit;
-                recentTransactionList = transactionNQ.getRecentTransactionByAccount(userCode, languageCode, limit, offset);
+            if (size != 0) {
+                Integer offset = (page - 1) * size;
+                recentTransactionList = transactionNQ.getRecentTransactionByAccount(userCode, languageCode, size, offset);
 
                 Long total = (long) transactionNQ.getAllRecentTransactionByAccount(userCode, languageCode).size();
 
-                Integer pages = (int) Math.ceil(total / Double.valueOf(limit));
                 pagesRS.setPage(page);
-                pagesRS.setSize(pages);
+                pagesRS.setSize(size);
                 pagesRS.setTotals(total);
 
             } else {
                 recentTransactionList = transactionNQ.getAllRecentTransactionByAccount(userCode, languageCode);
             }
 
-            return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, recentTransactionList, pagesRS);
+            return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, formatRecentTransactionList(recentTransactionList), pagesRS);
         } catch (BadRequestException e) {
             e.printStackTrace();
             throw new BadRequestException(e.getMessage(), null);
@@ -190,11 +198,14 @@ public class TransactionIP extends BaseServiceIP implements TransactionSV {
     @Override
     public StructureRS searchOfflineTransaction(String searchValue) {
         try {
-            List<OfflineTopUpTransactionDetailTO> topUpTransactionDetailTOList =
-                    transactionNQ.searchOfflineTopUpTransaction(searchValue);
+            List<TopUpTransactionDetailTO> topUpTransactionDetailTOList = new ArrayList<>();
+            if (!searchValue.equalsIgnoreCase("")) {
+                topUpTransactionDetailTOList = transactionNQ.searchOfflineTopUpTransaction(searchValue);
+            }
 
             SearchOfflineTopUpTransactionRS searchOfflineTopUpTransactionRS = new SearchOfflineTopUpTransactionRS();
-            searchOfflineTopUpTransactionRS.setOfflineTopUpTransactionList(topUpTransactionDetailTOList);
+            searchOfflineTopUpTransactionRS.setOfflineTopUpTransactionList(
+                    formatOfflineTopUpTransactionList(topUpTransactionDetailTOList));
             return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, searchOfflineTopUpTransactionRS);
         } catch (BadRequestException e) {
             e.printStackTrace();
@@ -216,8 +227,10 @@ public class TransactionIP extends BaseServiceIP implements TransactionSV {
             }
 
             OnlineTopUpTransactionDetailRS onlineTopUpTransactionDetailRS = new OnlineTopUpTransactionDetailRS();
-            BeanUtils.copyProperties(onlineTopUpTransactionDetailTO, onlineTopUpTransactionDetailRS);
-            onlineTopUpTransactionDetailRS.setTransactionDate(onlineTopUpTransactionDetailTO.getTransactionDate());
+            BeanUtils.copyProperties(new OnlineTopUpTransactionDetailTO(onlineTopUpTransactionDetailTO),
+                    onlineTopUpTransactionDetailRS);
+            onlineTopUpTransactionDetailRS.setTransactionDate(dateTimeBean.convertDateTime(
+                    onlineTopUpTransactionDetailTO.getTransactionDate()));
 
             return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, onlineTopUpTransactionDetailRS);
         } catch (BadRequestException e) {
@@ -230,22 +243,22 @@ public class TransactionIP extends BaseServiceIP implements TransactionSV {
     }
 
     @Override
-    public StructureRS getPendingOfflineTopUpList(Integer page, Integer limit) {
+    public StructureRS getPendingOfflineTopUpList(Integer page, Integer size) {
         try {
-            Integer offset = (page - 1) * limit;
+            Integer offset = (page - 1) * size;
             List<PendingOfflineTopUpTransactionTO> pendingOfflineTransactionList = transactionNQ
-                    .getPendingOfflineTopUpList(limit, offset);
+                    .getPendingOfflineTopUpList(size, offset);
 
             Long total = (long) transactionNQ.countAllPendingOfflineTopUpTransaction().size();
 
-            Integer pages = (int) Math.ceil(total / Double.valueOf(limit));
             PagingRS pagingRS = new PagingRS();
             pagingRS.setPage(page);
-            pagingRS.setSize(pages);
+            pagingRS.setSize(size);
             pagingRS.setTotals(total);
 
             PendingOfflineTopUpTransactionRS pendingOfflineTopUpTransactionRS = new PendingOfflineTopUpTransactionRS();
-            pendingOfflineTopUpTransactionRS.setPendingOfflineTransactionList(pendingOfflineTransactionList);
+            pendingOfflineTopUpTransactionRS.setPendingOfflineTransactionList(
+                    formatPendingOfflineTopUpTransactionList(pendingOfflineTransactionList));
             return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, pendingOfflineTopUpTransactionRS, pagingRS);
         } catch (BadRequestException e) {
             e.printStackTrace();
@@ -256,4 +269,37 @@ public class TransactionIP extends BaseServiceIP implements TransactionSV {
         }
     }
 
+    private List<PendingOfflineTopUpTransactionTO> formatPendingOfflineTopUpTransactionList(
+            List<PendingOfflineTopUpTransactionTO> pendingOfflineTopUpTransactionTOList) {
+        List<PendingOfflineTopUpTransactionTO> pendingOfflineTopUpTransactionList = new ArrayList<>();
+        if (pendingOfflineTopUpTransactionTOList.size() > 0) {
+            pendingOfflineTopUpTransactionTOList.forEach(pendingOfflineTopUpTransactionTO -> {
+                pendingOfflineTopUpTransactionList.add(new PendingOfflineTopUpTransactionTO(pendingOfflineTopUpTransactionTO));
+            });
+        }
+
+        return pendingOfflineTopUpTransactionList;
+    }
+
+    private List<AccountTransactionTO> formatRecentTransactionList(List<AccountTransactionTO> accountTransactionTOList) {
+        List<AccountTransactionTO> recentTransactionList = new ArrayList<>();
+        if (accountTransactionTOList.size() > 0) {
+            accountTransactionTOList.forEach(accountTransactionTO -> {
+                recentTransactionList.add(new AccountTransactionTO(accountTransactionTO));
+            });
+        }
+        return recentTransactionList;
+    }
+
+    private List<TopUpTransactionDetailTO> formatOfflineTopUpTransactionList(
+            List<TopUpTransactionDetailTO> topUpTransactionDetailTOList) {
+        List<TopUpTransactionDetailTO> offlineTopUpTransactionDetailList = new ArrayList<>();
+        if (topUpTransactionDetailTOList.size() > 0) {
+            topUpTransactionDetailTOList.forEach(offlineTopUpTransactionDetailTO -> {
+                offlineTopUpTransactionDetailList.add(new TopUpTransactionDetailTO(offlineTopUpTransactionDetailTO));
+            });
+        }
+
+        return offlineTopUpTransactionDetailList;
+    }
 }

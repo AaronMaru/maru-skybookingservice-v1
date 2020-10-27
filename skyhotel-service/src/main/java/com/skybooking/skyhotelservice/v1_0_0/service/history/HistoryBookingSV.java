@@ -8,6 +8,6 @@ import org.springframework.stereotype.Service;
 @Service
 public interface HistoryBookingSV {
     StructureRS listing();
-    BookingDetailRS detail(String bookingCode, String userType);
+    BookingDetailRS detail(String bookingCode, String userType, Long companyId);
     HistoryBookingDetailRS historyDetail(String bookingCode);
 }

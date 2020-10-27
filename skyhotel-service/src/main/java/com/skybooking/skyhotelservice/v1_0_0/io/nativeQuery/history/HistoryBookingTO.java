@@ -32,6 +32,7 @@ public class HistoryBookingTO {
     private String cardHolderName;
     private String cardType;
     private String cardNumber;
+    private String paymentMethod;
     private BigDecimal paidAmount;
     private String paymentId;
     private String paymentOf;

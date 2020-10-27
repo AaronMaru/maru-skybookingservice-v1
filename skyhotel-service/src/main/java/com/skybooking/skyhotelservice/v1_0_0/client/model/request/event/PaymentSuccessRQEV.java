@@ -6,17 +6,17 @@ import java.math.BigDecimal;
 @Data
 public class PaymentSuccessRQEV {
 
-    private String email = "tenglyheang@skybooking.info";
-    private String bookingCode = "bookingcode";
-    private String hotelName = "Teriblade";
+    private String email = "";
+    private String bookingCode = "";
+    private String hotelName = "";
     private Integer period = 0;
-    private String roomType = "Triple Kill";
+    private String roomType = "";
     private Integer numRooms = 0;
     private Integer numExtraBed = 0;
     private BigDecimal totalRoomCharges = BigDecimal.ZERO;
     private BigDecimal totalExtraBedCharges = BigDecimal.ZERO;
     private BigDecimal grandTotal = BigDecimal.ZERO;
-    private BigDecimal totalPaymentFee = BigDecimal.ZERO;
+    private BigDecimal totalPaidToCreditCard = BigDecimal.ZERO;
     private String lang;
 
 }

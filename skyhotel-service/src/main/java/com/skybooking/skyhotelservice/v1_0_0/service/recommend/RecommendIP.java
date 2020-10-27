@@ -55,16 +55,20 @@ public class RecommendIP extends BaseServiceIP implements RecommendSV {
 
         List<HotelRS> data = availabilitySV.getAvailabilityByDesCodes(desCode, geolocation);
 
-        data.stream().forEach(hotel -> {
-            hotel.getRooms().stream().forEach(room -> {
-                room.getRates().stream().forEach(rate -> {
-                    if (rate.getPromotions() == null) {
-                        hotel.setHasPromotion(true);
-                    }
-                });
-            });
-        });
-        data = data.stream().sorted(Comparator.comparing((HotelRS hotel) -> hotel.getHasPromotion()).thenComparing(compares -> compares.getScore().getNumber(), Comparator.reverseOrder())).collect(Collectors.toList());
+//        data.stream().forEach(hotel -> {
+//            hotel.getRooms().stream().forEach(room -> {
+//                room.getRates().stream().forEach(rate -> {
+//                    if (rate.getPromotions() == null) {
+//                        hotel.setHasPromotion(true);
+//                    }
+//                });
+//            });
+//        });
+//        data = data.stream()
+//            .sorted(Comparator.comparing(HotelRS::getHasPromotion)
+//            .thenComparing(compares -> compares.getScore().getNumber(), Comparator.reverseOrder()))
+//            .collect(Collectors.toList());
+
         return responseBodyWithSuccessMessage(data);
 
     }

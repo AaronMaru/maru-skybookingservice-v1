@@ -39,9 +39,6 @@ public class EmailBean {
     private MultiLanguageNQ multiLanguageNQ;
 
     @Autowired
-    private JwtUtils jwtUtils;
-
-    @Autowired
     private LocaleRP localeRP;
 
     @Autowired
@@ -106,7 +103,7 @@ public class EmailBean {
         MultiLanguageTO multiLanguageTO = this.getMailData(templateName);
         Map<String, Object> mailTemplateData = new HashMap<>();
         mailTemplateData.put("receiver", receiver);
-        mailTemplateData.put("fullName", jwtUtils.getUserToken().getFullname());
+        mailTemplateData.put("fullName", "Customer");
         mailTemplateData.put("templateName", templateName);
         mailTemplateData.put("hasTemplate", true);
         mailTemplateData.put("script", multiLanguageTO);
@@ -148,5 +145,14 @@ public class EmailBean {
         labels.forEach(item -> pdfData.put(item.getKey(), item.getValue()));
 
         return pdfData;
+    }
+
+    public Map<String, Object> dataSMSTemplate(String label, Map<String, Object> smsData) {
+
+        List<TranslationEntity> labels = this.translationLabel(label);
+
+        labels.forEach(item -> smsData.put(item.getKey(), item.getValue()));
+
+        return smsData;
     }
 }

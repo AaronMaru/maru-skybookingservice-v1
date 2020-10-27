@@ -20,6 +20,7 @@ public class PaymentRQ {
     @NotBlank(message = "Product type is required")
     @Include(contains = "FLIGHT|HOTEL|POINT", delimiter = "\\|")
     private String productType;
+
     private String platform;
     private Double paymentAmount;
     private String providerType;

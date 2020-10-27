@@ -16,5 +16,6 @@ public class FlightMandatoryDataRS {
     private Integer companyId;
     private Integer bookingId;
     private String bookingCode;
+    private String phoneCode;
 
 }

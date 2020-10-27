@@ -21,18 +21,18 @@ public class TransactionController {
     }
 
     @PreAuthorize("#oauth2.hasScope('get-recent-offline-topup-skypoint')")
-    @RequestMapping(value = "/recent/offline/top-up", method = RequestMethod.GET)
-    public StructureRS getRecentOfflineTopUp() {
-        return transactionSV.getRecentOfflineTopUp();
+    @RequestMapping(value = "/recent/top-up", method = RequestMethod.GET)
+    public StructureRS getRecentTopUp() {
+        return transactionSV.getRecentTopUp();
     }
 
     @PreAuthorize("#oauth2.hasScope('get-recent-transaction-skypoint')")
     @RequestMapping(value = "/recent", method = RequestMethod.GET)
     public StructureRS getRecentTransaction(HttpServletRequest httpServletRequest,
                                             @RequestParam String userCode,
-                                            @RequestParam(name = "limit", defaultValue = "0") Integer limit,
+                                            @RequestParam(name = "size", defaultValue = "0") Integer size,
                                             @RequestParam(name = "page", defaultValue = "1") Integer page) {
-        return transactionSV.getRecentTransaction(httpServletRequest, userCode, limit, page);
+        return transactionSV.getRecentTransaction(httpServletRequest, userCode, size, page);
     }
 
     @PreAuthorize("#oauth2.hasScope('get-offline-topup-detail-skypoint')")
@@ -55,7 +55,7 @@ public class TransactionController {
 
     @RequestMapping(value = "/pending/offline/top-up", method = RequestMethod.GET)
     public StructureRS getPendingOfflineTopUpTransaction(@RequestParam(name = "page", defaultValue = "1") Integer page,
-                                                         @RequestParam(name = "limit", defaultValue = "50") Integer limit) {
-        return transactionSV.getPendingOfflineTopUpList(page, limit);
+                                                         @RequestParam(name = "size", defaultValue = "10") Integer size) {
+        return transactionSV.getPendingOfflineTopUpList(page, size);
     }
 }

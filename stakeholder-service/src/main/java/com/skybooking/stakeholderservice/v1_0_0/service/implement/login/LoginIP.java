@@ -84,12 +84,7 @@ public class LoginIP implements LoginSV {
         checkUserStatus(user, loginRQ.getPassword());
 
         String credential = userBean.oauth2Credential(httpHeaders);
-        TokenRS token;
-        if (user.getProvider() != null)
-            token = userBean.getCredential(loginRQ.getUsername(), credential, loginRQ.getCode(), null);
-        else
-            token = userBean.getCredential(loginRQ.getUsername(), loginRQ.getPassword(), credential, loginRQ.getCode(), null);
-
+        TokenRS token = userBean.getCredential(loginRQ.getUsername(), loginRQ.getPassword(), credential, loginRQ.getCode(), null);
 
         userBean.registerPlayer(user);
 

@@ -9,5 +9,5 @@ import java.util.List;
 @Data
 public class BackendAccountInfoReportRS {
     private BalanceInfo balanceInfo;
-    private List<TransactionSummaryReportTO> transactionSummaryReportList;
+    private List<TransactionSummaryReport> transactionSummaryReportList;
 }

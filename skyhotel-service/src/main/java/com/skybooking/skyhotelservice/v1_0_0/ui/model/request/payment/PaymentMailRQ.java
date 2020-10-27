@@ -9,16 +9,18 @@ public class PaymentMailRQ {
     private String email;
     private String bookingCode;
     private String lang;
+    private Long compnayId;
 
     @Include(contains = "voucher|e-receipt", delimiter = "\\|", message = "Type is invalid")
     private String type = "all";
 
     public PaymentMailRQ() {}
 
-    public PaymentMailRQ(String email, String bookingCode, String lang) {
+    public PaymentMailRQ(String email, String bookingCode, String lang, Long compnayId) {
         this.email = email;
         this.bookingCode = bookingCode;
         this.lang = lang;
+        this.compnayId = compnayId;
     }
 
 }

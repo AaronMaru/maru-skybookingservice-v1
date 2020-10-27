@@ -6,7 +6,6 @@ import io.github.gasparbarancelli.NativeQueryParam;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,12 +35,14 @@ public interface HistoryNQ extends NativeQuery {
 
     @Transactional
     List<SkyOwnerTransactionHistoryTO> skyOwnerTransactionHistory(@NativeQueryParam(value = "userCode") String userCode,
+                                                                  @NativeQueryParam(value = "stakeholderUserId") Integer stakeholderUserId,
                                                                   @NativeQueryParam(value = "languageCode") String languageCode,
                                                                   @NativeQueryParam(value = "limit") Integer limit,
                                                                   @NativeQueryParam(value = "offset") Integer offset);
 
     @Transactional
     List<SkyOwnerTransactionHistoryTO> skyOwnerTransactionHistoryAll(@NativeQueryParam(value = "userCode") String userCode,
+                                                                     @NativeQueryParam(value = "stakeholderUserId") Integer stakeholderUserId,
                                                                      @NativeQueryParam(value = "languageCode") String languageCode);
 
     @Transactional

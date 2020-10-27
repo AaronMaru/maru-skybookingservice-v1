@@ -44,7 +44,7 @@ FROM
                 AND t.status = 'SUCCESS'
                 AND DATE(t.created_at ) >= DATE(:startDate)
                 AND DATE(t.created_at ) <= DATE(:endDate)
-            GROUP BY tv.transaction_type_code
+            GROUP BY tv.transaction_type_code, tv.created_at
         ) AS result1
     ) AS result2
     GROUP BY createdAt

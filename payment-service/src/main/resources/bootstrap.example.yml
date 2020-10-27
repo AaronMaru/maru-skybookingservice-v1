@@ -1,28 +1,30 @@
 spring:
-  application:
-    name: payment-service
+    application:
+        name: payment-service
 
-  cloud:
-    config:
-      uri: http://192.168.2.4:8888
+    cloud:
+        config:
+            uri: http://192.168.2.4:8888
 
-  service:
-    flight:
-      url: http://127.0.0.1:7005
-      version: /v1.0.0
+    service:
+        flight:
+            url: http://localhost:7000/flight/
+            version: /v1.0.0
+        point:
+            url: http://localhost:7000/point/
+            version: /v1.0.0
+        hotel:
+            url: http://localhost:7000/hotel/
+            version: /v1.0.0
+
+    redis:
+        host: 172.17.0.2
+        port: 6379
+        password:
+
     point:
-      url: http://127.0.0.1:7007
-      version: /v1.0.0
-    hotel:
-      url: http://127.0.0.1:7006
-      version: /v1.0.0
-
-
-
-  redis:
-    host: 3.229.56.17
-    port: 6379
-    password:
+        topup: http://localhost:5555/skyuser/point
+        topup: http://desktop.skybooking.local/skyuser/point
 
 native-query:
-  package-scan: com.skybooking.paymentservice
+    package-scan: com.skybooking.paymentservice

@@ -37,7 +37,7 @@ public class Consumer {
         BookingEntity bookingEntity = paymentIP.saveBookingPayment(paymentSucceedRQ);
 
         // hit payment skyHistory
-        SendBookingPDFRQ sendBookingPDFRQ = new SendBookingPDFRQ(bookingEntity.getBookingCode(),
+         SendBookingPDFRQ sendBookingPDFRQ = new SendBookingPDFRQ(bookingEntity.getBookingCode(),
                 paymentSucceedRQ.getEmail(), paymentSucceedRQ.getSkyuserId(), paymentSucceedRQ.getCompanyId());
 
         skyhistoryAction.sendPayment(sendBookingPDFRQ);

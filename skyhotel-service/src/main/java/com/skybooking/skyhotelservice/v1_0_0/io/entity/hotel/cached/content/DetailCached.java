@@ -10,10 +10,16 @@ import java.util.List;
 
 @Data
 public class DetailCached implements Serializable {
+    private Long totalNight;
+    private BigDecimal subTotalAmount = BigDecimal.ZERO;
     private BigDecimal totalAmount = BigDecimal.ZERO;
     private BigDecimal totalNet = BigDecimal.ZERO;
-    private BigDecimal totalTaxesAmount = BigDecimal.ZERO;
     private BigDecimal markupAmount = BigDecimal.ZERO;
     private BigDecimal markupPercentage = BigDecimal.ZERO;
+    private BigDecimal totalTaxesAmount = BigDecimal.ZERO;
+    private List<Tax> taxes;
+    private BigDecimal discountPercentage = BigDecimal.ZERO;
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+    private List<Discount> discounts;
     private String currency;
 }

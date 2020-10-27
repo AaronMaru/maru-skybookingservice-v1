@@ -6,7 +6,6 @@ import io.github.gasparbarancelli.NativeQueryParam;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
 import java.util.List;
 
 @NativeQueryFolder("report")
@@ -79,4 +78,10 @@ public interface ReportNQ extends NativeQuery {
     @Transactional
     UpgradedLevelSummaryReportTO upgradedLevelSummaryReport(@NativeQueryParam("startDate") String startDate,
                                                             @NativeQueryParam("endDate") String endDate);
+
+
+    @Transactional
+    List<TransactionReportTO> getTransactionReport(@NativeQueryParam("startDate") String startDate,
+                                                   @NativeQueryParam("endDate") String endDate,
+                                                   @NativeQueryParam("languageCode") String languageCode);
 }

@@ -16,6 +16,6 @@ public class PaymentBaseForm {
     private BigDecimal totalRoomCharges = BigDecimal.ZERO;
     private BigDecimal totalExtraBedCharges = BigDecimal.ZERO;
     private BigDecimal grandTotal = BigDecimal.ZERO;
-    private BigDecimal totalPaymentFee = BigDecimal.ZERO;
+    private BigDecimal totalPaidToCreditCard = BigDecimal.ZERO;
 
 }

@@ -75,7 +75,8 @@ public class PaymentIP implements PaymentSV {
         paymentMandatoryData.setPhoneNumber(bookingUpdated.getContPhone());
         paymentMandatoryData.setEmail(bookingUpdated.getContEmail());
         paymentMandatoryData.setBookingId(bookingUpdated.getId());
-
+        paymentMandatoryData.setSkyuserId(booking.getStakeholderUserId());
+        paymentMandatoryData.setCompanyId(booking.getStakeholderCompanyId());
         return paymentMandatoryData;
     }
 
@@ -109,6 +110,7 @@ public class PaymentIP implements PaymentSV {
         paymentMandatoryRS.setCompanyId(booking.getStakeholderCompanyId());
         paymentMandatoryRS.setBookingId(booking.getId());
         paymentMandatoryRS.setBookingCode(booking.getBookingCode());
+        paymentMandatoryRS.setPhoneCode(booking.getContPhonecode());
 
         return paymentMandatoryRS;
     }

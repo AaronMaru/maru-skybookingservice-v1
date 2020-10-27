@@ -33,4 +33,5 @@ classes/
 ### VS Code ###
 .vscode/
 
-bootstrap.yml
+/src/main/resources/application.yml
+/src/main/resources/bootstrap.yml

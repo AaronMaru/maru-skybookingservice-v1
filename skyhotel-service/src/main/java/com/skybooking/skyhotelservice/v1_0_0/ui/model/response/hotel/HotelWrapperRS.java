@@ -1,5 +1,6 @@
 package com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.filter.FilterRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.sort.SortRS;
@@ -18,11 +19,21 @@ public class HotelWrapperRS<T> {
     private FilterRS filterInfo;
     private SortRS sortInfo;
     private ResourceRS resource;
+
+    @JsonIgnore
+    private String locale;
+
     private List<T> hotelList = new ArrayList<>();
 
     public HotelWrapperRS(String requestId, List<T> hotelList) {
         this.requestId = requestId;
         this.hotelList = hotelList;
+    }
+
+    public HotelWrapperRS(String requestId, List<T> hotelList, String locale) {
+        this.requestId = requestId;
+        this.hotelList = hotelList;
+        this.locale = locale;
     }
 
     public HotelWrapperRS(String requestId, FilterRS filterInfo, SortRS sortInfo, List<T> hotelList) {

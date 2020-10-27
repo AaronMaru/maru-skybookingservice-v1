@@ -52,7 +52,10 @@ public class TransformIP implements TransformSV {
     private final AirlineNQ airlineNQ;
     private final AircraftNQ aircraftNQ;
     private final AppConfig appConfig;
-    private final BookmarkSV bookmarkSV;
+
+    @Autowired
+    private BookmarkSV bookmarkSV;
+
     private final CurrencySV currencySV;
     private final CabinRP cabinRP;
     private final MealRP mealRP;

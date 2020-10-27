@@ -2,8 +2,12 @@ package com.skybooking.skypointservice.v1_0_0.client.event.model.requset;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
+
 @Data
 public class NotificationRQ {
-    private String bookingId;
+    private BigDecimal amount;
+    private String transactionFor;
+    private String transactionCode;
     private String type;
 }

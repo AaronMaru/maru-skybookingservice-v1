@@ -1,7 +1,7 @@
 package com.skybooking.eventservice.v1_0_0.ui.controller.skypoint;
 
 import com.skybooking.eventservice.v1_0_0.service.download.SkyPointDownloadSV;
-import com.skybooking.eventservice.v1_0_0.ui.model.request.email.SkyPointTopUpRQ;
+import com.skybooking.eventservice.v1_0_0.ui.model.request.email.SkyPointTopUpSuccessRQ;
 import com.skybooking.eventservice.v1_0_0.ui.model.response.ResRS;
 import com.skybooking.eventservice.v1_0_0.ui.model.response.S3UploadRS;
 import com.skybooking.eventservice.v1_0_0.util.localization.LocalizationBean;
@@ -25,9 +25,9 @@ public class SkyPointDownloadController {
     private LocalizationBean localization;
 
     @PostMapping("receipt")
-    public ResRS topUpSkyPoint(@Valid @RequestBody SkyPointTopUpRQ skyPointTopUpRQ) {
+    public ResRS topUpSkyPoint(@Valid @RequestBody SkyPointTopUpSuccessRQ skyPointTopUpSuccessRQ) {
 
-        S3UploadRS s3UploadRS = skyPointDownloadSV.downloadReceipt(skyPointTopUpRQ);
+        S3UploadRS s3UploadRS = skyPointDownloadSV.downloadReceipt(skyPointTopUpSuccessRQ);
 
         return localization.resAPI(HttpStatus.OK, "is_skb_info", s3UploadRS);
     }

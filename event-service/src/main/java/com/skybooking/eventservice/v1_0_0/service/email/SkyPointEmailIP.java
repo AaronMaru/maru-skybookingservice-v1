@@ -39,18 +39,18 @@ public class SkyPointEmailIP implements SkyPointEmailSV {
     }
 
     @Override
-    public S3UploadRS topUp(SkyPointTopUpRQ skyPointTopUpRQ) {
+    public S3UploadRS topUpSuccess(SkyPointTopUpSuccessRQ skyPointTopUpSuccessRQ) {
 
-        Map<String, Object> mailData = emailBean.mailData(skyPointTopUpRQ.getEmail(), skyPointTopUpRQ.getFullName(),
-                skyPointTopUpRQ.getAmount(), SKY_POINT_TOP_UP);
+        Map<String, Object> mailData = emailBean.mailData(skyPointTopUpSuccessRQ.getEmail(), skyPointTopUpSuccessRQ.getFullName(),
+                skyPointTopUpSuccessRQ.getAmount(), SKY_POINT_TOP_UP);
 
-        mailData.put("earnAmount", skyPointTopUpRQ.getEarnAmount());
+        mailData.put("earnAmount", skyPointTopUpSuccessRQ.getEarnAmount());
 
         List<File> fileList = new ArrayList<>();
 
         Map<String, Object> pdfData = new HashMap<>();
-        pdfData.put("data", skyPointTopUpRQ);
-        pdfData.put("pdfTemplate", "topUp");
+        pdfData.put("data", skyPointTopUpSuccessRQ);
+        pdfData.put("pdfTemplate", "top_up");
         pdfData.put("label_topUp", emailBean.dataPdfTemplate("api_receipt_top_up_pdf"));
         S3UploadRS s3UploadRS = new S3UploadRS();
         try {
@@ -66,6 +66,14 @@ public class SkyPointEmailIP implements SkyPointEmailSV {
         emailBean.email(mailData, fileList);
 
         return s3UploadRS;
+    }
+
+    @Override
+    public void topUpFailed(SkyPointTopUpFailedRQ skyPointTopUpFailedRQ) {
+        Map<String, Object> mailData = emailBean.mailData(skyPointTopUpFailedRQ.getEmail(), skyPointTopUpFailedRQ.getFullName(),
+                skyPointTopUpFailedRQ.getAmount(), SKY_POINT_TOP_UP_FAILED);
+
+        emailBean.email(mailData, null);
     }
 
     @Override

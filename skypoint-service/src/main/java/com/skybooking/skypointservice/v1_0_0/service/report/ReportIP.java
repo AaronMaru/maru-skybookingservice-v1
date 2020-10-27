@@ -5,6 +5,7 @@ import com.skybooking.skypointservice.constant.UserTypeConstant;
 import com.skybooking.skypointservice.httpstatus.BadRequestException;
 import com.skybooking.skypointservice.httpstatus.InternalServerError;
 import com.skybooking.skypointservice.util.HeaderDataUtil;
+import com.skybooking.skypointservice.util.AmountFormatUtil;
 import com.skybooking.skypointservice.v1_0_0.client.stakeholder.action.StakeholderAction;
 import com.skybooking.skypointservice.v1_0_0.client.stakeholder.model.response.ClientResponseUserCompany;
 import com.skybooking.skypointservice.v1_0_0.client.stakeholder.model.response.CompanyUserTO;
@@ -13,7 +14,7 @@ import com.skybooking.skypointservice.v1_0_0.helper.AccountHelper;
 import com.skybooking.skypointservice.v1_0_0.io.entity.account.AccountEntity;
 import com.skybooking.skypointservice.v1_0_0.io.entity.config.ConfigUpgradeLevelEntity;
 import com.skybooking.skypointservice.v1_0_0.io.nativeQuery.report.*;
-import com.skybooking.skypointservice.v1_0_0.io.nativeQuery.transaction.OfflineTopUpTransactionDetailTO;
+import com.skybooking.skypointservice.v1_0_0.io.nativeQuery.transaction.TopUpTransactionDetailTO;
 import com.skybooking.skypointservice.v1_0_0.io.nativeQuery.transaction.TransactionNQ;
 import com.skybooking.skypointservice.v1_0_0.io.repository.account.AccountRP;
 import com.skybooking.skypointservice.v1_0_0.io.repository.config.ConfigUpgradeLevelRP;
@@ -21,13 +22,18 @@ import com.skybooking.skypointservice.v1_0_0.service.BaseServiceIP;
 import com.skybooking.skypointservice.v1_0_0.ui.model.response.StructureRS;
 import com.skybooking.skypointservice.v1_0_0.ui.model.response.account.BalanceInfo;
 import com.skybooking.skypointservice.v1_0_0.ui.model.response.report.*;
+import com.skybooking.skypointservice.v1_0_0.util.datetime.DateTimeBean;
+import org.joda.time.DateTime;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -56,6 +62,9 @@ public class ReportIP extends BaseServiceIP implements ReportSV {
     @Autowired
     private HeaderDataUtil headerDataUtil;
 
+    @Autowired
+    private DateTimeBean dateTimeBean;
+
     public static <T> Predicate<T> distinctByKey(Function<? super T, ?> keyExtractor) {
         Set<Object> seen = ConcurrentHashMap.newKeySet();
         return t -> seen.add(keyExtractor.apply(t));
@@ -66,13 +75,13 @@ public class ReportIP extends BaseServiceIP implements ReportSV {
         try {
             BackendDashBoardReportRS backendDashBoardReportRS = new BackendDashBoardReportRS();
             AccountSummaryTO accountSummaryTO = reportNQ.getAccountSummary();
-            List<OfflineTopUpTransactionDetailTO> offlineTopUTransactionList = transactionNQ
-                    .getRecentOfflineTopUp();
+            List<TopUpTransactionDetailTO> offlineTopUTransactionList = transactionNQ
+                    .getRecentTopUp();
             List<TopBalanceTO> topBalanceTOList = reportNQ.getTopBalance();
             List<TopEarningTO> topEarningTOList = reportNQ.getTopEarning();
 
             AccountSummary accountSummary = new AccountSummary();
-            BeanUtils.copyProperties(accountSummaryTO, accountSummary);
+            BeanUtils.copyProperties(new AccountSummaryTO(accountSummaryTO), accountSummary);
 
             TopBalance topBalance;
             List<TopBalance> topBalancesList = new ArrayList<>();
@@ -84,6 +93,7 @@ public class ReportIP extends BaseServiceIP implements ReportSV {
                         accountHelper.getUserOrCompanyDetailByUserCode(topBalanceTO.getUserCode());
                 topBalance.setUserName(userAccountInfoRS.getName());
                 topBalance.setThumbnail(userAccountInfoRS.getThumbnail());
+                topBalance.setBalance(AmountFormatUtil.roundAmount(topBalanceTO.getBalance()));
                 topBalancesList.add(topBalance);
             }
 
@@ -97,13 +107,14 @@ public class ReportIP extends BaseServiceIP implements ReportSV {
                         accountHelper.getUserOrCompanyDetailByUserCode(topEarningTO.getUserCode());
                 topEarning.setUserName(userAccountInfoRS.getName());
                 topEarning.setThumbnail(userAccountInfoRS.getThumbnail());
+                topEarning.setSavedPoint(AmountFormatUtil.roundAmount(topEarningTO.getSavedPoint()));
                 topEarningList.add(topEarning);
             }
 
             backendDashBoardReportRS.setAccountSummary(accountSummary);
             backendDashBoardReportRS.setTopBalanceList(topBalancesList);
             backendDashBoardReportRS.setTopEarningList(topEarningList);
-            backendDashBoardReportRS.setRecentOfflineTopUpList(offlineTopUTransactionList);
+            backendDashBoardReportRS.setRecentOfflineTopUpList(formatOfflineTopUTransactionList(offlineTopUTransactionList));
 
             return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, backendDashBoardReportRS);
         } catch (BadRequestException e) {
@@ -139,8 +150,8 @@ public class ReportIP extends BaseServiceIP implements ReportSV {
             List<TransactionSummaryReportTO> transactionSummaryReportTOList =
                     reportNQ.transactionSummaryListReportByAccount(userCode);
 
-            backendAccountInfoReportRS.setTransactionSummaryReportList(transactionSummaryReportTOList);
-            backendAccountInfoReportRS.setBalanceInfo(balanceInfo);
+            backendAccountInfoReportRS.setTransactionSummaryReportList(formatTransactionSummaryReport(transactionSummaryReportTOList));
+            backendAccountInfoReportRS.setBalanceInfo(new BalanceInfo(balanceInfo));
 
             return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, backendAccountInfoReportRS);
         } catch (BadRequestException e) {
@@ -159,8 +170,8 @@ public class ReportIP extends BaseServiceIP implements ReportSV {
             TransactionSummaryReportTO transactionSummaryReportTO = reportNQ.transactionSummaryReport(starDate, endDate);
 
             TransactionSummaryReportRS transactionSummaryReportRS = new TransactionSummaryReportRS();
-            transactionSummaryReportRS.setTransactionSummaryReportInfo(transactionSummaryReportTO);
-            transactionSummaryReportRS.setTransactionSummaryReportList(transactionSummaryReportTOList);
+            transactionSummaryReportRS.setTransactionSummaryReportInfo(new TransactionSummaryReportTO(transactionSummaryReportTO));
+            transactionSummaryReportRS.setTransactionSummaryReportList(formatTransactionSummaryReport(transactionSummaryReportTOList));
             return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, transactionSummaryReportRS);
         } catch (BadRequestException e) {
             e.printStackTrace();
@@ -417,11 +428,12 @@ public class ReportIP extends BaseServiceIP implements ReportSV {
     }
 
     @Override
-    public StructureRS transactionSummaryReportList(String startDate, String endDate) {
+    public StructureRS transactionReportExport(HttpServletRequest httpServletRequest, String startDate, String endDate) {
         try {
-            List<TransactionSummaryReportTO> transactionSummaryReportTOList = reportNQ.transactionListSummaryReport(startDate, endDate);
+            String languageCode = headerDataUtil.languageCode(httpServletRequest);
+            List<TransactionReportTO> transactionReportTOList = reportNQ.getTransactionReport(startDate, endDate, languageCode);
 
-            return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, transactionSummaryReportTOList);
+            return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, formatTransactionReport(transactionReportTOList));
         } catch (BadRequestException e) {
             e.printStackTrace();
             throw new BadRequestException(e.getMessage(), null);
@@ -440,5 +452,62 @@ public class ReportIP extends BaseServiceIP implements ReportSV {
                 .stream()
                 .collect(Collectors.toMap(CompanyUserTO::getCode, Function.identity(), (existing, replacement) -> existing));
     }
+
+    private List<TransactionSummaryReport> formatTransactionSummaryReport(List<TransactionSummaryReportTO> transactionSummaryReportTOList) {
+        List<TransactionSummaryReport> transactionSummaryReportList = new ArrayList<>();
+        if (transactionSummaryReportTOList.size() > 0) {
+            transactionSummaryReportTOList.forEach(transactionSummaryReportTO -> {
+                TransactionSummaryReport transactionSummaryReport = new TransactionSummaryReport();
+                BeanUtils.copyProperties(new TransactionSummaryReportTO(transactionSummaryReportTO),
+                        transactionSummaryReport);
+                transactionSummaryReportList.add(transactionSummaryReport);
+            });
+        }
+
+        return transactionSummaryReportList;
+    }
+
+
+    private List<TransactionReport> formatTransactionReport(List<TransactionReportTO> transactionReportTOList) {
+        List<TransactionReport> transactionReportList = new ArrayList<>();
+        if (transactionReportTOList.size() > 0) {
+            //========== Format date
+            transactionReportTOList.forEach(transactionReportTO -> {
+                TransactionReport transactionReport = new TransactionReport();
+                BeanUtils.copyProperties(new TransactionReportTO(transactionReportTO), transactionReport);
+                transactionReport.setTransactionDate(dateTimeBean.convertDateTime(transactionReportTO.getTransactionDate()));
+                transactionReportList.add(transactionReport);
+            });
+
+            //========= Get Account Name
+            List<TransactionReport> distinctUserCode = transactionReportList.stream()
+                    .filter(distinctByKey(TransactionReport::getUserCode))
+                    .collect(Collectors.toList());
+            ArrayList<String> keyCode = new ArrayList<>();
+            distinctUserCode.forEach(item -> keyCode.add(item.getUserCode()));
+            Map<String, CompanyUserTO> companyUserMap = mapCodeUserName(keyCode);
+
+            transactionReportList.forEach(transaction -> {
+                var found = companyUserMap.get(transaction.getUserCode());
+                if (found != null) {
+                    transaction.setAccountName(found.getName());
+                }
+            });
+        }
+
+        return transactionReportList;
+    }
+
+    private List<TopUpTransactionDetailTO> formatOfflineTopUTransactionList(List<TopUpTransactionDetailTO>
+                                                                                    topUpTransactionDetailTOList) {
+        List<TopUpTransactionDetailTO> offlineTopUpTransactionDetailList = new ArrayList<>();
+        if (topUpTransactionDetailTOList.size() > 0) {
+            topUpTransactionDetailTOList.forEach(offlineTopUpTransactionDetailTO -> {
+                offlineTopUpTransactionDetailList.add(new TopUpTransactionDetailTO(offlineTopUpTransactionDetailTO));
+            });
+        }
+        return offlineTopUpTransactionDetailList;
+    }
+
 
 }

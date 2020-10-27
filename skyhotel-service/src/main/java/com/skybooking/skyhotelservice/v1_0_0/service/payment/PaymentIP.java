@@ -1,7 +1,7 @@
 package com.skybooking.skyhotelservice.v1_0_0.service.payment;
 
 import com.skybooking.skyhotelservice.constant.AttachmentConstant;
-import com.skybooking.skyhotelservice.constant.BookingConstant;
+import com.skybooking.skyhotelservice.constant.BookingConstantPayment;
 import com.skybooking.skyhotelservice.v1_0_0.client.action.event.PaymentAction;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.request.event.PaymentInfoRQEV;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.request.event.PaymentSuccessRQEV;
@@ -15,6 +15,7 @@ import com.skybooking.skyhotelservice.v1_0_0.service.BaseServiceIP;
 import com.skybooking.skyhotelservice.v1_0_0.service.history.HistoryBookingSV;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.request.payment.PaymentMailRQ;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.request.payment.PaymentMandatoryRQ;
+import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.StructureRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.history.detail.BookingDetailRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.payment.PaymentMandatoryRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.payment.PaymentTransactionRQ;
@@ -69,13 +70,14 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
     @Autowired
     private HistoryBookingSV historyBookingSV;
 
+
     public PaymentMandatoryRS payment(PaymentMandatoryRQ paymentRQ) {
 
         var booking = bookingRP.getPnrCreated(paymentRQ.getBookingCode(),
-                BookingConstant.PENDING,
-                BookingConstant.PAYMENT_SELECTED,
-                BookingConstant.PAYMENT_CREATED,
-                BookingConstant.PAYMENT_PROCESSING
+                BookingConstantPayment.PENDING,
+                BookingConstantPayment.PAYMENT_SELECTED,
+                BookingConstantPayment.PAYMENT_CREATED,
+                BookingConstantPayment.PAYMENT_PROCESSING
         );
 
         /**
@@ -107,13 +109,13 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
         PaymentMandatoryRS paymentMandatoryRS = new PaymentMandatoryRS();
 
         var booking = bookingRP.getPnrCreated(bookingCode,
-                BookingConstant.PENDING,
-                BookingConstant.PAYMENT_SELECTED,
-                BookingConstant.PAYMENT_CREATED,
-                BookingConstant.PAYMENT_PROCESSING
+                BookingConstantPayment.PENDING,
+                BookingConstantPayment.PAYMENT_SELECTED,
+                BookingConstantPayment.PAYMENT_CREATED,
+                BookingConstantPayment.PAYMENT_PROCESSING
         );
 
-        booking.setStatus(BookingConstant.PAYMENT_PROCESSING);
+        booking.setStatus(BookingConstantPayment.PAYMENT_PROCESSING);
         bookingRP.save(booking);
 
         BigDecimal amount = NumberFormatter.trimAmount(booking.getTotalAmount());
@@ -122,6 +124,7 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
         paymentMandatoryRS.setDescription("Hotel Description");
         paymentMandatoryRS.setEmail(booking.getContactEmail());
         paymentMandatoryRS.setPhoneNumber(booking.getContactPhone());
+        paymentMandatoryRS.setPhoneCode(booking.getContactPhoneCode());
         paymentMandatoryRS.setName(booking.getContactFullname());
         paymentMandatoryRS.setSkyuserId(booking.getStakeholderUserId());
         paymentMandatoryRS.setCompanyId(booking.getStakeholderCompanyId());
@@ -135,6 +138,7 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
     public void updatePaymentSucceed(PaymentTransactionRQ paymentSucceedRQ) {
         BookingDetailRS bookingDetail = new BookingDetailRS();
         paymentSucceedRQ.setLang(headerCM.getLocalization());
+        paymentSucceedRQ.setCompanyId(headerCM.getCompanyIdZ());
         paymentSucceedRQ.setBookingDetail(bookingDetail);
 
         jmsTemplate.convertAndSend(SKY_HOTEL_PAYMENT, paymentSucceedRQ);
@@ -172,7 +176,7 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
 
             hotelPaymentTransactionRP.save(paymentTransactionEntity);
 
-            booking.setStatus(BookingConstant.PAYMENT_SUCCEED);
+            booking.setStatus(BookingConstantPayment.PAYMENT_SUCCEED);
             bookingRP.save(booking);
         }
 
@@ -182,8 +186,24 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
 
     public void sendMailPaymentSuccess(PaymentMailRQ paymentMailRQ) {
 
+        BookingDetailRS bookingDetailRS = historyBookingSV.detail(paymentMailRQ.getBookingCode(), "no-auth", paymentMailRQ.getCompnayId());
+
         var paymentSuccessRQEV = new PaymentSuccessRQEV();
         BeanUtils.copyProperties(paymentMailRQ, paymentSuccessRQEV);
+
+        paymentSuccessRQEV.setGrandTotal(bookingDetailRS.getPaymentInfo().getPaidAmount());
+        paymentSuccessRQEV.setTotalPaidToCreditCard(bookingDetailRS.getPaymentInfo().getPaidAmount());
+        paymentSuccessRQEV.setHotelName(bookingDetailRS.getHotelInfo().getHotelName());
+        paymentSuccessRQEV.setPeriod(bookingDetailRS.getPeriod());
+
+        if (bookingDetailRS.getRoom() != null && bookingDetailRS.getRoom().size() > 0) {
+            paymentSuccessRQEV.setRoomType(bookingDetailRS.getRoom().get(0).getDescription());
+        }
+
+        paymentSuccessRQEV.setNumRooms(bookingDetailRS.getTotalRoom());
+        paymentSuccessRQEV.setNumExtraBed(bookingDetailRS.getTotalExtraBed());
+        paymentSuccessRQEV.setTotalRoomCharges(bookingDetailRS.getPriceInfo().getTotalRoomCharges());
+        paymentSuccessRQEV.setTotalExtraBedCharges(bookingDetailRS.getPriceInfo().getTotalExtraBedCharges());
 
         paymentAction.paymentSucces(paymentSuccessRQEV);
 
@@ -203,7 +223,7 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
 
     }
 
-    public void sendMailPaymentInfo(PaymentMailRQ paymentMailRQ) {
+    public StructureRS sendMailPaymentInfo(PaymentMailRQ paymentMailRQ) {
 
         BookingDetailRS bookingDetail = new BookingDetailRS();
 
@@ -218,39 +238,39 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
         if (attachInfo.isPresent()) {
             paymentInfoRQEV.setUrl(awsPartCM.partUrl(type, attachInfo.get().getPath() + "/" + attachInfo.get().getName()));
         } else {
-            bookingDetail = historyBookingSV.detail(paymentMailRQ.getBookingCode(), "no-auth");
+            bookingDetail = historyBookingSV.detail(paymentMailRQ.getBookingCode(), "no-auth", headerCM.getCompanyIdZ());
             if (type.equals("voucher")) {
                 this.setVoucherData(bookingDetail);
             }
-
             if (type.equals("e-receipt")) {
                 this.setReceiptData(bookingDetail);
             }
         }
         paymentAction.paymentInfo(paymentInfoRQEV);
 
+        return responseBodyWithSuccessMessage();
     }
 
     public PaymentInfoRQEV setReceiptData (BookingDetailRS detail) {
         var paymentInfoRQEV = new PaymentInfoRQEV();
 
         paymentInfoRQEV.setPeriod(detail.getPeriod());
-        paymentInfoRQEV.setAddress(detail.getHotelLocation());
-        paymentInfoRQEV.setCustomerName(detail.getContactName());
+        paymentInfoRQEV.setAddress(detail.getHotelInfo().getHotelLocation());
+        paymentInfoRQEV.setCustomerName(detail.getContactInfo().getContactName());
         paymentInfoRQEV.setEmailAddress(detail.getEmailAddress());
-        paymentInfoRQEV.setHotelName(detail.getHotelName());
+        paymentInfoRQEV.setHotelName(detail.getHotelInfo().getHotelName());
         paymentInfoRQEV.setChargeDate(detail.getChargeDate() == null ? "" : DatetimeUtil.convertDateFormat(detail.getChargeDate()));
 
         if (detail.getRoom() != null) {
-            paymentInfoRQEV.setRoomType(detail.getRoom().get(0).getType());
+            paymentInfoRQEV.setRoomType(detail.getRoom().get(0).getDescription());
         }
         paymentInfoRQEV.setNumExtraBed(detail.getTotalExtraBed());
         paymentInfoRQEV.setNumRooms(detail.getTotalRoom());
 
-        paymentInfoRQEV.setTotalExtraBedCharges(detail.getTotalExtraBedCharges());
-        paymentInfoRQEV.setTotalRoomCharges(detail.getTotalRoomCharges());
-        paymentInfoRQEV.setGrandTotal(detail.getTotalAmount());
-        paymentInfoRQEV.setTotalPaymentFee(detail.getPaymentFeeAmount());
+        paymentInfoRQEV.setTotalExtraBedCharges(detail.getPriceInfo().getTotalExtraBedCharges());
+        paymentInfoRQEV.setTotalRoomCharges(detail.getPriceInfo().getTotalRoomCharges());
+        paymentInfoRQEV.setGrandTotal(detail.getPriceInfo().getTotalAmount());
+        paymentInfoRQEV.setTotalPaidToCreditCard(detail.getPaymentInfo().getPaidAmount());
 
         return paymentInfoRQEV;
     }
@@ -258,7 +278,7 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
     public PaymentInfoRQEV setVoucherData (BookingDetailRS detail) {
         var paymentInfoRQEV = new PaymentInfoRQEV();
 
-        paymentInfoRQEV.setCustomerName(detail.getContactName());
+        paymentInfoRQEV.setCustomerName(detail.getContactInfo().getContactName());
         paymentInfoRQEV.setBookingReference(detail.getBookingReference());
         paymentInfoRQEV.setCountryResident(detail.getCountryResident());
 
@@ -269,15 +289,15 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
         paymentInfoRQEV.setNumRooms(detail.getTotalRoom());
 
         if (detail.getRoom() != null) {
-            paymentInfoRQEV.setRoomType(detail.getRoom().get(0).getType());
+            paymentInfoRQEV.setRoomType(detail.getRoom().get(0).getDescription());
         }
 
-        paymentInfoRQEV.setCardNo(detail.getCardNumber());
-        paymentInfoRQEV.setPaymentMethod(detail.getPaymentMethod());
-        paymentInfoRQEV.setExpired(detail.getExpired());
+        paymentInfoRQEV.setCardNo(detail.getPaymentInfo().getCardNumber());
+        paymentInfoRQEV.setPaymentMethod(detail.getPaymentInfo().getPaymentMethod());
+        paymentInfoRQEV.setExpired("");//not yet
 
-        paymentInfoRQEV.setArrival(detail.getCheckIn() == null ? "" : DatetimeUtil.convertDateFormat(detail.getCheckIn()));
-        paymentInfoRQEV.setDeparture(detail.getCheckOut() == null ? "" : DatetimeUtil.convertDateFormat(detail.getCheckOut()));
+        paymentInfoRQEV.setArrival(detail.getCheckIn() == null ? "" : detail.getCheckIn());
+        paymentInfoRQEV.setDeparture(detail.getCheckOut() == null ? "" : detail.getCheckOut());
 
         paymentInfoRQEV.setRemark(detail.getRemark());
 

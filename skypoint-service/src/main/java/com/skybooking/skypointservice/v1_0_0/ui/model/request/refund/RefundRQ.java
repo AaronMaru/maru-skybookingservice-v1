@@ -4,10 +4,12 @@ import com.skybooking.core.validators.annotations.IsIn;
 import com.skybooking.core.validators.annotations.IsNotEmpty;
 import lombok.Data;
 
+import javax.validation.constraints.Digits;
 import java.math.BigDecimal;
 
 @Data
 public class RefundRQ {
+    @Digits(integer = 10, fraction = 3)
     private BigDecimal amount;
     private String userCode;
     private String createdBy;

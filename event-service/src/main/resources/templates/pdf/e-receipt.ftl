@@ -202,7 +202,7 @@
 
                 <div class="rec-name" style="margin-bottom:20px">
                     <h4 style="font-family:Muli, Roboto, RobotoDraft, Helvetica, Arial, sans-serif; margin-top:0; font-size:23px; margin:10px 0; text-align:center" align="center">${label_receipt.receipt??? then(label_receipt.receipt, 'NO LABEL YET')}</h4>
-                    <h5 style="font-family:Muli, Roboto, RobotoDraft, Helvetica, Arial, sans-serif; font-size:15px; font-weight:700; margin:0 0 10px 0; padding-bottom:10px; text-align:center; background:#e5f2f8; border-radius:5px; padding:10px 0" align="left">${label_receipt.cus_name_addr??? then(label_receipt.cus_name_addr, 'NO LABEL YET')}</h5>
+                    <h5 style="font-family:Muli, Roboto, RobotoDraft, Helvetica, Arial, sans-serif; font-size:15px; font-weight:700; margin:0 0 10px 0; padding-bottom:10px; text-align:left; background:#e5f2f8; border-radius:5px; padding:10px 0" align="center">${label_receipt.cus_name_addr??? then(label_receipt.cus_name_addr, 'NO LABEL YET')}</h5>
                     <table class="des-area" style="border-radius:5px; padding:10px; width:100%; background: rgba(3, 126, 188, 0.1)" width="100%">
                         <tr>
                             <td style="font-family:arial, sans-serif; color:#000; font-size:13px; padding:9px; font-weight:600">${label_receipt.name??? then(label_receipt.name, 'NO LABEL YET')}</td>
@@ -220,7 +220,7 @@
                 </div>
                 <div class="pay-info" style="display:inline-block; width:100%" width="100%">
                     <div class="left-de" style="float:left; margin-right:5%; width:75%" width="75%">
-                        <h5 style="font-family:Muli, Roboto, RobotoDraft, Helvetica, Arial, sans-serif; font-size:14px; font-weight:700; margin:0 0 10px 0; padding-bottom:10px; text-align:center; border-radius:5px; padding:7px; background: rgba(3, 126, 188, 0.1)" align="left">${label_receipt.desc??? then(label_receipt.desc, 'NO LABEL YET')}</h5>
+                        <h5 style="font-family:Muli, Roboto, RobotoDraft, Helvetica, Arial, sans-serif; font-size:14px; font-weight:700; margin:0 0 10px 0; padding-bottom:10px; text-align:left; border-radius:5px; padding:7px; background: rgba(3, 126, 188, 0.1)" align="center">${label_receipt.desc??? then(label_receipt.desc, 'NO LABEL YET')}</h5>
                         <table class="des-area" style="border-radius:5px; padding:10px; width:100%; background: rgba(3, 126, 188, 0.1)" width="100%">
                             <tr>
                                 <td style="font-family:arial, sans-serif; color:#000; font-size:13px; padding:9px; font-weight:600">${label_receipt.hotel_name??? then(label_receipt.hotel_name, 'NO LABEL YET')}</td>
@@ -279,7 +279,7 @@
                             </tr>
                         </table>
                         <h6 style="font-family:Muli, Roboto, RobotoDraft, Helvetica, Arial, sans-serif; font-size:13px; font-weight:700; margin:5px 0; border-radius:5px; padding:10px 15px; text-align:center;background: rgba(3, 126, 188, 0.3)" align="center">${label_receipt.usd??? then(label_receipt.usd, 'NO LABEL YET')} ${data.grandTotal}</h6>
-                        <h6 style="font-family:Muli, Roboto, RobotoDraft, Helvetica, Arial, sans-serif; font-size:13px; font-weight:700; margin:5px 0; border-radius:5px; padding:10px 15px; text-align:center;background: rgba(3, 126, 188, 0.3)" align="center">${label_receipt.usd??? then(label_receipt.usd, 'NO LABEL YET')} ${data.totalPaymentFee}</h6>
+                        <h6 style="font-family:Muli, Roboto, RobotoDraft, Helvetica, Arial, sans-serif; font-size:13px; font-weight:700; margin:5px 0; border-radius:5px; padding:10px 15px; text-align:center;background: rgba(3, 126, 188, 0.3)" align="center">${label_receipt.usd??? then(label_receipt.usd, 'NO LABEL YET')} ${data.totalPaidToCreditCard}</h6>
                     </div>
                 </div>
                 <div class="signature-stamp" style="display:inline-block; margin:30px 0 0 0; text-align:center; width:100%" align="center" width="100%">

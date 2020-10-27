@@ -6,6 +6,6 @@ import lombok.Data;
 public class TopUpNotificationRQ {
     private Integer stakeholderUserId;
     private Integer stakeholderCompanyId;
-    private String bookingId;
+    private String transactionCode;
     private String type = "TOPUP_POINT";
 }

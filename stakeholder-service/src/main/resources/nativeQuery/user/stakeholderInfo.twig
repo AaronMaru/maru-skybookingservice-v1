@@ -1,6 +1,11 @@
 SELECT
 	su.id AS stakeholderUserId,
 	su.user_code AS referenceCode,
-	CONCAT("skyuser") AS type
+	CONCAT("skyuser") AS type,
+	CONCAT(su.last_name, " ", su.first_name) AS name,
+	u.code AS phoneCode,
+	u.phone AS phoneNumber,
+	u.email
 FROM `stakeholder_users` su
+JOIN users u ON u.id = su.user_id
 WHERE su.id = :skyuserId

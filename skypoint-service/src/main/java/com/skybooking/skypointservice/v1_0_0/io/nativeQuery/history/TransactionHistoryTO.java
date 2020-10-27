@@ -4,13 +4,14 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Date;
 
 @Data
 public class TransactionHistoryTO {
-    private BigInteger id;
-    private String transactionCode;
-    private String transactionTypeCode;
-    private String transactionTypeName;
-    private BigDecimal totalPoint;
-    private String createdAt;
+    protected BigInteger id;
+    protected String transactionCode;
+    protected String transactionTypeCode;
+    protected String transactionTypeName;
+    protected BigDecimal totalPoint;
+    private Date createdAt;
 }

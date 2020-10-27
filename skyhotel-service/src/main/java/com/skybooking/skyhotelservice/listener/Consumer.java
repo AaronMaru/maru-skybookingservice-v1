@@ -24,7 +24,8 @@ public class Consumer {
         // Store payment transactions
         HotelBookingEntity bookingEntity = paymentSV.saveBookingPayment(paymentSucceedRQ);
 
-        PaymentMailRQ paymentMailRQ = new PaymentMailRQ(bookingEntity.getContactEmail(), bookingEntity.getCode(), paymentSucceedRQ.getLang());
+        PaymentMailRQ paymentMailRQ = new PaymentMailRQ(bookingEntity.getContactEmail(),
+                bookingEntity.getCode(), paymentSucceedRQ.getLang(), paymentSucceedRQ.getCompanyId());
         try {
             paymentSV.sendMailPaymentSuccess(paymentMailRQ);
         } catch (Exception e) {

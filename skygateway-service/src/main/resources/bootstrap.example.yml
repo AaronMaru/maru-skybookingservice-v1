@@ -39,3 +39,7 @@ zuul:
             path: /stakeholder/**
             serviceId: stakeholder-service
             url: http://192.168.2.4:7004
+
+encryption:
+    key: 12345678901234567890123456789012
+    iv : 1234567890123456
