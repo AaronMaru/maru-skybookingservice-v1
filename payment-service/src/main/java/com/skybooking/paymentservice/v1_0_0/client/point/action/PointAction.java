@@ -9,6 +9,7 @@ import com.skybooking.paymentservice.v1_0_0.util.encrypt.AESEncryptionDecryption
 import com.skybooking.paymentservice.v1_0_1.ui.model.response.StructureRS;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -29,6 +30,8 @@ public class PointAction {
     @Autowired
     private BookingLanguageRedisRP bookingLanguageRedisRP;
 
+    @Autowired
+    private Environment environment;
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Update discount payment method in booking
@@ -68,8 +71,8 @@ public class PointAction {
         jsonObject.put("transactionCode", postOnlineTopUpRQ.getTransactionCode());
         jsonObject.put("paymentStatus", postOnlineTopUpRQ.getPaymentStatus());
 
-        String key = "12345678901234567890123456789012";
-        String initVector = "1234567890123456";
+        String key = environment.getProperty("encryption.key");
+        String initVector = environment.getProperty("encryption.iv");
 
         try {
             pointRQ.setData(AESEncryptionDecryption.encrypt(jsonObject.toString(), key, initVector));

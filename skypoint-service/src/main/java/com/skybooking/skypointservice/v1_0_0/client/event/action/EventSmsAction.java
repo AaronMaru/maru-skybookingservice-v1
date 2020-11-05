@@ -22,13 +22,13 @@ public class EventSmsAction {
     @Autowired
     private AuthUtility authUtility;
 
-    public ClientResponse topUpSuccessSms(HttpServletRequest httpServletRequest, SkyPointTopUpSuccessSmsRQ skyPointTopUpSuccessSmsRQ) {
+    public ClientResponse topUpSuccessSms(String languageCode, SkyPointTopUpSuccessSmsRQ skyPointTopUpSuccessSmsRQ) {
 
         return webClient.mutate()
                 .build()
                 .post()
                 .uri(appConfig.getEventUrl() + appConfig.getEventVersion() + "/sms/no-auth/top-up/success")
-                .header("X-localization", httpServletRequest.getHeader("X-localization"))
+                .header("X-localization", languageCode)
                 .bodyValue(skyPointTopUpSuccessSmsRQ)
                 .retrieve()
                 .bodyToMono(ClientResponse.class)
@@ -36,12 +36,12 @@ public class EventSmsAction {
 
     }
 
-    public void topUpFailedSms(HttpServletRequest httpServletRequest, SkyPointTopUpFailedSmsRQ skyPointTopUpFailedSmsRQ) {
+    public void topUpFailedSms(String languageCode, SkyPointTopUpFailedSmsRQ skyPointTopUpFailedSmsRQ) {
 
         webClient
                 .post()
                 .uri(appConfig.getEventUrl() + appConfig.getEventVersion() + "/sms/no-auth/top-up/failed")
-                .header("X-localization", httpServletRequest.getHeader("X-localization"))
+                .header("X-localization", languageCode)
                 .header(HttpHeaders.AUTHORIZATION, authUtility.getAuthToken())
                 .bodyValue(skyPointTopUpFailedSmsRQ)
                 .retrieve()

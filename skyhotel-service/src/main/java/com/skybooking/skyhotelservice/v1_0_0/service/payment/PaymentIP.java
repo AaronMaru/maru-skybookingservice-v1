@@ -191,13 +191,13 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
         var paymentSuccessRQEV = new PaymentSuccessRQEV();
         BeanUtils.copyProperties(paymentMailRQ, paymentSuccessRQEV);
 
-        paymentSuccessRQEV.setGrandTotal(bookingDetailRS.getPaymentInfo().getPaidAmount());
-        paymentSuccessRQEV.setTotalPaidToCreditCard(bookingDetailRS.getPaymentInfo().getPaidAmount());
+        paymentSuccessRQEV.setGrandTotal(bookingDetailRS.getPriceInfo().getPaidAmount());
+        paymentSuccessRQEV.setTotalPaidToCreditCard(bookingDetailRS.getPriceInfo().getPaidAmount());
         paymentSuccessRQEV.setHotelName(bookingDetailRS.getHotelInfo().getHotelName());
         paymentSuccessRQEV.setPeriod(bookingDetailRS.getPeriod());
 
-        if (bookingDetailRS.getRoom() != null && bookingDetailRS.getRoom().size() > 0) {
-            paymentSuccessRQEV.setRoomType(bookingDetailRS.getRoom().get(0).getDescription());
+        if (bookingDetailRS.getRooms() != null && bookingDetailRS.getRooms().size() > 0) {
+            paymentSuccessRQEV.setRoomType(bookingDetailRS.getRooms().get(0).getDescription());
         }
 
         paymentSuccessRQEV.setNumRooms(bookingDetailRS.getTotalRoom());
@@ -261,8 +261,8 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
         paymentInfoRQEV.setHotelName(detail.getHotelInfo().getHotelName());
         paymentInfoRQEV.setChargeDate(detail.getChargeDate() == null ? "" : DatetimeUtil.convertDateFormat(detail.getChargeDate()));
 
-        if (detail.getRoom() != null) {
-            paymentInfoRQEV.setRoomType(detail.getRoom().get(0).getDescription());
+        if (detail.getRooms() != null) {
+            paymentInfoRQEV.setRoomType(detail.getRooms().get(0).getDescription());
         }
         paymentInfoRQEV.setNumExtraBed(detail.getTotalExtraBed());
         paymentInfoRQEV.setNumRooms(detail.getTotalRoom());
@@ -270,7 +270,7 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
         paymentInfoRQEV.setTotalExtraBedCharges(detail.getPriceInfo().getTotalExtraBedCharges());
         paymentInfoRQEV.setTotalRoomCharges(detail.getPriceInfo().getTotalRoomCharges());
         paymentInfoRQEV.setGrandTotal(detail.getPriceInfo().getTotalAmount());
-        paymentInfoRQEV.setTotalPaidToCreditCard(detail.getPaymentInfo().getPaidAmount());
+        paymentInfoRQEV.setTotalPaidToCreditCard(detail.getPriceInfo().getPaidAmount());
 
         return paymentInfoRQEV;
     }
@@ -288,8 +288,8 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
         paymentInfoRQEV.setNumPromotion(detail.getTotalPromotion());
         paymentInfoRQEV.setNumRooms(detail.getTotalRoom());
 
-        if (detail.getRoom() != null) {
-            paymentInfoRQEV.setRoomType(detail.getRoom().get(0).getDescription());
+        if (detail.getRooms() != null) {
+            paymentInfoRQEV.setRoomType(detail.getRooms().get(0).getDescription());
         }
 
         paymentInfoRQEV.setCardNo(detail.getPaymentInfo().getCardNumber());

@@ -18,11 +18,11 @@ public class ListHotelItemRS {
     private List<BoardRS> boards = new ArrayList<>();
     private LocationRS location;
     private List<ImageListRS> images = new ArrayList<>();
-    private List<AmenityRS> amenities = new ArrayList<>();
     private List<InterestPointRS> interestPoints = new ArrayList<>();
     private PolicyRS policy;
     private ScoreRS score;
     private SpecialOfferRS offer;
+    private List<FacilityRS> facilities;
     private CancellationDetailRS cancellation;
     private PriceUnitRS priceUnit;
 }

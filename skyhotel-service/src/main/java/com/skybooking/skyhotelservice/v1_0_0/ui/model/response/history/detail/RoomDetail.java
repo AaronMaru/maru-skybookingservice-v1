@@ -1,6 +1,5 @@
 package com.skybooking.skyhotelservice.v1_0_0.ui.model.response.history.detail;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import java.util.List;
 
@@ -13,6 +12,7 @@ public class RoomDetail {
     private String description = "";
     private Integer capacity;
     private List<String> specialRequest;
+    private List<PassengerInfo> paxInfo;
 
     public RoomDetail() {}
     public RoomDetail(String thumbnail, String description, Integer capacity, List<String> specialRequest) {

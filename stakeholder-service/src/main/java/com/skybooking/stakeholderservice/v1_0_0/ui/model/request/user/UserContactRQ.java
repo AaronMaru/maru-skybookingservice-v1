@@ -10,10 +10,11 @@ import org.hibernate.validator.constraints.Length;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
+import java.io.Serializable;
 
 @Data
 @FieldMatch(first = "password", second = "confirmPassword", message = "PASSWORD_NOT_MATCH")
-public class UserContactRQ {
+public class UserContactRQ implements Serializable {
 
     @NotBlank(message = UserContactMessageConstant.PHONE_CODE_REQUIRED)
     @IsPhoneCode

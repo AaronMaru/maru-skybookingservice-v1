@@ -27,7 +27,7 @@ public class TransactionTypeIP extends BaseServiceIP implements TransactionTypeS
 
     @Override
     public StructureRS getTransactionTypeCode() {
-        String languageCode = headerDataUtil.languageCode(httpServletRequest);
+        String languageCode = headerDataUtil.languageCodeExist(httpServletRequest);
         List<TransactionTypeEntity> transactionTypeList = transactionTypeRP.findAllByLanguageCode(languageCode);
 
         TransactionTypeRS transactionTypeRS = new TransactionTypeRS();

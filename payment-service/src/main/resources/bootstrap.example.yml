@@ -24,7 +24,11 @@ spring:
 
     point:
         topup: http://localhost:5555/skyuser/point
-        topup: http://desktop.skybooking.local/skyuser/point
+#        topup: http://desktop.skybooking.local/skyuser/point
 
 native-query:
     package-scan: com.skybooking.paymentservice
+
+encryption:
+    key: 12345678901234567890123456789012
+    iv : 1234567890123456

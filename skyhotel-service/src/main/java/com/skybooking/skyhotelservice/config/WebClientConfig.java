@@ -11,6 +11,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
+import org.springframework.web.reactive.function.client.ExchangeFilterFunctions;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
@@ -27,22 +29,26 @@ public class WebClientConfig {
     public WebClient webClient() {
 
         var tcpClient = TcpClient.create()
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 60_000)
-                .doOnConnected(connection -> {
-                    connection
-                            .addHandlerLast(new ReadTimeoutHandler(60))
-                            .addHandlerLast(new WriteTimeoutHandler(60));
-                });
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 60_000)
+            .doOnConnected(connection -> {
+                connection
+                    .addHandlerLast(new ReadTimeoutHandler(60))
+                    .addHandlerLast(new WriteTimeoutHandler(60));
+            });
+
+        ExchangeStrategies exchangeStrategies = ExchangeStrategies.builder()
+            .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(1024 * 50)).build();
 
         return WebClient
-                .builder()
-                .clientConnector(new ReactorClientHttpConnector(HttpClient.from(tcpClient)))
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader(HttpHeaders.USER_AGENT, "sky-basehotelds-agent")
-                .filter(logRequest())
-                .filter(logResponse())
-                .build();
+            .builder()
+            .clientConnector(new ReactorClientHttpConnector(HttpClient.from(tcpClient)))
+            .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+            .defaultHeader(HttpHeaders.USER_AGENT, "sky-basehotelds-agent")
+            .exchangeStrategies(exchangeStrategies)
+            .filter(logRequest())
+            .filter(logResponse())
+            .build();
 
     }
 
@@ -61,7 +67,7 @@ public class WebClientConfig {
         return ExchangeFilterFunction.ofResponseProcessor(clientResponse -> {
             logger.info("Response: {} {}", clientResponse.statusCode(), clientResponse.cookies());
             clientResponse.headers().asHttpHeaders()
-                    .forEach((name, values) -> values.forEach(value -> logger.info("{}={}", name, value)));
+                .forEach((name, values) -> values.forEach(value -> logger.info("{}={}", name, value)));
             return Mono.just(clientResponse);
         });
     }

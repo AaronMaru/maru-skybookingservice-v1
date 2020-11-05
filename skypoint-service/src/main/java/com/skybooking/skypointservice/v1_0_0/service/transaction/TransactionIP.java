@@ -123,7 +123,7 @@ public class TransactionIP extends BaseServiceIP implements TransactionSV {
     @Override
     public StructureRS getRecentTransaction(HttpServletRequest httpServletRequest, String userCode, Integer size, Integer page) {
         try {
-            String languageCode = headerDataUtil.languageCode(httpServletRequest);
+            String languageCode = headerDataUtil.languageCodeExist(httpServletRequest);
             List<AccountTransactionTO> recentTransactionList;
             PagingRS pagesRS = new PagingRS();
             if (size != 0) {
@@ -153,7 +153,7 @@ public class TransactionIP extends BaseServiceIP implements TransactionSV {
     @Override
     public StructureRS getOfflineTopUpTransactionDetail(HttpServletRequest httpServletRequest, String transactionCode) {
         try {
-            String languageCode = headerDataUtil.languageCode(httpServletRequest);
+            String languageCode = headerDataUtil.languageCodeExist(httpServletRequest);
             TransactionValueEntity transactionValue = transactionValueRP.findByCode(transactionCode);
             if (transactionValue == null) {
                 throw new BadRequestException("transaction_not_found", null);

@@ -119,12 +119,15 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
     @Transactional
     public StructureRS earningConfirm(HttpServletRequest httpServletRequest, PaymentRQ paymentRQ) {
         try {
-            String languageCode = headerDataUtil.languageCode(httpServletRequest);
+            String languageCode = headerDataUtil.languageCodeExist(httpServletRequest);
             //======= Validate key
             List<String> key = Arrays.asList("amount", "transactionFor", "referenceCode");
             ValidateKeyUtil.validateKey(paymentRQ, key);
             //======= Validate amount not negative
             ValidateKeyUtil.validateAmountNotNegative(paymentRQ.getAmount());
+
+            //======= Check referenceCode with status success
+            this.checkReferenceCode(paymentRQ.getReferenceCode(), "referenceCode_earned_already");
 
             String transactionTypeCode = this.getTransactionTypeCode(paymentRQ.getTransactionFor(), "earned");
             UserReferenceRS userReferenceRS = accountHelper.getUserReference(httpServletRequest);
@@ -182,7 +185,7 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
             transactionValueEntity.setTransactionTypeCode(transactionTypeCode);
             transactionValueRP.save(transactionValueEntity);
 
-            upgradeLevelSV.save(account.getId(), configUpgradeLevel);
+            upgradeLevelSV.save(userReferenceRS, account.getId(), configUpgradeLevel);
 
             //========= Save skyPoint transaction for skyStaff
             skyPointTransactionHelper.saveSkyPointTransaction(userReferenceRS.getType(),
@@ -252,11 +255,7 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
             ValidateKeyUtil.validateAmountNotNegative(paymentRQ.getAmount());
 
             //======= Check referenceCode with status success
-            TransactionEntity transactionReferenceCode = transactionRP.findByReferenceCodeAndStatus(paymentRQ.getReferenceCode(),
-                    TransactionStatusConstant.SUCCESS);
-            if (transactionReferenceCode != null) {
-                throw new BadRequestException("referenceCode_paid_already", null);
-            }
+            this.checkReferenceCode(paymentRQ.getReferenceCode(), "referenceCode_paid_already");
 
             //======== Get user reference
             UserReferenceRS userReferenceRS = accountHelper.getUserReference(httpServletRequest);
@@ -372,7 +371,7 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
     private StructureRS redeemPointResponse(HttpServletRequest httpServletRequest, AccountEntity account,
                                             BigDecimal amount, String transactionCode) {
         //======== Get level Name
-        String languageCode = headerDataUtil.languageCode(httpServletRequest);
+        String languageCode = headerDataUtil.languageCodeExist(httpServletRequest);
         ConfigUpgradeLevelEntity configUpgradeLevel = configUpgradeLevelRP.getRecordByFromValueAndToValueAndTypeAndLanguageCode(
                 account.getSavedPoint(),
                 account.getType(),
@@ -420,5 +419,14 @@ public class PaymentIP extends BaseServiceIP implements PaymentSV {
             throw new BadRequestException("transactionFor_not_valid", null);
         }
         return transactionTypeCode;
+    }
+
+    private void checkReferenceCode(String referenceCode, String messageKey) {
+        //======= Check referenceCode with status success
+        TransactionEntity transactionReferenceCode = transactionRP.findByReferenceCodeAndStatus(referenceCode,
+                TransactionStatusConstant.SUCCESS);
+        if (transactionReferenceCode != null) {
+            throw new BadRequestException(messageKey, null);
+        }
     }
 }

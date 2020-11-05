@@ -19,6 +19,7 @@ public class ContentRSDS {
     private List<RoomRSDS> rooms = new ArrayList<>();
     private List<SegmentRSDS> segments = new ArrayList<>();
     private HotelFacilityRSDS facility;
+    private List<FacilityRSDS> facilities;
     private List<ImageRSDS> images = new ArrayList<>();
 
 }

@@ -12,7 +12,7 @@ public class HistoryBookingTO {
     private Integer stakeholderCompanyId;
     private String bookingCode;
     private String bookingReference;
-    private String referenceCode;
+    private String reference;
     private String contactName;
     private String contactPhone;
     private String contactEmail;

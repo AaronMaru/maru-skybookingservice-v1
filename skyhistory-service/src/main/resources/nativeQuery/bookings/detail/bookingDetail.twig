@@ -12,17 +12,17 @@ END AS tripType,
 (SELECT IFNULL(SUM(`pass_qty`), 0)
 	FROM booking_travel_itineraries bti
 	WHERE bti.booking_id = b.id
-	AND bti.pass_type = "ADT"
+	AND bti.pass_type = 'ADT'
 ) AS `adult`,
 (SELECT IFNULL(SUM(`pass_qty`), 0)
 	FROM booking_travel_itineraries bti
 	WHERE bti.booking_id = b.id
-	AND bti.pass_type = "CNN"
+	AND bti.pass_type = 'CNN'
 ) AS `child`,
 (SELECT IFNULL(SUM(`pass_qty`), 0)
 	FROM booking_travel_itineraries bti
 	WHERE bti.booking_id = b.id
-	AND bti.pass_type = "INF"
+	AND bti.pass_type = 'INF'
 ) AS `infant`,
 b.booking_type As bookingType,
 (SELECT IFNULL(SUM(`pass_qty`), 0) FROM booking_travel_itineraries bti WHERE bti.booking_id = b.id) AS `totalPass`,
@@ -132,10 +132,14 @@ WHERE b.status IN (11, 10, 4, 12, 3, 1)
 AND b.booking_code = :bookingCode
 
 -- CHECK USERS
-AND CASE WHEN :stake = "skyuser"
+AND CASE
+    WHEN :stake = 'skyuser'
     THEN
         (b.stakeholder_user_id = :skyuserId AND b.stakeholder_company_id IS NULL)
-    ELSE
+    WHEN :stake = 'skyowner'
+    THEN
         -- Condition for Skyowner
         b.stakeholder_company_id = :companyId
+    ELSE
+        TRUE
     END

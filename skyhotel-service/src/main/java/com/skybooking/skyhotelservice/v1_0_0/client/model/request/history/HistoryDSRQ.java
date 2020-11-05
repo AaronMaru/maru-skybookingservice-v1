@@ -1,23 +1,22 @@
 package com.skybooking.skyhotelservice.v1_0_0.client.model.request.history;
 
-import com.skybooking.skyhotelservice.v1_0_0.ui.model.request.history.HistoryBookingRQ;
 import lombok.Data;
 
 import java.util.List;
 
 @Data
-public class HistoryHBRQ {
+public class HistoryDSRQ {
 
     List<String> bookingCodes = List.of();
 
-    private FilterRQ filter;
+    private FilterRQ filter = new FilterRQ();
 
-    public HistoryHBRQ(){}
-    public HistoryHBRQ(List<String> bookingCodes) {
+    public HistoryDSRQ(){}
+    public HistoryDSRQ(List<String> bookingCodes) {
         this.bookingCodes = bookingCodes;
     }
 
-    public HistoryHBRQ(List<String> bookingCodes, FilterRQ filterRQ) {
+    public HistoryDSRQ(List<String> bookingCodes, FilterRQ filterRQ) {
         this.bookingCodes = bookingCodes;
         this.filter = filterRQ;
     }

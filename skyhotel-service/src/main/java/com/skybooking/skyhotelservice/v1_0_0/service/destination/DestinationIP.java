@@ -2,10 +2,13 @@ package com.skybooking.skyhotelservice.v1_0_0.service.destination;
 
 import com.skybooking.skyhotelservice.constant.DestinationGroupByConstant;
 import com.skybooking.skyhotelservice.constant.DestinationTypeGroupConstant;
+import com.skybooking.skyhotelservice.constant.PopularcityConstant;
 import com.skybooking.skyhotelservice.constant.SearchByConstant;
 import com.skybooking.skyhotelservice.v1_0_0.client.action.destination.DestinationAction;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.response.destination.Destination;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.response.destination.DestinationRQDS;
+import com.skybooking.skyhotelservice.v1_0_0.io.entity.popularcity.HotelPopularCityEntity;
+import com.skybooking.skyhotelservice.v1_0_0.io.repository.popularcity.PopularCityRP;
 import com.skybooking.skyhotelservice.v1_0_0.service.BaseServiceIP;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.StructureRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.destination.DestinationRS;
@@ -28,45 +31,17 @@ public class DestinationIP extends BaseServiceIP implements DestinationSV {
     @Autowired
     private ModelMapper modelMapper;
 
-    public StructureRS quickSearch(String groupByKey) {
-        List<String> locations = List.of(
-            "PNH",
-            "REP",
-            "KKZ",
-            "BKK",
-            "BBM",
-            "SIN",
-            "CHN",
-            "IRN",
-            "PAK",
-            "TJK",
-            "TKM",
-            "UZB",
-            "GRC",
-            "MKD",
-            "MNE",
-            "KOS",
-            "LBY",
-            "MLI",
-            "MRT",
-            "MAR",
-            "NER",
-            "TUN",
-            "ESH",
-            "FRA",
-            "ESP",
-            "COG",
-            "COD",
-            "NAM",
-            "ZMB",
-            "BOL",
-            "BRA",
-            "CHL",
-            "PRY",
-            "URY"
-        );
+    @Autowired
+    private PopularCityRP popularCityRP;
 
-        List<Destination> destinations = destinationAction.quickSearch(new DestinationRQDS(locations)).getData();
+    public StructureRS quickSearch(String groupByKey) {
+
+        List<HotelPopularCityEntity> quickSearch = popularCityRP.findByType(PopularcityConstant.QUICK_SEARCH);
+        List<String> desCode = quickSearch
+                .stream().map(HotelPopularCityEntity::getDestinationCode)
+                .collect(Collectors.toList());
+
+        List<Destination> destinations = destinationAction.quickSearch(new DestinationRQDS(desCode)).getData();
 
         if (!groupByKey.isEmpty()) {
             List<GroupDestinationRS> rs = new ArrayList<>();

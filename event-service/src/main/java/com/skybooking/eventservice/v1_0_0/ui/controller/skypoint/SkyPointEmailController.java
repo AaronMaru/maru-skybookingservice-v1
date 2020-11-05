@@ -1,5 +1,6 @@
 package com.skybooking.eventservice.v1_0_0.ui.controller.skypoint;
 
+import com.amazonaws.services.xray.model.Http;
 import com.skybooking.eventservice.v1_0_0.service.email.SkyPointEmailSV;
 import com.skybooking.eventservice.v1_0_0.ui.controller.BaseController;
 import com.skybooking.eventservice.v1_0_0.ui.model.request.email.*;
@@ -38,22 +39,32 @@ public class SkyPointEmailController extends BaseController {
     }
 
     @PostMapping("no-auth/top-up/failed")
-    public void topUpSkyPointFailed(@Valid @RequestBody SkyPointTopUpFailedRQ skyPointTopUpFailedRQ) {
+    public ResponseEntity<StructureRS> topUpSkyPointFailed(@Valid @RequestBody SkyPointTopUpFailedRQ skyPointTopUpFailedRQ) {
         emailSV.topUpFailed(skyPointTopUpFailedRQ);
+        return response(new StructureRS(HttpStatus.OK.value(), "res_succ", null));
     }
 
     @PostMapping("earned")
-    public void earningPoint(@Valid @RequestBody SkyPointEarnedRQ skyPointEarnedRQ) {
+    public ResponseEntity<StructureRS> earningPoint(@Valid @RequestBody SkyPointEarnedRQ skyPointEarnedRQ) {
         emailSV.earning(skyPointEarnedRQ);
+        return response(new StructureRS(HttpStatus.OK.value(), "res_succ", null));
     }
 
     @PostMapping("redeem")
-    public void redeemPoint(@Validated @RequestBody SkyPointRedeemRQ skyPointRedeemRQ) {
+    public ResponseEntity<StructureRS> redeemPoint(@Validated @RequestBody SkyPointRedeemRQ skyPointRedeemRQ) {
         emailSV.redeem(skyPointRedeemRQ);
+        return response(new StructureRS(HttpStatus.OK.value(), "res_succ", null));
     }
 
     @PostMapping("refund")
-    public void refundPoint(@Validated @RequestBody SkyPointRefundRQ skyPointRefundRQ) {
+    public ResponseEntity<StructureRS> refundPoint(@Validated @RequestBody SkyPointRefundRQ skyPointRefundRQ) {
         emailSV.refund(skyPointRefundRQ);
+        return response(new StructureRS(HttpStatus.OK.value(), "res_succ", null));
     }
+
+    @PostMapping("upgrade-level")
+    public void upgradeLevel(@Validated @RequestBody SkyPointUpgradeLevelRQ skyPointUpgradeLevelRQ) {
+        emailSV.upgradeLevel(skyPointUpgradeLevelRQ);
+    }
+
 }

@@ -25,7 +25,8 @@ public class HotelCached implements Serializable {
     private List<InterestPointCached> interestPoints = new ArrayList<>();
     private List<RoomCached> rooms = new ArrayList<>();
     private List<SegmentCached> segments = new ArrayList<>();
-    private HotelFacilityCached facility;
+//    private HotelFacilityCached facility;
+    private List<FacilityCached> facilities;
     private ScoreCached score;
     private SpecialOfferCached offer;
     private PriceUnitCached priceUnit;

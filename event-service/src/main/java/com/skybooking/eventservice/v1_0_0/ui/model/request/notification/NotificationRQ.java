@@ -17,7 +17,7 @@ public class NotificationRQ {
     private String transactionCode;
 
     @IsNotEmpty
-    @IsIn(contains = {"EARNED_POINT", "REDEEM_POINT", "REFUND_POINT"})
+    @IsIn(contains = {"EARNED_POINT", "REDEEM_POINT", "REFUND_POINT", "UPGRADE_LEVEL"})
     private String type;
 
     private String script;

@@ -55,10 +55,12 @@ public class BookingDetailIP implements BookingDetailSV {
      */
     public BookingDetailRS getBookingDetail(String bookingCode, SendBookingNoAuthRQ sendBookingNoAuthRQ) {
 
-        String userType;
+        String userType = "";
         String role = "";
-        Long userId;
-        Long companyId = 0l;
+        Long userId = 0L;
+        Long companyId = 0L;
+
+
         if (sendBookingNoAuthRQ == null) {
             FilterRQ filterRQ = new FilterRQ(request, jwtUtils.getUserToken());
             companyId = filterRQ.getCompanyHeaderId();
@@ -66,34 +68,36 @@ public class BookingDetailIP implements BookingDetailSV {
             userId = filterRQ.getSkyuserId();
             role = filterRQ.getRole();
         } else {
-            userType = sendBookingNoAuthRQ.getCompanyId() == null ? "skyuser" : "skyowner";
-            userId = sendBookingNoAuthRQ.getSkyuserId().longValue();
-            if (sendBookingNoAuthRQ.getCompanyId() != null) {
-                companyId = sendBookingNoAuthRQ.getCompanyId().longValue();
-                StakeholderUserHasCompanyEntity stakeholderUserHasCompanyEntity = companyHasUserRP
+            if (!sendBookingNoAuthRQ.isAdmin()) {
+                userType = sendBookingNoAuthRQ.getCompanyId() == null ? "skyuser" : "skyowner";
+                userId = sendBookingNoAuthRQ.getSkyuserId().longValue();
+                if (sendBookingNoAuthRQ.getCompanyId() != null) {
+                    companyId = sendBookingNoAuthRQ.getCompanyId().longValue();
+                    StakeholderUserHasCompanyEntity stakeholderUserHasCompanyEntity = companyHasUserRP
                         .findByStakeholderUserIdAndStakeholderCompanyId(userId, companyId);
-                if (stakeholderUserHasCompanyEntity != null) {
-                    role = stakeholderUserHasCompanyEntity.getSkyuserRole();
+                    if (stakeholderUserHasCompanyEntity != null) {
+                        role = stakeholderUserHasCompanyEntity.getSkyuserRole();
+                    }
                 }
             }
         }
 
         BookingDetailTO bookingDetailTO = bookingDetailNQ.bookingDetail(
-                userType,
-                bookingCode,
-                userId,
-                companyId,
-                role,
-                headerBean.getLocalizationId(),
-                BookingKeyConstant.COMPLETED,
-                BookingKeyConstant.UPCOMING,
-                BookingKeyConstant.CANCELLED,
-                BookingKeyConstant.FAILED,
-                BookingKeyConstant.PENDING,
-                BookingKeyConstant.ONEWAY,
-                BookingKeyConstant.ROUND,
-                BookingKeyConstant.MULTICITY,
-                environment.getProperty("spring.awsImageUrl.profile.url_small")
+            userType,
+            bookingCode,
+            userId,
+            companyId,
+            role,
+            headerBean.getLocalizationId(),
+            BookingKeyConstant.COMPLETED,
+            BookingKeyConstant.UPCOMING,
+            BookingKeyConstant.CANCELLED,
+            BookingKeyConstant.FAILED,
+            BookingKeyConstant.PENDING,
+            BookingKeyConstant.ONEWAY,
+            BookingKeyConstant.ROUND,
+            BookingKeyConstant.MULTICITY,
+            environment.getProperty("spring.awsImageUrl.profile.url_small")
         );
 
         if (bookingDetailTO == null)
@@ -115,8 +119,8 @@ public class BookingDetailIP implements BookingDetailSV {
         BookingInfoRS bookingInfoRS = new BookingInfoRS();
         BeanUtils.copyProperties(bookingDetailTO, bookingInfoRS);
         if (!bookingInfoRS.getUrlItinerary().equals("")) {
-            bookingInfoRS.setUrlItinerary(environment.getProperty("spring.awsImageUrl.file.itinerary")+bookingInfoRS.getUrlItinerary());
-            bookingInfoRS.setUrlReceipt(environment.getProperty("spring.awsImageUrl.file.receipt")+bookingInfoRS.getUrlReceipt());
+            bookingInfoRS.setUrlItinerary(environment.getProperty("spring.awsImageUrl.file.itinerary") + bookingInfoRS.getUrlItinerary());
+            bookingInfoRS.setUrlReceipt(environment.getProperty("spring.awsImageUrl.file.receipt") + bookingInfoRS.getUrlReceipt());
         }
 
         /**
@@ -149,7 +153,7 @@ public class BookingDetailIP implements BookingDetailSV {
          * Get Itinerary Information
          */
         List<ItineraryODInfoRS> itineraryODInfoRS = getItineraryODInfoRS(bookingDetailTO.getBookingId(),
-                bookingDetailTO.getStatusKey());
+            bookingDetailTO.getStatusKey());
 
         /**
          * Response booking detail
@@ -192,8 +196,8 @@ public class BookingDetailIP implements BookingDetailSV {
              */
 
             List<ItineraryODSegmentTO> itineraryODSegmentTOS = bookingDetailNQ.bookingODSegment(itineraryODInfo.getId(),
-                    environment.getProperty("spring.awsImageUrl.airline"), headerBean.getLocalizationId(),
-                    constant.COMPLETED, constant.UPCOMING);
+                environment.getProperty("spring.awsImageUrl.airline"), headerBean.getLocalizationId(),
+                constant.COMPLETED, constant.UPCOMING);
             List<ItineraryODSegmentRS> itineraryODSegmentRS = new ArrayList<>();
 
             for (ItineraryODSegmentTO itineraryODSegment : itineraryODSegmentTOS) {
@@ -219,7 +223,7 @@ public class BookingDetailIP implements BookingDetailSV {
                  * Get Stop information
                  */
                 List<ItineraryStopInfoTO> itineraryStopInfoTO = bookingDetailNQ
-                        .bookingStopInfo(itineraryODSegment.getId(), headerBean.getLocalizationId());
+                    .bookingStopInfo(itineraryODSegment.getId(), headerBean.getLocalizationId());
                 List<BookingStopInfoRS> bookingStopInfoRS = new ArrayList<>();
 
                 for (ItineraryStopInfoTO stopInfoTO : itineraryStopInfoTO) {
@@ -325,9 +329,9 @@ public class BookingDetailIP implements BookingDetailSV {
 
             if (!baggage.getSegment().isEmpty()) {
                 var cities = Arrays.stream(baggage.getSegment().split(",")).map(segment -> Arrays
-                        .stream(segment.split("-"))
-                        .map(it -> bookingDetailNQ.baggageLocation(it.trim(), headerBean.getLocalizationId()).getCity())
-                        .collect(Collectors.joining("-"))).collect(Collectors.joining(", "));
+                    .stream(segment.split("-"))
+                    .map(it -> bookingDetailNQ.baggageLocation(it.trim(), headerBean.getLocalizationId()).getCity())
+                    .collect(Collectors.joining("-"))).collect(Collectors.joining(", "));
 
                 baggageInfo.setSegment(cities);
             }

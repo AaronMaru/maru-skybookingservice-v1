@@ -15,5 +15,7 @@ public interface SkyPointSmsSV {
     void sendRedeemSms(SkyPointRedeemSmsRQ skyPointRedeemSmsRQ);
 
     void sendRefundSms(SkyPointRefundSmsRQ skyPointRefundSmsRQ);
+
+    void upgradeLevel(SkyPointUpgradeLevelSmsRQ skyPointUpgradeLevelSmsRQ);
 }
 

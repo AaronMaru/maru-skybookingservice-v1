@@ -14,7 +14,7 @@ import java.util.Date;
 public class WishlistHotelEntity {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "stakeholder_user_id")

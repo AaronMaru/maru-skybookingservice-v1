@@ -48,5 +48,4 @@ public class CareersEntity {
     @Temporal(TemporalType.TIMESTAMP)
     private Date updatedAt;
 
-
 }

@@ -39,6 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -93,6 +94,9 @@ public class ProviderIP implements ProviderSV {
     @Autowired
     private PointAction pointAction;
 
+    @Autowired
+    private Environment environment;
+
     @Override
     public UrlPaymentRS getRequestUrl(PaymentRQ paymentRQ) {
 
@@ -122,10 +126,10 @@ public class ProviderIP implements ProviderSV {
 
         PaymentMethodTO paymentMethodTO = paymentNQ.getPaymentMethod(paymentRQ.getPaymentCode());
         FlightMandatoryDataRQ mandatoryDataRQ = new FlightMandatoryDataRQ(
-                paymentRQ.getBookingCode(),
-                paymentRQ.getPaymentCode(),
-                paymentMethodTO.getPercentage(),
-                paymentMethodTO.getPercentageBase()
+            paymentRQ.getBookingCode(),
+            paymentRQ.getPaymentCode(),
+            paymentMethodTO.getPercentage(),
+            paymentMethodTO.getPercentageBase()
         );
 
         FlightMandatoryDataRS mandatoryData = flightAction.updateDiscountPaymentMethod(mandatoryDataRQ);
@@ -153,7 +157,7 @@ public class ProviderIP implements ProviderSV {
 
             PaymentMethodTO paymentMethodTO = paymentNQ.getPaymentMethod(paymentRQ.getPaymentCode());
             HotelMandatoryDataRQ mandatoryDataRQ = new HotelMandatoryDataRQ(paymentRQ.getBookingCode(),
-                    paymentRQ.getPaymentCode(), paymentMethodTO.getPercentage(), paymentMethodTO.getPercentageBase());
+                paymentRQ.getPaymentCode(), paymentMethodTO.getPercentage(), paymentMethodTO.getPercentageBase());
 
             HotelMandatoryDataRS mandatoryData = hotelAction.updateDiscountPaymentMethod(mandatoryDataRQ);
             if (mandatoryData.getAmount().equals(BigDecimal.ZERO)) {
@@ -201,7 +205,7 @@ public class ProviderIP implements ProviderSV {
 
             if (bookingCode.contains("SBFT")) {
                 totalAmount = finalBooking.getTotalAmount()
-                        .add(finalBooking.getMarkupAmount().add(finalBooking.getMarkupPayAmount()));
+                    .add(finalBooking.getMarkupAmount().add(finalBooking.getMarkupPayAmount()));
                 commission = finalBooking.getCommissionAmount();
             }
             if (bookingCode.contains("SBHT")) {
@@ -212,14 +216,21 @@ public class ProviderIP implements ProviderSV {
 
             totalAmount = totalAmount.subtract(commission);
             var discount = GeneralUtility
-                    .trimAmount(totalAmount.multiply(item.getPercentage().divide(new BigDecimal(100))));
+                .trimAmount(totalAmount.multiply(item.getPercentage().divide(new BigDecimal(100))));
             discount = discount.add(commission);
 
             var paidAmount = totalAmount.subtract(discount);
 
+
+            PriceDetailRS priceDetail = new PriceDetailRS(totalAmount, discount, paidAmount);
+
+            if (item.getCode().equalsIgnoreCase("SP")) {
+                priceDetail.setCurrency("PTS");
+            }
+
             paymentMethodRS.add(new PaymentMethodRS(item.getType(), item.getCode(), item.getMethod(),
-                    item.getPercentage(), appConfig.getImagePathPaymentMethod() + item.getCode() + ".png",
-                    new PriceDetailRS(totalAmount, discount, paidAmount)));
+                item.getPercentage(), appConfig.getImagePathPaymentMethod() + item.getCode() + ".png",
+                priceDetail));
         });
 
         return paymentMethodRS;
@@ -370,7 +381,7 @@ public class ProviderIP implements ProviderSV {
             FlightMandatoryDataRS mandatoryData = flightAction.getMandatoryData(bookingCode);
             if (!pipayAction.verify(request, mandatoryData.getAmount())) {
                 return appConfig.getPaymentPage() + "?bookingCode=" + bookingCode + "&status="
-                        + PaymentStatusConstant.PAYMENT_FAIL;
+                    + PaymentStatusConstant.PAYMENT_FAIL;
             }
             PaymentSucceedRQ paymentSucceedRQ = pipaySucceedRS(request, mandatoryData);
             /**
@@ -382,7 +393,7 @@ public class ProviderIP implements ProviderSV {
             FlightMandatoryDataRS mandatoryData = hotelAction.getMandatoryData(bookingCode);
             if (!pipayAction.verify(request, mandatoryData.getAmount())) {
                 return appConfig.getPaymentPage() + "?bookingCode=" + bookingCode + "&status="
-                        + PaymentStatusConstant.PAYMENT_FAIL;
+                    + PaymentStatusConstant.PAYMENT_FAIL;
             }
             PaymentSucceedRQ paymentSucceedRQ = pipaySucceedRS(request, mandatoryData);
             hotelAction.updateHotelPaymentSucceed(paymentSucceedRQ);
@@ -397,8 +408,8 @@ public class ProviderIP implements ProviderSV {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("code", bookingCode);
 
-            String key = "12345678901234567890123456789012";
-            String initVector = "1234567890123456";
+            String initVector = environment.getProperty("encryption.iv");
+            String key = environment.getProperty("encryption.key");
 
             try {
                 pointRQ.setData(AESEncryptionDecryption.encrypt(jsonObject.toString(), key, initVector));
@@ -464,7 +475,7 @@ public class ProviderIP implements ProviderSV {
         }
 
         return appConfig.getPaymentPage() + "?bookingCode=" + mandatoryData.getBookingCode() + "&status="
-                + PaymentStatusConstant.PAYMENT_FAIL;
+            + PaymentStatusConstant.PAYMENT_FAIL;
 
     }
 
@@ -477,7 +488,7 @@ public class ProviderIP implements ProviderSV {
 
         paymentMethodTOS.forEach(item -> {
             paymentMethodRS.add(new PaymentMethodAvailableRS(item.getType(), item.getCode(), item.getMethod(),
-                    item.getPercentage(), appConfig.getImagePathPaymentMethod() + item.getCode() + ".png"));
+                item.getPercentage(), appConfig.getImagePathPaymentMethod() + item.getCode() + ".png"));
         });
 
         return paymentMethodRS;
@@ -510,7 +521,7 @@ public class ProviderIP implements ProviderSV {
             booking.setStatus(BookingStatusConstant.PAYMENT_SELECTED);
             bookingRP.save(booking);
             activityLog.activities(ActivityLoggingBean.Action.INDEX_PAYMNET_METHOD_SELECT, activityLog.getUser(),
-                    booking);
+                booking);
 
             // Save Language to redis for email template
             BookingLanguageCached bookingLanguageCached = new BookingLanguageCached();
@@ -520,7 +531,7 @@ public class ProviderIP implements ProviderSV {
 
             PaymentMethodTO paymentMethodTO = paymentNQ.getPaymentMethod(paymentRQ.getPaymentCode());
             FlightMandatoryDataRQ mandatoryDataRQ = new FlightMandatoryDataRQ(paymentRQ.getBookingCode(),
-                    paymentRQ.getPaymentCode(), paymentMethodTO.getPercentage(), paymentMethodTO.getPercentageBase());
+                paymentRQ.getPaymentCode(), paymentMethodTO.getPercentage(), paymentMethodTO.getPercentageBase());
 
             var mandatoryData = flightAction.updateDiscountPaymentMethod(mandatoryDataRQ);
             if (mandatoryData.getAmount().equals(BigDecimal.ZERO)) {
@@ -557,8 +568,10 @@ public class ProviderIP implements ProviderSV {
 
         jsonObject.put("transactionFor", paymentRQ.getProductType());
         jsonObject.put("referenceCode", paymentRQ.getBookingCode());
-        String key = "12345678901234567890123456789012";
-        String initVector = "1234567890123456";
+
+        String key = environment.getProperty("encryption.key");
+        String initVector = environment.getProperty("encryption.iv");
+
         try {
             pointRQ.setData(AESEncryptionDecryption.encrypt(jsonObject.toString(), key, initVector));
         } catch (Exception e) {
@@ -571,7 +584,7 @@ public class ProviderIP implements ProviderSV {
         if (structureRS.getStatus() == HttpStatus.OK.value()) {
 
             urlPaymentRS.setUrlPayment(appConfig.getPaymentPage() + "?bookingCode=" + paymentRQ.getBookingCode()
-                    + "&status=" + PaymentStatusConstant.PAYMENT_SUCCESS);
+                + "&status=" + PaymentStatusConstant.PAYMENT_SUCCESS);
 
 
             if (paymentRQ.getProductType().equals(ProductTypeConstant.FLIGHT)) {
@@ -586,7 +599,7 @@ public class ProviderIP implements ProviderSV {
         }
 
         urlPaymentRS.setUrlPayment(appConfig.getPaymentPage() + "?bookingCode=" + paymentRQ.getBookingCode() +
-                "&status=" + PaymentStatusConstant.PAYMENT_FAIL);
+            "&status=" + PaymentStatusConstant.PAYMENT_FAIL);
 
         return urlPaymentRS;
     }

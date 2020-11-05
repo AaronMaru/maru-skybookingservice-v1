@@ -17,4 +17,6 @@ public interface SkyPointEmailSV {
     void redeem(SkyPointRedeemRQ skyPointRedeemRQ);
 
     void refund(SkyPointRefundRQ skyPointRefundRQ);
+
+    void upgradeLevel(SkyPointUpgradeLevelRQ skyPointUpgradeLevelRQ);
 }

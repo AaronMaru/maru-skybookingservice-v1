@@ -11,5 +11,5 @@ public class SkyPointMailRQ {
     private String email;
     private String fullName;
     private String transactionCode;
-
+    private String transactionFor;
 }

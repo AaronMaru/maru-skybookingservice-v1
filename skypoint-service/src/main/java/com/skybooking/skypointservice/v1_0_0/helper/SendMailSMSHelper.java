@@ -7,6 +7,7 @@ import com.skybooking.skypointservice.v1_0_0.client.event.action.EventSmsAction;
 import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.SkyPointMailRQ;
 import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.SkyPointTopUpFailedRQ;
 import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.SkyPointTopUpSuccessRQ;
+import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.SkyPointUpgradeLevelRQ;
 import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.sms.*;
 import com.skybooking.skypointservice.v1_0_0.client.stakeholder.model.response.UserAccountInfoRS;
 import com.skybooking.skypointservice.v1_0_0.client.stakeholder.model.response.UserReferenceRS;
@@ -51,6 +52,7 @@ public class SendMailSMSHelper {
             skyPointMailRQ.setEmail(userReferenceRS.getEmail());
             skyPointMailRQ.setFullName(userReferenceRS.getName());
             skyPointMailRQ.setTransactionCode(paymentRQ.getReferenceCode());
+            skyPointMailRQ.setTransactionFor(paymentRQ.getTransactionFor());
             if (type.equalsIgnoreCase("redeemed")) {
                 eventEmailAction.redeemEmail(httpServletRequest, skyPointMailRQ);
             } else if (type.equalsIgnoreCase("earned")) {
@@ -97,12 +99,11 @@ public class SendMailSMSHelper {
 
     public void sendMailOrSmsTopUp(TransactionEntity transaction, TransactionValueEntity transactionValue,
                               TransactionContactInfoEntity transactionContactInfo,
-                              ConfigTopUpEntity configTopUp, String languageCode,
-                              HttpServletRequest httpServletRequest) {
+                              ConfigTopUpEntity configTopUp, String languageCode) {
         //======= Send mail or sms
         ClientResponse s3UploadRS = null;
         if (!transactionContactInfo.getEmail().equalsIgnoreCase("")) {
-            s3UploadRS = this.sendMailTopUp(httpServletRequest, transaction, transactionValue,
+            s3UploadRS = this.sendMailTopUp(languageCode, transaction, transactionValue,
                     transactionContactInfo.getEmail(), transactionContactInfo.getName(),
                     transaction.getAmount().multiply(configTopUp.getValue()),
                     transactionContactInfo.getPhoneCode() + transactionContactInfo.getPhoneNumber());
@@ -118,7 +119,7 @@ public class SendMailSMSHelper {
             skyPointTopUpSuccessSmsRQ.setTransactionDate(dateTimeBean.convertDateTime(transaction.getCreatedAt()));
             skyPointTopUpSuccessSmsRQ.setTransactionId(transactionValue.getCode());
             
-            s3UploadRS = eventSmsAction.topUpSuccessSms(httpServletRequest, skyPointTopUpSuccessSmsRQ); 
+            s3UploadRS = eventSmsAction.topUpSuccessSms(languageCode, skyPointTopUpSuccessSmsRQ);
         }
 
         if (s3UploadRS != null) {
@@ -133,29 +134,48 @@ public class SendMailSMSHelper {
         }
     }
 
-    public void sendMailOrSmsTopUpFailed(HttpServletRequest httpServletRequest, TransactionValueEntity transactionValue,
+    public void sendMailOrSmsTopUpFailed(String languageCode, TransactionValueEntity transactionValue,
                                          TransactionContactInfoEntity transactionContactInfo) {
+
         //======= Send mail or sms
         if (!transactionContactInfo.getEmail().equalsIgnoreCase("")) {
             SkyPointTopUpFailedRQ skyPointTopUpFailedRQ = new SkyPointTopUpFailedRQ();
             skyPointTopUpFailedRQ.setAmount(AmountFormatUtil.roundAmount(transactionValue.getAmount()));
             skyPointTopUpFailedRQ.setEmail(transactionContactInfo.getEmail());
             skyPointTopUpFailedRQ.setFullName(transactionContactInfo.getName());
-            eventEmailAction.topUpFailedMail(httpServletRequest, skyPointTopUpFailedRQ);
+            eventEmailAction.topUpFailedMail(languageCode, skyPointTopUpFailedRQ);
         } else if (!transactionContactInfo.getPhoneNumber().equalsIgnoreCase("")) {
             //Send sms
             SkyPointTopUpFailedSmsRQ skyPointTopUpFailedSmsRQ = new SkyPointTopUpFailedSmsRQ();
             skyPointTopUpFailedSmsRQ.setPhone(transactionContactInfo.getPhoneCode() +
                     transactionContactInfo.getPhoneNumber().trim());
 
-            eventSmsAction.topUpFailedSms(httpServletRequest, skyPointTopUpFailedSmsRQ);
+            eventSmsAction.topUpFailedSms(languageCode, skyPointTopUpFailedSmsRQ);
 
         }
     }
 
-    private ClientResponse sendMailTopUp(HttpServletRequest httpServletRequest, TransactionEntity transaction,
-                                         TransactionValueEntity transactionValue, String email, String fullName, BigDecimal earnAmount,
-                                         String phone) {
+    public void sendMailOrSmsUpgradeLevel(UserReferenceRS userReferenceRS, HttpServletRequest httpServletRequest,
+                                          SkyPointUpgradeLevelRQ skyPointUpgradeLevelRQ) {
+
+        if (!userReferenceRS.getEmail().equalsIgnoreCase("")) {
+            //======= Send mail and notification
+            skyPointUpgradeLevelRQ.setEmail(userReferenceRS.getEmail());
+            skyPointUpgradeLevelRQ.setFullName(userReferenceRS.getName());
+
+            eventEmailAction.upgradeLevel(httpServletRequest, skyPointUpgradeLevelRQ);
+        } else if (!userReferenceRS.getPhoneNumber().equalsIgnoreCase("")) {
+            //======= Send sms
+            SkyPointRefundSmsRQ skyPointRefundSmsRQ = new SkyPointRefundSmsRQ();
+            skyPointRefundSmsRQ.setPhone((userReferenceRS.getPhoneCode() + userReferenceRS.getPhoneNumber()).trim());
+            eventSmsAction.refundedSms(httpServletRequest, skyPointRefundSmsRQ);
+
+        }
+
+    }
+
+    private ClientResponse sendMailTopUp(String languageCode, TransactionEntity transaction, TransactionValueEntity transactionValue,
+                                         String email, String fullName, BigDecimal earnAmount, String phone) {
         //======= Send mail
         SkyPointTopUpSuccessRQ skyPointTopUpSuccessRQ = new SkyPointTopUpSuccessRQ();
         skyPointTopUpSuccessRQ.setAmount(AmountFormatUtil.roundAmount(transactionValue.getAmount()));
@@ -165,6 +185,6 @@ public class SendMailSMSHelper {
         skyPointTopUpSuccessRQ.setPhone(phone);
         skyPointTopUpSuccessRQ.setTransactionId(transactionValue.getCode());
         skyPointTopUpSuccessRQ.setTransactionDate(dateTimeBean.convertDateTime(transaction.getCreatedAt()));
-        return eventEmailAction.topUpEmail(httpServletRequest, skyPointTopUpSuccessRQ);
+        return eventEmailAction.topUpEmail(languageCode, skyPointTopUpSuccessRQ);
     }
 }

@@ -22,4 +22,7 @@ public class AppConfig {
     @Value("${spring.service.distributed.auth.clientSecret}")
     private String AUTH_CLIENT_SECRET;
 
+    @Value("${spring.service.sky.url}")
+    private String SKY_URL;
+
 }

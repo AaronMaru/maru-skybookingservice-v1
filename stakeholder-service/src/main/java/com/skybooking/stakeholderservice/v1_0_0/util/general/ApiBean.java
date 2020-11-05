@@ -259,6 +259,10 @@ public class ApiBean {
 
     }
 
+    public int createVerifyCode(UserEntity user, int status) {
+        return createVerifyCode(user, status, null);
+    }
+
 
     /**
      * -----------------------------------------------------------------------------------------------------------------

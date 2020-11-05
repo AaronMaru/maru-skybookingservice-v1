@@ -1,6 +1,7 @@
 package com.skybooking.eventservice.v1_0_0.ui.model.request.email;
 
 import com.skybooking.core.validators.annotations.IsEmail;
+import com.skybooking.core.validators.annotations.IsIn;
 import lombok.Data;
 
 import javax.validation.constraints.DecimalMin;
@@ -22,5 +23,8 @@ public class SkyPointEarnedRQ {
 
     @NotNull
     private String fullName;
+
+    @IsIn(contains = {"FLIGHT", "HOTEL"}, message = "TransactionFor is invalid.")
+    private String transactionFor;
 
 }

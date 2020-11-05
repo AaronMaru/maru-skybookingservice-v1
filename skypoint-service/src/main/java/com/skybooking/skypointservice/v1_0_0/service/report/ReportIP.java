@@ -129,7 +129,7 @@ public class ReportIP extends BaseServiceIP implements ReportSV {
     @Override
     public StructureRS backendAccountInfoReport(HttpServletRequest httpServletRequest, String userCode) {
         try {
-            String languageCode = headerDataUtil.languageCode(httpServletRequest);
+            String languageCode = headerDataUtil.languageCodeExist(httpServletRequest);
             BackendAccountInfoReportRS backendAccountInfoReportRS = new BackendAccountInfoReportRS();
             AccountEntity accountEntity = accountRP.findAccountEntityByUserCode(userCode)
                     .orElse(new AccountEntity("LEVEL1"));
@@ -202,7 +202,7 @@ public class ReportIP extends BaseServiceIP implements ReportSV {
     @Override
     public StructureRS topUpPointDetailReport(HttpServletRequest httpServletRequest, String startDate, String endDate, String userCode) {
         try {
-            String languageCode = headerDataUtil.languageCode(httpServletRequest);
+            String languageCode = headerDataUtil.languageCodeExist(httpServletRequest);
             List<TopUpPointDetailReportTO> topUpPointDetailReportTOList = reportNQ.topUpPointDetailReport(
                     startDate, endDate, languageCode, userCode);
 
@@ -259,7 +259,7 @@ public class ReportIP extends BaseServiceIP implements ReportSV {
     @Override
     public StructureRS spentPointDetailReport(HttpServletRequest httpServletRequest, String startDate, String endDate, String userCode) {
         try {
-            String languageCode = headerDataUtil.languageCode(httpServletRequest);
+            String languageCode = headerDataUtil.languageCodeExist(httpServletRequest);
             List<SpentPointDetailReportTO> spentPointDetailReportTOList = reportNQ.spentPointDetailReport(
                     startDate, endDate, languageCode, userCode);
 
@@ -316,7 +316,7 @@ public class ReportIP extends BaseServiceIP implements ReportSV {
     @Override
     public StructureRS earnedPointDetailReport(HttpServletRequest httpServletRequest, String startDate, String endDate, String userCode) {
         try {
-            String languageCode = headerDataUtil.languageCode(httpServletRequest);
+            String languageCode = headerDataUtil.languageCodeExist(httpServletRequest);
             List<EarnedPointDetailReportTO> earnedPointDetailReportTOList = reportNQ.earnedPointDetailReport(
                     startDate, endDate, languageCode, userCode);
 
@@ -373,7 +373,7 @@ public class ReportIP extends BaseServiceIP implements ReportSV {
     @Override
     public StructureRS refundedPointDetailReport(HttpServletRequest httpServletRequest, String startDate, String endDate, String userCode) {
         try {
-            String languageCode = headerDataUtil.languageCode(httpServletRequest);
+            String languageCode = headerDataUtil.languageCodeExist(httpServletRequest);
             List<RefundedPointDetailReportTO> refundedPointDetailReportTOList = reportNQ.refundedPointDetailReport(
                     startDate, endDate, languageCode, userCode);
 
@@ -430,7 +430,7 @@ public class ReportIP extends BaseServiceIP implements ReportSV {
     @Override
     public StructureRS transactionReportExport(HttpServletRequest httpServletRequest, String startDate, String endDate) {
         try {
-            String languageCode = headerDataUtil.languageCode(httpServletRequest);
+            String languageCode = headerDataUtil.languageCodeExist(httpServletRequest);
             List<TransactionReportTO> transactionReportTOList = reportNQ.getTransactionReport(startDate, endDate, languageCode);
 
             return responseBody(HttpStatus.OK, ResponseConstant.SUCCESS, formatTransactionReport(transactionReportTOList));

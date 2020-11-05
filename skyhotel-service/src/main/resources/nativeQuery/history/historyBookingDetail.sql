@@ -3,7 +3,7 @@ SELECT
 	hb.stakeholder_company_id AS stakeholderCompanyId,
 	hb.code AS bookingCode,
 	hb.booking_reference AS bookingReference,
-	hb.reference_code AS referenceCode,
+	hb.reference,
 	hb.contact_fullname AS contactName,
 	CONCAT(hb.contact_phone_code,hb.contact_phone) AS contactPhone,
 	hb.contact_email AS contactEmail,

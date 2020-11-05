@@ -9,6 +9,6 @@ import org.springframework.stereotype.Repository;
 public interface UpgradeLevelHistoryRP extends JpaRepository<UpgradeLevelHistoryEntity, Integer> {
     UpgradeLevelHistoryEntity findTopByAccountIdOrderByIdDesc(Integer accountId);
 
-    @Query(value = "SELECT * FROM skypoint_db.upgrade_level_history where account_id = :accountId ORDER BY id desc LIMIT 1", nativeQuery = true)
+    @Query(value = "SELECT * FROM upgrade_level_history where account_id = :accountId ORDER BY id desc LIMIT 1", nativeQuery = true)
     UpgradeLevelHistoryEntity findLastUpgrade(Integer accountId);
 }

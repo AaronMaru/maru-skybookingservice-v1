@@ -28,8 +28,7 @@ public class HotelBookingEntity {
     @Column(name = "booking_reference")
     private String bookingReference;
 
-    @Column(name = "reference_code")
-    private String referenceCode;
+    private String reference;
 
     @Column(name = "check_in")
     private Date checkIn;

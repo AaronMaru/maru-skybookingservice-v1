@@ -2,6 +2,7 @@ package com.skybooking.skypointservice.v1_0_0.client.event.action;
 
 import com.skybooking.skypointservice.config.AppConfig;
 import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.NotificationRQ;
+import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.NotificationUpgradeLevelRQ;
 import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.TopUpNotificationRQ;
 import com.skybooking.skypointservice.v1_0_0.util.auth.AuthUtility;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,12 +23,13 @@ public class EventNotificationAction {
     @Autowired
     private AuthUtility authUtility;
 
-    public void topUpNotification(HttpServletRequest httpServletRequest, TopUpNotificationRQ topUpNotificationRQ) {
+
+    public void topUpNotification(String languageCode, TopUpNotificationRQ topUpNotificationRQ) {
 
         webClient
                 .post()
                 .uri(appConfig.getEventUrl() + appConfig.getEventVersion() + "/notification/no-auth/top-up")
-                .header("X-localization", httpServletRequest.getHeader("X-localization"))
+                .header("X-localization", languageCode)
                 .bodyValue(topUpNotificationRQ)
                 .retrieve()
                 .bodyToMono(Object.class)
@@ -42,6 +44,20 @@ public class EventNotificationAction {
                 .header("X-localization", httpServletRequest.getHeader("X-localization"))
                 .header(HttpHeaders.AUTHORIZATION, authUtility.getAuthToken())
                 .bodyValue(notificationRQ)
+                .retrieve()
+                .bodyToMono(Object.class)
+                .subscribe();
+    }
+
+    public void sendNotificationUpgradeLevel(HttpServletRequest httpServletRequest,
+                                             NotificationUpgradeLevelRQ notificationUpgradeLevelRQ) {
+
+        webClient
+                .post()
+                .uri(appConfig.getEventUrl() + appConfig.getEventVersion() + "/notification/upgrade-level")
+                .header("X-localization", httpServletRequest.getHeader("X-localization"))
+                .header(HttpHeaders.AUTHORIZATION, authUtility.getAuthToken())
+                .bodyValue(notificationUpgradeLevelRQ)
                 .retrieve()
                 .bodyToMono(Object.class)
                 .subscribe();

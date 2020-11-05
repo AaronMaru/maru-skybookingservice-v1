@@ -8,12 +8,15 @@ import com.skybooking.skygatewayservice.service.AuthService;
 import com.skybooking.skygatewayservice.service.EncryptionDecryptionService;
 import com.skybooking.skygatewayservice.service.StakeholderService;
 import com.skybooking.skygatewayservice.utils.JwtUtils;
+import com.skybooking.skygatewayservice.utils.PermissionCM;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
 import javax.servlet.http.HttpServletRequest;
+
+import java.util.List;
 
 import static com.netflix.zuul.context.RequestContext.getCurrentContext;
 
@@ -27,6 +30,9 @@ public class PreFilter extends ZuulFilter {
 
     @Autowired
     private JwtUtils jwtUtils;
+
+    @Autowired
+    private PermissionCM permissionCM;
 
     @Autowired
     private EncryptionDecryptionService encryptionDecryptionService;
@@ -79,7 +85,7 @@ public class PreFilter extends ZuulFilter {
             if (auth == AuthConstant.PERMISSION_CHANGED) { // user permission have changed by someone
                 this.setFailedRequest(HttpStatus.FORBIDDEN, "{\"status\": 403,\"message\": \"Forbidden\",\"error\": null}");
             }
-            this.checkRoleUser(request);
+            this.checkUserType(request);
             this.validationCompanyId(request, authorization);
             stakeholderService.checkUserContact(ctx);
 
@@ -138,6 +144,9 @@ public class PreFilter extends ZuulFilter {
             if (!companyId.equals(tokenCompanyId)) {
                 this.setFailedRequest(HttpStatus.FORBIDDEN, "{\"status\": 403,\"message\": \"Forbidden\",\"error\": null}");
             }
+
+            String userRole = jwtUtils.getClaim("userRole", String.class);
+            checkSkyownerRole(request, userRole);
         }
 
     }
@@ -205,7 +214,7 @@ public class PreFilter extends ZuulFilter {
         return false;
     }
 
-    public void checkRoleUser(HttpServletRequest request) {
+    public void checkUserType(HttpServletRequest request) {
         if (staffAuthorizationRoute(request)) {
             String userType = jwtUtils.getClaim("userType", String.class);
             String userRole = jwtUtils.getClaim("userRole", String.class);
@@ -244,4 +253,25 @@ public class PreFilter extends ZuulFilter {
 
         return false;
     }
+
+
+    public void checkSkyownerRole(HttpServletRequest request, String role) {
+
+        if (permissionCM.admin(request)) {
+            if (role.equals("moderator")) {
+                if (!permissionCM.moderator(request)) {
+                    this.setFailedRequest(HttpStatus.FORBIDDEN, "{\"status\": 403,\"message\": \"Unauthorized\",\"error\": null}");
+                }
+            }
+
+            if (role.equals("editor")) {
+                if (!permissionCM.editor(request)) {
+                    this.setFailedRequest(HttpStatus.FORBIDDEN, "{\"status\": 403,\"message\": \"Unauthorized\",\"error\": null}");
+                }
+            }
+        }
+
+    }
+
+
 }

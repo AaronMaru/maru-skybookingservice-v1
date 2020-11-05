@@ -7,11 +7,12 @@ import java.math.BigDecimal;
 @Data
 public class NotificationDTO {
 
-    private Long stakeholderUserId;
-    private Long stakeholderCompanyId;
-    private String transactionCode;
-    private String type;
-    private String script;
-    private BigDecimal amount;
+    protected Long stakeholderUserId;
+    protected Long stakeholderCompanyId;
+    protected String transactionCode;
+    protected String type;
+    protected String script;
+    protected BigDecimal amount;
+    protected String transactionFor;
 
 }

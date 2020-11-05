@@ -111,4 +111,15 @@ public class SkyPointSmsIP implements SkyPointSmsSV {
         smsBean.sendSms(smsData);
 
     }
+
+    @Override
+    public void upgradeLevel(SkyPointUpgradeLevelSmsRQ skyPointUpgradeLevelSmsRQ) {
+
+        Map<String, Object> smsData = smsBean.smsData(skyPointUpgradeLevelSmsRQ.getPhone(),
+                SKY_POINT_UPGRADE_LEVEL_SMS);
+
+        smsData.put("level", skyPointUpgradeLevelSmsRQ.getLevel());
+        smsBean.sendSms(smsData);
+
+    }
 }

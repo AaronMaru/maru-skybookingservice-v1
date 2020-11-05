@@ -80,7 +80,7 @@ public class HistoryIP extends BaseServiceIP implements HistorySV {
     public StructureRS getTransactionHistoryByUserAccount(HttpServletRequest httpServletRequest, String startDate,
                                                           String endDate, String transactionTypCode, Integer page, Integer size) {
         try {
-            String languageCode = headerDataUtil.languageCode(httpServletRequest);
+            String languageCode = headerDataUtil.languageCodeExist(httpServletRequest);
             // ======== userReferenceRS
             UserReferenceRS userReferenceRS = accountHelper.getUserReference(httpServletRequest);
             String userCode = userReferenceRS.getUserCode();
@@ -88,7 +88,11 @@ public class HistoryIP extends BaseServiceIP implements HistorySV {
             Integer offset = (page - 1) * size;
             PagingRS pagingRS = new PagingRS();
             List<CountTransactionHistory> countTransactionHistory;
-            if (startDate != null && endDate != null) {
+            if (startDate != null && endDate == null) {
+                throw new BadRequestException("startDate_endDate_required", null);
+            } else if (startDate == null && endDate != null) {
+                throw new BadRequestException("startDate_endDate_required", null);
+            } else if(startDate != null && endDate != null) {
                 if (!DateFormatUtil.isValidFormat(startDate) || !DateFormatUtil.isValidFormat(endDate)) {
                     throw new BadRequestException("startDate_endDate_not_valid_format", null);
                 }
@@ -97,7 +101,6 @@ public class HistoryIP extends BaseServiceIP implements HistorySV {
                 countTransactionHistory = historyNQ.countAllFilterTransactionHistoryByAccount(userCode,
                         transactionTypCode, startDate, endDate);
             } else {
-
                 transactionHistoryTOList = historyNQ.getTransactionHistoryByAccount(
                         userCode, transactionTypCode, languageCode, size, offset);
                 countTransactionHistory = historyNQ.countAllTransactionHistoryByAccount(userCode, transactionTypCode);
@@ -124,7 +127,7 @@ public class HistoryIP extends BaseServiceIP implements HistorySV {
     @Override
     public StructureRS getTransactionHistoryDetail(HttpServletRequest httpServletRequest, String transactionCode) {
         try {
-            String languageCode = headerDataUtil.languageCode(httpServletRequest);
+            String languageCode = headerDataUtil.languageCodeExist(httpServletRequest);
             TransactionHistoryDetailTO transactionHistoryDetailTO = historyNQ
                     .getTransactionHistoryDetail(transactionCode, languageCode).orElse(null);
             if (transactionHistoryDetailTO == null) {
@@ -155,7 +158,7 @@ public class HistoryIP extends BaseServiceIP implements HistorySV {
     public StructureRS skyOwnerTransactionHistory(HttpServletRequest httpServletRequest, Integer stakeholderUserId,
                                                   Integer page, Integer size) {
         try {
-            String languageCode = headerDataUtil.languageCode(httpServletRequest);
+            String languageCode = headerDataUtil.languageCodeExist(httpServletRequest);
             UserReferenceRS userReferenceRS = accountHelper.getUserReference(httpServletRequest);
             Integer offset = (page - 1) * size;
             List<SkyOwnerTransactionHistoryTO> skyOwnerTransactionHistoryList = historyNQ
@@ -260,7 +263,7 @@ public class HistoryIP extends BaseServiceIP implements HistorySV {
             } else if (!DateFormatUtil.isValidFormat(startDate) || !DateFormatUtil.isValidFormat(endDate)) {
                 throw new BadRequestException("startDate_endDate_not_valid_format", null);
             }
-            String languageCode = headerDataUtil.languageCode(httpServletRequest);
+            String languageCode = headerDataUtil.languageCodeExist(httpServletRequest);
             // ======== userReferenceRS
             UserReferenceRS userReferenceRS = accountHelper.getUserReference(httpServletRequest);
             String userCode = userReferenceRS.getUserCode();

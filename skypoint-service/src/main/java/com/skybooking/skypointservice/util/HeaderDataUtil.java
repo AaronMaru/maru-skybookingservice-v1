@@ -10,12 +10,6 @@ public class HeaderDataUtil {
     @Autowired
     private StakeholderAction stakeholderAction;
 
-
-    public String languageCode(HttpServletRequest httpServletRequest) {
-        String reqLocale = httpServletRequest.getHeader("X-localization");
-        return reqLocale == null ? "en" : reqLocale;
-    }
-
     public String languageCodeExist(HttpServletRequest httpServletRequest) {
         String reqLocale = httpServletRequest.getHeader("X-localization");
 

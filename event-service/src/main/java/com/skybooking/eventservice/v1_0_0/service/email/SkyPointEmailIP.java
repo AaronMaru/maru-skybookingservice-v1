@@ -1,5 +1,8 @@
 package com.skybooking.eventservice.v1_0_0.service.email;
 
+import com.skybooking.eventservice.constant.TransactionForConstant;
+import com.skybooking.eventservice.v1_0_0.io.entity.locale.TranslationEntity;
+import com.skybooking.eventservice.v1_0_0.io.nativeQuery.mail.MultiLanguageTO;
 import com.skybooking.eventservice.v1_0_0.ui.model.request.email.*;
 import com.skybooking.eventservice.v1_0_0.ui.model.response.S3UploadRS;
 import com.skybooking.eventservice.v1_0_0.util.email.EmailBean;
@@ -16,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 
 import static com.skybooking.eventservice.constant.EmailKey.*;
+import static com.skybooking.eventservice.constant.SmsKey.API_PRODUCT_FLIGHT;
+import static com.skybooking.eventservice.constant.SmsKey.API_PRODUCT_HOTEL;
 
 @Service
 public class SkyPointEmailIP implements SkyPointEmailSV {
@@ -83,6 +88,19 @@ public class SkyPointEmailIP implements SkyPointEmailSV {
                 skyPointEarnedRQ.getFullName(),
                 skyPointEarnedRQ.getAmount(), SKY_POINT_EARNED);
         mailData.put("transactionId", skyPointEarnedRQ.getTransactionCode());
+
+        List<TranslationEntity> translationEntities;
+
+        if (skyPointEarnedRQ.getTransactionFor().equalsIgnoreCase(TransactionForConstant.FLIGHT)) {
+            translationEntities = emailBean.translationLabel(API_PRODUCT_FLIGHT);
+        } else {
+            translationEntities = emailBean.translationLabel(API_PRODUCT_HOTEL);
+        }
+
+        if(! translationEntities.isEmpty()) {
+            mailData.put("transactionFor", translationEntities.stream().findFirst().get().getValue());
+        }
+
         emailBean.email(mailData, null);
 
     }
@@ -104,5 +122,28 @@ public class SkyPointEmailIP implements SkyPointEmailSV {
                 skyPointRefundRQ.getAmount(), SKY_POINT_REFUND);
 
         emailBean.email(mailData, null);
+    }
+
+    @Override
+    public void upgradeLevel(SkyPointUpgradeLevelRQ skyPointUpgradeLevelRQ) {
+
+        MultiLanguageTO multiLanguageTO = emailBean.getMailData(SKY_POINT_UPGRADE_LEVEL);
+
+        String script = multiLanguageTO.getSubject();
+
+        script = script.replace("{{OLD_LEVEL}}", skyPointUpgradeLevelRQ.getOldLevel());
+        script = script.replace("{{NEW_LEVEL}}", skyPointUpgradeLevelRQ.getNewLevel());
+
+        multiLanguageTO.setSubject(script);
+
+        Map<String, Object> mailTemplateData = new HashMap<>();
+        mailTemplateData.put("receiver", skyPointUpgradeLevelRQ.getEmail());
+        mailTemplateData.put("fullName", skyPointUpgradeLevelRQ.getFullName());
+        mailTemplateData.put("script", multiLanguageTO);
+        mailTemplateData.put("brand", SKY_POINT);
+
+
+        emailBean.email(mailTemplateData, null);
+
     }
 }

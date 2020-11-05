@@ -15,5 +15,6 @@ public class ImageCached implements Serializable {
     private String roomCode;
     private String roomType;
     private String characteristicCode;
+    private Boolean service;
 
 }

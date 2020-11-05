@@ -5,6 +5,7 @@ import com.skybooking.skypointservice.v1_0_0.client.ClientResponse;
 import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.SkyPointMailRQ;
 import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.SkyPointTopUpFailedRQ;
 import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.SkyPointTopUpSuccessRQ;
+import com.skybooking.skypointservice.v1_0_0.client.event.model.requset.SkyPointUpgradeLevelRQ;
 import com.skybooking.skypointservice.v1_0_0.util.auth.AuthUtility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -24,13 +25,13 @@ public class EventEmailAction {
     @Autowired
     private AuthUtility authUtility;
 
-    public ClientResponse topUpEmail(HttpServletRequest httpServletRequest, SkyPointTopUpSuccessRQ skyPointTopUpSuccessRQ) {
+    public ClientResponse topUpEmail(String languageCode, SkyPointTopUpSuccessRQ skyPointTopUpSuccessRQ) {
 
         return webClient.mutate()
                 .build()
                 .post()
                 .uri(appConfig.getEventUrl() + appConfig.getEventVersion() + "/email/no-auth/top-up/success")
-                .header("X-localization", httpServletRequest.getHeader("X-localization"))
+                .header("X-localization", languageCode)
                 .bodyValue(skyPointTopUpSuccessRQ)
                 .retrieve()
                 .bodyToMono(ClientResponse.class)
@@ -38,12 +39,12 @@ public class EventEmailAction {
 
     }
 
-    public void topUpFailedMail(HttpServletRequest httpServletRequest, SkyPointTopUpFailedRQ skyPointTopUpFailedRQ) {
+    public void topUpFailedMail(String languageCode, SkyPointTopUpFailedRQ skyPointTopUpFailedRQ) {
 
         webClient
                 .post()
                 .uri(appConfig.getEventUrl() + appConfig.getEventVersion() + "/email/no-auth/top-up/failed")
-                .header("X-localization", httpServletRequest.getHeader("X-localization"))
+                .header("X-localization", languageCode)
                 .header(HttpHeaders.AUTHORIZATION, authUtility.getAuthToken())
                 .bodyValue(skyPointTopUpFailedRQ)
                 .retrieve()
@@ -89,6 +90,20 @@ public class EventEmailAction {
                 .header("X-localization", httpServletRequest.getHeader("X-localization"))
                 .header(HttpHeaders.AUTHORIZATION, authUtility.getAuthToken())
                 .bodyValue(skyPointMailRQ)
+                .retrieve()
+                .bodyToMono(Object.class)
+                .subscribe();
+
+    }
+
+    public void upgradeLevel(HttpServletRequest httpServletRequest, SkyPointUpgradeLevelRQ skyPointUpgradeLevelRQ) {
+
+        webClient
+                .post()
+                .uri(appConfig.getEventUrl() + appConfig.getEventVersion() + "/email/upgrade-level")
+                .header("X-localization", httpServletRequest.getHeader("X-localization"))
+                .header(HttpHeaders.AUTHORIZATION, authUtility.getAuthToken())
+                .bodyValue(skyPointUpgradeLevelRQ)
                 .retrieve()
                 .bodyToMono(Object.class)
                 .subscribe();

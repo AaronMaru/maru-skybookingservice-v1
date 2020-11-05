@@ -5,7 +5,7 @@ import com.skybooking.skyhotelservice.constant.CancellationTypeConstant;
 import com.skybooking.skyhotelservice.v1_0_0.client.action.booking.HistoryAction;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.request.content.HotelsRQDS;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.request.history.FilterRQ;
-import com.skybooking.skyhotelservice.v1_0_0.client.model.request.history.HistoryHBRQ;
+import com.skybooking.skyhotelservice.v1_0_0.client.model.request.history.HistoryDSRQ;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.response.history.HistoryHBRS;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.response.hoteldata.BasicHotelDataDSRS;
 import com.skybooking.skyhotelservice.v1_0_0.io.nativeQuery.history.HistoryBookingNQ;
@@ -82,7 +82,7 @@ public class HistoryBookingIP extends BaseServiceIP implements HistoryBookingSV 
 
         List<HistoryBookingRS> historyBookingRS = new ArrayList<>();
         PagingRS paging = new PagingRS();
-        System.out.println(historyBookingTO);
+
         if (historyBookingTO.size() > 0) {
 
             List<String> bookingReference = historyBookingTO
@@ -91,7 +91,7 @@ public class HistoryBookingIP extends BaseServiceIP implements HistoryBookingSV 
                     .distinct()
                     .collect(Collectors.toList());
 
-            HistoryHBRS historyHBRS = historyAction.listHistory(new HistoryHBRQ(bookingReference, new FilterRQ(historyBookingRQ)));
+            HistoryHBRS historyHBRS = historyAction.listHistory(new HistoryDSRQ(bookingReference, new FilterRQ(historyBookingRQ)));
 
             if (historyHBRS != null && historyHBRS.getData().size() > 0) {
                 List<String> bookingCodeHS = historyHBRS.getData()
@@ -214,7 +214,6 @@ public class HistoryBookingIP extends BaseServiceIP implements HistoryBookingSV 
 
     }
 
-
     public HistoryBookingDetailRS historyDetail(String bookingCode) {
         var bookingDetailRS =  detail(bookingCode, headerCM.skyType(), headerCM.getCompanyIdZ());
         HistoryBookingDetailRS data = modelMapper.map(bookingDetailRS, HistoryBookingDetailRS.class);
@@ -241,20 +240,23 @@ public class HistoryBookingIP extends BaseServiceIP implements HistoryBookingSV 
             BeanUtils.copyProperties(historyBooking, contactInfo);
             BeanUtils.copyProperties(historyBooking, paymentInfo);
 
-            BigDecimal discountAmount = priceInfo.getTotalAmountBeforeDiscount().subtract(priceInfo.getTotalAmount());
-            BigDecimal discountPercentage = CalculatePriceUtil.calculateDiscountPercentage(priceInfo.getTotalAmount(), discountAmount);
-            priceInfo.setDiscountPercentage(discountPercentage);
-            priceInfo.setDiscountAmount(discountAmount);
+            if (priceInfo.getTotalAmountBeforeDiscount().compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal discountAmount = priceInfo.getTotalAmountBeforeDiscount().subtract(priceInfo.getTotalAmount());
+                BigDecimal discountPercentage = CalculatePriceUtil.calculateDiscountPercentage(priceInfo.getTotalAmount(), discountAmount);
+                priceInfo.setDiscountPercentage(discountPercentage);
+                priceInfo.setDiscountAmount(discountAmount);
+            }
 
             List<String> bookingReference = Collections.singletonList(historyBookingRS.getBookingReference());
 
-            HistoryHBRS historyHBRS = historyAction.listHistory(new HistoryHBRQ(bookingReference));
+            HistoryHBRS historyHBRS = historyAction.listHistory(new HistoryDSRQ(bookingReference));
             historyBookingRS.setCheckIn(DatetimeUtil.convertDateTimeISO(historyBooking.getCheckIn()));
             historyBookingRS.setCheckOut(DatetimeUtil.convertDateTimeISO(historyBooking.getCheckOut()));
 
             if (historyHBRS != null) {
 
                 Optional<HistoryListRS> bookingDataHB = historyHBRS.getData().stream().findFirst();
+
                 bookingDataHB.ifPresent( dataHB -> {
                     if (dataHB.getBookingDate() != null) {
                         historyBookingRS.setBookingDate(DatetimeUtil.convertDateTimeISO(dataHB.getBookingDate()));
@@ -264,10 +266,9 @@ public class HistoryBookingIP extends BaseServiceIP implements HistoryBookingSV 
 
                     AtomicReference<Integer> totalRooms = new AtomicReference<>(0);
                     List<RoomDetail> roomList = new ArrayList<>();
-
+                    System.out.println(dataHB.getRooms());
                     dataHB.getRooms().forEach(room -> {
                         RoomDetail roomDetail = new RoomDetail();
-//                        roomDetail.setSpecialRequest();
                         room.getRates().forEach(rate -> {
                             totalRooms.updateAndGet(v -> v + rate.getTotalRoom());
                         });
@@ -275,6 +276,13 @@ public class HistoryBookingIP extends BaseServiceIP implements HistoryBookingSV 
                         var checkExist = roomList.stream().filter(f -> f.getCode().equals(room.getCode())).findFirst();
                         if (!checkExist.isPresent()) {
                             roomDetail.setCode(room.getCode());
+
+                            List<PassengerInfo> paxInfo = room.getPaxes()
+                                .stream()
+                                .map(pax -> modelMapper.map(pax, PassengerInfo.class)).collect(Collectors.toList());
+
+                            roomDetail.setPaxInfo(paxInfo);
+
                             roomList.add(roomDetail);
                         }
 
@@ -304,7 +312,7 @@ public class HistoryBookingIP extends BaseServiceIP implements HistoryBookingSV 
                         }).collect(Collectors.toList());
 
                     });
-                    historyBookingRS.setRoom(roomList);
+                    historyBookingRS.setRooms(roomList);
                 });
             }
 

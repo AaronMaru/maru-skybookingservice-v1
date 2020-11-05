@@ -1,5 +1,6 @@
 package com.skybooking.skyhotelservice.v1_0_0.util.header;
 
+import com.skybooking.skyhotelservice.v1_0_0.util.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +16,9 @@ public class HeaderCM {
     @Autowired
     private HttpServletRequest request;
 
+    @Autowired
+    private JwtUtils jwtUtils;
+
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -27,13 +31,20 @@ public class HeaderCM {
     }
 
     public String skyType() {
+
         Long companyId = getCompanyIdZ();
+
+        if (jwtUtils.getClaim("client_id", String.class).equals("skybooking-back-office")) {
+            return "";
+        }
+
         if (companyId == 0) {
             return "skyuser";
         }
 
         return "company";
     }
+
 
     public String getLocalization() {
 

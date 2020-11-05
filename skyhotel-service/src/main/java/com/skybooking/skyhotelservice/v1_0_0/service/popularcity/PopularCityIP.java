@@ -1,6 +1,7 @@
 package com.skybooking.skyhotelservice.v1_0_0.service.popularcity;
 
 import com.skybooking.skyhotelservice.config.AppConfig;
+import com.skybooking.skyhotelservice.constant.PopularcityConstant;
 import com.skybooking.skyhotelservice.v1_0_0.client.action.popularcity.PopularCityAction;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.request.content.DestinationRQDS;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.request.popularcity.PopularCityRQDS;
@@ -26,7 +27,7 @@ public class PopularCityIP extends BaseServiceIP implements PopularcitySV {
 
     public StructureRS listing() {
 
-        List<HotelPopularCityEntity> popularCities = popularCityRP.findAll();
+        List<HotelPopularCityEntity> popularCities = popularCityRP.findByType(PopularcityConstant.POPULAR_CITY);
 
         List<DestinationRQDS> destinationCodes = popularCities
             .stream()

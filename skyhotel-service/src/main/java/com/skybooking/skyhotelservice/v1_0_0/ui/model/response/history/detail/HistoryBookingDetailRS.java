@@ -3,8 +3,6 @@ package com.skybooking.skyhotelservice.v1_0_0.ui.model.response.history.detail;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
-import java.math.BigDecimal;
-import java.util.Date;
 import java.util.List;
 
 @Data
@@ -26,6 +24,6 @@ public class HistoryBookingDetailRS {
     private ContactInfo contactInfo;
     private PriceInfo priceInfo;
     private PaymentInfo paymentInfo;
-    private List<RoomDetail> room;
+    private List<RoomDetail> rooms;
 
 }

@@ -33,6 +33,7 @@ public class QuickIP implements QuickSV{
     public void created(QuickRQ quickRQ)
     {
         QuickEntity quick = new QuickEntity();
+
         quick.setDestinationCode(quickRQ.getDestinationCode());
         quick.setDestinationType(quickRQ.getDestinationType());
         quick.setType(VariableConstant.QUICK_TYPE);

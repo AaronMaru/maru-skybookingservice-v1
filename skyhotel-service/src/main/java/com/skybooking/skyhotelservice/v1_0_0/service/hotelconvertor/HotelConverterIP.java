@@ -16,6 +16,7 @@ import com.skybooking.skyhotelservice.v1_0_0.client.model.response.basehotel.ava
 import com.skybooking.skyhotelservice.v1_0_0.client.model.response.basehotel.availability.room.PromotionRSDS;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.response.basehotel.availability.room.RateRSDS;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.response.basehotel.content.ContentRSDS;
+import com.skybooking.skyhotelservice.v1_0_0.client.model.response.basehotel.content.FacilityRSDS;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.response.booking.RateTaxesHBRS;
 import com.skybooking.skyhotelservice.v1_0_0.io.entity.markup.HotelMarkupEntity;
 import com.skybooking.skyhotelservice.v1_0_0.io.repository.markup.HotelMarkupRP;
@@ -24,6 +25,7 @@ import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.booking.checkrate
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.booking.checkrate.Discount;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.booking.checkrate.Tax;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.BoardRS;
+import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.FacilityRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.HotelRS;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.content.*;
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.content.facility.HotelFacilityRS;
@@ -141,7 +143,8 @@ public class HotelConverterIP implements HotelConverterSV {
         hotel.setImages(getHotelImageResponse(content, resource.getImageUrl().getMedium()));
         hotel.setSegments(getHotelSegmentResponse(content));
         hotel.setRooms(getHotelRoomResponse(hotel, content, rooms, availabilityRQ, markup));
-        hotel.setFacility(getHotelFacilityResponse(content));
+        hotel.setFacilities(getHotelFacilitiesResponse(content));
+//        hotel.setFacility(getHotelFacilityResponse(content));
 
         // get rate price of first room availability in hotel
         RateRS roomRate = getBestRate(hotel);
@@ -150,6 +153,15 @@ public class HotelConverterIP implements HotelConverterSV {
         hotel.setOffer(getHotelOffer(roomRate));
         hotel.setPaymentType(roomRate.getPaymentType());
 
+    }
+
+    private List<FacilityRS> getHotelFacilitiesResponse(ContentRSDS content) {
+        List<FacilityRSDS> facilities = content.getFacilities();
+
+        return facilities
+            .parallelStream()
+            .map(facilityRSDS -> modelMapper.map(facilityRSDS, FacilityRS.class))
+            .collect(Collectors.toList());
     }
 
     /**

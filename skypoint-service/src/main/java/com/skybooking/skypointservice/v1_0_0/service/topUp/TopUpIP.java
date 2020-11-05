@@ -103,7 +103,7 @@ public class TopUpIP extends BaseServiceIP implements TopUpSV {
     @Transactional(rollbackFor = {})
     public StructureRS offlineTopUp(HttpServletRequest httpServletRequest, OfflineTopUpRQ offlineTopUpRQ) {
         try {
-            String languageCode = headerDataUtil.languageCode(httpServletRequest);
+            String languageCode = headerDataUtil.languageCodeExist(httpServletRequest);
             //========== Validate key
             OfflineTopUpRQ offlineTopUpRQValidate = new OfflineTopUpRQ();
             BeanUtils.copyProperties(offlineTopUpRQ, offlineTopUpRQValidate);
@@ -188,6 +188,10 @@ public class TopUpIP extends BaseServiceIP implements TopUpSV {
     @Transactional(rollbackFor = {})
     public StructureRS confirmOfflineTopUp(HttpServletRequest httpServletRequest, ConfirmOfflineTopUpRQ confirmOfflineTopUpRQ) {
         try {
+
+            //======= Get languageCode for sending mail or sms
+            String languageCode = headerDataUtil.languageCodeExist(httpServletRequest);
+
             //======== Validate key request
             List<String> keyList = Arrays.asList("transactionCode", "status");
             ValidateKeyUtil.validateKey(confirmOfflineTopUpRQ, keyList);
@@ -210,7 +214,7 @@ public class TopUpIP extends BaseServiceIP implements TopUpSV {
             }
 
             if (confirmOfflineTopUpRQ.getStatus().equalsIgnoreCase(TransactionStatusConstant.APPROVED)) {
-                updateTopUp(httpServletRequest, transaction, transactionValue);
+                updateTopUp(languageCode, transaction, transactionValue);
             } else if (confirmOfflineTopUpRQ.getStatus().equalsIgnoreCase(TransactionStatusConstant.REJECTED)){
                 transaction.setStatus(TransactionStatusConstant.REJECTED);
                 transactionRP.save(transaction);
@@ -366,6 +370,9 @@ public class TopUpIP extends BaseServiceIP implements TopUpSV {
     @Transactional(rollbackFor = {})
     public StructureRS postTopUp(HttpServletRequest httpServletRequest, PostOnlineTopUpRQ postOnlineTopUpRQ) {
         try {
+            //======= Get languageCode for sending mail or sms
+            String languageCode = headerDataUtil.languageCodeExist(httpServletRequest);
+
             StructureRS structureRS = new StructureRS();
             //======== Validate key request
             List<String> keyList = Arrays.asList("paymentStatus", "transactionCode");
@@ -382,15 +389,20 @@ public class TopUpIP extends BaseServiceIP implements TopUpSV {
                 throw new BadRequestException("transaction_updated", null);
             }
 
+            BookingLanguageCached bookingLanguageCached = bookingLanguageRedisRP.findByBookingCode(transactionValue.getCode());
+            if (bookingLanguageCached != null) {
+                languageCode = bookingLanguageCached.getBookingCode();
+            }
+
             if (postOnlineTopUpRQ.getPaymentStatus().equalsIgnoreCase("success")) {
-                updateTopUp(httpServletRequest, transaction, transactionValue);
+                updateTopUp(languageCode, transaction, transactionValue);
             } else if (postOnlineTopUpRQ.getPaymentStatus().equalsIgnoreCase("failed")) {
                 transaction.setStatus(TransactionStatusConstant.FAILED);
                 transactionRP.save(transaction);
 
                 TransactionContactInfoEntity transactionContactInfo =
                         transactionContactInfoRP.findByTransactionId(transaction.getId());
-                sendMailSMSHelper.sendMailOrSmsTopUpFailed(httpServletRequest, transactionValue, transactionContactInfo);
+                sendMailSMSHelper.sendMailOrSmsTopUpFailed(languageCode, transactionValue, transactionContactInfo);
             } else {
                 throw new BadRequestException("paymentStatus_invalid", null);
             }
@@ -405,7 +417,7 @@ public class TopUpIP extends BaseServiceIP implements TopUpSV {
         }
     }
 
-    private void sendNotificationTopUp(HttpServletRequest httpServletRequest, TransactionEntity transaction) {
+    private void sendNotificationTopUp(String languageCode, TransactionEntity transaction) {
         TopUpNotificationRQ topUpNotificationRQ = new TopUpNotificationRQ();
         TransactionValueEntity transactionValue = transactionValueRP.findByTransactionIdAndTransactionTypeCode(transaction.getId(),
                 TransactionTypeConstant.TOP_UP);
@@ -413,12 +425,12 @@ public class TopUpIP extends BaseServiceIP implements TopUpSV {
         topUpNotificationRQ.setStakeholderCompanyId(transaction.getStakeholderCompanyId());
         topUpNotificationRQ.setStakeholderUserId(transaction.getStakeholderUserId());
         topUpNotificationRQ.setType("TOP_UP_POINT");
-        eventNotificationAction.topUpNotification(httpServletRequest, topUpNotificationRQ);
+        eventNotificationAction.topUpNotification(languageCode, topUpNotificationRQ);
     }
 
-    private void updateTopUp(HttpServletRequest httpServletRequest, TransactionEntity transaction,
+    private void updateTopUp(String languageCode, TransactionEntity transaction,
                              TransactionValueEntity transactionValue) {
-        String languageCode = headerDataUtil.languageCode(httpServletRequest);
+
         transaction.setStatus(TransactionStatusConstant.SUCCESS);
         transactionRP.save(transaction);
 
@@ -443,10 +455,10 @@ public class TopUpIP extends BaseServiceIP implements TopUpSV {
         //======= Send mail
         TransactionContactInfoEntity transactionContactInfo = transactionContactInfoRP.findByTransactionId(transaction.getId());
         sendMailSMSHelper.sendMailOrSmsTopUp(transaction, transactionValue, transactionContactInfo,
-                configTopUp, languageCode, httpServletRequest);
+                configTopUp, languageCode);
 
         //======= Send Notification
-        this.sendNotificationTopUp(httpServletRequest, transaction);
+        this.sendNotificationTopUp(languageCode, transaction);
     }
 
     private void validateStatus(String status) {

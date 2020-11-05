@@ -74,6 +74,10 @@ public class SendingMailThroughAWSSESSMTPServer {
                 html = this.replaceCode(html, "{{EARN_AMOUNT}}", mailTemplateData.get("earnAmount").toString());
             }
 
+            if (mailTemplateData.get("transactionFor") != null) {
+                html = this.replaceCode(html, "{{TRANSACTION_FOR}}", mailTemplateData.get("transactionFor").toString());
+            }
+
             if (fileList != null) {
                 quickService.submit(() -> fileList.forEach(file -> {
                     try {
@@ -91,8 +95,7 @@ public class SendingMailThroughAWSSESSMTPServer {
             Transport transport = session.getTransport();
             transport.connect(mailProperty.get("SERVER_HOST"), mailProperty.get("USER_NAME"),
                     mailProperty.get("USER_PASSWORD"));
-
-
+            
             quickService.submit(() -> {
                 try {
                     transport.sendMessage(message, message.getAllRecipients());

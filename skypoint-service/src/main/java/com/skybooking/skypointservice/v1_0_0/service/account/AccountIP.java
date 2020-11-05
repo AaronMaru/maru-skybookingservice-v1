@@ -41,7 +41,7 @@ public class AccountIP extends BaseServiceIP implements AccountSV {
     public StructureRS getBalance(HttpServletRequest httpServletRequest) {
         try {
             BalanceRS balanceRS = new BalanceRS();
-            String languageCode = headerDataUtil.languageCode(httpServletRequest);
+            String languageCode = headerDataUtil.languageCodeExist(httpServletRequest);
             UserReferenceRS userReferenceRS = accountHelper.getUserReference(httpServletRequest);
             String userCode = userReferenceRS.getUserCode();
 
@@ -66,7 +66,7 @@ public class AccountIP extends BaseServiceIP implements AccountSV {
     @Override
     public StructureRS getSkyOwnerAccountBalanceInfo(HttpServletRequest httpServletRequest, String userCode) {
         try {
-            String languageCode = headerDataUtil.languageCode(httpServletRequest);
+            String languageCode = headerDataUtil.languageCodeExist(httpServletRequest);
             AccountEntity account = accountRP.findAccountEntityByUserCode(userCode).orElse(new AccountEntity("LEVEL1"));
             //======== Return response
             AccountBalanceInfoRS accountBalanceInfoRS = new AccountBalanceInfoRS();

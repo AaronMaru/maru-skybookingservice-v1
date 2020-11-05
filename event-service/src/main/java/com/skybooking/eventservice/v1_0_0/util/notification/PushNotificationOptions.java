@@ -1,10 +1,12 @@
 package com.skybooking.eventservice.v1_0_0.util.notification;
 
+import com.skybooking.eventservice.constant.TransactionForConstant;
 import com.skybooking.eventservice.v1_0_0.client.onesignal.NotificationAction;
 import com.skybooking.eventservice.v1_0_0.io.entity.notification.NotificationEntity;
 import com.skybooking.eventservice.v1_0_0.io.nativeQuery.notification.NotificationNQ;
 import com.skybooking.eventservice.v1_0_0.io.nativeQuery.notification.ScriptingTO;
 import com.skybooking.eventservice.v1_0_0.io.repository.notification.NotificationRP;
+import com.skybooking.eventservice.v1_0_0.util.email.EmailBean;
 import com.skybooking.eventservice.v1_0_0.util.header.HeaderBean;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -13,7 +15,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import static com.skybooking.eventservice.constant.SmsKey.API_PRODUCT_FLIGHT;
+import static com.skybooking.eventservice.constant.SmsKey.API_PRODUCT_HOTEL;
 
 @Component
 public class PushNotificationOptions {
@@ -33,16 +40,44 @@ public class PushNotificationOptions {
     @Autowired
     private HeaderBean headerBean;
 
-    public void sendMessageToUsers(NotificationDTO notificationDTO) {
+    @Autowired
+    private EmailBean emailBean;
+
+    public void sendNotificationMultiProduct(NotificationDTO notificationDTO) {
 
         Long localeID = headerBean.getLocalizationId();
+
+        Map<String, Object> smsData = new HashMap<>();
+
+        if (notificationDTO.getTransactionFor().equalsIgnoreCase(TransactionForConstant.FLIGHT)) {
+            smsData = emailBean.dataSMSTemplate(API_PRODUCT_FLIGHT, smsData);
+        } else {
+            smsData = emailBean.dataSMSTemplate(API_PRODUCT_HOTEL, smsData);
+        }
 
         ScriptingTO scriptingTO = notificationNQ.scripting(localeID, notificationDTO.getScript());
         List<String> playerIds = notificationNQ.getPlayerIdByStakeholderUserId(
                 notificationDTO.getStakeholderUserId().intValue()
         );
 
-        addNotificationHistory(notificationDTO, scriptingTO);
+        if (smsData.get("hotel") != null) {
+            scriptingTO.setSubject(scriptingTO.getSubject().replace("{{TRANSACTION_FOR}}",
+                    smsData.get("hotel").toString()));
+        }
+
+        if (smsData.get("flight") != null) {
+            scriptingTO.setSubject(scriptingTO.getSubject().replace("{{TRANSACTION_FOR}}",
+                    smsData.get("flight").toString()));
+        }
+
+        this.sendNotificationMultiplayer(playerIds, notificationDTO, scriptingTO);
+
+    }
+
+
+
+    public void sendNotificationMultiplayer(List<String> playerIds, NotificationDTO notificationDTO, ScriptingTO scriptingTO) {
+
 
         playerIds.forEach(playerId -> {
 
@@ -72,16 +107,5 @@ public class PushNotificationOptions {
 
             notificationAction.sendNotification(sendData.toString());
         });
-
     }
-
-    public void addNotificationHistory(NotificationDTO notificationDTO, ScriptingTO scriptingTO) {
-
-        NotificationEntity notificationEntity = new NotificationEntity();
-        BeanUtils.copyProperties(notificationDTO, notificationEntity);
-        notificationEntity.setSendScriptId(scriptingTO.getScriptId());
-        notificationRP.save(notificationEntity);
-
-    }
-
 }

@@ -82,6 +82,10 @@ public class SmsBean {
             body = body.replace("{{TRANSACTION_FOR}}", smsData.get("flight").toString());
         }
 
+        if (smsData.get("level") != null) {
+            body = body.replace("{{NEW_LEVEL}}", smsData.get("level").toString());
+        }
+
         return body;
     }
 

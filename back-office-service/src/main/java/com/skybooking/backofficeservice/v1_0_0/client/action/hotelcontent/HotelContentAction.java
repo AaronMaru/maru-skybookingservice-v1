@@ -13,7 +13,6 @@ public class HotelContentAction extends BaseAction {
     public StructureRSDS getHotelContents(HotelContentRQDS request)
     {
         try {
-
             return client
                 .mutate()
                 .build()

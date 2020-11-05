@@ -7,7 +7,6 @@ import com.skybooking.eventservice.v1_0_0.io.nativeQuery.mail.MultiLanguageNQ;
 import com.skybooking.eventservice.v1_0_0.io.nativeQuery.mail.MultiLanguageTO;
 import com.skybooking.eventservice.v1_0_0.io.repository.locale.LocaleRP;
 import com.skybooking.eventservice.v1_0_0.io.repository.locale.TranslationRP;
-import com.skybooking.eventservice.v1_0_0.util.auth.JwtUtils;
 import com.skybooking.eventservice.v1_0_0.util.header.HeaderBean;
 import freemarker.template.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -109,8 +108,8 @@ public class EmailBean {
         mailTemplateData.put("script", multiLanguageTO);
         mailTemplateData.put("brand", SKY_HOTEL);
 
-        var multilanguage = translationRP.findByModule(localId, "api_payment_success_hotel");
-        multilanguage.forEach(item -> mailTemplateData.put(item.getKey(), item.getValue()));
+        var multiLanguage = translationRP.findByModule(localId, "api_payment_success_hotel");
+        multiLanguage.forEach(item -> mailTemplateData.put(item.getKey(), item.getValue()));
 
         return mailTemplateData;
 
@@ -127,7 +126,7 @@ public class EmailBean {
 
     }
 
-    private List<TranslationEntity> translationLabel(String label) {
+    public List<TranslationEntity> translationLabel(String label) {
 
         String locale = headerBean.getLocalization();
 

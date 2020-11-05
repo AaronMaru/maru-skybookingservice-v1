@@ -12,7 +12,7 @@ import javax.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping("v1.0.0/popular-city")
+@RequestMapping("v1.0.0/ ")
 public class PopularCityController {
 
     @Autowired private PopularCitySV popularCitySV;

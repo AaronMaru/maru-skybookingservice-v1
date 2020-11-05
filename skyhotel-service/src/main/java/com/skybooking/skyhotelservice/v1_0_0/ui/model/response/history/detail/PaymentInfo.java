@@ -9,8 +9,6 @@ public class PaymentInfo {
     private String payTo = "SKYBOOKING";
     private String paymentOf;
     private String paymentId;
-    private BigDecimal paymentFeeAmount = BigDecimal.ZERO;
-    private BigDecimal paidAmount = BigDecimal.ZERO;
     private String cardNumber = "";
     private String paymentMethod = "";
 }

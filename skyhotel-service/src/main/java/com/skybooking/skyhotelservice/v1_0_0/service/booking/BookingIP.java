@@ -11,13 +11,15 @@ import com.skybooking.skyhotelservice.v1_0_0.client.model.request.booking.*;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.response.StructureRSDS;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.response.basehotel.availability.room.FeeRSDS;
 import com.skybooking.skyhotelservice.v1_0_0.client.model.response.basehotel.availability.room.RateRSDS;
-import com.skybooking.skyhotelservice.v1_0_0.client.model.response.booking.*;
+import com.skybooking.skyhotelservice.v1_0_0.client.model.response.booking.BookingConfirmationHBRS;
+import com.skybooking.skyhotelservice.v1_0_0.client.model.response.booking.CheckRateHBRS;
+import com.skybooking.skyhotelservice.v1_0_0.client.model.response.booking.CheckRateHotelHBRS;
+import com.skybooking.skyhotelservice.v1_0_0.client.model.response.booking.ReserveDSRS;
 import com.skybooking.skyhotelservice.v1_0_0.io.entity.booking.HotelBookingEntity;
 import com.skybooking.skyhotelservice.v1_0_0.io.entity.booking.HotelBookingRateEntity;
 import com.skybooking.skyhotelservice.v1_0_0.io.entity.booking.cached.CheckRateCached;
 import com.skybooking.skyhotelservice.v1_0_0.io.entity.markup.HotelMarkupEntity;
 import com.skybooking.skyhotelservice.v1_0_0.io.repository.booking.HotelBookingRP;
-import com.skybooking.skyhotelservice.v1_0_0.io.repository.booking.HotelBookingRateRP;
 import com.skybooking.skyhotelservice.v1_0_0.io.repository.booking.HotelRatebreakdownRP;
 import com.skybooking.skyhotelservice.v1_0_0.io.repository.markup.HotelMarkupRP;
 import com.skybooking.skyhotelservice.v1_0_0.service.BaseServiceIP;
@@ -35,8 +37,9 @@ import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.hotel.content.Roo
 import com.skybooking.skyhotelservice.v1_0_0.ui.model.response.payment.PaymentTransactionRQ;
 import com.skybooking.skyhotelservice.v1_0_0.util.GeneratorCM;
 import com.skybooking.skyhotelservice.v1_0_0.util.JwtUtils;
-import com.skybooking.skyhotelservice.v1_0_0.util.calculator.*;
 import com.skybooking.skyhotelservice.v1_0_0.util.calculator.CalculatePriceRS.*;
+import com.skybooking.skyhotelservice.v1_0_0.util.calculator.CalculatePriceUtil;
+import com.skybooking.skyhotelservice.v1_0_0.util.calculator.NumberFormatter;
 import com.skybooking.skyhotelservice.v1_0_0.util.datetime.DatetimeUtil;
 import com.skybooking.skyhotelservice.v1_0_0.util.header.HeaderCM;
 import lombok.RequiredArgsConstructor;
@@ -69,9 +72,13 @@ public class BookingIP extends BaseServiceIP implements BookingSV {
     @Autowired
     private HotelMarkupRP hotelMarkupRP;
 
-    @Autowired
-    private HotelBookingRateRP hotelBookingRateRP;
-
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * This function use for check rate
+     * -----------------------------------------------------------------------------------------------------------------
+     * @param checkRateRQ
+     * @return checkRateRS
+     */
     @Override
     public StructureRS checkRate(CheckRateRQ checkRateRQ) {
 
@@ -104,6 +111,13 @@ public class BookingIP extends BaseServiceIP implements BookingSV {
         return responseBodyWithSuccessMessage(checkRateRS);
     }
 
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * This function use for reserve
+     * -----------------------------------------------------------------------------------------------------------------
+     * @param reserveRQ
+     * @return checkRateRS
+     */
     @Override
     public StructureRS reserve(ReserveRQ reserveRQ) {
 
@@ -184,7 +198,15 @@ public class BookingIP extends BaseServiceIP implements BookingSV {
         return responseBodyWithSuccessMessage(checkRateRS);
     }
 
-    // Has Response from DS
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * This function use for store check rate with response
+     * -----------------------------------------------------------------------------------------------------------------
+     * @param checkRateHotelHBRS
+     * @param hotelRS
+     * @param checkRateRQ
+     * @return checkRateHotelRS
+     */
     private CheckRateHotel getCheckRateWithResponse(CheckRateHotelHBRS checkRateHotelHBRS, HotelRS hotelRS, CheckRateRQ checkRateRQ) {
         CheckRateHotel checkRateHotelRS = new CheckRateHotel();
         // get total night from checkRateRQ
@@ -325,7 +347,14 @@ public class BookingIP extends BaseServiceIP implements BookingSV {
         return checkRateHotelRS;
     }
 
-    // No response from DS
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * This function use for store check rate with cached
+     * -----------------------------------------------------------------------------------------------------------------
+     * @param hotelRS
+     * @param checkRateRQ
+     * @return checkRateHotelRS
+     */
     public CheckRateHotel getCheckRateWithCached(HotelRS hotelRS, CheckRateRQ checkRateRQ) {
 
         //TODO: Mark up price, store and create response here
@@ -377,6 +406,14 @@ public class BookingIP extends BaseServiceIP implements BookingSV {
 
     }
 
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * This function get room check rate with cached
+     * -----------------------------------------------------------------------------------------------------------------
+     * @param roomRSList
+     * @param checkRateRQ
+     * @return rooms
+     */
     private List<Room> getRoomCheckRateWithCached(List<RoomRS> roomRSList, CheckRateRQ checkRateRQ) {
         // get total nights
         long numberOfNights = DatetimeUtil.night(checkRateRQ.getCheckIn(), checkRateRQ.getCheckOut());
@@ -433,6 +470,7 @@ public class BookingIP extends BaseServiceIP implements BookingSV {
                 BigDecimal markupAmount = priceUnit.getMarkupAmount()
                     .multiply(BigDecimal.valueOf(rRoom))
                     .multiply(BigDecimal.valueOf(numberOfNights));
+
                 rate.setMarkupPercentage(rateRS.getPrice().getDetail().getMarkupPercentage());
                 rate.setMarkupAmount(markupAmount);
                 rate.setPreviousTotalAmount(totalAmount);
@@ -460,9 +498,18 @@ public class BookingIP extends BaseServiceIP implements BookingSV {
 
             rooms.add(room);
         });
+
         return rooms;
     }
 
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * This function get hotel room rate with cached
+     * -----------------------------------------------------------------------------------------------------------------
+     * @param checkRateRQ
+     * @param rates
+     * @return hotelRS
+     */
     private Optional<HotelRS> getHotelRoomRatesFromCache(CheckRateRQ checkRateRQ, List<BookingRoomHBRQ> rates) {
         Optional<HotelRS> hotelRS = hotelCachedSV.retrieveHotel(checkRateRQ.getRequestId(), checkRateRQ.getHotelCode());
         rates.removeAll(List.copyOf(rates));
@@ -501,13 +548,18 @@ public class BookingIP extends BaseServiceIP implements BookingSV {
         return hotelRS;
     }
 
+    /**
+     * -----------------------------------------------------------------------------------------------------------------
+     * This function for store data booking hotel
+     * -----------------------------------------------------------------------------------------------------------------
+     * @param checkRateRS
+     */
     @Transactional(rollbackFor = {Exception.class})
     public void storeHotelBooking(CheckRateRS checkRateRS) {
         // TODO: Store hotel booking histories
         var booking = hotelBookingRP.findFirstByOrderByIdDesc();
 
         HotelBookingEntity hotelBooking = new HotelBookingEntity();
-
         hotelBooking.setCode(GeneratorCM.bookingCode(booking == null ? null : booking.getCode()));
         hotelBooking.setStatus(BookingConstantPayment.PENDING);
         hotelBooking.setCheckIn(DatetimeUtil.toDate(checkRateRS.getSummary().getCheckIn()));
@@ -610,8 +662,8 @@ public class BookingIP extends BaseServiceIP implements BookingSV {
         try {
 
             Mono<BookingConfirmationHBRS> bookingMono = bookingAction.confirmBooking(bookingConfirmationHBRQ);
-            bookingMono.block();
-
+            var data = bookingMono.block();
+            bookingEntity.setReference(data.getBooking().getReference());
         } catch (WebClientResponseException exception) {
             if (exception instanceof WebClientResponseException.InternalServerError) {
                 System.out.println("Booking Response ==> " + exception.getResponseBodyAsString());

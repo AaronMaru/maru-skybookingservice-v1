@@ -17,6 +17,7 @@ import com.skybooking.paymentservice.v1_0_0.util.integration.Payments;
 import com.skybooking.paymentservice.v1_0_1.ui.model.response.StructureRS;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -62,7 +63,8 @@ public class PaymentFormController {
     @Autowired
     private PaymentFormIP paymentFormIP;
 
-
+    @Autowired
+    private Environment environment;
     /**
      * -----------------------------------------------------------------------------------------------------------------
      * Request Payment Form PIPAY
@@ -103,8 +105,8 @@ public class PaymentFormController {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("code", dataToken.getBookingCode());
 
-            String initVector = "1234567890123456";
-            String key = "12345678901234567890123456789012";
+            String key = environment.getProperty("encryption.key");
+            String initVector = environment.getProperty("encryption.iv");
 
             try {
                 pointRQ.setData(AESEncryptionDecryption.encrypt(jsonObject.toString(), key, initVector));
@@ -170,14 +172,14 @@ public class PaymentFormController {
         if (bookingCode.contains("SBFT")) {
             payments.ipay88Payload(payments.getPaymentInfo(dataToken, flightAction.getMandatoryData(dataToken.getBookingCode())), model);
         } else {
-            PointRQ pointRQ = new PointRQ();
 
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("code", bookingCode);
 
-            String key = "12345678901234567890123456789012";
-            String initVector = "1234567890123456";
+            String initVector = environment.getProperty("encryption.iv");
+            String key = environment.getProperty("encryption.key");
 
+            PointRQ pointRQ = new PointRQ();
             try {
                 pointRQ.setData(AESEncryptionDecryption.encrypt(jsonObject.toString(), key, initVector));
             } catch (Exception e) {
